@@ -1,15 +1,18 @@
 # Yazi olcegi 4x'te panellerin pencere icinde kalip kalmadigi.
+# Oyun artik ANA MENUDE aciliyor; oynanis karesi icin once dunyaya girilir.
+screen Playing
+
 wait 90
-tap F7
+screen Settings
 wait 15
 tap D2
 wait 10
 tap D2
 wait 20
 shot 01_ayarlar_4x
-tap F7
+screen Playing
 wait 15
-tap F3
+screen Achievements
 wait 25
 shot 02_basarimlar_4x
 quit

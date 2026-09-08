@@ -4,14 +4,17 @@
 # otede (-2,0) bir agac var (Tools/verify_worldgen.py ile haritalandi).
 # Sola yurunce oyuncu agaca dayanip durur ve sola bakar; Space ile keser.
 
+# Oyun artik ANA MENUDE aciliyor; oynanis karesi icin once dunyaya girilir.
+screen Playing
+
 wait 90
 shot 01_acilis
 
-# F3: basarim listesi — hicbiri acik degil, gizli olan ??? gorunur
-tap F3
+# Basarim listesi
+screen Achievements
 wait 20
 shot 02_basarim_listesi_kapali
-tap F3
+screen Playing
 wait 15
 
 # Sola yuru: agac kati oldugu icin oyuncu ona dayanip durur
@@ -29,20 +32,20 @@ wait 10
 shot 04_basarim_bildirimi
 
 # F3: liste artik acilmis basarimi gostermeli
-tap F3
+screen Achievements
 wait 25
 shot 05_basarim_listesi_acilmis
-tap F3
+screen Playing
 wait 10
 
-# F4: siralamalar.
+# Siralamalar
 # Skorlar 10 saniyede bir yaziliyor (her karede yazmak Steam'de hiz
 # sinirina takilirdi), bu yuzden ilk yazimin gecmesi beklenir.
 wait 700
-tap F4
+screen Leaderboard
 wait 25
 shot 06_siralamalar
-tap F4
+screen Playing
 wait 10
 
 # F6: davet — Steam'siz derlemede uyari vermeli

@@ -686,7 +686,7 @@ public sealed class HudRenderer
 
         var rows = new List<(string Text, Color Color)>
         {
-            ($"YAMA NOTLARI  (F8 kapat, yukari/asagi kaydir)  v{notes.LatestVersion}", TextColor)
+            ($"{Loc.T("patch.title")}   v{notes.LatestVersion}", TextColor)
         };
 
         foreach (var release in notes.Releases)
@@ -904,6 +904,122 @@ public sealed class HudRenderer
                 new Vector2(origin.X + padding, origin.Y + padding + i * lineHeight),
                 rows[i].Color, UiScale);
         }
+    }
+
+    /// <summary>
+    /// Ana menü.
+    ///
+    /// Menü tam ekran ve arkasındaki dünyayı KOYULTUR, gizlemez: oyuncu
+    /// nereye döneceğini görsün. Tamamen opak bir menü, oyunun kapandığı
+    /// hissini verirdi.
+    /// </summary>
+    public void DrawMainMenu(SpriteBatch spriteBatch, MainMenu menu,
+                             string versionLine, int windowWidth, int windowHeight)
+    {
+        var lineHeight = _font.LineHeight * UiScale;
+
+        // Arkadaki dunyayi koyultan tam ekran perde.
+        Fill(spriteBatch, new Rectangle(0, 0, windowWidth, windowHeight),
+             new Color(10, 11, 16) * 0.82f);
+
+        // --- Baslik ---
+        // Menu basligi HUD'dan daha buyuk: ekranin neresi oldugunu tek
+        // bakista soylemeli.
+        var titleScale = UiScale + 2;
+        var title = Loc.T("menu.title");
+        var titleWidth = _font.Measure(title, titleScale);
+
+        var titleY = Math.Max(24, windowHeight / 2 - Entries(menu) * lineHeight / 2
+                                  - _font.LineHeight * titleScale - 40);
+
+        _font.Draw(spriteBatch, title,
+                   new Vector2((windowWidth - titleWidth) / 2, titleY),
+                   Accessibility.Palette.Warning, titleScale);
+
+        // Baslik altinda ince ayrac.
+        Fill(spriteBatch,
+             new Rectangle((windowWidth - titleWidth) / 2,
+                           titleY + _font.LineHeight * titleScale + 4, titleWidth, 2),
+             Accessibility.Palette.Warning * 0.6f);
+
+        // --- Satirlar ---
+        var startY = titleY + _font.LineHeight * titleScale + 34;
+
+        for (var i = 0; i < menu.Items.Count; i++)
+        {
+            var entry = menu.Items[i];
+            var enabled = menu.IsEnabled(entry);
+            var selected = i == menu.SelectedIndex;
+
+            var label = menu.LabelOf(entry);
+            if (!enabled) label += "  " + Loc.T("menu.needWorld");
+
+            var width = _font.Measure(label, UiScale);
+            var x = (windowWidth - width) / 2;
+            var y = startY + i * (lineHeight + 6);
+
+            // Secili satir hem RENKLE hem ISARETLE gosteriliyor: madde
+            // 23'un kurali — renk tek basina anlam tasimaz.
+            if (selected)
+            {
+                Fill(spriteBatch,
+                     new Rectangle(x - 14, y - 3, width + 28, lineHeight + 6),
+                     Accessibility.Palette.Positive * 0.22f);
+
+                _font.Draw(spriteBatch, ">", new Vector2(x - 12 - _font.Measure(">", UiScale), y),
+                           Accessibility.Palette.Positive, UiScale);
+            }
+
+            var color = !enabled ? DimTextColor
+                      : selected ? Accessibility.Palette.Positive
+                      : TextColor;
+
+            _font.Draw(spriteBatch, label, new Vector2(x, y), color, UiScale);
+        }
+
+        // --- Alt bilgi ---
+        var hint = Loc.T("menu.hint");
+        _font.Draw(spriteBatch, hint,
+                   new Vector2((windowWidth - _font.Measure(hint, UiScale)) / 2,
+                               windowHeight - lineHeight * 2 - 18),
+                   DimTextColor, UiScale);
+
+        _font.Draw(spriteBatch, versionLine,
+                   new Vector2(12, windowHeight - lineHeight - 10), DimTextColor, UiScale);
+    }
+
+    private static int Entries(MainMenu menu) => menu.Items.Count;
+
+    /// <summary>
+    /// Alt ekranlarin ustunde duran "Esc ile geri don" seridi.
+    ///
+    /// Menuden acilan her ekranda gorunur; oyuncunun cikisi arayip
+    /// bulmasi gerekmesin.
+    /// </summary>
+    /// <param name="dim">
+    /// Perdenin koyulugu. Gardirop gibi arkadaki DUNYAYI gostermesi gereken
+    /// ekranlarda dusuk tutulur: kusanilan kozmetigi karakterin uzerinde
+    /// gormek o ekranin butun amaci.
+    /// </param>
+    public void DrawScreenChrome(SpriteBatch spriteBatch, string titleKey,
+                                 int windowWidth, int windowHeight, float dim = 0.86f)
+    {
+        var lineHeight = _font.LineHeight * UiScale;
+
+        Fill(spriteBatch, new Rectangle(0, 0, windowWidth, windowHeight),
+             new Color(10, 11, 16) * dim);
+
+        var title = Loc.T(titleKey);
+        _font.Draw(spriteBatch, title, new Vector2(16, 14),
+                   Accessibility.Palette.Warning, UiScale);
+
+        var hint = Loc.T("menu.backHint");
+        _font.Draw(spriteBatch, hint,
+                   new Vector2(windowWidth - _font.Measure(hint, UiScale) - 16, 14),
+                   DimTextColor, UiScale);
+
+        Fill(spriteBatch, new Rectangle(16, 14 + lineHeight + 4, windowWidth - 32, 2),
+             Accessibility.Palette.Warning * 0.5f);
     }
 
     /// <summary>Sol üstte seçili yapı ve ağ oturumu durumu.</summary>

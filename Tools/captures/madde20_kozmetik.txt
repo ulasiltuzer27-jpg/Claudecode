@@ -1,12 +1,15 @@
 # MADDE 20 dogrulamasi: katmanli sprite + rarity + sezonluk.
-# Beklenen: K gardirobu acar, 1-5 slotlari dolasir, karakterin uzerinde
+# Beklenen: menuden acilan gardirop, 1-5 slotlari dolasir, karakterin uzerinde
 # katmanlar gorunur, nadirlik renkleri panelde farklidir.
+
+# Oyun artik ANA MENUDE aciliyor; oynanis karesi icin once dunyaya girilir.
+screen Playing
 
 wait 90
 shot 01_ciplak_beden
 
 # Gardirobu ac
-tap K
+screen Wardrobe
 wait 20
 shot 02_gardirop_bos
 

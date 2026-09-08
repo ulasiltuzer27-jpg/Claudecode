@@ -53,26 +53,29 @@ ağ senkronizasyonu. Bkz. "Bilinen boşluklar".
 | F9 | sunucu aç (port 7777) |
 | F10 | localhost'a bağlan |
 | F11 | oturumdan ayrıl |
-| K | gardırop (madde 20) — açıkken 1-5 slot değiştirir, 0 hepsini çıkarır |
-| N | klan paneli (madde 22) — açıkken 1 kur, 2 davet et, 3 ayrıl |
+| Escape | **ana menü** (oyunu kapatmaz) |
 | Y | takas penceresi (madde 22) — ok tuşları seçer, Enter onaylar |
-| M | mod/Workshop paneli (madde 25) |
 | P | photo mode (madde 24) — arayüz gizlenir, kamera serbest kalır |
 | F12 | photo mode'da temiz kareyi `photos/` klasörüne kaydet |
 | Alt (**basılı tut**) | emote/ping tekerleği: 1-6 emote, Q/E/R/F ping türü |
 | F1 | asset denetim görünümü (ham sprite sheet'ler) |
 | F2 | debug görünümü (katı tile kırmızı, collider yeşil, chunk sınırı sarı) |
-| F3 | başarım listesi (madde 21) |
-| F4 | sıralamalar (madde 21) |
 | F5 | rastgele yeni tohumla dünyayı yeniden üret |
 | F6 | Steam arkadaş daveti (madde 21) |
-| F7 | ayarlar (madde 23) — 1 dil, 2 yazı boyutu, 3 renk paleti |
-| F8 | yama notları (madde 24) |
-| Escape / gamepad Back | çıkış |
 
-Sayı tuşlarını paylaşan paneller (üretim, gardırop, klan, ayarlar, emote
-tekerleği) **asla aynı anda aktif değildir**: tuşun hangi işlevi tetiklediği
-belirsiz kalmasın diye biri açılınca diğerleri kapanır.
+**Ana menü** (Escape): Oyna/Devam et · Gardırop · Klan · Başarımlar ·
+Sıralamalar · Modlar · Ayarlar · Yama Notları · Çıkış. Yukarı/Aşağı ile
+gezinilir, Enter onaylar, Escape geri döner.
+
+Gardırop ve Klan dünyaya girilmeden **soluk** görünür ve imleç onları atlar:
+oyuncunun seçemeyeceği bir satırda imleç bırakmak, tuşun bozuk olduğu
+izlenimi verir.
+
+Madde 20-25 boyunca her sistem kendi F-tuşunu almıştı (F3 başarım, F4 sıralama,
+F7 ayarlar, F8 yama notları, K gardırop, N klan, M modlar): yedi ekran, yedi
+ezberlenecek tuş, hiçbiri ekranda yazmıyordu. Hepsi ana menüye taşındı.
+Oynanış tuşları (hareket, toplama, inşa, dövüş, ağ, photo mode) yerinde kaldı —
+onlar oyunun **içinde** kullanılıyor.
 
 Hareket 8 yönlü, animasyon 4 yönlü (Stardew Valley yaklaşımı). Katı 4 yön isteniyorsa
 `Entities/Player.cs` içindeki `SnapToFourDirections` sabiti `true` yapılır.

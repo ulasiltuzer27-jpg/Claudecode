@@ -1,10 +1,13 @@
 # MADDE 24 dogrulamasi: photo mode, emote, ping, yama notlari.
 
+# Oyun artik ANA MENUDE aciliyor; oynanis karesi icin once dunyaya girilir.
+screen Playing
+
 wait 90
 shot 01_normal
 
-# F8: yama notlari
-tap F8
+# Yama notlari
+screen PatchNotes
 wait 25
 shot 02_yama_notlari
 
@@ -17,7 +20,7 @@ tap Down
 tap Down
 wait 25
 shot 03_yama_notlari_kaydirilmis
-tap F8
+screen Playing
 wait 15
 
 # Emote: Alt basili tut + 1 (el sallama)

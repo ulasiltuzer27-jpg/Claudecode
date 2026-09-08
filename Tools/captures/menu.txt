@@ -1,0 +1,58 @@
+# Ana menu dogrulamasi.
+#
+# Not: her "tap" kendi bekleme suresini dayatiyor, yani arka arkaya
+# yazilan tap'ler AYRI basislar olarak isleniyor.
+
+wait 60
+shot 01_ana_menu
+
+# Menu sirasi: Oyna(0) Gardirop(1) Klan(2) Basarimlar(3) Siralamalar(4)
+#              Modlar(5) Ayarlar(6) YamaNotlari(7) Cikis(8)
+# Gardirop ve Klan dunya kurulmadan SOLUK ve atlanir.
+
+# Oyna -> Basarimlar (1 asagi, devre disi ikisi atlanir)
+tap Down
+wait 10
+shot 02_basarimlar_secili
+tap Enter
+wait 25
+shot 03_basarimlar_ekrani
+tap Escape
+wait 20
+
+# Ayarlar: Basarimlar(3) -> Siralamalar -> Modlar -> Ayarlar
+tap Down
+tap Down
+tap Down
+wait 10
+tap Enter
+wait 25
+shot 04_ayarlar_ekrani
+
+# Dil degistir: ayar ekrani calisiyor mu
+tap D1
+wait 25
+shot 05_ayarlar_ingilizce
+tap D1
+wait 20
+tap Escape
+wait 20
+
+# Oyna'ya don: Ayarlar(6) -> 5 -> 4 -> 3 -> 0 (devre disi 2 ve 1 atlanir).
+# Dort basis; besincisi listenin basindan Cikis'a sarardi.
+tap Up
+tap Up
+tap Up
+tap Up
+wait 10
+shot 06_oyna_secili
+tap Enter
+wait 70
+shot 07_oyun_basladi
+
+# Esc: menu dunyanin USTUNE gelmeli, Gardirop/Klan artik acik olmali
+tap Escape
+wait 25
+shot 08_oyun_icinden_menu
+
+quit

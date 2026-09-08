@@ -1,6 +1,9 @@
 # Taban dogrulama: dunya yuklendi mi, HUD ciziliyor mu, hareket calisiyor mu.
 # 60 kare = 1 saniye (sabit adim).
 
+# Oyun artik ANA MENUDE aciliyor; oynanis karesi icin once dunyaya girilir.
+screen Playing
+
 wait 90
 shot 01_acilis
 

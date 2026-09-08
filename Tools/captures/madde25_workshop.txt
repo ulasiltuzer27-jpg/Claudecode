@@ -1,6 +1,9 @@
 # MADDE 25 dogrulamasi: mod kesfi, manifest dogrulama, parmak izi.
+# Oyun artik ANA MENUDE aciliyor; oynanis karesi icin once dunyaya girilir.
+screen Playing
+
 wait 90
-tap M
+screen Mods
 wait 30
 shot 01_mod_paneli
 quit

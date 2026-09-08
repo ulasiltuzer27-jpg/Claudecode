@@ -23,6 +23,7 @@ namespace PixelSurvival.Diagnostics;
 ///   up W             W tuşunu bırak
 ///   tap Tab          Tab'a bas ve 2 kare sonra bırak (kenar tespitli tuşlar için)
 ///   shot hud         o karenin görüntüsünü &lt;çıktı&gt;/hud.png olarak kaydet
+///   screen Settings  dogrudan o ekrana gec (menu gezinmesini atlar)
 ///   quit             oyunu kapat
 /// </code>
 /// </summary>
@@ -47,6 +48,27 @@ public sealed class CaptureHarness
 
     /// <summary>Bu karede kaydedilecek görüntünün adı; yoksa null.</summary>
     private string? _pendingShot;
+
+    /// <summary>
+    /// Script'in istediği ekran adı; oyun kabuğu okuyup uygular ve
+    /// temizler.
+    ///
+    /// Neden var: ekranlar artık ana menüden açılıyor ve her doğrulama
+    /// script'inin menüde kaç kez aşağı ineceğini saymasi gerekiyordu.
+    /// O sayım menüye bir satır eklendiği anda sessizce bozuluyor ve
+    /// script yanlış ekranın görüntüsünü kaydediyordu. Menü gezinmesi
+    /// kendi script'inde (menu.txt) test ediliyor; diğer script'ler
+    /// kendi ozelliklerini test etmeli.
+    /// </summary>
+    public string? RequestedScreen { get; private set; }
+
+    /// <summary>İstenen ekranı okur ve isteği temizler.</summary>
+    public string? TakeRequestedScreen()
+    {
+        var value = RequestedScreen;
+        RequestedScreen = null;
+        return value;
+    }
 
     /// <summary>Script "quit" dedi ya da kare sınırı doldu.</summary>
     public bool ShouldExit { get; private set; }
@@ -178,12 +200,28 @@ public sealed class CaptureHarness
                         _held.Add(tapKey);
                         _releaseAt[tapKey] = _frame + TapHoldFrames;
                     }
-                    break;
+
+                    // Tap kendi bekleme suresini DAYATIR ve komut islemeyi
+                    // durdurur.
+                    //
+                    // Aksi halde arka arkaya yazilan "tap Down / tap Down"
+                    // ayni karede islenir, ikisi de ayni tusu basili
+                    // yapar ve oyun kenar tespiti kullandigi icin TEK
+                    // basis olarak gorunur. Script yazan kisi ise iki
+                    // basis bekler. Bu, script'i sessizce yanlis
+                    // calistiran bir tuzakti.
+                    _waitFrames = TapHoldFrames + 1;
+                    return;
 
                 case "shot":
                     // Görüntü ancak Draw bittikten sonra alınabilir; işaretlenip
                     // bu kare için komut işleme durduruluyor.
                     _pendingShot = command.Argument;
+                    return;
+
+                case "screen":
+                    RequestedScreen = command.Argument;
+                    _waitFrames = 1;
                     return;
 
                 case "quit":

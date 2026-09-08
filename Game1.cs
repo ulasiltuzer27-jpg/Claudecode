@@ -123,6 +123,21 @@ public class Game1 : Game
 
     private bool _showCrafting = true;
 
+    // --- Ekran durumu ---
+    //
+    // Yedi ayri bool yerine TEK enum: menuden acilan ekranlar birbirinin
+    // ustune binmemeli ve "hangi ekran acik" sorusunun tek cevabi olmali.
+    // Ayri bool'larda o cevap kombinasyon sayisi kadar cogaliyordu ve
+    // her yeni panel digerlerini tek tek kapatmak zorundaydi.
+    private readonly MainMenu _menu = new();
+    private GameScreen _screen = GameScreen.MainMenu;
+
+    /// <summary>Dunya kuruldu mu — menu bunu bilmeli.</summary>
+    private bool _worldReady;
+
+    /// <summary>Gamepad Back kenar tespiti icin onceki durum.</summary>
+    private ButtonState _previousGamepadBack;
+
     // --- Madde 20: kozmetik / katmanli sprite ---
     private CosmeticTable _cosmetics = null!;
     private CosmeticLoadout _loadout = null!;
@@ -134,7 +149,6 @@ public class Game1 : Game
     /// modal bir panel tercih edildi, yoksa her yeni sistem yeni bir tus
     /// istiyor ve klavye tukeniyor.
     /// </summary>
-    private bool _showWardrobe;
 
     // --- Madde 21: Steamworks (basarim / leaderboard / arkadas daveti) ---
     private AchievementCatalog _achievementCatalog = null!;
@@ -142,20 +156,16 @@ public class Game1 : Game
     private ILeaderboardBackend _leaderboards = null!;
     private SteamFriendsService _friends = null!;
 
-    private bool _showAchievements;
-    private bool _showLeaderboard;
 
     // --- Madde 25: Workshop / modlar ---
     private readonly ModRegistry _mods = new();
     private IWorkshopBackend _workshop = null!;
-    private bool _showWorkshop;
 
     // --- Madde 24: photo mode, emote, ping, yama notlari ---
     private readonly PhotoMode _photoMode = new();
     private readonly SocialSystem _social = new();
     private PatchNotes _patchNotes = null!;
 
-    private bool _showPatchNotes;
     private int _patchScroll;
 
     /// <summary>Emote/ping tekerlegi acik mi (sayi tuslari onu dolasir).</summary>
@@ -163,11 +173,9 @@ public class Game1 : Game
 
     // --- Madde 23: dil ve erisilebilirlik ---
     private readonly AccessibilitySettings _accessibility = new();
-    private bool _showSettings;
 
     // --- Madde 22: klan ve takas ---
     private readonly ClanSystem _clans = new();
-    private bool _showClan;
     private bool _showTrade;
 
     /// <summary>Takas penceresinde secili envanter slotu.</summary>
@@ -460,14 +468,45 @@ public class Game1 : Game
         {
             _capture.Update();
             if (_capture.ShouldExit) Exit();
+
+            // Yakalama script'i dogrudan bir ekran istediyse oraya gec.
+            if (_capture.TakeRequestedScreen() is { } requested &&
+                Enum.TryParse<GameScreen>(requested, ignoreCase: true, out var screen))
+            {
+                // Oynanis ekrani dunyanin kurulmus olmasini gerektiriyor.
+                if (screen == GameScreen.Playing) _worldReady = true;
+
+                _screen = screen;
+                if (screen == GameScreen.PatchNotes) _patchScroll = 0;
+            }
         }
 
         var keyboard = InputSource.GetKeyboard();
 
-        if (keyboard.IsKeyDown(Keys.Escape) ||
-            GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed)
+        // Escape artik oyunu KAPATMIYOR, menuye donuyor. Cikis menunun son
+        // satirinda: tek tusla kapanan bir oyun, yanlislikla basildiginda
+        // ilerlemeyi goturuyordu.
+        var back = WasPressed(keyboard, Keys.Escape) ||
+                   (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed &&
+                    _previousGamepadBack == ButtonState.Released);
+
+        _previousGamepadBack = GamePad.GetState(PlayerIndex.One).Buttons.Back;
+
+        if (_screen != GameScreen.Playing)
         {
-            Exit();
+            UpdateMenuScreens(keyboard, back, gameTime);
+            _previousKeyboard = keyboard;
+            base.Update(gameTime);
+            return;
+        }
+
+        if (back)
+        {
+            _screen = GameScreen.MainMenu;
+            _menu.Reset();
+            _previousKeyboard = keyboard;
+            base.Update(gameTime);
+            return;
         }
 
         if (WasPressed(keyboard, Keys.F1)) _showAssetView = !_showAssetView;
@@ -479,64 +518,23 @@ public class Game1 : Game
 
         if (WasPressed(keyboard, Keys.Tab)) _showCrafting = !_showCrafting;
 
-        // Madde 20: gardirop
-        if (WasPressed(keyboard, Keys.K))
-        {
-            _showWardrobe = !_showWardrobe;
-            if (_showWardrobe) _showClan = false;
-        }
-
-        // Madde 25: mod paneli
-        if (WasPressed(keyboard, Keys.M))
-        {
-            _showWorkshop = !_showWorkshop;
-            if (_showWorkshop) { _showClan = false; _showWardrobe = false; _showSettings = false; }
-        }
-
-        // --- Madde 24: photo mode, emote/ping tekerlegi, yama notlari ---
+        // --- Madde 24: photo mode. Menuye TASINMADI: oynanis sirasinda
+        //     kullaniliyor ve menuden acilmasi anlamsiz olurdu. ---
         if (WasPressed(keyboard, Keys.P)) _photoMode.Toggle(_camera);
         if (WasPressed(keyboard, Keys.F12) && _photoMode.IsActive) _photoMode.RequestShot();
-
-        if (WasPressed(keyboard, Keys.F8))
-        {
-            _showPatchNotes = !_showPatchNotes;
-            _patchScroll = 0;
-        }
-
-        if (_showPatchNotes)
-        {
-            if (WasPressed(keyboard, Keys.Down)) _patchScroll++;
-            if (WasPressed(keyboard, Keys.Up)) _patchScroll = Math.Max(0, _patchScroll - 1);
-        }
 
         // Emote tekerlegi basili TUTULARAK acilir: tek basisla acilip
         // kapanan bir tekerlek, sayi tuslarini uretimden surekli calardi.
         _showEmoteWheel = keyboard.IsKeyDown(Keys.LeftAlt) || keyboard.IsKeyDown(Keys.RightAlt);
         if (_showEmoteWheel) HandleSocialKeys(keyboard);
 
-        // Madde 23: ayarlar paneli
-        if (WasPressed(keyboard, Keys.F7))
-        {
-            _showSettings = !_showSettings;
-            if (_showSettings) { _showClan = false; _showWardrobe = false; }
-        }
-
-        // Madde 22: klan paneli ve takas penceresi.
-        // Sayi tuslarini paylasan paneller ayni anda acik kalmasin:
-        // hangisinin tusu isledigi oyuncu icin belirsiz olurdu.
-        if (WasPressed(keyboard, Keys.N))
-        {
-            _showClan = !_showClan;
-            if (_showClan) _showWardrobe = false;
-        }
-
+        // Takas iki oyuncu arasinda ve oynanis sirasinda aciliyor; menuye
+        // tasinmadi.
         if (WasPressed(keyboard, Keys.Y)) ToggleTradeWindow();
-
         if (_showTrade) HandleTradeKeys(keyboard);
 
-        // Madde 21: basarim listesi / leaderboard / arkadas daveti
-        if (WasPressed(keyboard, Keys.F3)) _showAchievements = !_showAchievements;
-        if (WasPressed(keyboard, Keys.F4)) _showLeaderboard = !_showLeaderboard;
+        // Steam davet overlay'i: Steam'in kendi arayuzunu aciyor, oyunun
+        // bir ekrani degil.
         if (WasPressed(keyboard, Keys.F6))
         {
             ShowToast(Loc.T(_friends.OpenInviteOverlay()
@@ -579,10 +577,10 @@ public class Game1 : Game
         // ayrilmamisti: klan paneli acikken 1'e basmak hem klan kuruyor
         // hem uretim deniyordu ("Malzeme yetersiz" toast'i cikiyordu).
         // Zincir if/else bu cakismayi yapisal olarak imkansiz kiliyor.
+        // Sayi tuslari: emote tekerlegi acikken emote, takasta hicbir sey,
+        // aksi halde uretim. Gardirop/klan/ayarlar artik oyun icinde degil
+        // MENUDE oldugu icin burada yer almiyorlar.
         if (_showEmoteWheel) { /* sayi tuslari HandleSocialKeys'te islendi */ }
-        else if (_showSettings) HandleSettingsKeys(keyboard);
-        else if (_showWardrobe) HandleWardrobeKeys(keyboard);
-        else if (_showClan) HandleClanKeys(keyboard);
         else if (!_showTrade) HandleCraftingKeys(keyboard);
 
         if (_toastSeconds > 0f)
@@ -851,6 +849,84 @@ public class Game1 : Game
 
     private bool WasPressed(KeyboardState current, Keys key) =>
         current.IsKeyDown(key) && _previousKeyboard.IsKeyUp(key);
+
+    /// <summary>
+    /// Ana menü ve menüden açılan alt ekranların güncellemesi.
+    ///
+    /// Dünya burada İLERLEMEZ: menüdeyken gece olması ya da düşmanın
+    /// yaklaşması oyuncuyu cezalandırırdı. (Photo mode'dan farkı bu —
+    /// orada amaç hareketli bir anı yakalamak.)
+    /// </summary>
+    private void UpdateMenuScreens(KeyboardState keyboard, bool back, GameTime gameTime)
+    {
+        _ = gameTime;
+
+        // --- Alt ekranlar: Esc menuye doner ---
+        if (_screen != GameScreen.MainMenu)
+        {
+            if (back)
+            {
+                _screen = GameScreen.MainMenu;
+                return;
+            }
+
+            switch (_screen)
+            {
+                case GameScreen.Settings:
+                    HandleSettingsKeys(keyboard);
+                    break;
+
+                case GameScreen.Wardrobe:
+                    HandleWardrobeKeys(keyboard);
+                    break;
+
+                case GameScreen.Clan:
+                    HandleClanKeys(keyboard);
+                    break;
+
+                case GameScreen.PatchNotes:
+                    if (WasPressed(keyboard, Keys.Down)) _patchScroll++;
+                    if (WasPressed(keyboard, Keys.Up)) _patchScroll = Math.Max(0, _patchScroll - 1);
+                    break;
+            }
+
+            return;
+        }
+
+        // --- Ana menu ---
+        _menu.WorldReady = _worldReady;
+        _menu.Resumable = _worldReady;
+
+        if (WasPressed(keyboard, Keys.Up)) _menu.Move(-1);
+        if (WasPressed(keyboard, Keys.Down)) _menu.Move(1);
+
+        if (!WasPressed(keyboard, Keys.Enter) && !WasPressed(keyboard, Keys.Space))
+        {
+            return;
+        }
+
+        if (_menu.IsQuitSelected)
+        {
+            Exit();
+            return;
+        }
+
+        var target = _menu.Selected.Target;
+
+        if (target == GameScreen.Playing)
+        {
+            // Dunya LoadContent'te zaten uretildi (alanlar null olamaz);
+            // burada YENIDEN uretilmiyor. Uretmek ayni tohumla ayni dunyayi
+            // kurardi ama oyuncunun ilerlemesini de sifirlardi.
+            _worldReady = true;
+            _screen = GameScreen.Playing;
+            return;
+        }
+
+        if (target == GameScreen.PatchNotes) _patchScroll = 0;
+
+        _screen = target;
+    }
 
     /// <summary>
     /// MADDE 24 — emote ve ping tuşları (Alt basılı tutulurken).
@@ -1449,6 +1525,19 @@ public class Game1 : Game
     {
         GraphicsDevice.Clear(new Color(28, 30, 40));
 
+        // Dunya henuz kurulmadiysa (oyuncu hic "Oyna" demediyse) cizilecek
+        // bir dunya yok: yalnizca menu.
+        if (!_worldReady)
+        {
+            _spriteBatch.Begin(samplerState: SamplerState.PointClamp);
+            DrawMenuScreen();
+            _spriteBatch.End();
+
+            base.Draw(gameTime);
+            _capture?.CaptureIfRequested(GraphicsDevice);
+            return;
+        }
+
         var visible = _camera.GetVisibleWorldArea();
 
         // --- Dünya katmanı: kamera matrisi altında, dünya koordinatlarında ---
@@ -1571,32 +1660,9 @@ public class Game1 : Game
                 _zones.ZoneAt(_player.Position, _map.TileSize) == ZoneKind.Safe,
                 _steam.Status, WindowWidth, WindowHeight);
 
-            // Madde 25: mod paneli
-            if (_showWorkshop)
-            {
-                _hud.DrawWorkshop(_spriteBatch, _mods, _workshop, WindowWidth, WindowHeight);
-            }
-
-            // Madde 24: yama notlari
-            if (_showPatchNotes)
-            {
-                _hud.DrawPatchNotes(_spriteBatch, _patchNotes, _patchScroll,
-                                    WindowWidth, WindowHeight);
-            }
-
-            // Madde 23: ayarlar paneli
-            if (_showSettings)
-            {
-                _hud.DrawSettings(_spriteBatch, _accessibility, WindowWidth, WindowHeight);
-            }
-
-            // Madde 22: klan paneli ve takas penceresi.
-            if (_showClan)
-            {
-                _hud.DrawClan(_spriteBatch, _clans, _session.LocalPlayerId,
-                              WindowWidth, WindowHeight);
-            }
-
+            // Menuden acilan ekranlar burada DEGIL: onlar oynanis HUD'inin
+            // ustune degil, kendi tam ekran katmanlarina ciziliyor
+            // (bkz. DrawMenuScreen).
             if (_showTrade)
             {
                 var host = _session.Mode == SessionMode.Host;
@@ -1617,28 +1683,11 @@ public class Game1 : Game
                                stateLabel, WindowWidth, WindowHeight);
             }
 
-            // Madde 21: basarim listesi / siralamalar / acilma bildirimi.
-            if (_showAchievements)
-            {
-                _hud.DrawAchievements(_spriteBatch, _achievements, WindowWidth, WindowHeight);
-            }
-
-            if (_showLeaderboard)
-            {
-                _hud.DrawLeaderboard(_spriteBatch, _leaderboards,
-                                     _achievementCatalog.Leaderboards, _achievements,
-                                     WindowWidth, WindowHeight);
-            }
-
+            // Basarim acilma bildirimi oynanis sirasinda cikar; listesi
+            // menude.
             if (_unlockBanner is { } banner)
             {
                 _hud.DrawUnlockBanner(_spriteBatch, banner, WindowWidth, WindowHeight);
-            }
-
-            if (_showWardrobe)
-            {
-                _hud.DrawWardrobe(_spriteBatch, _cosmetics, _loadout, _ownership,
-                                  _climate.Season.Name, WindowWidth, WindowHeight);
             }
 
             if (_fishing.IsActive)
@@ -1648,12 +1697,21 @@ public class Game1 : Game
                     _fishing.State == FishingState.Casting, WindowWidth, WindowHeight);
             }
 
-            // Ayar paneli acikken toast gizlenir: panel zaten ayni degeri
-            // gosteriyor ve buyuk yazi olceginde ikisi ust uste biniyordu.
-            if (_toastSeconds > 0f && !_showSettings)
+            // Toast yalnizca OYNARKEN: menu acikken kisa omurlu bir bildirim
+            // menunun basligiyla ust uste biniyordu ve zaten okunacak bir
+            // baglami kalmiyordu.
+            if (_toastSeconds > 0f && _screen == GameScreen.Playing)
             {
                 _hud.DrawToast(_spriteBatch, _toast, WindowWidth);
             }
+        }
+
+        // Menu ve alt ekranlar HUD'in USTUNE, kendi perdeleriyle cizilir:
+        // arkadaki dunya koyulasip gorunur kalir, oyuncu nereye donecegini
+        // bilir.
+        if (_screen != GameScreen.Playing)
+        {
+            DrawMenuScreen();
         }
 
         _spriteBatch.End();
@@ -1664,6 +1722,82 @@ public class Game1 : Game
         // back buffer PNG'ye yazilir.
         _capture?.CaptureIfRequested(GraphicsDevice);
         _photoMode.CaptureIfRequested(GraphicsDevice);
+    }
+
+    /// <summary>
+    /// Ana menü ya da menüden açılan alt ekran.
+    ///
+    /// Çağıran <c>SpriteBatch.Begin</c>'i açmış olmalı — bu metot kendi
+    /// batch'ini açmaz, böylece hem dünya üstünde hem dünyasız çizilebilir.
+    /// </summary>
+    private void DrawMenuScreen()
+    {
+        if (_screen == GameScreen.MainMenu)
+        {
+            _menu.WorldReady = _worldReady;
+            _menu.Resumable = _worldReady;
+
+            _hud.DrawMainMenu(_spriteBatch, _menu,
+                              $"v{_patchNotes.LatestVersion}   {_mods.Summary}",
+                              WindowWidth, WindowHeight);
+            return;
+        }
+
+        // Alt ekranlar: once ortak baslik/geri seridi, sonra icerik.
+        var titleKey = _screen switch
+        {
+            GameScreen.Achievements => "menu.achievements",
+            GameScreen.Leaderboard => "menu.leaderboard",
+            GameScreen.Wardrobe => "menu.wardrobe",
+            GameScreen.Clan => "menu.clan",
+            GameScreen.Mods => "menu.mods",
+            GameScreen.Settings => "menu.settings",
+            GameScreen.PatchNotes => "menu.patchNotes",
+            _ => "menu.title"
+        };
+
+        // Gardirop arkadaki karakteri GOSTERMELI: kusanilan kozmetigi
+        // uzerinde gormek o ekranin butun amaci. Diger ekranlarda dunya
+        // yalnizca "nereye donecegim" baglami, o yuzden daha koyu.
+        var dim = _screen == GameScreen.Wardrobe ? 0.45f : 0.86f;
+
+        _hud.DrawScreenChrome(_spriteBatch, titleKey, WindowWidth, WindowHeight, dim);
+
+        switch (_screen)
+        {
+            case GameScreen.Achievements:
+                _hud.DrawAchievements(_spriteBatch, _achievements, WindowWidth, WindowHeight);
+                break;
+
+            case GameScreen.Leaderboard:
+                _hud.DrawLeaderboard(_spriteBatch, _leaderboards,
+                                     _achievementCatalog.Leaderboards, _achievements,
+                                     WindowWidth, WindowHeight);
+                break;
+
+            case GameScreen.Wardrobe:
+                _hud.DrawWardrobe(_spriteBatch, _cosmetics, _loadout, _ownership,
+                                  _climate.Season.Name, WindowWidth, WindowHeight);
+                break;
+
+            case GameScreen.Clan:
+                _hud.DrawClan(_spriteBatch, _clans, _session.LocalPlayerId,
+                              WindowWidth, WindowHeight);
+                break;
+
+            case GameScreen.Mods:
+                _hud.DrawWorkshop(_spriteBatch, _mods, _workshop, WindowWidth, WindowHeight);
+                break;
+
+            case GameScreen.Settings:
+                _hud.DrawSettings(_spriteBatch, _accessibility, WindowWidth, WindowHeight);
+                break;
+
+            case GameScreen.PatchNotes:
+                _hud.DrawPatchNotes(_spriteBatch, _patchNotes, _patchScroll,
+                                    WindowWidth, WindowHeight);
+                break;
+        }
     }
 
     /// <summary>
