@@ -229,6 +229,16 @@ public sealed class Player
     }
 
     /// <summary>Canı doldurup verilen konumda diriltir.</summary>
+    /// <summary>
+    /// Cani kayittan geri kurar.
+    ///
+    /// Ayri bir metot cunku <see cref="Health"/> disariya kapali: cani
+    /// serbestce yazilabilir yapmak, dovus sisteminin disindan can
+    /// degistirmeyi bir satirlik is haline getirirdi.
+    /// </summary>
+    public void RestoreHealth(int health) =>
+        Health = Math.Clamp(health, 0, MaxHealth);
+
     public void Respawn(Vector2 position)
     {
         Health = MaxHealth;

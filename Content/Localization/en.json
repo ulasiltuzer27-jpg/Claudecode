@@ -122,6 +122,13 @@
     "menu.needWorld": "(enter the world first)",
     "menu.backHint": "Esc to return to menu",
     "menu.inGameHint": "Esc menu",
-    "patch.title": "Up/Down to scroll"
+    "patch.title": "Up/Down to scroll",
+    "save.saved": "Game saved",
+    "save.failed": "Save failed: {0}",
+    "save.loadFailed": "Load failed: {0}",
+    "save.modMismatch": "This save was made with a different mod set",
+    "menu.newGame": "New game",
+    "menu.newGameWarn": "(deletes current save)",
+    "menu.saveHint": "F5 to save"
   }
 }

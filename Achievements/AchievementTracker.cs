@@ -61,6 +61,37 @@ public sealed class AchievementTracker
     /// <summary>Bir istatistiğin güncel değeri (leaderboard bunu yazar).</summary>
     public int Value(StatKey key) => _stats.GetValueOrDefault(key.Value);
 
+    /// <summary>Tüm istatistikler — kaydetmek için.</summary>
+    public IReadOnlyDictionary<string, int> AllStats => _stats;
+
+    /// <summary>Açılmış achievement kimlikleri — kaydetmek için.</summary>
+    public IReadOnlyCollection<string> UnlockedIds => _unlocked;
+
+    /// <summary>
+    /// Kayittan gelen ilerlemeyi geri kurar.
+    ///
+    /// Acilmis achievement'lar BILDIRIM URETMEZ: yukleme aninda oyuncunun
+    /// ekranini onlarca "basarim acildi" balonuyla doldurmak, kaydin
+    /// yuklendigini degil hepsinin yeniden acildigini dusundururdu.
+    /// Bu yuzden kuyruk beslenmiyor, yalnizca kume dolduruluyor.
+    /// </summary>
+    public void Restore(IReadOnlyDictionary<string, int> stats,
+                        IEnumerable<string> unlocked)
+    {
+        foreach (var (key, value) in stats)
+        {
+            // Tanimsiz istatistik yok sayilir: kayit eski bir surumden
+            // gelmis olabilir ve tek fazla anahtar yuklemeyi engellememeli.
+            if (_stats.ContainsKey(key)) _stats[key] = value;
+        }
+
+        _unlocked.Clear();
+        foreach (var id in unlocked) _unlocked.Add(id);
+
+        // Hedefe de yaz: Steam tarafi bu oturumda dogru degeri gorsun.
+        _dirty = true;
+    }
+
     /// <summary>
     /// Biriken bir istatistiği artırır (toplanan odun, öldürülen düşman…).
     ///

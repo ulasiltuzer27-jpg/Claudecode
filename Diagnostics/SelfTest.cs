@@ -3,6 +3,7 @@ using PixelSurvival.Clans;
 using PixelSurvival.Inventory;
 using PixelSurvival.Systems.Social;
 using PixelSurvival.Trade;
+using PixelSurvival.Persistence;
 using PixelSurvival.Workshop;
 
 namespace PixelSurvival.Diagnostics;
@@ -44,6 +45,7 @@ public static class SelfTest
         TradeAtomicityRules(items);
         SocialSignalRules();
         WorkshopRules();
+        SaveGameRules();
 
         Console.WriteLine($"\n{_passed} gecti, {_failed} kaldi.");
         return _failed;
@@ -210,6 +212,106 @@ public static class SelfTest
         foreach (var (name, body) in files)
         {
             File.WriteAllText(Path.Combine(folder, name), body);
+        }
+    }
+
+    // ==================== KAYIT / YUKLEME ====================
+
+    private static void SaveGameRules()
+    {
+        Section("7) Kayit yazma/okuma");
+
+        // Testin gercek kayit dosyasina dokunmamasi icin calisma dizini
+        // gecici bir klasore alinir: SaveGame yollari goreli.
+        var original = Directory.GetCurrentDirectory();
+        var sandbox = Path.Combine(Path.GetTempPath(), "pixelsurvival_selftest_save");
+
+        if (Directory.Exists(sandbox)) Directory.Delete(sandbox, recursive: true);
+        Directory.CreateDirectory(sandbox);
+        Directory.SetCurrentDirectory(sandbox);
+
+        try
+        {
+            Check("kayit yokken Exists false", !SaveGame.Exists());
+            Check("kayit yokken NotFound doner",
+                SaveGame.Load(out _, out _) == LoadOutcome.NotFound);
+
+            var data = new SaveData
+            {
+                Seed = 12345,
+                WorldSeconds = 480.5,
+                Weather = "rain",
+                PlayerX = 10.5f,
+                PlayerY = -20.25f,
+                PlayerHealth = 73,
+                Tiles = [new SavedTile { X = -2, Y = 0, Tile = 0 }],
+                Inventory = [new SavedSlot { Slot = 0, Item = "wood", Count = 3 }],
+                Unlocked = ["ACH_FIRST_WOOD"],
+            };
+            data.Stats["wood_gathered"] = 3;
+            data.Cosmetics["Hat"] = "hat_cap";
+
+            Check("kayit yazilabiliyor", SaveGame.Save(data) is null);
+            Check("kayit dosyasi olustu", SaveGame.Exists());
+
+            Check("kayit okunabiliyor",
+                SaveGame.Load(out var loaded, out _) == LoadOutcome.Success && loaded is not null);
+
+            // Gidis-donus: yazilan her alan aynen geri gelmeli.
+            Check("tohum korunuyor", loaded!.Seed == 12345);
+            Check("dunya saati korunuyor", Math.Abs(loaded.WorldSeconds - 480.5) < 0.001);
+            Check("hava korunuyor", loaded.Weather == "rain");
+            Check("oyuncu konumu korunuyor",
+                Math.Abs(loaded.PlayerX - 10.5f) < 0.001f &&
+                Math.Abs(loaded.PlayerY + 20.25f) < 0.001f);
+            Check("can korunuyor", loaded.PlayerHealth == 73);
+
+            Check("tile degisikligi korunuyor",
+                loaded.Tiles.Count == 1 && loaded.Tiles[0].X == -2 && loaded.Tiles[0].Tile == 0);
+
+            Check("envanter korunuyor",
+                loaded.Inventory.Count == 1 && loaded.Inventory[0].Item == "wood" &&
+                loaded.Inventory[0].Count == 3);
+
+            Check("kozmetik korunuyor", loaded.Cosmetics.GetValueOrDefault("Hat") == "hat_cap");
+            Check("istatistik korunuyor", loaded.Stats.GetValueOrDefault("wood_gathered") == 3);
+            Check("acilan basarim korunuyor", loaded.Unlocked.Contains("ACH_FIRST_WOOD"));
+
+            // Ikinci yazim once mevcut kaydi yedeklemeli: atomik yazim
+            // yarim dosyaya karsi korur, yedek MANTIK hatasina karsi.
+            SaveGame.Save(data);
+            Check("ikinci yazimda yedek olusuyor", File.Exists(SaveGame.Path + ".bak"));
+
+            // Gecici dosya ortada birakilmamali: bir sonraki yazim onu
+            // gormemeli.
+            Check("gecici dosya temizlenmis", !File.Exists(SaveGame.Path + ".tmp"));
+
+            // Surum uyusmazligi SESSIZCE okunmamali: eski bir kaydi yeni
+            // alan duzeniyle okumak alanlari yanlis yerlere oturtur.
+            var raw = File.ReadAllText(SaveGame.Path);
+            File.WriteAllText(SaveGame.Path,
+                raw.Replace($"\"version\": {SaveData.CurrentVersion}", "\"version\": 99"));
+
+            Check("surum uyusmazligi reddediliyor",
+                SaveGame.Load(out var rejected, out _) == LoadOutcome.VersionMismatch
+                && rejected is null);
+
+            // Bozuk dosya COKERTMEMELI.
+            File.WriteAllText(SaveGame.Path, "{ bu gecerli json degil");
+            Check("bozuk kayit cokertmiyor",
+                SaveGame.Load(out _, out _) == LoadOutcome.Unreadable);
+
+            // Silme kaydi yedege TASIR, yok etmez: "yeni oyun"a yanlislikla
+            // basmak geri donulemez olmamali.
+            File.WriteAllText(SaveGame.Path, raw);
+            SaveGame.Delete();
+            Check("silinen kayit yedekte duruyor",
+                !SaveGame.Exists() && File.Exists(SaveGame.Path + ".bak"));
+        }
+        finally
+        {
+            Directory.SetCurrentDirectory(original);
+            if (Directory.Exists(sandbox)) Directory.Delete(sandbox, recursive: true);
         }
     }
 

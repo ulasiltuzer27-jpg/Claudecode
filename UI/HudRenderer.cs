@@ -945,18 +945,27 @@ public sealed class HudRenderer
         // --- Satirlar ---
         var startY = titleY + _font.LineHeight * titleScale + 34;
 
+        var row = 0;
+
         for (var i = 0; i < menu.Items.Count; i++)
         {
             var entry = menu.Items[i];
+
+            // Gorunmeyen satir yer de KAPLAMAZ: bosluk birakmak listede
+            // delik gibi okunur.
+            if (!menu.IsVisible(entry)) continue;
+
             var enabled = menu.IsEnabled(entry);
             var selected = i == menu.SelectedIndex;
 
             var label = menu.LabelOf(entry);
             if (!enabled) label += "  " + Loc.T("menu.needWorld");
+            else if (entry.IsNewGame) label += "  " + Loc.T("menu.newGameWarn");
 
             var width = _font.Measure(label, UiScale);
             var x = (windowWidth - width) / 2;
-            var y = startY + i * (lineHeight + 6);
+            var y = startY + row * (lineHeight + 6);
+            row++;
 
             // Secili satir hem RENKLE hem ISARETLE gosteriliyor: madde
             // 23'un kurali — renk tek basina anlam tasimaz.

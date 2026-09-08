@@ -282,6 +282,39 @@ public sealed class ClanSystem
     /// <summary>Kayıtlı sahipli yapı sayısı — arayüz ve doğrulama için.</summary>
     public int OwnedStructureCount => _structureOwners.Count;
 
+    /// <summary>
+    /// Kayittan gelen bir klani ve yapilarini geri kurar.
+    ///
+    /// Kimlik uretecinin ilerletilmesi onemli: geri kurulan klan 1
+    /// numarayi aldiginda, sonradan kurulan klan da 1 alsaydi ikisi ayni
+    /// kimlikle yasardi ve yapi sahipligi karisirdi.
+    /// </summary>
+    public Clan Restore(string name, string tag,
+                        IEnumerable<(byte PlayerId, string Name, ClanRank Rank)> members,
+                        IEnumerable<Point> structures)
+    {
+        var clan = new Clan(new ClanId(_nextClanId++), name, tag);
+
+        foreach (var (playerId, memberName, rank) in members)
+        {
+            clan.Add(new ClanMember(playerId, memberName, rank));
+            _byPlayer[playerId] = clan.Id;
+        }
+
+        _clans[clan.Id.Value] = clan;
+
+        foreach (var tile in structures)
+        {
+            _structureOwners[tile] = clan.Id;
+        }
+
+        return clan;
+    }
+
+    /// <summary>Bir klana ait yapilarin tile koordinatlari — kaydetmek icin.</summary>
+    public IEnumerable<Point> StructuresOf(ClanId clanId) =>
+        _structureOwners.Where(pair => pair.Value == clanId).Select(pair => pair.Key);
+
     /// <summary>Dünya yeniden üretildiğinde her şey sıfırlanır.</summary>
     public void Reset()
     {

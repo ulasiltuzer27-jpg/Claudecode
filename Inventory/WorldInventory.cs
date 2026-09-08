@@ -258,6 +258,19 @@ public sealed class WorldInventory(ItemDatabase database)
         return copy;
     }
 
+    /// <summary>
+    /// Envanteri bosaltir.
+    ///
+    /// Kayit yuklenirken gerekli: slotlar once temizlenmezse kaydedilen
+    /// esyalar mevcut olanlarin USTUNE eklenir ve oyuncu her yuklemede
+    /// zenginlesir.
+    /// </summary>
+    public void Clear()
+    {
+        Array.Clear(_slots);
+        Changed?.Invoke();
+    }
+
     /// <summary>Dolu slot sayısı — HUD ve doluluk kontrolü için.</summary>
     public int UsedSlots => _slots.Count(s => !s.IsEmpty);
 }

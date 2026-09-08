@@ -13,6 +13,7 @@ using PixelSurvival.Cosmetics;
 using PixelSurvival.Systems.Animation;
 using PixelSurvival.Systems.Collision;
 using PixelSurvival.Networking;
+using PixelSurvival.Persistence;
 using PixelSurvival.Systems.Building;
 using PixelSurvival.Systems.Climate;
 using PixelSurvival.Systems.Combat;
@@ -511,10 +512,13 @@ public class Game1 : Game
 
         if (WasPressed(keyboard, Keys.F1)) _showAssetView = !_showAssetView;
         if (WasPressed(keyboard, Keys.F2)) _showCollisionDebug = !_showCollisionDebug;
-        if (WasPressed(keyboard, Keys.F5) && _session.Mode == SessionMode.Offline)
-        {
-            GenerateWorld(Random.Shared.Next());
-        }
+        // F5 artik KAYDEDIYOR.
+        //
+        // Eskiden rastgele tohumla dunyayi yeniden uretiyordu; kayit
+        // sistemi geldikten sonra o kisayol tek tusla butun ilerlemeyi
+        // sessizce silen bir tuzaga donusurdu. Uretim cesitliligini
+        // gormek icin menudeki "Yeni oyun" ve Tools/verify_worldgen.py var.
+        if (WasPressed(keyboard, Keys.F5)) SaveWorld();
 
         if (WasPressed(keyboard, Keys.Tab)) _showCrafting = !_showCrafting;
 
@@ -851,6 +855,178 @@ public class Game1 : Game
         current.IsKeyDown(key) && _previousKeyboard.IsKeyUp(key);
 
     /// <summary>
+    /// "Yeni oyun" icin oyuncuya ait ilerlemeyi sifirlar.
+    ///
+    /// <see cref="GenerateWorld"/> dunyayi kuruyor ama envanter, klan,
+    /// kozmetik ve basarimlar oyuncuya ait: onlar dunyayla birlikte
+    /// sifirlanmiyor. Sifirlanmasalardi "yeni oyun" adi altinda eski
+    /// envanterle baslanirdi.
+    ///
+    /// Basarimlar bilerek DISARIDA: bir kez kazanilan basarim, yeni oyun
+    /// baslatildi diye geri alinmaz — Steam tarafinda da oyle calisiyor.
+    /// </summary>
+    private void ResetProgress()
+    {
+        _inventory.Clear();
+        _loadout.ClearAll();
+        _clans.Reset();
+        _social.Clear();
+    }
+
+    /// <summary>
+    /// Oyun durumunu diske yazar.
+    ///
+    /// Dunyanin kendisi kaydedilmiyor: tohumdan yeniden uretiliyor.
+    /// Yazilan tek dunya verisi oyuncunun yaptigi tile degisiklikleri —
+    /// override katmaninin bastan beri var olus sebebi.
+    /// </summary>
+    private void SaveWorld()
+    {
+        if (!_worldReady) return;
+
+        var clan = _clans.ClanOf(_session.LocalPlayerId);
+
+        var data = new SaveData
+        {
+            SavedAtUtc = DateTime.UtcNow.ToString("O"),
+            ModFingerprint = _mods.Fingerprint,
+
+            Seed = _map.Seed,
+            WorldSeconds = _climate.WorldSeconds,
+            Weather = _climate.Weather.Key,
+
+            Tiles = [.. _map.Overrides.Select(pair => new SavedTile
+            {
+                X = pair.Key.X, Y = pair.Key.Y, Tile = pair.Value
+            })],
+
+            PlayerX = _player.Position.X,
+            PlayerY = _player.Position.Y,
+            PlayerHealth = _player.Health,
+
+            Inventory = [.. Enumerable.Range(0, _inventory.SlotCount)
+                .Where(i => !_inventory[i].IsEmpty)
+                .Select(i => new SavedSlot
+                {
+                    Slot = i,
+                    Item = _inventory[i].ItemId,
+                    Count = _inventory[i].Count
+                })],
+
+            Cosmetics = CosmeticSlotExtensions.Equippable
+                .Select(slot => (slot, cosmetic: _loadout.InSlot(slot)))
+                .Where(pair => pair.cosmetic is not null)
+                .ToDictionary(pair => pair.slot.ToString(),
+                              pair => pair.cosmetic!.Id, StringComparer.Ordinal),
+
+            Stats = _achievements.AllStats.ToDictionary(p => p.Key, p => p.Value,
+                                                        StringComparer.Ordinal),
+            Unlocked = [.. _achievements.UnlockedIds],
+
+            Clan = clan is null ? null : new SavedClan
+            {
+                Name = clan.Name,
+                Tag = clan.Tag,
+                Members = [.. clan.Members.Select(m => new SavedClanMember
+                {
+                    PlayerId = m.PlayerId, Name = m.Name, Rank = m.Rank.ToString()
+                })],
+                Structures = [.. _clans.StructuresOf(clan.Id).Select(t => new SavedTile
+                {
+                    X = t.X, Y = t.Y, Tile = 0
+                })]
+            }
+        };
+
+        var error = SaveGame.Save(data);
+
+        ShowToast(error is null
+            ? Loc.T("save.saved")
+            : Loc.T("save.failed", error));
+
+        Console.WriteLine(error is null
+            ? $"[kayit] yazildi: {SaveGame.Path} ({data.Tiles.Count} tile degisikligi)"
+            : $"[kayit] YAZILAMADI: {error}");
+    }
+
+    /// <summary>
+    /// Kaydı yükler ve dünyayı o duruma getirir.
+    /// </summary>
+    /// <returns>Yükleme başarılıysa <c>true</c>.</returns>
+    private bool LoadWorld()
+    {
+        var outcome = SaveGame.Load(out var data, out var message);
+
+        if (outcome != LoadOutcome.Success || data is null)
+        {
+            if (outcome != LoadOutcome.NotFound)
+            {
+                ShowToast(Loc.T("save.loadFailed", message));
+                Console.WriteLine($"[kayit] YUKLENEMEDI ({outcome}): {message}");
+            }
+
+            return false;
+        }
+
+        // Modlar dunya uretimini besleyen veriyi degistirebiliyor; farkli
+        // mod kumesiyle acilan bir kayit ayni tohumdan FARKLI dunya uretir
+        // ve kaydedilen tile degisiklikleri baska seylerin ustune oturur.
+        // Engellemiyoruz ama UYARIYORUZ.
+        if (data.ModFingerprint.Length > 0 && data.ModFingerprint != _mods.Fingerprint)
+        {
+            Console.WriteLine($"[kayit] UYARI: mod kumesi degismis " +
+                              $"(kayit={data.ModFingerprint}, simdi={_mods.Fingerprint})");
+            ShowToast(Loc.T("save.modMismatch"));
+        }
+
+        // Dunyayi kaydin tohumuyla bastan kur, sonra degisiklikleri uygula.
+        GenerateWorld(data.Seed);
+
+        _map.RestoreOverrides(data.Tiles.Select(t =>
+            new KeyValuePair<Point, int>(new Point(t.X, t.Y), t.Tile)));
+
+        _player.Position = new Vector2(data.PlayerX, data.PlayerY);
+        _player.RestoreHealth(data.PlayerHealth);
+        _camera.SnapTo(_player.Position, _map.Bounds);
+
+        _inventory.Clear();
+        foreach (var slot in data.Inventory)
+        {
+            if (_itemDatabase.Contains(slot.Item)) _inventory.TryAdd(slot.Item, slot.Count);
+        }
+
+        _climate.ApplyNetworkState(data.WorldSeconds, data.Weather);
+
+        _loadout.ClearAll();
+        foreach (var (_, id) in data.Cosmetics)
+        {
+            if (_cosmetics.TryGet(new CosmeticId(id), out var cosmetic))
+            {
+                _loadout.TryEquip(cosmetic, out _);
+            }
+        }
+
+        _achievements.Restore(data.Stats, data.Unlocked);
+
+        if (data.Clan is { } savedClan)
+        {
+            _clans.Restore(
+                savedClan.Name, savedClan.Tag,
+                savedClan.Members.Select(m => (
+                    m.PlayerId, m.Name,
+                    Enum.TryParse<ClanRank>(m.Rank, out var rank) ? rank : ClanRank.Member)),
+                savedClan.Structures.Select(t => new Point(t.X, t.Y)));
+        }
+
+        _worldReady = true;
+        Console.WriteLine($"[kayit] yuklendi: tohum={data.Seed} " +
+                          $"{data.Tiles.Count} tile degisikligi, " +
+                          $"{data.Inventory.Count} dolu slot");
+
+        return true;
+    }
+
+    /// <summary>
     /// Ana menü ve menüden açılan alt ekranların güncellemesi.
     ///
     /// Dünya burada İLERLEMEZ: menüdeyken gece olması ya da düşmanın
@@ -895,7 +1071,11 @@ public class Game1 : Game
 
         // --- Ana menu ---
         _menu.WorldReady = _worldReady;
-        _menu.Resumable = _worldReady;
+        _menu.HasSave = SaveGame.Exists();
+
+        // "Devam et" yalnizca gercekten devam edilecek bir sey varsa:
+        // ya bu oturumda oynanmis ya da diskte kayit var.
+        _menu.Resumable = _worldReady || _menu.HasSave;
 
         if (WasPressed(keyboard, Keys.Up)) _menu.Move(-1);
         if (WasPressed(keyboard, Keys.Down)) _menu.Move(1);
@@ -907,21 +1087,44 @@ public class Game1 : Game
 
         if (_menu.IsQuitSelected)
         {
+            // Cikarken kaydet: oyuncunun menuden cikmasi ilerlemesini
+            // goturmemeli.
+            if (_worldReady) SaveWorld();
+
             Exit();
             return;
         }
 
-        var target = _menu.Selected.Target;
+        var entry = _menu.Selected;
 
-        if (target == GameScreen.Playing)
+        if (entry.IsNewGame)
         {
-            // Dunya LoadContent'te zaten uretildi (alanlar null olamaz);
-            // burada YENIDEN uretilmiyor. Uretmek ayni tohumla ayni dunyayi
-            // kurardi ama oyuncunun ilerlemesini de sifirlardi.
+            // Kayit SILINMIYOR, .bak olarak saklaniyor: "yeni oyun"a
+            // yanlislikla basmak geri donulemez olmamali.
+            SaveGame.Delete();
+
+            GenerateWorld(Random.Shared.Next());
+            ResetProgress();
+
             _worldReady = true;
             _screen = GameScreen.Playing;
             return;
         }
+
+        if (entry.Target == GameScreen.Playing)
+        {
+            // Bu oturumda henuz oynanmadiysa diskteki kaydi yuklemeyi dene.
+            // Kayit yoksa LoadContent'te uretilen dunya oldugu gibi
+            // kullanilir; yeniden uretmek ayni dunyayi kurardi ama
+            // gereksiz is olurdu.
+            if (!_worldReady && SaveGame.Exists()) LoadWorld();
+
+            _worldReady = true;
+            _screen = GameScreen.Playing;
+            return;
+        }
+
+        var target = entry.Target;
 
         if (target == GameScreen.PatchNotes) _patchScroll = 0;
 

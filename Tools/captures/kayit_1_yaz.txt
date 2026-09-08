@@ -1,0 +1,38 @@
+# KAYIT TESTI - 1. asama: dunyaya gir, agac kes, kaydet.
+#
+# Tohum 20260908'de spawn'in tam SOLUNDA (-2,0) bir agac var
+# (Tools/verify_worldgen.py ile haritalandi).
+
+screen Playing
+wait 60
+
+# Sola yuru: agac kati oldugu icin oyuncu ona dayanip durur
+down A
+wait 60
+up A
+wait 10
+
+# Agaci kes -> envantere odun girer, tile degisir
+down Space
+wait 150
+up Space
+wait 20
+shot 01_kesim_sonrasi
+
+# Gardiroptan kozmetik kusan (kaydin kozmetigi de tasidigini gostermek icin)
+screen Wardrobe
+wait 15
+tap D3
+wait 15
+tap D4
+wait 15
+screen Playing
+wait 20
+shot 02_kusanmis
+
+# F5: kaydet
+tap F5
+wait 40
+shot 03_kaydedildi
+
+quit

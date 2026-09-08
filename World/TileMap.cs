@@ -63,6 +63,37 @@ public sealed class TileMap
     public int TileSize => _tileset.TileSize;
     public int LoadedChunkCount => _chunks.Count;
     public int ModifiedTileCount => _overrides.Count;
+
+    /// <summary>
+    /// Oyuncunun yaptigi tile degisiklikleri.
+    ///
+    /// Kaydedilmesi gereken TEK dunya verisi budur; gerisi tohumdan
+    /// yeniden uretiliyor. Salt okunur donuyor: disaridan yazilmasi
+    /// <see cref="SetTile"/> uzerinden olmali, yoksa chunk gecersiz
+    /// kilma adimi atlanir.
+    /// </summary>
+    public IReadOnlyDictionary<Point, int> Overrides => _overrides;
+
+    /// <summary>
+    /// Kayittan gelen degisiklikleri toplu uygular.
+    ///
+    /// Tek tek <see cref="SetTile"/> cagirmak yerine tek metot: her cagri
+    /// chunk gecersiz kildigi icin binlerce degisiklik yuklenirken ayni
+    /// chunk defalarca yeniden kuruluyordu.
+    /// </summary>
+    public void RestoreOverrides(IEnumerable<KeyValuePair<Point, int>> saved)
+    {
+        _overrides.Clear();
+
+        foreach (var (tile, index) in saved)
+        {
+            _overrides[tile] = index;
+        }
+
+        // Yuklu chunk'lar artik eski veriyi tasiyor; hepsi atiliyor ve
+        // bir sonraki akista override'larla birlikte yeniden kuruluyor.
+        _chunks.Clear();
+    }
     public int Seed => _generator.Seed;
 
     /// <summary>

@@ -35,6 +35,15 @@ public sealed record MenuEntry(string LabelKey, GameScreen Target)
 {
     /// <summary>Oyun başlamadan anlamsız olan girdiler menüde soluk görünür.</summary>
     public bool RequiresWorld { get; init; }
+
+    /// <summary>
+    /// Bu satır mevcut kaydı SİLİP sıfırdan başlatır.
+    ///
+    /// "Oyna"dan ayrı bir satır: ikisini tek satırda toplamak, devam
+    /// etmek isteyen oyuncunun kaydını yanlışlıkla silmesine yol açardı.
+    /// Yalnızca kayıt varken görünür.
+    /// </summary>
+    public bool IsNewGame { get; init; }
 }
 
 /// <summary>
@@ -67,6 +76,7 @@ public sealed class MainMenu
     private static readonly MenuEntry[] Entries =
     [
         new("menu.play", GameScreen.Playing),
+        new("menu.newGame", GameScreen.Playing) { IsNewGame = true },
         new("menu.wardrobe", GameScreen.Wardrobe) { RequiresWorld = true },
         new("menu.clan", GameScreen.Clan) { RequiresWorld = true },
         new("menu.achievements", GameScreen.Achievements),
@@ -90,13 +100,27 @@ public sealed class MainMenu
     /// <summary>Oyuncu daha önce dünyaya girdi mi ("Oyna" mı "Devam et" mi).</summary>
     public bool Resumable { get; set; }
 
+    /// <summary>
+    /// Diskte kayıt var mı. "Yeni oyun" satırı yalnızca varken görünür:
+    /// silinecek bir şey yokken o satırı göstermek anlamsız.
+    /// </summary>
+    public bool HasSave { get; set; }
+
     /// <summary>Son satır her zaman çıkış — özel olarak ele alınıyor.</summary>
     public bool IsQuitSelected => _index == Entries.Length - 1;
 
     public MenuEntry Selected => Entries[_index];
 
     /// <summary>Bir satırın şu an seçilebilir olup olmadığı.</summary>
-    public bool IsEnabled(MenuEntry entry) => !entry.RequiresWorld || WorldReady;
+    public bool IsEnabled(MenuEntry entry) => IsVisible(entry) && (!entry.RequiresWorld || WorldReady);
+
+    /// <summary>
+    /// Satır listede yer alıyor mu.
+    ///
+    /// "Yeni oyun" kayıt yokken GİZLENİR — soluk gösterilmesi bile
+    /// oyuncuya olmayan bir kaydı düşündürürdü.
+    /// </summary>
+    public bool IsVisible(MenuEntry entry) => !entry.IsNewGame || HasSave;
 
     /// <summary>
     /// Seçimi taşır. Devre dışı satırlar ATLANIR — oyuncunun seçemeyeceği
@@ -109,7 +133,7 @@ public sealed class MainMenu
         for (var step = 0; step < Entries.Length; step++)
         {
             _index = (_index + delta + Entries.Length) % Entries.Length;
-            if (IsEnabled(Entries[_index])) return;
+            if (IsEnabled(Entries[_index]) && IsVisible(Entries[_index])) return;
         }
     }
 
@@ -118,7 +142,10 @@ public sealed class MainMenu
 
     /// <summary>Bir satırın ekranda görünecek metni.</summary>
     public string LabelOf(MenuEntry entry) =>
-        entry.Target == GameScreen.Playing && Resumable
+        // "Yeni oyun" HER ZAMAN kendi etiketini tasir: Resumable oldugunda
+        // ona da "Devam et" demek, kaydi silecek satiri devam ediyormus
+        // gibi gosterirdi.
+        entry.Target == GameScreen.Playing && !entry.IsNewGame && Resumable
             ? Loc.T("menu.resume")
             : Loc.T(entry.LabelKey);
 }

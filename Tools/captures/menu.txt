@@ -1,5 +1,9 @@
 # Ana menu dogrulamasi.
 #
+#
+# Bu script TEMIZ bir baslangic varsayar (saves/ bos). Kayit varken ana
+# menuye "Yeni oyun" satiri ekleniyor ve asagidaki imlec sayilari kayar.
+# Tools/run_captures.sh her kosumdan once kaydi siliyor.
 # Not: her "tap" kendi bekleme suresini dayatiyor, yani arka arkaya
 # yazilan tap'ler AYRI basislar olarak isleniyor.
 

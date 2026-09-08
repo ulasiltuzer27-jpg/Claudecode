@@ -1,0 +1,25 @@
+# requires-save
+#
+# Bu script bir ONCEKI script'in (kayit_1_yaz) yazdigi kaydi okur, bu
+# yuzden kayit temizligi ATLANMALI. run_captures.sh yukaridaki
+# "requires-save" satirini gorup temizligi atliyor.
+#
+# KAYIT TESTI - 2. asama: menuden "Devam et" ile kaydi yukle.
+#
+# Beklenen: kesilen agac hala kesik, 3 odun envanterde, kozmetikler
+# kusanili, basarimlar acik.
+
+wait 60
+shot 01_menu_devam_et
+
+# "Devam et" secili (ilk satir) -> Enter
+tap Enter
+wait 60
+shot 02_yuklendi
+
+# Basarimlar korunmus mu
+screen Achievements
+wait 25
+shot 03_basarimlar_korundu
+
+quit

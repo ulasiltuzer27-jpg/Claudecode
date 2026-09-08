@@ -122,6 +122,13 @@
     "menu.needWorld": "(once oyuna gir)",
     "menu.backHint": "Esc menuye don",
     "menu.inGameHint": "Esc menu",
-    "patch.title": "Yukari/Asagi kaydir"
+    "patch.title": "Yukari/Asagi kaydir",
+    "save.saved": "Oyun kaydedildi",
+    "save.failed": "Kaydedilemedi: {0}",
+    "save.loadFailed": "Kayit yuklenemedi: {0}",
+    "save.modMismatch": "Kayit farkli bir mod kumesiyle alinmis",
+    "menu.newGame": "Yeni oyun",
+    "menu.newGameWarn": "(mevcut kayit silinir)",
+    "menu.saveHint": "F5 kaydet"
   }
 }

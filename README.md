@@ -60,10 +60,10 @@ ağ senkronizasyonu. Bkz. "Bilinen boşluklar".
 | Alt (**basılı tut**) | emote/ping tekerleği: 1-6 emote, Q/E/R/F ping türü |
 | F1 | asset denetim görünümü (ham sprite sheet'ler) |
 | F2 | debug görünümü (katı tile kırmızı, collider yeşil, chunk sınırı sarı) |
-| F5 | rastgele yeni tohumla dünyayı yeniden üret |
+| F5 | **oyunu kaydet** |
 | F6 | Steam arkadaş daveti (madde 21) |
 
-**Ana menü** (Escape): Oyna/Devam et · Gardırop · Klan · Başarımlar ·
+**Ana menü** (Escape): Devam et · Yeni oyun · Gardırop · Klan · Başarımlar ·
 Sıralamalar · Modlar · Ayarlar · Yama Notları · Çıkış. Yukarı/Aşağı ile
 gezinilir, Enter onaylar, Escape geri döner.
 
@@ -542,6 +542,40 @@ Baskın sökmekten **verimsiz**: malzemenin %50'si dönüyor. Yoksa yapı kurmak
 başkasınınkini kırmak her zaman daha kârlı olurdu. Yarım bırakılan baskın 30 saniye
 sonra iyileşiyor.
 
+### Kaydetme/yükleme
+
+`saves/world.json`. Oyun içinde **F5**, ayrıca menüden çıkarken otomatik.
+
+**Dünya kaydedilmiyor** — tohumdan yeniden üretiliyor. Diske yazılan tek dünya
+verisi oyuncunun yaptığı tile değişiklikleri; override katmanının baştan beri
+var oluş sebebi bu. Düşmanlar, yaratıklar ve NPC'ler her açılışta tohumdan
+yeniden doğuyor: onları kaydetmek dosyayı dünya büyüklüğünde şişirir ve
+kazandırdığı tek şey "aynı tavşan aynı yerde" olurdu.
+
+Kaydedilenler: tohum, tile değişiklikleri, oyuncu konumu/canı, envanter,
+dünya saati ve havası, kuşanılan kozmetikler, başarım istatistikleri ve
+açılmış başarımlar, klan üyeliği ve yapı sahipliği.
+
+**Atomik yazım.** Kayıt önce geçici dosyaya yazılır, sonra yerine *taşınır*.
+Doğrudan üstüne yazmak, yazımın ortasında oyun kapanırsa (çökme, elektrik)
+yarım bir dosya bırakır — ve o yarım dosya oyuncunun tek kaydıdır. Taşıma
+işletim sistemi düzeyinde atomik olduğu için ya eski ya yeni kayıt kalır.
+
+Ayrıca her başarılı yazımdan önce mevcut kayıt `.bak` olarak saklanır: atomik
+yazım yarım dosyaya karşı korur, **mantık** hatasına karşı korumaz.
+
+**Sürüm uyuşmazlığı sessizce okunmaz.** Eski bir kaydı yeni alan düzeniyle
+okumak, alanların yanlış yerlere oturup envanteri bozması demektir; açıkça
+reddetmek daha iyi.
+
+**"Yeni oyun" kaydı silmez**, `.bak`'a taşır — yanlışlıkla basmak geri
+dönülemez olmamalı.
+
+`F5` eskiden dünyayı rastgele tohumla yeniden üretiyordu. Kayıt sistemi
+geldikten sonra o kısayol **tek tuşla bütün ilerlemeyi sessizce silen bir
+tuzağa** dönüşürdü; üretim çeşitliliğini görmek için menüdeki "Yeni oyun" ve
+`verify_worldgen.py` var.
+
 ### Madde 20-25: tasarım kararları
 
 **Nadirlik yalnızca renktir.** `CosmeticRarity`'nin tek davranışı bir `Color`
@@ -613,10 +647,9 @@ ve tutmayan bağlantı reddediliyor. Kablo biçimi değiştiği için
   şu an yalnızca oyuncular, tile'lar ve dünya saati senkron.
 * **Düşman yol bulma yok.** Düz çizgide yürüyorlar, duvar arkasına geçince takılırlar.
 * **Görev ilerlemesi kaydedilmiyor** (save sistemi henüz yok).
-* **Kaydetme/yükleme yok.** Dünya değişiklikleri (override katmanı), envanter,
-  klan üyeliği, yapı sahipliği ve görev ilerlemesi oyun kapanınca kayboluyor.
-  Diske yazılması gereken tek dünya verisi override katmanı; gerisi tohumdan
-  yeniden üretilebilir.
+* **Görev ilerlemesi ve tarım kaydedilmiyor.** Kayıt sistemi var (aşağıya bak)
+  ama NPC görev durumu ile ekili tarlalar henüz kapsam dışında; ikisi de
+  kendi sistemlerinde dışa aktarım arayüzü istiyor.
 
 * **Veri dosyalarındaki isimler tek dilli.** Dil altyapısı (madde 23) hazır ama
   item, mevsim ve hava adları hâlâ tek dilde; her veri dosyasına dil başına
