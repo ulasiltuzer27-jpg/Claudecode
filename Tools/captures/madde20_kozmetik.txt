@@ -1,0 +1,61 @@
+# MADDE 20 dogrulamasi: katmanli sprite + rarity + sezonluk.
+# Beklenen: K gardirobu acar, 1-5 slotlari dolasir, karakterin uzerinde
+# katmanlar gorunur, nadirlik renkleri panelde farklidir.
+
+wait 90
+shot 01_ciplak_beden
+
+# Gardirobu ac
+tap K
+wait 20
+shot 02_gardirop_bos
+
+# 3 = hair slotu (cape, outfit, hair, hat, accessory sirasi)
+tap D3
+wait 15
+shot 03_sac_kusanildi
+
+# 2 = outfit
+tap D2
+wait 15
+shot 04_kiyafet
+
+# 4 = hat
+tap D4
+wait 15
+shot 05_sapka
+
+# 1 = cape
+tap D1
+wait 15
+shot 06_pelerin_tam_kusam
+
+# Yurumeye basla: katmanlar bedene YAPISIK kalmali
+down S
+wait 25
+shot 07_yururken_katmanlar
+wait 20
+shot 08_yururken_katmanlar_2
+up S
+wait 10
+
+# Yon degistir: yandan profil
+down A
+wait 30
+shot 09_yandan_profil
+up A
+wait 10
+
+# Yukari: arkadan gorunum (pelerin tam gorunur)
+down W
+wait 30
+shot 10_arkadan_pelerin
+up W
+wait 15
+
+# 0 = hepsini cikar
+tap D0
+wait 20
+shot 11_hepsi_cikarildi
+
+quit

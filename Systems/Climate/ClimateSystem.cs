@@ -44,6 +44,17 @@ public sealed class WeatherType
 public sealed class ClimateTable
 {
     [JsonPropertyName("dayLengthSeconds")] public float DayLengthSeconds { get; init; } = 480f;
+
+    /// <summary>
+    /// Dünya kurulurken günün hangi noktasından başlanacağı (0 = gece yarısı,
+    /// 0.5 = öğle).
+    ///
+    /// Varsayılan sabah: oyuncuyu yeni ürettiği dünyaya zifiri karanlıkta
+    /// düşürmek, ilk izlenimi "hiçbir şey görünmüyor" yapıyordu. Değer
+    /// veriden okunuyor, çünkü gece başlangıcı bilinçli bir tasarım tercihi
+    /// olabilir (zorluk modu).
+    /// </summary>
+    [JsonPropertyName("startTimeOfDay")] public float StartTimeOfDay { get; init; } = 0.34f;
     [JsonPropertyName("daysPerSeason")] public int DaysPerSeason { get; init; } = 7;
     [JsonPropertyName("phases")] public List<DayPhase> Phases { get; init; } = [];
     [JsonPropertyName("seasons")] public List<SeasonDefinition> Seasons { get; init; } = [];
@@ -144,6 +155,10 @@ public sealed class ClimateSystem
 
         Weather = table.WeatherTypes[0];
         RollWeather();
+
+        // Gun 1 gece yarisinda degil, veriden okunan saatte baslar.
+        // Kesir 0..1 disina tasarsa gun sayaci bozulurdu; kirpiliyor.
+        WorldSeconds = Math.Clamp(table.StartTimeOfDay, 0f, 0.999f) * table.DayLengthSeconds;
     }
 
     /// <summary>Kaçıncı gün (1'den başlar).</summary>

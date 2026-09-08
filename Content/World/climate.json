@@ -1,33 +1,137 @@
 {
   "_comment": "Madde 12 — gunduz/gece, mevsim ve hava dongusu. Tum sureler GERCEK saniye.",
-
   "dayLengthSeconds": 480,
+  "_baslangic_notu": "Gun 1 hangi saatte baslar (0 = gece yarisi, 0.5 = ogle). 0.34 = sabahin ilk saatleri: oyuncu yeni urettigi dunyayi GORUR. 0 birakilirsa oyun zifiri karanlikta baslar.",
+  "startTimeOfDay": 0.34,
   "_gun_notu": "8 dakikalik gun. Stardew 14 dk kullaniyor; test sirasinda dongulari gormek icin kisa tutuldu.",
-
   "daysPerSeason": 7,
-
   "_faz_notu": "Gunun normalize edilmis kesri (0=gece yarisi, 0.5=ogle). Fazlar sirayla degerlendirilir.",
   "phases": [
-    { "name": "gece",   "until": 0.22, "light": [ 42,  52,  96], "intensity": 0.72 },
-    { "name": "safak",  "until": 0.30, "light": [190, 130, 110], "intensity": 0.34 },
-    { "name": "gunduz", "until": 0.72, "light": [255, 255, 255], "intensity": 0.00 },
-    { "name": "aksam",  "until": 0.84, "light": [220, 140,  90], "intensity": 0.30 },
-    { "name": "gece2",  "until": 1.01, "light": [ 42,  52,  96], "intensity": 0.72 }
+    {
+      "name": "gece",
+      "until": 0.22,
+      "light": [
+        42,
+        52,
+        96
+      ],
+      "intensity": 0.72
+    },
+    {
+      "name": "safak",
+      "until": 0.3,
+      "light": [
+        190,
+        130,
+        110
+      ],
+      "intensity": 0.34
+    },
+    {
+      "name": "gunduz",
+      "until": 0.72,
+      "light": [
+        255,
+        255,
+        255
+      ],
+      "intensity": 0.0
+    },
+    {
+      "name": "aksam",
+      "until": 0.84,
+      "light": [
+        220,
+        140,
+        90
+      ],
+      "intensity": 0.3
+    },
+    {
+      "name": "gece2",
+      "until": 1.01,
+      "light": [
+        42,
+        52,
+        96
+      ],
+      "intensity": 0.72
+    }
   ],
-
   "seasons": [
-    { "name": "Ilkbahar", "tint": [235, 255, 235], "weather": { "clear": 0.55, "rain": 0.42, "snow": 0.03 } },
-    { "name": "Yaz",      "tint": [255, 250, 225], "weather": { "clear": 0.82, "rain": 0.18, "snow": 0.00 } },
-    { "name": "Sonbahar", "tint": [255, 238, 214], "weather": { "clear": 0.60, "rain": 0.38, "snow": 0.02 } },
-    { "name": "Kis",      "tint": [226, 240, 255], "weather": { "clear": 0.45, "rain": 0.10, "snow": 0.45 } }
+    {
+      "name": "Ilkbahar",
+      "tint": [
+        235,
+        255,
+        235
+      ],
+      "weather": {
+        "clear": 0.55,
+        "rain": 0.42,
+        "snow": 0.03
+      }
+    },
+    {
+      "name": "Yaz",
+      "tint": [
+        255,
+        250,
+        225
+      ],
+      "weather": {
+        "clear": 0.82,
+        "rain": 0.18,
+        "snow": 0.0
+      }
+    },
+    {
+      "name": "Sonbahar",
+      "tint": [
+        255,
+        238,
+        214
+      ],
+      "weather": {
+        "clear": 0.6,
+        "rain": 0.38,
+        "snow": 0.02
+      }
+    },
+    {
+      "name": "Kis",
+      "tint": [
+        226,
+        240,
+        255
+      ],
+      "weather": {
+        "clear": 0.45,
+        "rain": 0.1,
+        "snow": 0.45
+      }
+    }
   ],
-
   "weatherMinSeconds": 45,
   "weatherMaxSeconds": 180,
-
   "weatherTypes": [
-    { "key": "clear", "name": "Acik",    "darken": 0.00, "particles": 0 },
-    { "key": "rain",  "name": "Yagmur",  "darken": 0.18, "particles": 220 },
-    { "key": "snow",  "name": "Kar",     "darken": 0.10, "particles": 140 }
+    {
+      "key": "clear",
+      "name": "Acik",
+      "darken": 0.0,
+      "particles": 0
+    },
+    {
+      "key": "rain",
+      "name": "Yagmur",
+      "darken": 0.18,
+      "particles": 220
+    },
+    {
+      "key": "snow",
+      "name": "Kar",
+      "darken": 0.1,
+      "particles": 140
+    }
   ]
 }

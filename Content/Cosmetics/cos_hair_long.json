@@ -1,0 +1,93 @@
+{
+  "asset": "Cosmetics/cos_hair_long",
+  "displayName": "Uzun Sac",
+  "frameWidth": 32,
+  "frameHeight": 32,
+  "columns": 4,
+  "rows": 11,
+  "placeholder": true,
+  "slot": "hair",
+  "drawOrder": 30,
+  "rarity": "common",
+  "season": "",
+  "tags": [],
+  "animations": [
+    {
+      "row": 0,
+      "state": "idle_down",
+      "frames": 2,
+      "fps": 2.5,
+      "loop": true
+    },
+    {
+      "row": 1,
+      "state": "idle_up",
+      "frames": 2,
+      "fps": 2.5,
+      "loop": true
+    },
+    {
+      "row": 2,
+      "state": "idle_left",
+      "frames": 2,
+      "fps": 2.5,
+      "loop": true
+    },
+    {
+      "row": 3,
+      "state": "idle_right",
+      "frames": 2,
+      "fps": 2.5,
+      "loop": true
+    },
+    {
+      "row": 4,
+      "state": "walk_down",
+      "frames": 4,
+      "fps": 10.0,
+      "loop": true
+    },
+    {
+      "row": 5,
+      "state": "walk_up",
+      "frames": 4,
+      "fps": 10.0,
+      "loop": true
+    },
+    {
+      "row": 6,
+      "state": "walk_left",
+      "frames": 4,
+      "fps": 10.0,
+      "loop": true
+    },
+    {
+      "row": 7,
+      "state": "walk_right",
+      "frames": 4,
+      "fps": 10.0,
+      "loop": true
+    },
+    {
+      "row": 8,
+      "state": "harvest",
+      "frames": 3,
+      "fps": 8.0,
+      "loop": true
+    },
+    {
+      "row": 9,
+      "state": "hurt",
+      "frames": 2,
+      "fps": 10.0,
+      "loop": false
+    },
+    {
+      "row": 10,
+      "state": "death",
+      "frames": 4,
+      "fps": 6.0,
+      "loop": false
+    }
+  ]
+}

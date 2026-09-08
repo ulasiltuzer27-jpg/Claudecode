@@ -5,6 +5,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using PixelSurvival.Entities;
 using PixelSurvival.Systems;
+using PixelSurvival.Cosmetics;
 using PixelSurvival.Systems.Animation;
 using PixelSurvival.Systems.Collision;
 using PixelSurvival.Networking;
@@ -115,6 +116,19 @@ public class Game1 : Game
 
     private bool _showCrafting = true;
 
+    // --- Madde 20: kozmetik / katmanli sprite ---
+    private CosmeticTable _cosmetics = null!;
+    private CosmeticLoadout _loadout = null!;
+    private ICosmeticOwnership _ownership = null!;
+
+    /// <summary>
+    /// Gardirop paneli acik mi (K). Acikken 1-5 tuslari uretim yerine
+    /// kozmetik slotlarini dolasir — ayni tuslara iki anlam yuklemek yerine
+    /// modal bir panel tercih edildi, yoksa her yeni sistem yeni bir tus
+    /// istiyor ve klavye tukeniyor.
+    /// </summary>
+    private bool _showWardrobe;
+
     /// <summary>Kısa ömürlü bilgi mesajı (üretim başarısız, envanter dolu vb.).</summary>
     private string _toast = "";
     private float _toastSeconds;
@@ -216,6 +230,16 @@ public class Game1 : Game
         _hud = new HudRenderer(_font, _pixel, _itemIcons, _itemDatabase,
                                Content, "Items/icons_16");
 
+        // Madde 20: kozmetik katmanlari. Temel beden sheet'i referans olarak
+        // veriliyor; grid'i tutmayan bir katman yuklemede HATA verir.
+        _cosmetics = CosmeticTable.Load(Content, "Cosmetics/cosmetics", _playerSheet);
+
+        // Gelistirme derlemesinde sahiplik kaynagi yalnizca ucretsiz
+        // kozmetikler. Steam derlemesinde bu, Steam Inventory'ye bagli bir
+        // implementasyonla degistirilir — kusanma kodu degismez.
+        _ownership = new FreeCosmeticsOnly();
+        _loadout = new CosmeticLoadout(_ownership);
+
         _camera = new Camera2D(WindowWidth, WindowHeight, CameraZoom);
 
         GenerateWorld(DefaultSeed);
@@ -241,7 +265,13 @@ public class Game1 : Game
             (spawnTile.Y + 1) * _map.TileSize);
 
         _spawnPosition = start;
-        _player = new Player(_playerSheet, start);
+        _player = new Player(_playerSheet, start)
+        {
+            // Katmanlar dunya yeniden uretilse de korunur: kusanilan
+            // kozmetik dunyaya degil oyuncuya aittir.
+            Cosmetics = _cosmetics,
+            Loadout = _loadout
+        };
         _camera.SnapTo(_player.Position);
 
         // Aşama 2: iklim, tarım ve yaratıklar dünyayla birlikte kurulur.
@@ -305,6 +335,9 @@ public class Game1 : Game
 
         if (WasPressed(keyboard, Keys.Tab)) _showCrafting = !_showCrafting;
 
+        // Madde 20: gardirop
+        if (WasPressed(keyboard, Keys.K)) _showWardrobe = !_showWardrobe;
+
         // Madde 9: yapı seçimi
         if (WasPressed(keyboard, Keys.Q)) _building.SelectPrevious();
         if (WasPressed(keyboard, Keys.Z)) _building.SelectNext();
@@ -321,7 +354,17 @@ public class Game1 : Game
         if (WasPressed(keyboard, Keys.F10)) _session.Connect(TransportFactory.DefaultConnectTarget);
         if (WasPressed(keyboard, Keys.F11)) { _session.Leave(); ShowToast("Oturum kapatildi"); }
 
-        HandleCraftingKeys(keyboard);
+        // Gardirop acikken sayi tuslari kozmetik slotlarini dolasir; kapaliyken
+        // uretim tariflerini uygular. Ayni tusun iki islevi ASLA ayni anda
+        // aktif degil.
+        if (_showWardrobe)
+        {
+            HandleWardrobeKeys(keyboard);
+        }
+        else
+        {
+            HandleCraftingKeys(keyboard);
+        }
 
         if (_toastSeconds > 0f)
         {
@@ -527,6 +570,38 @@ public class Game1 : Game
 
     private bool WasPressed(KeyboardState current, Keys key) =>
         current.IsKeyDown(key) && _previousKeyboard.IsKeyUp(key);
+
+    /// <summary>
+    /// Madde 20: gardirop tuşları. 1-5, kuşanılabilir slotların sırasına
+    /// karşılık gelir; her basış o slottaki kozmetiği bir sonrakine çevirir,
+    /// listenin sonunda slotu boşaltır.
+    ///
+    /// Sahip olunmayan kozmetikler <see cref="CosmeticLoadout.CycleSlot"/>
+    /// tarafından atlanır — oyuncu kuşanamayacağı bir seçeneğe takılmaz.
+    /// </summary>
+    private void HandleWardrobeKeys(KeyboardState keyboard)
+    {
+        var slots = CosmeticSlotExtensions.Equippable;
+
+        for (var i = 0; i < slots.Length; i++)
+        {
+            if (!WasPressed(keyboard, Keys.D1 + i)) continue;
+
+            var slot = slots[i];
+            var equipped = _loadout.CycleSlot(_cosmetics, slot);
+
+            ShowToast(equipped is null
+                ? $"{slot}: cikarildi"
+                : $"{slot}: {equipped.Name} ({equipped.Rarity.Label()})");
+        }
+
+        // 0: hepsini cikar. Tek tek dolasmadan cıplak bedene donmek icin.
+        if (WasPressed(keyboard, Keys.D0))
+        {
+            _loadout.ClearAll();
+            ShowToast("Kozmetikler cikarildi");
+        }
+    }
 
     /// <summary>
     /// 1-9 tuşları tarif listesindeki sıraya karşılık gelir.
@@ -857,6 +932,12 @@ public class Game1 : Game
             _hud.DrawZone(_spriteBatch,
                 _zones.ZoneAt(_player.Position, _map.TileSize) == ZoneKind.Safe,
                 _steam.Status, WindowWidth, WindowHeight);
+
+            if (_showWardrobe)
+            {
+                _hud.DrawWardrobe(_spriteBatch, _cosmetics, _loadout, _ownership,
+                                  _climate.Season.Name, WindowWidth, WindowHeight);
+            }
 
             if (_fishing.IsActive)
             {

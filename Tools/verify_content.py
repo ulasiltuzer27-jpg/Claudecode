@@ -543,6 +543,108 @@ def main() -> int:
                          f"pay-to-win yaratir.")
                     break
 
+    # ======================================================================
+    # MADDE 20 - kozmetik / rarity / katmanli sprite / sezonluk
+    # ======================================================================
+    cosmetics_path = os.path.join(CONTENT, "Cosmetics", "cosmetics.json")
+    if os.path.exists(cosmetics_path):
+        with open(cosmetics_path, encoding="utf-8") as f:
+            cos = json.load(f)
+
+        # C# tarafindaki slot cizim sirasi tek gercek kaynaktir; Python
+        # ureticisi ile ayrisirsa sapka sacin ALTINDA kalirdi.
+        slot_cs = os.path.join(ROOT, "Cosmetics", "CosmeticSlot.cs")
+        cs_order: dict[str, int] = {}
+        if os.path.exists(slot_cs):
+            with open(slot_cs, encoding="utf-8") as f:
+                for name, value in re.findall(r"^\s*(\w+)\s*=\s*(\d+)\s*,?\s*$",
+                                              f.read(), re.M):
+                    cs_order[name.lower()] = int(value)
+
+        gen_path = os.path.join(ROOT, "Tools", "generate_placeholders.py")
+        py_order: dict[str, int] = {}
+        if os.path.exists(gen_path):
+            with open(gen_path, encoding="utf-8") as f:
+                block = re.search(r"SLOT_ORDER:\s*dict\[str,\s*int\]\s*=\s*\{(.*?)\}",
+                                  f.read(), re.S)
+            if block:
+                for name, value in re.findall(r'"(\w+)"\s*:\s*(\d+)', block.group(1)):
+                    py_order[name.lower()] = int(value)
+
+        checks += 1
+        if cs_order and py_order and cs_order != py_order:
+            fail(f"Katman cizim sirasi ayrismis. CosmeticSlot.cs={cs_order} "
+                 f"generate_placeholders.py={py_order}. Sira ayrisirsa sapka "
+                 f"sacin altinda kalir.")
+
+        seen_ids: set[str] = set()
+        valid_slots = {k for k in cs_order if k != "body"}
+
+        for item in cos.get("cosmetics", []):
+            cid = item.get("id", "?")
+
+            checks += 1
+            if cid in seen_ids:
+                fail(f"cosmetics.json: '{cid}' iki kez tanimlanmis.")
+            seen_ids.add(cid)
+
+            # Nadirlik YALNIZCA gorseldir: istatistik alani hata sayilir.
+            checks += 1
+            for banned in ("damage", "health", "speed", "power", "bonus", "armor",
+                           "defense", "crit", "stats"):
+                if banned in item:
+                    fail(f"cosmetics.json: '{cid}' icinde '{banned}' alani var. "
+                         f"Nadirlik YALNIZCA kozmetik farktir - gameplay gucu "
+                         f"veren kozmetik pay-to-win yaratir.")
+                    break
+
+            checks += 1
+            slot = str(item.get("slot", "")).lower()
+            if valid_slots and slot not in valid_slots:
+                fail(f"cosmetics.json: '{cid}' gecersiz slot '{slot}'. "
+                     f"Gecerli: {sorted(valid_slots)}")
+
+            # 'body' bir kozmetik slotu DEGIL - beden degisimi karakter lisansi.
+            checks += 1
+            if slot == "body":
+                fail(f"cosmetics.json: '{cid}' slot olarak 'body' kullaniyor. "
+                     f"Beden degisimi kozmetik degil, karakter lisansidir.")
+
+            # Katman sheet'i bedenle AYNI grid'i kullanmali.
+            asset = item.get("asset", "")
+            meta_path = os.path.join(CONTENT, asset.replace("/", os.sep) + ".json")
+            checks += 1
+            if not os.path.exists(meta_path):
+                fail(f"cosmetics.json: '{cid}' icin katman metadata'si yok: {asset}.json")
+            else:
+                with open(meta_path, encoding="utf-8") as f:
+                    layer = json.load(f)
+
+                checks += 1
+                if (layer.get("frameWidth"), layer.get("frameHeight")) != (32, 32):
+                    fail(f"{asset}.json: katman frame boyutu "
+                         f"{layer.get('frameWidth')}x{layer.get('frameHeight')}, "
+                         f"beden 32x32. Katmanli sprite icin grid AYNI olmali.")
+
+                # Katalog ile uretilen sheet metadata'si ayrismamali.
+                checks += 1
+                if str(layer.get("slot", "")).lower() != slot:
+                    fail(f"{asset}.json slot='{layer.get('slot')}' ama cosmetics.json "
+                         f"slot='{slot}'. Katalog ve sheet ayrismis.")
+
+                checks += 1
+                if str(layer.get("rarity", "")).lower() != str(item.get("rarity", "")).lower():
+                    fail(f"{asset}.json rarity='{layer.get('rarity')}' ama cosmetics.json "
+                         f"rarity='{item.get('rarity')}'. Katalog ve sheet ayrismis.")
+
+            # Sezonluk pencere: bitis baslangictan once olamaz.
+            season = item.get("season") or {}
+            frm, until = season.get("from", ""), season.get("until", "")
+            checks += 1
+            if frm and until and frm > until:
+                fail(f"cosmetics.json: '{cid}' sezon penceresi ters "
+                     f"(from={frm} > until={until}) - item hicbir zaman elde edilemez.")
+
     # --- Rapor
     print(f"{checks} kontrol calistirildi.\n")
     for w in warnings:

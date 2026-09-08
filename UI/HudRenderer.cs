@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
+using PixelSurvival.Cosmetics;
 using PixelSurvival.Inventory;
 using PixelSurvival.Systems.Crafting;
 
@@ -156,6 +157,79 @@ public sealed class HudRenderer
             _font.Draw(spriteBatch, labels[i],
                 new Vector2(originX + padding, originY + padding + (i + 1) * lineHeight),
                 color, UiScale);
+        }
+    }
+
+    /// <summary>
+    /// MADDE 20 — gardirop paneli.
+    ///
+    /// Her kuşanılabilir slot bir satır: slot adı, kuşanılan kozmetiğin adı
+    /// ve NADİRLİK RENGİ. Nadirliğin oyundaki tek etkisi bu renktir; panelde
+    /// bilerek hiçbir istatistik satırı yok, çünkü kozmetiklerin istatistiği
+    /// de yok (bkz. <see cref="CosmeticRarity"/>).
+    ///
+    /// Sahip olunmayan kozmetikler sayıya dahil edilmez: oyuncuya
+    /// kuşanamayacağı bir liste göstermek, mağaza olmayan bir ekranda
+    /// yalnızca kafa karıştırır.
+    /// </summary>
+    public void DrawWardrobe(SpriteBatch spriteBatch, CosmeticTable table,
+                             CosmeticLoadout loadout, ICosmeticOwnership ownership,
+                             string worldSeason, int windowWidth, int windowHeight)
+    {
+        var slots = CosmeticSlotExtensions.Equippable;
+        var lineHeight = _font.LineHeight * UiScale;
+        var padding = 6 * UiScale;
+
+        var header = "GARDIROP  (K kapat, 0 hepsini cikar)";
+        var rows = new (string Text, Color Color)[slots.Length];
+
+        for (var i = 0; i < slots.Length; i++)
+        {
+            var slot = slots[i];
+            var equipped = loadout.InSlot(slot);
+            var ownedCount = table.InSlot(slot).Count(ownership.Owns);
+
+            if (equipped is null)
+            {
+                rows[i] = ($"{i + 1}. {slot,-9} -                      ({ownedCount} sahip)",
+                           DimTextColor);
+                continue;
+            }
+
+            // Sezonluk kozmetikte pencere bilgisi de gosterilir. Pencere
+            // KAPALI olsa bile item kusanili kalir - pencere yalnizca elde
+            // edilebilirligi kapatir, kullanimi degil.
+            var seasonNote = equipped.Season.IsSeasonal
+                ? equipped.Season.IsObtainable(DateTime.UtcNow, worldSeason)
+                    ? "  [sezon acik]"
+                    : "  [sezon kapali - kusanili kalir]"
+                : "";
+
+            rows[i] = ($"{i + 1}. {slot,-9} {equipped.Name} ({equipped.Rarity.Label()}){seasonNote}",
+                       equipped.Rarity.FrameColor());
+        }
+
+        var width = Math.Max(_font.Measure(header, UiScale),
+                             rows.Max(r => _font.Measure(r.Text, UiScale)));
+
+        var panelWidth = width + padding * 2;
+        var panelHeight = (rows.Length + 1) * lineHeight + padding * 2;
+
+        // Envanter cubugu alt ortada; panel onun USTUNDE bitmeli.
+        var originX = (windowWidth - panelWidth) / 2;
+        var originY = windowHeight - panelHeight - 130;
+
+        Fill(spriteBatch, new Rectangle(originX, originY, panelWidth, panelHeight),
+             PanelColor * 0.92f);
+
+        _font.Draw(spriteBatch, header, new Vector2(originX + padding, originY + padding),
+                   DimTextColor, UiScale);
+
+        for (var i = 0; i < rows.Length; i++)
+        {
+            _font.Draw(spriteBatch, rows[i].Text,
+                new Vector2(originX + padding, originY + padding + (i + 1) * lineHeight),
+                rows[i].Color, UiScale);
         }
     }
 

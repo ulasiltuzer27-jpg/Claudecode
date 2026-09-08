@@ -551,26 +551,29 @@ def build_tileset(out_dir: str) -> dict:
 # Karakter üretimi
 # --------------------------------------------------------------------------
 
-def draw_character_frame(spec: CharacterSpec, state: str, frame: int) -> Image.Image:
+class Pose(NamedTuple):
     """
-    Tek bir 32x32 karakter frame'i.
+    Bir animasyon karesinin govde duruşu.
 
-    Silüet sözleşmesi (ayak 30. satırda, sprite 20 pixel geniş):
-        y  4- 6  saç tepesi
-        y  7-13  kafa (yüz)
-        y 14-15  boyun / omuz geçişi
-        y 16-23  gövde + kollar
-        y 24-27  bacaklar
-        y 28-29  botlar
-        y 30     ayak hizası (origin)
-
-    Önceki sürümde kafa doğrudan dikdörtgen gövdenin üstünde duruyordu,
-    kol ve ayak yoktu. Omuz genişliğini kafadan büyük yapmak ve botları
-    ayırmak silüeti tek başına belirgin biçimde iyileştiriyor.
+    Neden ayri bir tip? Madde 20'deki katmanli kozmetikler (sac, kiyafet,
+    sapka, pelerin) govdeyle AYNI karede AYNI yerde durmali. Poz matematigi
+    iki ayri rutinde kopyalansaydi, yuruyus bobbing'i bir pixel kaydiginda
+    sapka kafadan ayrilirdi. Tek kaynak: bu fonksiyon.
     """
-    img = Image.new("RGBA", (CHAR_SIZE, CHAR_SIZE), TRANSPARENT)
-    d = ImageDraw.Draw(img)
+    facing: str
+    side: bool
+    walking: bool
+    bob: int
+    front_leg: int
+    arm_swing: int
+    alpha: int
+    sink: int
+    oy: int
+    hurt: bool
 
+
+def character_pose(state: str, frame: int) -> Pose:
+    """Verilen state/frame icin govde duruşunu hesaplar."""
     facing = state.split("_")[-1] if "_" in state else "down"
     side = facing in ("left", "right")
     walking = state.startswith("walk")
@@ -597,8 +600,34 @@ def draw_character_frame(spec: CharacterSpec, state: str, frame: int) -> Image.I
         sink = min(frame, 3)
         alpha = (255, 205, 150, 95)[min(frame, 3)]
 
-    oy = bob + sink
-    hurt = state == "hurt" and frame % 2 == 0
+    return Pose(facing, side, walking, bob, front_leg, arm_swing,
+                alpha, sink, bob + sink, state == "hurt" and frame % 2 == 0)
+
+
+def draw_character_frame(spec: CharacterSpec, state: str, frame: int) -> Image.Image:
+    """
+    Tek bir 32x32 karakter frame'i.
+
+    Silüet sözleşmesi (ayak 30. satırda, sprite 20 pixel geniş):
+        y  4- 6  saç tepesi
+        y  7-13  kafa (yüz)
+        y 14-15  boyun / omuz geçişi
+        y 16-23  gövde + kollar
+        y 24-27  bacaklar
+        y 28-29  botlar
+        y 30     ayak hizası (origin)
+
+    Önceki sürümde kafa doğrudan dikdörtgen gövdenin üstünde duruyordu,
+    kol ve ayak yoktu. Omuz genişliğini kafadan büyük yapmak ve botları
+    ayırmak silüeti tek başına belirgin biçimde iyileştiriyor.
+    """
+    img = Image.new("RGBA", (CHAR_SIZE, CHAR_SIZE), TRANSPARENT)
+    d = ImageDraw.Draw(img)
+
+    pose = character_pose(state, frame)
+    facing, side = pose.facing, pose.side
+    front_leg, arm_swing = pose.front_leg, pose.arm_swing
+    alpha, oy, hurt = pose.alpha, pose.oy, pose.hurt
 
     def C(name: str, level: int) -> tuple[int, int, int, int]:
         """Rampa kademesi; hasar karesinde kırmızıya çalar."""
@@ -767,6 +796,261 @@ def build_character(spec: CharacterSpec, out_dir: str) -> dict:
     write_meta(png_path, meta)
     return meta
 
+
+
+# --------------------------------------------------------------------------
+# Kozmetik katmanlar (32x32) — Asama 2 / Madde 20
+# --------------------------------------------------------------------------
+# Katmanli sprite sistemi: bir karakterin gorunumu
+#     temel beden sheet'i + uzerine bindirilen kozmetik katmanlar
+# olarak kurulur. Her katman govdeyle AYNI grid'i (4 sutun x 11 satir,
+# 32x32 frame) kullanir, boylece ayni kaynak dikdortgeni hepsine uyar ve
+# animasyon kendiliginde senkron kalir.
+#
+# NADIRLIK YALNIZCA GORSELDIR. Bu dosyada bir kozmetige damage/health/
+# speed benzeri bir alan EKLENMEZ; nadirlik yalnizca arayuzdeki cerceve
+# renginden ibarettir. Gameplay gucu veren kozmetik pay-to-win demektir ve
+# PvP/ekonomi dengesini bozar. (verify_content.py bunu denetliyor.)
+
+
+@dataclass
+class CosmeticSpec:
+    """Tek bir kozmetik katmanin kimligi ve cizim tarifi."""
+    key: str
+    display_name: str
+    slot: str            # cape / outfit / hair / hat / accessory
+    style: str           # cizim rutini
+    ramp: str            # ana rampa
+    accent: str          # vurgu rampasi
+    rarity: str          # common / uncommon / rare / epic / legendary
+    season: str = ""     # bos = her zaman; spring/summer/autumn/winter
+    tags: list[str] = field(default_factory=list)
+
+
+COSMETICS: list[CosmeticSpec] = [
+    # --- Sac (hair) ---
+    CosmeticSpec("cos_hair_long", "Uzun Sac", "hair", "long", "hairbr", "hairbr", "common"),
+    CosmeticSpec("cos_hair_spiky", "Dikenli Sac", "hair", "spiky", "hairrd", "hairrd", "uncommon"),
+    CosmeticSpec("cos_hair_frost", "Buz Perceni", "hair", "ponytail", "hairwh", "frost", "rare"),
+
+    # --- Kiyafet (outfit) ---
+    CosmeticSpec("cos_outfit_tunic", "Kasaba Tunigi", "outfit", "tunic", "leaf", "wood", "common"),
+    CosmeticSpec("cos_outfit_plate", "Demir Zirh", "outfit", "plate", "iron", "stone", "epic"),
+    CosmeticSpec("cos_outfit_robe", "Bilge Kaftani", "outfit", "robe", "violet", "gold", "rare"),
+
+    # --- Sapka (hat) ---
+    CosmeticSpec("cos_hat_cap", "Yun Bere", "hat", "cap", "rose", "rose", "common"),
+    CosmeticSpec("cos_hat_crown", "Altin Tac", "hat", "crown", "gold", "gold", "legendary"),
+
+    # --- Pelerin (cape) ---
+    CosmeticSpec("cos_cape_cloak", "Gezgin Pelerini", "cape", "cloak", "denim", "denim", "uncommon"),
+    CosmeticSpec("cos_cape_spring", "Ilkbahar 2026 Pelerini", "cape", "cloak", "leaf", "gold",
+                 "epic", season="spring", tags=["seasonal", "spring2026"]),
+
+    # --- Aksesuar (accessory) ---
+    CosmeticSpec("cos_fx_star", "Gozde Yildiz Efekti", "accessory", "stars", "gold", "gold",
+                 "common"),
+]
+
+# Katmanlarin cizim sirasi: kucuk once (arkada). Pelerin govdenin ARKASINDA,
+# sapka sacin ONUNDE olmali. C# tarafi ayni sirayi Cosmetics/CosmeticSlot.cs
+# icinde tekrar tanimlar; iki tarafi verify_content.py karsilastirir.
+SLOT_ORDER: dict[str, int] = {
+    "cape": 0,
+    "body": 10,
+    "outfit": 20,
+    "hair": 30,
+    "hat": 40,
+    "accessory": 50,
+}
+
+
+def draw_cosmetic_frame(spec: CosmeticSpec, state: str, frame: int) -> Image.Image:
+    """
+    Tek bir kozmetik katman frame'i (32x32, seffaf zemin).
+
+    Govde ile ayni `character_pose` cikti sini kullanir; bu yuzden yuruyus
+    bobbing'i, olum cokmesi ve hasar yanip sonmesi katmanda da AYNI
+    kaydirmayla olusur ve katman bedenden ayrilmaz.
+    """
+    img = Image.new("RGBA", (CHAR_SIZE, CHAR_SIZE), TRANSPARENT)
+    d = ImageDraw.Draw(img)
+
+    pose = character_pose(state, frame)
+    facing, side, oy, alpha = pose.facing, pose.side, pose.oy, pose.alpha
+
+    def C(name: str, level: int) -> tuple[int, int, int, int]:
+        """Rampa kademesi; hasar karesinde govdeyle ayni sekilde kirmiziya calar."""
+        r, g, b, _ = tone(name, level)
+        if pose.hurt:
+            r = min(255, r + 80)
+            g = max(0, g - 45)
+            b = max(0, b - 45)
+        return r, g, b, alpha
+
+    # Govdeyle ayni silüet sozlesmesi (bkz. draw_character_frame).
+    head_left, head_right = 11, 20
+    body_left, body_right = (11, 20) if side else (9, 22)
+
+    ramp, accent = spec.ramp, spec.accent
+
+    # ============================ SAC ============================
+    if spec.style == "long":
+        # Tepe + omuza inen uzun tutamlar.
+        d.rectangle([head_left, 4 + oy, head_right, 8 + oy], fill=C(ramp, 1))
+        d.rectangle([head_left, 4 + oy, head_left + 4, 5 + oy], fill=C(ramp, 2))
+        if facing == "up":
+            d.rectangle([head_left, 4 + oy, head_right, 15 + oy], fill=C(ramp, 1))
+            d.rectangle([head_left, 4 + oy, head_right - 4, 6 + oy], fill=C(ramp, 2))
+        elif side:
+            back = head_right - 1 if facing == "left" else head_left
+            d.rectangle([back, 4 + oy, back + 1, 16 + oy], fill=C(ramp, 1))
+        else:
+            d.rectangle([head_left, 6 + oy, head_left + 1, 16 + oy], fill=C(ramp, 1))
+            d.rectangle([head_right - 1, 6 + oy, head_right, 16 + oy], fill=C(ramp, 0))
+
+    elif spec.style == "spiky":
+        # Tepede uc diken; alin acik kalir.
+        d.rectangle([head_left, 5 + oy, head_right, 8 + oy], fill=C(ramp, 1))
+        for sx in (head_left + 1, head_left + 5, head_right - 2):
+            d.polygon([(sx, 5 + oy), (sx + 2, 5 + oy), (sx + 1, 2 + oy)], fill=C(ramp, 2))
+        d.line([(head_left, 8 + oy), (head_right, 8 + oy)], fill=C(ramp, 0))
+
+    elif spec.style == "ponytail":
+        d.rectangle([head_left, 4 + oy, head_right, 8 + oy], fill=C(ramp, 1))
+        d.rectangle([head_left, 4 + oy, head_left + 4, 5 + oy], fill=C(ramp, 2))
+        # At kuyrugu: onden bakista ensede gizli, yandan/arkadan gorunur.
+        if facing == "up":
+            d.rectangle([15, 8 + oy, 17, 20 + oy], fill=C(accent, 1))
+        elif side:
+            tail = head_right - 1 if facing == "left" else head_left
+            d.rectangle([tail, 7 + oy, tail + 1, 18 + oy], fill=C(accent, 1))
+
+    # ========================== KIYAFET ==========================
+    elif spec.style == "tunic":
+        d.polygon([(body_left, 16 + oy), (body_right, 16 + oy),
+                   (body_right - 1, 24 + oy), (body_left + 1, 24 + oy)], fill=C(ramp, 1))
+        d.line([(body_left, 16 + oy), (body_right, 16 + oy)], fill=C(ramp, 2))
+        # Kemer
+        d.rectangle([body_left + 1, 22 + oy, body_right - 1, 23 + oy], fill=C(accent, 1))
+
+    elif spec.style == "plate":
+        d.polygon([(body_left, 16 + oy), (body_right, 16 + oy),
+                   (body_right - 1, 24 + oy), (body_left + 1, 24 + oy)], fill=C(ramp, 1))
+        # Omuzluklar: silueti genisletir, zirh hissini tek basina verir.
+        d.rectangle([body_left - 1, 16 + oy, body_left + 2, 18 + oy], fill=C(ramp, 2))
+        d.rectangle([body_right - 2, 16 + oy, body_right + 1, 18 + oy], fill=C(accent, 1))
+        d.line([(body_left + 3, 19 + oy), (body_right - 3, 19 + oy)], fill=C(ramp, 3))
+
+    elif spec.style == "robe":
+        # Dize kadar inen kaftan: bacaklari orter.
+        d.polygon([(body_left, 16 + oy), (body_right, 16 + oy),
+                   (body_right + 1, 28 + oy), (body_left - 1, 28 + oy)], fill=C(ramp, 1))
+        d.line([(body_left, 16 + oy), (body_right, 16 + oy)], fill=C(ramp, 2))
+        # Altin serit: yakadan etege
+        d.rectangle([15, 17 + oy, 16, 27 + oy], fill=C(accent, 2))
+
+    # ========================== PELERIN ==========================
+    elif spec.style == "cloak":
+        if facing == "up":
+            # Arkadan bakista pelerin tamamen gorunur.
+            d.polygon([(body_left - 1, 15 + oy), (body_right + 1, 15 + oy),
+                       (body_right + 2, 27 + oy), (body_left - 2, 27 + oy)], fill=C(ramp, 1))
+            d.line([(body_left - 1, 15 + oy), (body_right + 1, 15 + oy)], fill=C(accent, 2))
+        elif side:
+            # Yandan: sirtin arkasinda dalgalanan serit.
+            back = body_right if facing == "left" else body_left - 3
+            d.polygon([(back, 15 + oy), (back + 3, 15 + oy),
+                       (back + 4, 26 + oy), (back - 1, 26 + oy)], fill=C(ramp, 1))
+        else:
+            # Onden: yalnizca omuz hizasinda iki kenar payi gorunur.
+            d.rectangle([body_left - 2, 15 + oy, body_left, 25 + oy], fill=C(ramp, 1))
+            d.rectangle([body_right, 15 + oy, body_right + 2, 25 + oy], fill=C(ramp, 0))
+
+    # ========================== SAPKA ==========================
+    elif spec.style == "cap":
+        d.rectangle([head_left, 3 + oy, head_right, 6 + oy], fill=C(ramp, 1))
+        d.rectangle([head_left, 3 + oy, head_left + 4, 4 + oy], fill=C(ramp, 2))
+        # Siperlik yalnizca bakilan yone dogru cikar.
+        if facing == "down":
+            d.rectangle([head_left - 1, 7 + oy, head_right + 1, 7 + oy], fill=C(ramp, 0))
+        elif facing == "left":
+            d.rectangle([head_left - 2, 6 + oy, head_left, 6 + oy], fill=C(ramp, 0))
+        elif facing == "right":
+            d.rectangle([head_right, 6 + oy, head_right + 2, 6 + oy], fill=C(ramp, 0))
+
+    elif spec.style == "crown":
+        d.rectangle([head_left, 4 + oy, head_right, 6 + oy], fill=C(ramp, 1))
+        # Uc sivri uc + ortada tas
+        for sx in (head_left, head_left + 4, head_right - 1):
+            d.polygon([(sx, 4 + oy), (sx + 1, 4 + oy), (sx, 1 + oy)], fill=C(ramp, 2))
+        d.point((15, 5 + oy), fill=C(accent, 3))
+        d.line([(head_left, 6 + oy), (head_right, 6 + oy)], fill=C(ramp, 0))
+
+    # ========================= AKSESUAR =========================
+    elif spec.style == "stars":
+        # Kafanin ustunde donen kucuk kivilcimlar: frame'e gore yer degistirir,
+        # boylece durursa bile canli gorunur.
+        phase = frame % 4
+        spots = [(head_left + 1 + phase, 2 + oy),
+                 (head_right - phase, 4 + oy),
+                 (16, 1 + oy + (phase % 2))]
+        for sx, sy in spots:
+            d.point((sx, sy), fill=C(ramp, 3))
+            d.point((sx, sy - 1), fill=C(accent, 2))
+
+    else:
+        raise ValueError(f"bilinmeyen kozmetik stili: {spec.style}")
+
+    # Katmanin kendi outline'i var: govdenin uzerine bindiginde kenari
+    # kaybolmasin. Golge YOK - yere dusen golge yalnizca bedene aittir,
+    # her katman bir golge daha eklerse karakterin altinda leke olusur.
+    return add_outline(img)
+
+
+def build_cosmetic(spec: CosmeticSpec, out_dir: str) -> dict:
+    """Bir kozmetigin tum animasyon satirlarini govdeyle ayni grid'e dizer."""
+    width = CHAR_SIZE * MAX_FRAMES
+    height = CHAR_SIZE * len(ANIMATION_ROWS)
+    sheet = Image.new("RGBA", (width, height), TRANSPARENT)
+
+    rows_meta = []
+    for row_index, row in enumerate(ANIMATION_ROWS):
+        for frame in range(row.frames):
+            sheet.paste(
+                draw_cosmetic_frame(spec, row.state, frame),
+                (frame * CHAR_SIZE, row_index * CHAR_SIZE),
+            )
+        rows_meta.append({
+            "row": row_index,
+            "state": row.state,
+            "frames": row.frames,
+            "fps": row.fps,
+            "loop": row.loop,
+        })
+
+    png_path = os.path.join(out_dir, "Cosmetics", f"{spec.key}.png")
+    sheet.save(png_path)
+
+    # DIKKAT: bu metadata'ya gameplay istatistigi (damage/health/speed/armor)
+    # EKLENMEZ. Nadirlik yalnizca gorsel bir etikettir.
+    meta = {
+        "asset": f"Cosmetics/{spec.key}",
+        "displayName": spec.display_name,
+        "frameWidth": CHAR_SIZE,
+        "frameHeight": CHAR_SIZE,
+        "columns": MAX_FRAMES,
+        "rows": len(ANIMATION_ROWS),
+        "placeholder": True,
+        "slot": spec.slot,
+        "drawOrder": SLOT_ORDER[spec.slot],
+        "rarity": spec.rarity,
+        "season": spec.season,
+        "tags": spec.tags,
+        "animations": rows_meta,
+    }
+    write_meta(png_path, meta)
+    return meta
 
 
 # --------------------------------------------------------------------------
@@ -1544,7 +1828,7 @@ def main() -> int:
     args = parser.parse_args()
 
     out_dir = os.path.abspath(args.out)
-    for sub in ("Characters", "Tiles", "Items", "UI"):
+    for sub in ("Characters", "Tiles", "Items", "UI", "Cosmetics"):
         os.makedirs(os.path.join(out_dir, sub), exist_ok=True)
 
     # Bu scriptin URETTIGI dosyalar. --clean sadece bunlara dokunur.
@@ -1563,6 +1847,8 @@ def main() -> int:
         os.path.join(out_dir, "Characters", f"{spec.key}.png") for spec in CREATURES
     ] + [
         os.path.join(out_dir, "Characters", f"{spec.key}.png") for spec in ENEMIES + BOSSES
+    ] + [
+        os.path.join(out_dir, "Cosmetics", f"{spec.key}.png") for spec in COSMETICS
     ]
 
     if args.clean:
@@ -1596,6 +1882,11 @@ def main() -> int:
     for hostile in ENEMIES + BOSSES:
         build_hostile(hostile, out_dir)
         produced.append(os.path.join(out_dir, "Characters", f"{hostile.key}.png"))
+
+    # Madde 20: kozmetik katmanlar. Govde sheet'iyle AYNI grid'e dizilir.
+    for cosmetic in COSMETICS:
+        build_cosmetic(cosmetic, out_dir)
+        produced.append(os.path.join(out_dir, "Cosmetics", f"{cosmetic.key}.png"))
 
     print(f"Cikti klasoru: {out_dir}")
     for path in produced:

@@ -1,5 +1,6 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using PixelSurvival.Cosmetics;
 using PixelSurvival.Systems.Animation;
 using PixelSurvival.Systems.Collision;
 using PixelSurvival.Systems.Input;
@@ -254,20 +255,27 @@ public sealed class Player
     /// Dünya koordinatlarında çizer. Ölçek ve kaydırma artık kameranın işi;
     /// bu metod ekran hakkında hiçbir şey bilmez.
     /// </summary>
+    /// <summary>
+    /// Madde 20: kuşanılan kozmetikler. <c>null</c> ise karakter çıplak
+    /// bedenle çizilir — kozmetik sistemi kapalıyken de oyun çalışır.
+    /// </summary>
+    public CosmeticLoadout? Loadout { get; set; }
+
+    /// <summary>Katman sheet'lerinin kaynağı. <see cref="Loadout"/> ile birlikte anlamlı.</summary>
+    public CosmeticTable? Cosmetics { get; set; }
+
     public void Draw(SpriteBatch spriteBatch)
     {
-        // Origin ayakta: sprite'ın alt-orta noktası.
-        var origin = new Vector2(_sheet.FrameWidth / 2f, _sheet.FrameHeight);
-
-        spriteBatch.Draw(
-            _sheet.Texture,
-            Position,
+        // Katman yığını (pelerin → beden → kıyafet → saç → şapka → aksesuar)
+        // tek bir kaynak dikdörtgeniyle çizilir: bütün katmanlar bedenle
+        // aynı grid'i paylaşıyor, bu yüzden animasyon senkronu kendiliğinden.
+        LayeredCharacterRenderer.Draw(
+            spriteBatch,
+            _sheet,
             _animator.CurrentSourceRectangle,
+            Position,
             Color.White,
-            rotation: 0f,
-            origin: origin,
-            scale: 1f,
-            effects: SpriteEffects.None,
-            layerDepth: 0f);
+            Cosmetics,
+            Loadout);
     }
 }

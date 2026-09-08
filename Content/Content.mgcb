@@ -168,6 +168,138 @@
 /processorParam:TextureFormat=Color
 /build:UI/font_ascii.png
 
+#begin Cosmetics/cos_cape_cloak.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=False
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Cosmetics/cos_cape_cloak.png
+
+#begin Cosmetics/cos_cape_spring.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=False
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Cosmetics/cos_cape_spring.png
+
+#begin Cosmetics/cos_fx_star.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=False
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Cosmetics/cos_fx_star.png
+
+#begin Cosmetics/cos_hair_frost.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=False
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Cosmetics/cos_hair_frost.png
+
+#begin Cosmetics/cos_hair_long.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=False
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Cosmetics/cos_hair_long.png
+
+#begin Cosmetics/cos_hair_spiky.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=False
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Cosmetics/cos_hair_spiky.png
+
+#begin Cosmetics/cos_hat_cap.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=False
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Cosmetics/cos_hat_cap.png
+
+#begin Cosmetics/cos_hat_crown.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=False
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Cosmetics/cos_hat_crown.png
+
+#begin Cosmetics/cos_outfit_plate.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=False
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Cosmetics/cos_outfit_plate.png
+
+#begin Cosmetics/cos_outfit_robe.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=False
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Cosmetics/cos_outfit_robe.png
+
+#begin Cosmetics/cos_outfit_tunic.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=False
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Cosmetics/cos_outfit_tunic.png
+
 #begin Characters/boss_frost_maw.json
 /copy:Characters/boss_frost_maw.json
 
@@ -248,3 +380,39 @@
 
 #begin World/zones.json
 /copy:World/zones.json
+
+#begin Cosmetics/cos_cape_cloak.json
+/copy:Cosmetics/cos_cape_cloak.json
+
+#begin Cosmetics/cos_cape_spring.json
+/copy:Cosmetics/cos_cape_spring.json
+
+#begin Cosmetics/cos_fx_star.json
+/copy:Cosmetics/cos_fx_star.json
+
+#begin Cosmetics/cos_hair_frost.json
+/copy:Cosmetics/cos_hair_frost.json
+
+#begin Cosmetics/cos_hair_long.json
+/copy:Cosmetics/cos_hair_long.json
+
+#begin Cosmetics/cos_hair_spiky.json
+/copy:Cosmetics/cos_hair_spiky.json
+
+#begin Cosmetics/cos_hat_cap.json
+/copy:Cosmetics/cos_hat_cap.json
+
+#begin Cosmetics/cos_hat_crown.json
+/copy:Cosmetics/cos_hat_crown.json
+
+#begin Cosmetics/cos_outfit_plate.json
+/copy:Cosmetics/cos_outfit_plate.json
+
+#begin Cosmetics/cos_outfit_robe.json
+/copy:Cosmetics/cos_outfit_robe.json
+
+#begin Cosmetics/cos_outfit_tunic.json
+/copy:Cosmetics/cos_outfit_tunic.json
+
+#begin Cosmetics/cosmetics.json
+/copy:Cosmetics/cosmetics.json
