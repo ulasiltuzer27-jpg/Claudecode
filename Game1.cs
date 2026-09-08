@@ -5,6 +5,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using PixelSurvival.Entities;
 using PixelSurvival.Systems;
+using PixelSurvival.Accessibility;
 using PixelSurvival.Achievements;
 using PixelSurvival.Clans;
 using PixelSurvival.Trade;
@@ -27,6 +28,7 @@ using PixelSurvival.Systems.Crafting;
 using PixelSurvival.Systems.Gathering;
 using PixelSurvival.Systems.Input;
 using PixelSurvival.Inventory;
+using PixelSurvival.Localization;
 using PixelSurvival.UI;
 using PixelSurvival.World;
 
@@ -141,6 +143,10 @@ public class Game1 : Game
     private bool _showAchievements;
     private bool _showLeaderboard;
 
+    // --- Madde 23: dil ve erisilebilirlik ---
+    private readonly AccessibilitySettings _accessibility = new();
+    private bool _showSettings;
+
     // --- Madde 22: klan ve takas ---
     private readonly ClanSystem _clans = new();
     private bool _showClan;
@@ -209,6 +215,11 @@ public class Game1 : Game
     protected override void LoadContent()
     {
         _spriteBatch = new SpriteBatch(GraphicsDevice);
+
+        // Madde 23: dil tablolari EN ONCE yuklenir — sonraki her sistem
+        // (nadirlik etiketleri, klan rutbeleri, takas sonuclari) ceviri
+        // istiyor. Ilk kod varsayilan dil; "en" yedek olarak sart.
+        Loc.Load(Content, "tr", "en");
 
         _pixel = new Texture2D(GraphicsDevice, 1, 1);
         _pixel.SetData([Color.White]);
@@ -286,7 +297,10 @@ public class Game1 : Game
         _font = BitmapFont.Load(Content, "UI/font_ascii");
         _itemIcons = Content.Load<Texture2D>("Items/icons_16");
         _hud = new HudRenderer(_font, _pixel, _itemIcons, _itemDatabase,
-                               Content, "Items/icons_16");
+                               Content, "Items/icons_16")
+        {
+            Accessibility = _accessibility
+        };
 
         // Madde 20: kozmetik katmanlari. Temel beden sheet'i referans olarak
         // veriliyor; grid'i tutmayan bir katman yuklemede HATA verir.
@@ -428,6 +442,13 @@ public class Game1 : Game
             if (_showWardrobe) _showClan = false;
         }
 
+        // Madde 23: ayarlar paneli
+        if (WasPressed(keyboard, Keys.F7))
+        {
+            _showSettings = !_showSettings;
+            if (_showSettings) { _showClan = false; _showWardrobe = false; }
+        }
+
         // Madde 22: klan paneli ve takas penceresi.
         // Sayi tuslarini paylasan paneller ayni anda acik kalmasin:
         // hangisinin tusu isledigi oyuncu icin belirsiz olurdu.
@@ -446,9 +467,9 @@ public class Game1 : Game
         if (WasPressed(keyboard, Keys.F4)) _showLeaderboard = !_showLeaderboard;
         if (WasPressed(keyboard, Keys.F6))
         {
-            ShowToast(_friends.OpenInviteOverlay()
-                ? "Steam davet ekrani acildi"
-                : "Davet icin Steam derlemesi gerekli");
+            ShowToast(Loc.T(_friends.OpenInviteOverlay()
+                ? "steam.inviteOpened"
+                : "steam.inviteNeedsSteam"));
         }
 
         // Madde 9: yapı seçimi
@@ -480,7 +501,8 @@ public class Game1 : Game
         // ayrilmamisti: klan paneli acikken 1'e basmak hem klan kuruyor
         // hem uretim deniyordu ("Malzeme yetersiz" toast'i cikiyordu).
         // Zincir if/else bu cakismayi yapisal olarak imkansiz kiliyor.
-        if (_showWardrobe) HandleWardrobeKeys(keyboard);
+        if (_showSettings) HandleSettingsKeys(keyboard);
+        else if (_showWardrobe) HandleWardrobeKeys(keyboard);
         else if (_showClan) HandleClanKeys(keyboard);
         else if (!_showTrade) HandleCraftingKeys(keyboard);
 
@@ -720,6 +742,33 @@ public class Game1 : Game
 
     private bool WasPressed(KeyboardState current, Keys key) =>
         current.IsKeyDown(key) && _previousKeyboard.IsKeyUp(key);
+
+    /// <summary>
+    /// MADDE 23 — ayar tuşları: 1 dil, 2 yazı boyutu, 3 renk paleti.
+    ///
+    /// Üçü de "sırayla değiştir" mantığında. Ayar ekranı bir menü
+    /// çatısı ister; bu maddenin kapsamı ayarların KENDİSİ, menü değil.
+    /// </summary>
+    private void HandleSettingsKeys(KeyboardState keyboard)
+    {
+        if (WasPressed(keyboard, Keys.D1))
+        {
+            Loc.Cycle();
+            ShowToast(Loc.T("settings.language", Loc.CurrentName));
+        }
+
+        if (WasPressed(keyboard, Keys.D2))
+        {
+            _accessibility.CycleTextScale();
+            ShowToast(Loc.T("settings.textScale", _accessibility.TextScale));
+        }
+
+        if (WasPressed(keyboard, Keys.D3))
+        {
+            _accessibility.CycleColorVision();
+            ShowToast(Loc.T("settings.colorVision", _accessibility.ColorVisionLabel));
+        }
+    }
 
     /// <summary>
     /// MADDE 22 — takas penceresini açar/kapatır.
@@ -1229,9 +1278,9 @@ public class Game1 : Game
     /// <summary>Sol üstteki oturum durumu satırı.</summary>
     private string DescribeSession() => _session.Mode switch
     {
-        SessionMode.Host => $"SUNUCU  {_session.ConnectedCount} bagli  (F11 kapat)",
-        SessionMode.Client => $"ISTEMCI  oyuncu {_session.LocalPlayerId}  (F11 ayril)",
-        _ => "TEK KISILIK  (F9 sunucu ac, F10 baglan)"
+        SessionMode.Host => Loc.T("hud.session.host", _session.ConnectedCount),
+        SessionMode.Client => Loc.T("hud.session.client", _session.LocalPlayerId),
+        _ => Loc.T("hud.session.solo")
     };
 
     private void ShowToast(string message)
@@ -1322,8 +1371,8 @@ public class Game1 : Game
             // Iklim seridi ONCE cizilir: sag ust kosedeki uretim paneli
             // onun altindan baslasin diye alt kenarini geri veriyor.
             var climateBottom = _hud.DrawClimate(_spriteBatch,
-                $"Gun {_climate.Day}  {_climate.ClockText}  {_climate.Season.Name}  " +
-                $"{_climate.Weather.Name}", WindowWidth);
+                Loc.T("hud.climate", _climate.Day, _climate.ClockText,
+                      _climate.Season.Name, _climate.Weather.Name), WindowWidth);
 
             if (_showCrafting)
             {
@@ -1334,6 +1383,12 @@ public class Game1 : Game
             _hud.DrawZone(_spriteBatch,
                 _zones.ZoneAt(_player.Position, _map.TileSize) == ZoneKind.Safe,
                 _steam.Status, WindowWidth, WindowHeight);
+
+            // Madde 23: ayarlar paneli
+            if (_showSettings)
+            {
+                _hud.DrawSettings(_spriteBatch, _accessibility, WindowWidth, WindowHeight);
+            }
 
             // Madde 22: klan paneli ve takas penceresi.
             if (_showClan)
@@ -1393,7 +1448,9 @@ public class Game1 : Game
                     _fishing.State == FishingState.Casting, WindowWidth, WindowHeight);
             }
 
-            if (_toastSeconds > 0f)
+            // Ayar paneli acikken toast gizlenir: panel zaten ayni degeri
+            // gosteriyor ve buyuk yazi olceginde ikisi ust uste biniyordu.
+            if (_toastSeconds > 0f && !_showSettings)
             {
                 _hud.DrawToast(_spriteBatch, _toast, WindowWidth);
             }

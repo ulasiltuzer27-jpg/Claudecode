@@ -1,4 +1,5 @@
 using Microsoft.Xna.Framework;
+using PixelSurvival.Accessibility;
 
 namespace PixelSurvival.Cosmetics;
 
@@ -34,25 +35,33 @@ public static class CosmeticRarityExtensions
 {
     /// <summary>
     /// Arayüzdeki çerçeve/yazı rengi. Nadirliğin oyundaki TEK etkisi budur.
+    ///
+    /// MADDE 23: renk artık erişilebilirlik paletinden geliyor. Varsayılan
+    /// palette yaygın→gri, az bulunur→yeşil, nadir→mavi sırası, kırmızı-yeşil
+    /// körlüğünde iki kademeyi birbirine yaklaştırıyordu; renk körlüğü
+    /// paletlerinde kademeler mavi-turuncu ekseninde ayrışıyor.
+    ///
+    /// Nadirliğin renk DIŞINDA bir etkisi hâlâ yok: bu metot bir Color
+    /// döndürür, sayı değil.
     /// </summary>
-    public static Color FrameColor(this CosmeticRarity rarity) => rarity switch
+    public static Color FrameColor(this CosmeticRarity rarity, UiPalette palette) => rarity switch
     {
-        CosmeticRarity.Common => new Color(178, 184, 196),
-        CosmeticRarity.Uncommon => new Color(118, 198, 122),
-        CosmeticRarity.Rare => new Color(96, 158, 226),
-        CosmeticRarity.Epic => new Color(176, 118, 224),
-        CosmeticRarity.Legendary => new Color(240, 186, 74),
-        _ => Color.White
+        CosmeticRarity.Common => palette.RarityCommon,
+        CosmeticRarity.Uncommon => palette.RarityUncommon,
+        CosmeticRarity.Rare => palette.RarityRare,
+        CosmeticRarity.Epic => palette.RarityEpic,
+        CosmeticRarity.Legendary => palette.RarityLegendary,
+        _ => palette.Text
     };
 
-    /// <summary>Ekranda gösterilecek kısa ad.</summary>
+    /// <summary>Ekranda gösterilecek kısa ad (madde 23: çeviri tablosundan).</summary>
     public static string Label(this CosmeticRarity rarity) => rarity switch
     {
-        CosmeticRarity.Common => "Yaygin",
-        CosmeticRarity.Uncommon => "Az Bulunur",
-        CosmeticRarity.Rare => "Nadir",
-        CosmeticRarity.Epic => "Destansi",
-        CosmeticRarity.Legendary => "Efsanevi",
+        CosmeticRarity.Common => Localization.Loc.T("rarity.common"),
+        CosmeticRarity.Uncommon => Localization.Loc.T("rarity.uncommon"),
+        CosmeticRarity.Rare => Localization.Loc.T("rarity.rare"),
+        CosmeticRarity.Epic => Localization.Loc.T("rarity.epic"),
+        CosmeticRarity.Legendary => Localization.Loc.T("rarity.legendary"),
         _ => "?"
     };
 

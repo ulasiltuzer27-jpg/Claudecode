@@ -49,7 +49,7 @@ public sealed class LocalStatsBackend : IStatsBackend
     private readonly HashSet<string> _unlocked = new(StringComparer.Ordinal);
 
     public bool IsAvailable => false;
-    public string Status => "Basarimlar yerel (Steam yok)";
+    public string Status => Localization.Loc.T("ach.status.local");
 
     /// <summary>Açılmış achievement kimlikleri — arayüz ve doğrulama için.</summary>
     public IReadOnlyCollection<string> Unlocked => _unlocked;

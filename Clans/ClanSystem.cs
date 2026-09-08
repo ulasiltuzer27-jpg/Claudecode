@@ -294,16 +294,16 @@ public sealed class ClanSystem
     /// <summary>Arayüzde gösterilecek kısa açıklama.</summary>
     public static string Describe(ClanOutcome outcome) => outcome switch
     {
-        ClanOutcome.Success => "Tamam",
-        ClanOutcome.AlreadyInClan => "Zaten bir klanda",
-        ClanOutcome.NotInClan => "Bir klanda degilsin",
-        ClanOutcome.NameTaken => "Bu klan adi alinmis",
-        ClanOutcome.NameInvalid => "Klan adi/etiketi gecersiz",
-        ClanOutcome.NotFound => "Klan bulunamadi",
-        ClanOutcome.NoPermission => "Yetkin yok",
-        ClanOutcome.TargetNotInClan => "Hedef bu klanda degil",
-        ClanOutcome.CannotTargetSelf => "Kendini hedef alamazsin",
-        ClanOutcome.LeaderCannotLeave => "Lider once devretmeli",
+        ClanOutcome.Success => Localization.Loc.T("clan.out.success"),
+        ClanOutcome.AlreadyInClan => Localization.Loc.T("clan.out.alreadyInClan"),
+        ClanOutcome.NotInClan => Localization.Loc.T("clan.out.notInClan"),
+        ClanOutcome.NameTaken => Localization.Loc.T("clan.out.nameTaken"),
+        ClanOutcome.NameInvalid => Localization.Loc.T("clan.out.nameInvalid"),
+        ClanOutcome.NotFound => Localization.Loc.T("clan.out.notFound"),
+        ClanOutcome.NoPermission => Localization.Loc.T("clan.out.noPermission"),
+        ClanOutcome.TargetNotInClan => Localization.Loc.T("clan.out.targetNotInClan"),
+        ClanOutcome.CannotTargetSelf => Localization.Loc.T("clan.out.cannotTargetSelf"),
+        ClanOutcome.LeaderCannotLeave => Localization.Loc.T("clan.out.leaderCannotLeave"),
         _ => "?"
     };
 }

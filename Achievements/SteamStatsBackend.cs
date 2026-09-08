@@ -19,9 +19,8 @@ public sealed class SteamStatsBackend : IStatsBackend
 
     public bool IsAvailable => Steamworks.SteamAPI.IsSteamRunning();
 
-    public string Status => IsAvailable
-        ? "Basarimlar Steam'e yaziliyor"
-        : "Steam calismiyor";
+    public string Status => Localization.Loc.T(
+        IsAvailable ? "ach.status.steam" : "steam.notRunning");
 
     /// <summary>
     /// Kullanıcının mevcut istatistiklerini Steam'den ister.
@@ -65,7 +64,7 @@ public sealed class SteamStatsBackend : IStatsBackend
     // Steam'siz derleme: sinif var, gorevi yok. Bu sayede cagiran taraf
     // #if ile dallanmak zorunda kalmiyor.
     public bool IsAvailable => false;
-    public string Status => "Steam derlemesi degil";
+    public string Status => Localization.Loc.T("steam.notSteamBuild");
 
     public void RequestCurrentStats() { }
     public void SetStat(string key, int value) { _ = key; _ = value; }

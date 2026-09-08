@@ -3,11 +3,13 @@ using System.Text.Json.Serialization;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
+using PixelSurvival.Accessibility;
 using PixelSurvival.Achievements;
 using PixelSurvival.Clans;
 using PixelSurvival.Trade;
 using PixelSurvival.Cosmetics;
 using PixelSurvival.Inventory;
+using PixelSurvival.Localization;
 using PixelSurvival.Systems.Crafting;
 
 namespace PixelSurvival.UI;
@@ -23,14 +25,26 @@ public sealed class HudRenderer
 {
     private const int SlotSize = 20;
     private const int SlotGap = 2;
-    private const int UiScale = 2;
     private const int IconSize = 16;
 
+    // Panel/slot zeminleri anlam TASIMAZ (sadece arka plan), bu yuzden
+    // renk korlugu paletinin disinda kaldilar.
     private static readonly Color PanelColor = new(18, 20, 28);
     private static readonly Color SlotColor = new(44, 48, 62);
-    private static readonly Color TextColor = new(228, 232, 240);
-    private static readonly Color DimTextColor = new(128, 134, 150);
-    private static readonly Color CraftableColor = new(120, 230, 140);
+
+    /// <summary>
+    /// MADDE 23 — erisilebilirlik ayarlari.
+    ///
+    /// Yazi olcegi ve anlam tasiyan renkler artik sabit degil; ikisi de
+    /// buradan okunuyor. Sabit kalsalardi renk korlugu paletini eklemek
+    /// her cizim cagrisini tek tek bulmayi gerektirirdi.
+    /// </summary>
+    public AccessibilitySettings Accessibility { get; set; } = new();
+
+    private int UiScale => Accessibility.TextScale;
+    private Color TextColor => Accessibility.Palette.Text;
+    private Color DimTextColor => Accessibility.Palette.DimText;
+    private Color CraftableColor => Accessibility.Palette.Positive;
 
     private readonly BitmapFont _font;
     private readonly Texture2D _pixel;
@@ -77,7 +91,7 @@ public sealed class HudRenderer
         Fill(spriteBatch, new Rectangle(originX, originY, barWidth, barHeight),
              PanelColor * 0.88f);
 
-        _font.Draw(spriteBatch, $"ENVANTER  {inventory.UsedSlots}/{inventory.SlotCount}",
+        _font.Draw(spriteBatch, Loc.T("hud.inventory", inventory.UsedSlots, inventory.SlotCount),
                    new Vector2(originX + 4 * UiScale, originY + 3 * UiScale),
                    DimTextColor, UiScale);
 
@@ -147,7 +161,7 @@ public sealed class HudRenderer
         Fill(spriteBatch, new Rectangle(originX, originY, panelWidth, panelHeight),
              PanelColor * 0.88f);
 
-        _font.Draw(spriteBatch, "URETIM  (TAB kapat)",
+        _font.Draw(spriteBatch, Loc.T("hud.crafting.title"),
                    new Vector2(originX + padding, originY + padding), DimTextColor, UiScale);
 
         for (var i = 0; i < rows; i++)
@@ -183,7 +197,7 @@ public sealed class HudRenderer
         var lineHeight = _font.LineHeight * UiScale;
         var padding = 6 * UiScale;
 
-        var header = "GARDIROP  (K kapat, 0 hepsini cikar)";
+        var header = Loc.T("wardrobe.title");
         var rows = new (string Text, Color Color)[slots.Length];
 
         for (var i = 0; i < slots.Length; i++)
@@ -194,7 +208,7 @@ public sealed class HudRenderer
 
             if (equipped is null)
             {
-                rows[i] = ($"{i + 1}. {slot,-9} -                      ({ownedCount} sahip)",
+                rows[i] = ($"{i + 1}. {slot,-9} {Loc.T("wardrobe.empty"),-22} {Loc.T("wardrobe.owned", ownedCount)}",
                            DimTextColor);
                 continue;
             }
@@ -204,12 +218,12 @@ public sealed class HudRenderer
             // edilebilirligi kapatir, kullanimi degil.
             var seasonNote = equipped.Season.IsSeasonal
                 ? equipped.Season.IsObtainable(DateTime.UtcNow, worldSeason)
-                    ? "  [sezon acik]"
-                    : "  [sezon kapali - kusanili kalir]"
+                    ? Loc.T("wardrobe.season.open")
+                    : Loc.T("wardrobe.season.closed")
                 : "";
 
             rows[i] = ($"{i + 1}. {slot,-9} {equipped.Name} ({equipped.Rarity.Label()}){seasonNote}",
-                       equipped.Rarity.FrameColor());
+                       equipped.Rarity.FrameColor(Accessibility.Palette));
         }
 
         var width = Math.Max(_font.Measure(header, UiScale),
@@ -219,8 +233,12 @@ public sealed class HudRenderer
         var panelHeight = (rows.Length + 1) * lineHeight + padding * 2;
 
         // Envanter cubugu alt ortada; panel onun USTUNDE bitmeli.
-        var originX = (windowWidth - panelWidth) / 2;
-        var originY = windowHeight - panelHeight - 130;
+        var origin = ClampToWindow((windowWidth - panelWidth) / 2,
+                                   windowHeight - panelHeight - 130,
+                                   panelWidth, panelHeight, windowWidth, windowHeight);
+
+        var originX = origin.X;
+        var originY = origin.Y;
 
         Fill(spriteBatch, new Rectangle(originX, originY, panelWidth, panelHeight),
              PanelColor * 0.92f);
@@ -249,8 +267,8 @@ public sealed class HudRenderer
         var lineHeight = _font.LineHeight * UiScale;
         var padding = 6 * UiScale;
 
-        var header = $"BASARIMLAR {tracker.UnlockedCount}/{tracker.TotalCount}  " +
-                     $"(F3 kapat) — {tracker.Status}";
+        var header = Loc.T("ach.title", tracker.UnlockedCount, tracker.TotalCount,
+                           tracker.Status);
 
         var rows = new List<(string Text, Color Color)>();
 
@@ -261,7 +279,7 @@ public sealed class HudRenderer
             // Gizli VE acilmamis olan sakli kalir.
             if (achievement.Hidden && !unlocked)
             {
-                rows.Add(("[ ] ???", DimTextColor));
+                rows.Add(($"[ ] {Loc.T("ach.hidden")}", DimTextColor));
                 continue;
             }
 
@@ -275,8 +293,12 @@ public sealed class HudRenderer
         var panelWidth = width + padding * 2;
         var panelHeight = (rows.Count + 1) * lineHeight + padding * 2;
 
-        var originX = (windowWidth - panelWidth) / 2;
-        var originY = Math.Max(12, (windowHeight - panelHeight) / 2 - 40);
+        var origin = ClampToWindow((windowWidth - panelWidth) / 2,
+                                   (windowHeight - panelHeight) / 2 - 40,
+                                   panelWidth, panelHeight, windowWidth, windowHeight);
+
+        var originX = origin.X;
+        var originY = origin.Y;
 
         Fill(spriteBatch, new Rectangle(originX, originY, panelWidth, panelHeight),
              PanelColor * 0.94f);
@@ -310,19 +332,19 @@ public sealed class HudRenderer
 
         var rows = new List<(string Text, Color Color)>
         {
-            ($"SIRALAMALAR  (F4 kapat) — {backend.Status}", TextColor)
+            (Loc.T("lb.title", backend.Status), TextColor)
         };
 
         foreach (var board in boards)
         {
-            rows.Add(($"  {board.Name}  [su anki skorun: {tracker.Value(board.StatKey)}]",
+            rows.Add(($"  {board.Name}  [{Loc.T("lb.yourScore", tracker.Value(board.StatKey))}]",
                       CraftableColor));
 
             var entries = backend.Top(board, 5);
 
             if (entries.Count == 0)
             {
-                rows.Add(("    (henuz kayit yok)", DimTextColor));
+                rows.Add(($"    {Loc.T("lb.empty")}", DimTextColor));
                 continue;
             }
 
@@ -336,8 +358,12 @@ public sealed class HudRenderer
         var panelWidth = width + padding * 2;
         var panelHeight = rows.Count * lineHeight + padding * 2;
 
-        var originX = (windowWidth - panelWidth) / 2;
-        var originY = Math.Max(12, (windowHeight - panelHeight) / 2 - 40);
+        var origin = ClampToWindow((windowWidth - panelWidth) / 2,
+                                   (windowHeight - panelHeight) / 2 - 40,
+                                   panelWidth, panelHeight, windowWidth, windowHeight);
+
+        var originX = origin.X;
+        var originY = origin.Y;
 
         Fill(spriteBatch, new Rectangle(originX, originY, panelWidth, panelHeight),
              PanelColor * 0.94f);
@@ -363,14 +389,18 @@ public sealed class HudRenderer
         var lineHeight = _font.LineHeight * UiScale;
         var padding = 6 * UiScale;
 
-        var lines = new[] { "BASARIM ACILDI", achievement.Name, achievement.Description };
+        var lines = new[] { Loc.T("ach.unlocked"), achievement.Name, achievement.Description };
         var width = lines.Max(l => _font.Measure(l, UiScale));
 
         var panelWidth = width + padding * 2;
         var panelHeight = lines.Length * lineHeight + padding * 2;
 
-        var originX = windowWidth - panelWidth - 12;
-        var originY = windowHeight - panelHeight - 130;
+        var origin = ClampToWindow(windowWidth - panelWidth - 12,
+                                   windowHeight - panelHeight - 130,
+                                   panelWidth, panelHeight, windowWidth, windowHeight);
+
+        var originX = origin.X;
+        var originY = origin.Y;
 
         Fill(spriteBatch, new Rectangle(originX, originY, panelWidth, panelHeight),
              PanelColor * 0.95f);
@@ -387,6 +417,27 @@ public sealed class HudRenderer
         }
     }
 
+    /// <summary>
+    /// Ortalanan bir paneli pencere içinde tutar.
+    ///
+    /// MADDE 23'te ortaya cikti: yazi olcegi buyutulunce paneller
+    /// pencerenin disina tasiyordu. Erisilebilirlik ayarinin kendisi
+    /// arayuzu okunamaz hale getiriyordu — okunurluk icin buyutulen yazi,
+    /// panelin yarisini ekran disinda birakiyordu.
+    ///
+    /// Kirpma degil KAYDIRMA yapiliyor: panel pencereden buyukse sol/ust
+    /// kenara yaslanir, boylece en azindan basi gorunur.
+    /// </summary>
+    private static Point ClampToWindow(int x, int y, int width, int height,
+                                       int windowWidth, int windowHeight)
+    {
+        const int margin = 8;
+
+        return new Point(
+            Math.Max(margin, Math.Min(x, windowWidth - width - margin)),
+            Math.Max(margin, Math.Min(y, windowHeight - height - margin)));
+    }
+
     /// <summary>MADDE 22 — klan paneli: üyeler, rütbeler, sahipli yapı sayısı.</summary>
     public void DrawClan(SpriteBatch spriteBatch, ClanSystem clans, byte localPlayerId,
                          int windowWidth, int windowHeight)
@@ -396,37 +447,40 @@ public sealed class HudRenderer
 
         var rows = new List<(string Text, Color Color)>
         {
-            ("KLAN  (N kapat)   1 kur   2 davet et   3 ayril", TextColor)
+            (Loc.T("clan.title"), TextColor)
         };
 
         var clan = clans.ClanOf(localPlayerId);
 
         if (clan is null)
         {
-            rows.Add(("  Bir klanda degilsin.", DimTextColor));
-            rows.Add(("  Klan yapilarin sahipli olur: kendi yapini SOKERSIN", DimTextColor));
-            rows.Add(("  (malzemenin tamami doner), yabanci BASKIN yapar", DimTextColor));
-            rows.Add(("  (yarisi doner, 5 vurus surer).", DimTextColor));
+            rows.Add(($"  {Loc.T("clan.none")}", DimTextColor));
+            rows.Add(($"  {Loc.T("clan.none.hint1")}", DimTextColor));
+            rows.Add(($"  {Loc.T("clan.none.hint2")}", DimTextColor));
+            rows.Add(($"  {Loc.T("clan.none.hint3")}", DimTextColor));
         }
         else
         {
-            rows.Add(($"  [{clan.Tag}] {clan.Name}   ({clan.Members.Count} uye)", CraftableColor));
+            rows.Add(($"  {Loc.T("clan.header", clan.Tag, clan.Name, clan.Members.Count)}", CraftableColor));
 
             foreach (var member in clan.Members.OrderByDescending(m => m.Rank))
             {
-                var mine = member.PlayerId == localPlayerId ? " <- sen" : "";
+                var mine = member.PlayerId == localPlayerId ? Loc.T("clan.you") : "";
                 rows.Add(($"    {member.Rank.Label(),-6} {member.Name}{mine}", TextColor));
             }
 
-            rows.Add(($"  Sahipli yapi: {clans.OwnedStructureCount}", DimTextColor));
+            rows.Add(($"  {Loc.T("clan.owned", clans.OwnedStructureCount)}", DimTextColor));
         }
 
         var width = rows.Max(r => _font.Measure(r.Text, UiScale));
         var panelWidth = width + padding * 2;
         var panelHeight = rows.Count * lineHeight + padding * 2;
 
-        var originX = 12;
-        var originY = (windowHeight - panelHeight) / 2;
+        var origin = ClampToWindow(12, (windowHeight - panelHeight) / 2,
+                                   panelWidth, panelHeight, windowWidth, windowHeight);
+
+        var originX = origin.X;
+        var originY = origin.Y;
 
         Fill(spriteBatch, new Rectangle(originX, originY, panelWidth, panelHeight),
              PanelColor * 0.94f);
@@ -462,33 +516,33 @@ public sealed class HudRenderer
 
         var rows = new List<(string Text, Color Color)>
         {
-            ($"TAKAS  (Y kapat)   durum: {stateLabel}", TextColor),
-            ("  <- -> slot sec    yukari/asagi ekle-cikar    Enter onayla", DimTextColor),
+            (Loc.T("trade.title", stateLabel), TextColor),
+            ($"  {Loc.T("trade.help")}", DimTextColor),
             ("", DimTextColor)
         };
 
         var slot = inventory[selectedSlot];
         var slotText = slot.IsEmpty
-            ? "(bos)"
+            ? Loc.T("trade.slotEmpty")
             : $"{items.Get(slot.ItemId).Name} x{slot.Count}";
 
-        rows.Add(($"  Secili slot {selectedSlot + 1}: {slotText}", CraftableColor));
+        rows.Add(($"  {Loc.T("trade.selectedSlot", selectedSlot + 1, slotText)}", CraftableColor));
         rows.Add(("", DimTextColor));
 
-        rows.Add(($"  SENIN TEKLIFIN {(localAccepted ? "[ONAYLANDI]" : "")}",
+        rows.Add(($"  {Loc.T("trade.yourOffer")} {(localAccepted ? Loc.T("trade.accepted") : "")}",
                   localAccepted ? CraftableColor : TextColor));
 
-        if (mine.Count == 0) rows.Add(("    -", DimTextColor));
+        if (mine.Count == 0) rows.Add(($"    {Loc.T("common.none")}", DimTextColor));
         foreach (var stack in mine)
         {
             rows.Add(($"    {items.Get(stack.ItemId).Name} x{stack.Amount}", TextColor));
         }
 
         rows.Add(("", DimTextColor));
-        rows.Add(($"  KARSI TARAF {(partnerAccepted ? "[ONAYLANDI]" : "")}",
+        rows.Add(($"  {Loc.T("trade.theirOffer")} {(partnerAccepted ? Loc.T("trade.accepted") : "")}",
                   partnerAccepted ? CraftableColor : TextColor));
 
-        if (theirs.Count == 0) rows.Add(("    -", DimTextColor));
+        if (theirs.Count == 0) rows.Add(($"    {Loc.T("common.none")}", DimTextColor));
         foreach (var stack in theirs)
         {
             rows.Add(($"    {items.Get(stack.ItemId).Name} x{stack.Amount}", TextColor));
@@ -498,8 +552,12 @@ public sealed class HudRenderer
         var panelWidth = Math.Max(width + padding * 2, 380);
         var panelHeight = rows.Count * lineHeight + padding * 2;
 
-        var originX = (windowWidth - panelWidth) / 2;
-        var originY = Math.Max(12, (windowHeight - panelHeight) / 2 - 40);
+        var origin = ClampToWindow((windowWidth - panelWidth) / 2,
+                                   (windowHeight - panelHeight) / 2 - 40,
+                                   panelWidth, panelHeight, windowWidth, windowHeight);
+
+        var originX = origin.X;
+        var originY = origin.Y;
 
         Fill(spriteBatch, new Rectangle(originX, originY, panelWidth, panelHeight),
              PanelColor * 0.95f);
@@ -512,11 +570,83 @@ public sealed class HudRenderer
         }
     }
 
+    /// <summary>
+    /// MADDE 23 — erişilebilirlik ve dil ayarları paneli.
+    ///
+    /// Panelin altındaki not bilinçli: renk körlüğü paleti tek başına
+    /// erişilebilirlik değildir. Kritik bilgi her yerde METİNLE de
+    /// veriliyor ([X]/[ ], "GUVENLI BOLGE"/"PvP BOLGESI", "Nadir"/"Efsanevi");
+    /// palet yalnızca ayırt etmeyi hızlandırıyor.
+    /// </summary>
+    public void DrawSettings(SpriteBatch spriteBatch, AccessibilitySettings settings,
+                             int windowWidth, int windowHeight)
+    {
+        var lineHeight = _font.LineHeight * UiScale;
+        var padding = 6 * UiScale;
+
+        var rows = new (string Text, Color Color)[]
+        {
+            (Loc.T("settings.title"), TextColor),
+            (Loc.T("settings.language", Loc.CurrentName), CraftableColor),
+            (Loc.T("settings.textScale", settings.TextScale), CraftableColor),
+            (Loc.T("settings.colorVision", settings.ColorVisionLabel), CraftableColor),
+            ("", DimTextColor),
+            (Loc.T("settings.note"), DimTextColor),
+
+            // Palet ornekleri: secilen modun kademeleri gercekten
+            // ayrisiyor mu, oyuncu BURADA gorur.
+            ($"  {Loc.T("rarity.common")} / {Loc.T("rarity.uncommon")} / " +
+             $"{Loc.T("rarity.rare")} / {Loc.T("rarity.epic")} / {Loc.T("rarity.legendary")}",
+             TextColor)
+        };
+
+        var width = rows.Max(r => _font.Measure(r.Text, UiScale));
+        var panelWidth = width + padding * 2;
+        var panelHeight = (rows.Length + 2) * lineHeight + padding * 2;
+
+        var origin = ClampToWindow((windowWidth - panelWidth) / 2,
+                                   (windowHeight - panelHeight) / 2 - 40,
+                                   panelWidth, panelHeight, windowWidth, windowHeight);
+
+        var originX = origin.X;
+        var originY = origin.Y;
+
+        Fill(spriteBatch, new Rectangle(originX, originY, panelWidth, panelHeight),
+             PanelColor * 0.95f);
+
+        for (var i = 0; i < rows.Length; i++)
+        {
+            _font.Draw(spriteBatch, rows[i].Text,
+                new Vector2(originX + padding, originY + padding + i * lineHeight),
+                rows[i].Color, UiScale);
+        }
+
+        // Nadirlik renkleri yan yana: secili palette kademeler birbirinden
+        // ayrisiyor mu, tek bakista gorulur.
+        var swatchY = originY + padding + (rows.Length + 1) * lineHeight;
+        var swatchWidth = Math.Max(24, (panelWidth - padding * 2) / 5);
+
+        var palette = settings.Palette;
+        var swatches = new[]
+        {
+            palette.RarityCommon, palette.RarityUncommon, palette.RarityRare,
+            palette.RarityEpic, palette.RarityLegendary
+        };
+
+        for (var i = 0; i < swatches.Length; i++)
+        {
+            Fill(spriteBatch,
+                new Rectangle(originX + padding + i * swatchWidth, swatchY,
+                              swatchWidth - 4, lineHeight - 4),
+                swatches[i]);
+        }
+    }
+
     /// <summary>Sol üstte seçili yapı ve ağ oturumu durumu.</summary>
     public void DrawStatus(SpriteBatch spriteBatch, string selectedBuild, string sessionLine)
     {
         var lineHeight = _font.LineHeight * UiScale;
-        var lines = new[] { sessionLine, $"YAPI: {selectedBuild}  (Q/Z degistir, R koy)" };
+        var lines = new[] { sessionLine, Loc.T("hud.build", selectedBuild) };
 
         var width = lines.Max(l => _font.Measure(l, UiScale));
         var padding = 5 * UiScale;
@@ -542,8 +672,11 @@ public sealed class HudRenderer
     public void DrawZone(SpriteBatch spriteBatch, bool safe, string steamStatus,
                          int windowWidth, int windowHeight)
     {
-        var line = safe ? "GUVENLI BOLGE" : "PvP BOLGESI";
-        var color = safe ? CraftableColor : new Color(235, 110, 110);
+        var line = Loc.T(safe ? "hud.zone.safe" : "hud.zone.pvp");
+
+        // "Olumsuz" rengi de paletten: PvP kirmizisi, renk korlugu modunda
+        // guvenli yesilinden ayrisan bir tona kayiyor.
+        var color = safe ? CraftableColor : Accessibility.Palette.Negative;
 
         var width = Math.Max(_font.Measure(line, UiScale), _font.Measure(steamStatus, UiScale));
         var padding = 5 * UiScale;

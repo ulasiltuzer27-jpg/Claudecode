@@ -1,0 +1,51 @@
+# MADDE 23 dogrulamasi: dil degisimi, yazi boyutu, renk korlugu paleti.
+
+wait 90
+shot 01_turkce
+
+# F7: ayarlar paneli
+tap F7
+wait 20
+shot 02_ayarlar_tr
+
+# 1: dil degistir (tr -> en)
+tap D1
+wait 25
+shot 03_ingilizce
+
+# Ayarlari kapat, HUD'in tamaminin ingilizce oldugunu goster
+tap F7
+wait 20
+shot 04_hud_ingilizce
+
+# Gardirop ingilizce mi (nadirlik etiketleri dahil)
+tap K
+wait 15
+tap D3
+wait 15
+tap D1
+wait 20
+shot 05_gardirop_ingilizce
+tap K
+wait 10
+
+# Yazi boyutu 3x
+tap F7
+wait 15
+tap D2
+wait 25
+shot 06_yazi_3x
+
+# Renk paleti: doteranopi (en yaygin tur)
+tap D3
+wait 15
+tap D3
+wait 25
+shot 07_palet_doteranopi
+
+# Tritanopi
+tap D3
+wait 25
+shot 08_palet_tritanopi
+
+quit

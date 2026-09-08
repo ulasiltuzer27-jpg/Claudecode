@@ -53,7 +53,7 @@ public sealed class LocalLeaderboardBackend : ILeaderboardBackend
     private readonly Dictionary<string, Dictionary<string, int>> _boards = new(StringComparer.Ordinal);
 
     public bool IsAvailable => true;
-    public string Status => "Leaderboard yerel (Steam yok)";
+    public string Status => Localization.Loc.T("lb.status.local");
 
     /// <summary>Yerel oyuncunun adı. Steam derlemesinde Steam profil adı gelir.</summary>
     public string LocalPlayerName { get; set; } = "Sen";
@@ -110,7 +110,8 @@ public sealed class SteamLeaderboardBackend : ILeaderboardBackend
     private Steamworks.CallResult<Steamworks.LeaderboardFindResult_t>? _findCall;
 
     public bool IsAvailable => Steamworks.SteamAPI.IsSteamRunning();
-    public string Status => IsAvailable ? "Leaderboard Steam'de" : "Steam calismiyor";
+    public string Status =>
+        Localization.Loc.T(IsAvailable ? "lb.status.steam" : "steam.notRunning");
 
     public void Upload(LeaderboardDefinition board, int score)
     {
@@ -171,7 +172,7 @@ public sealed class SteamLeaderboardBackend : ILeaderboardBackend
     }
 #else
     public bool IsAvailable => false;
-    public string Status => "Steam derlemesi degil";
+    public string Status => Localization.Loc.T("steam.notSteamBuild");
 
     public void Upload(LeaderboardDefinition board, int score) { _ = board; _ = score; }
 

@@ -284,13 +284,13 @@ public sealed class TradeSession
 
     public static string Describe(TradeOutcome outcome) => outcome switch
     {
-        TradeOutcome.Success => "Tamam",
-        TradeOutcome.NotNegotiating => "Acik bir takas yok",
-        TradeOutcome.ItemNotOwned => "Teklif edilen item sende yok",
-        TradeOutcome.InventoryFull => "Envanterde yer yok",
-        TradeOutcome.NotAuthoritative => "Takasi yalnizca host uygular",
-        TradeOutcome.SelfTrade => "Kendinle takas yapamazsin",
-        TradeOutcome.AlreadyTrading => "Zaten bir takas acik",
+        TradeOutcome.Success => Localization.Loc.T("trade.out.success"),
+        TradeOutcome.NotNegotiating => Localization.Loc.T("trade.out.notNegotiating"),
+        TradeOutcome.ItemNotOwned => Localization.Loc.T("trade.out.itemNotOwned"),
+        TradeOutcome.InventoryFull => Localization.Loc.T("trade.out.inventoryFull"),
+        TradeOutcome.NotAuthoritative => Localization.Loc.T("trade.out.notAuthoritative"),
+        TradeOutcome.SelfTrade => Localization.Loc.T("trade.out.selfTrade"),
+        TradeOutcome.AlreadyTrading => Localization.Loc.T("trade.out.alreadyTrading"),
         _ => "?"
     };
 }

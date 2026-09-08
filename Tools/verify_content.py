@@ -645,6 +645,89 @@ def main() -> int:
                 fail(f"cosmetics.json: '{cid}' sezon penceresi ters "
                      f"(from={frm} > until={until}) - item hicbir zaman elde edilemez.")
 
+    # ======================================================================
+    # MADDE 23 - dil tablolari ve erisilebilirlik
+    # ======================================================================
+    loc_dir = os.path.join(CONTENT, "Localization")
+    if os.path.isdir(loc_dir):
+        tables: dict[str, dict] = {}
+
+        for name in sorted(os.listdir(loc_dir)):
+            if not name.endswith(".json"):
+                continue
+
+            code = name[:-5]
+            with open(os.path.join(loc_dir, name), encoding="utf-8") as f:
+                doc = json.load(f)
+
+            checks += 1
+            if doc.get("code") != code:
+                fail(f"Localization/{name}: dosya adi '{code}' ama icindeki "
+                     f"kod '{doc.get('code')}'. Loc.Load bunu hata sayar.")
+
+            tables[code] = doc.get("strings", {})
+
+        # Yedek dil olmadan eksik anahtarlar icin donulecek yer kalmaz.
+        checks += 1
+        if "en" not in tables:
+            fail("Localization: yedek dil 'en' yok. Loc.FallbackCode buna dayaniyor.")
+
+        if "en" in tables:
+            reference = set(tables["en"])
+
+            for code, strings in tables.items():
+                if code == "en":
+                    continue
+
+                # Eksik ceviri: ekranda [key] gorunur.
+                checks += 1
+                missing = reference - set(strings)
+                if missing:
+                    fail(f"Localization/{code}.json: {len(missing)} anahtar eksik "
+                         f"(orn. {sorted(missing)[:3]}). Eksik anahtar ekranda "
+                         f"[key] olarak gorunur.")
+
+                # Fazla anahtar: ya yazim hatasi ya da en.json'a eklenmemis.
+                checks += 1
+                extra = set(strings) - reference
+                if extra:
+                    fail(f"Localization/{code}.json: en.json'da olmayan "
+                         f"{len(extra)} anahtar var (orn. {sorted(extra)[:3]}).")
+
+                # Bicim yer tutuculari ayrisirsa string.Format ya patlar ya
+                # da bilgiyi dusurur.
+                for key in reference & set(strings):
+                    checks += 1
+                    ref_slots = set(re.findall(r"\{(\d+)\}", tables["en"][key]))
+                    cur_slots = set(re.findall(r"\{(\d+)\}", strings[key]))
+
+                    if ref_slots != cur_slots:
+                        fail(f"Localization/{code}.json: '{key}' yer tutuculari "
+                             f"ayrismis (en={sorted(ref_slots)}, "
+                             f"{code}={sorted(cur_slots)}).")
+
+        # Kodda gecen Loc.T("...") anahtarlari gercekten tanimli mi.
+        loc_keys: set[str] = set()
+        for dirpath, dirnames, filenames in os.walk(ROOT):
+            dirnames[:] = [d for d in dirnames if d not in ("bin", "obj", ".git", ".config")]
+            for name in filenames:
+                if not name.endswith(".cs"):
+                    continue
+                with open(os.path.join(dirpath, name), encoding="utf-8") as f:
+                    # Yorum satirlari atlanir: XML dokumantasyonundaki
+                    # ornek cagrilar ("bkz. Loc.T(...)") gercek kullanim
+                    # degil ve eksik anahtar diye raporlanmamali.
+                    code_lines = [ln for ln in f
+                                  if not ln.lstrip().startswith(("//", "///", "*"))]
+
+                loc_keys.update(re.findall(r'Loc\.T\(\s*"([^"]+)"', "".join(code_lines)))
+
+        if "en" in tables:
+            for key in sorted(loc_keys):
+                checks += 1
+                if key not in tables["en"]:
+                    fail(f"Loc.T(\"{key}\") cagriliyor ama en.json'da tanimli degil.")
+
     # --- Rapor
     print(f"{checks} kontrol calistirildi.\n")
     for w in warnings:

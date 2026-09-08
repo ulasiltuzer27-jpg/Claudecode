@@ -190,8 +190,18 @@ public sealed class SteamInventory(SteamItemCatalog catalog)
     /// <summary>Steam bağlantısı kurulabildi mi.</summary>
     public bool IsAvailable { get; private set; }
 
+    /// <summary>
+    /// Son durumun ÇEVİRİ ANAHTARI — çevrilmiş metin değil.
+    ///
+    /// Metin saklansaydı, dil değiştiğinde (madde 23) bu satır eski dilde
+    /// donup kalırdı: çeviri bir kez, <see cref="Refresh"/> anında
+    /// yapılırdı. Anahtar saklanıp <see cref="Status"/> her okumada
+    /// çevrildiği için dil değişimi anında yansıyor.
+    /// </summary>
+    private string _statusKey = "steam.absent";
+
     /// <summary>Son hata/durum açıklaması — HUD'da gösterilir.</summary>
-    public string Status { get; private set; } = "Steam yok (gelistirme derlemesi)";
+    public string Status => Localization.Loc.T(_statusKey);
 
     /// <summary>
     /// Steam'den sahiplik listesini tazeler.
@@ -206,10 +216,10 @@ public sealed class SteamInventory(SteamItemCatalog catalog)
         // uygulamada SteamInventoryResultReady_t callback'i beklenir.
         // Burada yalnızca çağrı noktası işaretleniyor.
         IsAvailable = Steamworks.SteamAPI.IsSteamRunning();
-        Status = IsAvailable ? "Steam envanteri okundu" : "Steam calismiyor";
+        _statusKey = IsAvailable ? "steam.inventoryRead" : "steam.notRunning";
 #else
         IsAvailable = false;
-        Status = "Steam yok (gelistirme derlemesi)";
+        _statusKey = "steam.absent";
         _items.Clear();
 #endif
     }

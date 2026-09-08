@@ -75,9 +75,9 @@ public static class ClanRankExtensions
 
     public static string Label(this ClanRank rank) => rank switch
     {
-        ClanRank.Leader => "Lider",
-        ClanRank.Officer => "Subay",
-        ClanRank.Member => "Uye",
+        ClanRank.Leader => Localization.Loc.T("clan.rank.leader"),
+        ClanRank.Officer => Localization.Loc.T("clan.rank.officer"),
+        ClanRank.Member => Localization.Loc.T("clan.rank.member"),
         _ => "?"
     };
 }

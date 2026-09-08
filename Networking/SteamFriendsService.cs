@@ -33,7 +33,8 @@ public sealed class SteamFriendsService
     private Steamworks.Callback<Steamworks.GameRichPresenceJoinRequested_t>? _joinCallback;
 
     public bool IsAvailable => Steamworks.SteamAPI.IsSteamRunning();
-    public string Status => IsAvailable ? "Steam arkadaslari hazir" : "Steam calismiyor";
+    public string Status =>
+        Localization.Loc.T(IsAvailable ? "steam.friendsReady" : "steam.notRunning");
 
     /// <summary>Yerel oyuncunun Steam profil adı.</summary>
     public string LocalPlayerName =>
@@ -86,7 +87,7 @@ public sealed class SteamFriendsService
     // Steam'siz derleme: sinif var, davet yolu kapali. Cagiran taraf
     // #if ile dallanmiyor; yalnizca IsAvailable false donuyor.
     public bool IsAvailable => false;
-    public string Status => "Steam derlemesi degil";
+    public string Status => Localization.Loc.T("steam.notSteamBuild");
     public string LocalPlayerName => "Sen";
 
     public void Initialize() { }

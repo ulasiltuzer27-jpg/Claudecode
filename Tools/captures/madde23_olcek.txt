@@ -1,0 +1,15 @@
+# Yazi olcegi 4x'te panellerin pencere icinde kalip kalmadigi.
+wait 90
+tap F7
+wait 15
+tap D2
+wait 10
+tap D2
+wait 20
+shot 01_ayarlar_4x
+tap F7
+wait 15
+tap F3
+wait 25
+shot 02_basarimlar_4x
+quit

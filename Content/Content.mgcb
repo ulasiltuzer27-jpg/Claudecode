@@ -419,3 +419,9 @@
 
 #begin Steam/achievements.json
 /copy:Steam/achievements.json
+
+#begin Localization/en.json
+/copy:Localization/en.json
+
+#begin Localization/tr.json
+/copy:Localization/tr.json
