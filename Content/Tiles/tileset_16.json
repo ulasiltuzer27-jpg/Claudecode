@@ -1,0 +1,80 @@
+{
+  "asset": "Tiles/tileset_16",
+  "tileSize": 16,
+  "columns": 3,
+  "rows": 14,
+  "variants": 3,
+  "placeholder": true,
+  "tiles": [
+    {
+      "index": 0,
+      "key": "grass",
+      "solid": false
+    },
+    {
+      "index": 1,
+      "key": "dirt",
+      "solid": false
+    },
+    {
+      "index": 2,
+      "key": "stone",
+      "solid": true
+    },
+    {
+      "index": 3,
+      "key": "sand",
+      "solid": false
+    },
+    {
+      "index": 4,
+      "key": "water",
+      "solid": true
+    },
+    {
+      "index": 5,
+      "key": "wood",
+      "solid": true
+    },
+    {
+      "index": 6,
+      "key": "plank_floor",
+      "solid": false
+    },
+    {
+      "index": 7,
+      "key": "stone_wall",
+      "solid": true
+    },
+    {
+      "index": 8,
+      "key": "campfire",
+      "solid": true
+    },
+    {
+      "index": 9,
+      "key": "soil_tilled",
+      "solid": false
+    },
+    {
+      "index": 10,
+      "key": "dungeon_floor",
+      "solid": false
+    },
+    {
+      "index": 11,
+      "key": "dungeon_wall",
+      "solid": true
+    },
+    {
+      "index": 12,
+      "key": "dungeon_entrance",
+      "solid": false
+    },
+    {
+      "index": 13,
+      "key": "dungeon_exit",
+      "solid": false
+    }
+  ]
+}

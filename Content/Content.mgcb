@@ -1,0 +1,250 @@
+#----------------------------- Global Properties ----------------------------#
+
+/outputDir:bin/$(Platform)
+/intermediateDir:obj/$(Platform)
+/platform:DesktopGL
+/config:
+/profile:Reach
+/compress:False
+
+#-------------------------------- References --------------------------------#
+
+
+#---------------------------------- Content ---------------------------------#
+
+#begin Characters/boss_frost_maw.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=False
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Characters/boss_frost_maw.png
+
+#begin Characters/boss_moss_titan.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=False
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Characters/boss_moss_titan.png
+
+#begin Characters/char_free_female.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=False
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Characters/char_free_female.png
+
+#begin Characters/char_free_male.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=False
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Characters/char_free_male.png
+
+#begin Characters/creature_capra.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=False
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Characters/creature_capra.png
+
+#begin Characters/enemy_husk.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=False
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Characters/enemy_husk.png
+
+#begin Characters/enemy_stalker.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=False
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Characters/enemy_stalker.png
+
+#begin Characters/npc_elder.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=False
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Characters/npc_elder.png
+
+#begin Characters/npc_trader.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=False
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Characters/npc_trader.png
+
+#begin Items/crops_16.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=False
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Items/crops_16.png
+
+#begin Items/icons_16.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=False
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Items/icons_16.png
+
+#begin Tiles/tileset_16.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=False
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Tiles/tileset_16.png
+
+#begin UI/font_ascii.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=False
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:UI/font_ascii.png
+
+#begin Characters/boss_frost_maw.json
+/copy:Characters/boss_frost_maw.json
+
+#begin Characters/boss_moss_titan.json
+/copy:Characters/boss_moss_titan.json
+
+#begin Characters/char_free_female.json
+/copy:Characters/char_free_female.json
+
+#begin Characters/char_free_male.json
+/copy:Characters/char_free_male.json
+
+#begin Characters/creature_capra.json
+/copy:Characters/creature_capra.json
+
+#begin Characters/enemy_husk.json
+/copy:Characters/enemy_husk.json
+
+#begin Characters/enemy_stalker.json
+/copy:Characters/enemy_stalker.json
+
+#begin Characters/npc_elder.json
+/copy:Characters/npc_elder.json
+
+#begin Characters/npc_trader.json
+/copy:Characters/npc_trader.json
+
+#begin Entities/creatures.json
+/copy:Entities/creatures.json
+
+#begin Entities/enemies.json
+/copy:Entities/enemies.json
+
+#begin Entities/npcs.json
+/copy:Entities/npcs.json
+
+#begin Items/crops_16.json
+/copy:Items/crops_16.json
+
+#begin Items/icons_16.json
+/copy:Items/icons_16.json
+
+#begin Items/items.json
+/copy:Items/items.json
+
+#begin Items/recipes.json
+/copy:Items/recipes.json
+
+#begin Steam/itemdefs.json
+/copy:Steam/itemdefs.json
+
+#begin Tiles/tileset_16.json
+/copy:Tiles/tileset_16.json
+
+#begin UI/font_ascii.json
+/copy:UI/font_ascii.json
+
+#begin World/biomes.json
+/copy:World/biomes.json
+
+#begin World/buildables.json
+/copy:World/buildables.json
+
+#begin World/climate.json
+/copy:World/climate.json
+
+#begin World/crops.json
+/copy:World/crops.json
+
+#begin World/dungeons.json
+/copy:World/dungeons.json
+
+#begin World/fishing.json
+/copy:World/fishing.json
+
+#begin World/resources.json
+/copy:World/resources.json
+
+#begin World/zones.json
+/copy:World/zones.json

@@ -1,0 +1,36 @@
+{
+  "_comment": "Biome tablosu. Esikleri degistirmek icin yeniden derlemeye gerek yok.",
+
+  "_esik_notu": "Esikler fBm'in GERCEK dagilimina gore secildi. fBm ciktisi 0.5 etrafinda yigilir (std ~0.10), duz 0..1 dagilmaz. 0.30 gibi bir esik teoride 'alt %30' gibi durur ama pratikte alt %1'e denk gelir. Degerler Tools/verify_worldgen.py ile olculen yuzdeliklerden alindi; esik degistirdikten sonra o scripti tekrar calistirin.",
+
+  "noise": {
+    "elevationScale": 0.011,
+    "moistureScale": 0.019,
+    "octaves": 4,
+    "lacunarity": 2.0,
+    "persistence": 0.5,
+    "moistureSeedOffset": 7777
+  },
+
+  "_rules_comment": "Sirayla degerlendirilir, ILK eslesen kazanir. Son kural kosulsuz = varsayilan.",
+  "rules": [
+    { "biome": "ocean",    "tile": "water", "elevationBelow": 0.397 },
+    { "biome": "beach",    "tile": "sand",  "elevationBelow": 0.421 },
+    { "biome": "wetland",  "tile": "dirt",  "elevationBelow": 0.482, "moistureAbove": 0.560 },
+    { "biome": "plains",   "tile": "grass", "elevationBelow": 0.598 },
+    { "biome": "highland", "tile": "dirt",  "elevationBelow": 0.681 },
+    { "biome": "mountain", "tile": "stone" }
+  ],
+
+  "_scatter_comment": "Zemin secildikten SONRA uygulanir. Kati tile'lar engel olur.",
+  "scatter": [
+    { "tile": "wood",  "onBiome": "plains",   "moistureAbove": 0.518, "chance": 0.22 },
+    { "tile": "stone", "onBiome": "highland", "chance": 0.10 }
+  ],
+
+  "spawn": {
+    "_comment": "Baslangic noktasi aramasi: bu kadar acik komsu tile bulunana kadar spiral tara.",
+    "minimumOpenArea": 120,
+    "searchRadius": 400
+  }
+}

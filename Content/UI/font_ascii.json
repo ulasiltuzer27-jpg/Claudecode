@@ -1,0 +1,439 @@
+{
+  "asset": "UI/font_ascii",
+  "columns": 16,
+  "rows": 7,
+  "cellWidth": 10,
+  "cellHeight": 16,
+  "lineSpacing": 17,
+  "placeholder": true,
+  "glyphs": [
+    {
+      "code": 32,
+      "advance": 2
+    },
+    {
+      "code": 33,
+      "advance": 3
+    },
+    {
+      "code": 34,
+      "advance": 3
+    },
+    {
+      "code": 35,
+      "advance": 6
+    },
+    {
+      "code": 36,
+      "advance": 7
+    },
+    {
+      "code": 37,
+      "advance": 7
+    },
+    {
+      "code": 38,
+      "advance": 7
+    },
+    {
+      "code": 39,
+      "advance": 1
+    },
+    {
+      "code": 40,
+      "advance": 4
+    },
+    {
+      "code": 41,
+      "advance": 3
+    },
+    {
+      "code": 42,
+      "advance": 7
+    },
+    {
+      "code": 43,
+      "advance": 7
+    },
+    {
+      "code": 44,
+      "advance": 2
+    },
+    {
+      "code": 45,
+      "advance": 3
+    },
+    {
+      "code": 46,
+      "advance": 2
+    },
+    {
+      "code": 47,
+      "advance": 3
+    },
+    {
+      "code": 48,
+      "advance": 6
+    },
+    {
+      "code": 49,
+      "advance": 6
+    },
+    {
+      "code": 50,
+      "advance": 6
+    },
+    {
+      "code": 51,
+      "advance": 6
+    },
+    {
+      "code": 52,
+      "advance": 6
+    },
+    {
+      "code": 53,
+      "advance": 6
+    },
+    {
+      "code": 54,
+      "advance": 6
+    },
+    {
+      "code": 55,
+      "advance": 6
+    },
+    {
+      "code": 56,
+      "advance": 6
+    },
+    {
+      "code": 57,
+      "advance": 6
+    },
+    {
+      "code": 58,
+      "advance": 2
+    },
+    {
+      "code": 59,
+      "advance": 2
+    },
+    {
+      "code": 60,
+      "advance": 6
+    },
+    {
+      "code": 61,
+      "advance": 6
+    },
+    {
+      "code": 62,
+      "advance": 6
+    },
+    {
+      "code": 63,
+      "advance": 4
+    },
+    {
+      "code": 64,
+      "advance": 10
+    },
+    {
+      "code": 65,
+      "advance": 6
+    },
+    {
+      "code": 66,
+      "advance": 6
+    },
+    {
+      "code": 67,
+      "advance": 7
+    },
+    {
+      "code": 68,
+      "advance": 7
+    },
+    {
+      "code": 69,
+      "advance": 6
+    },
+    {
+      "code": 70,
+      "advance": 6
+    },
+    {
+      "code": 71,
+      "advance": 7
+    },
+    {
+      "code": 72,
+      "advance": 8
+    },
+    {
+      "code": 73,
+      "advance": 3
+    },
+    {
+      "code": 74,
+      "advance": 6
+    },
+    {
+      "code": 75,
+      "advance": 6
+    },
+    {
+      "code": 76,
+      "advance": 6
+    },
+    {
+      "code": 77,
+      "advance": 9
+    },
+    {
+      "code": 78,
+      "advance": 8
+    },
+    {
+      "code": 79,
+      "advance": 7
+    },
+    {
+      "code": 80,
+      "advance": 6
+    },
+    {
+      "code": 81,
+      "advance": 7
+    },
+    {
+      "code": 82,
+      "advance": 6
+    },
+    {
+      "code": 83,
+      "advance": 6
+    },
+    {
+      "code": 84,
+      "advance": 6
+    },
+    {
+      "code": 85,
+      "advance": 7
+    },
+    {
+      "code": 86,
+      "advance": 6
+    },
+    {
+      "code": 87,
+      "advance": 10
+    },
+    {
+      "code": 88,
+      "advance": 6
+    },
+    {
+      "code": 89,
+      "advance": 6
+    },
+    {
+      "code": 90,
+      "advance": 7
+    },
+    {
+      "code": 91,
+      "advance": 3
+    },
+    {
+      "code": 92,
+      "advance": 3
+    },
+    {
+      "code": 93,
+      "advance": 3
+    },
+    {
+      "code": 94,
+      "advance": 6
+    },
+    {
+      "code": 95,
+      "advance": 5
+    },
+    {
+      "code": 96,
+      "advance": 3
+    },
+    {
+      "code": 97,
+      "advance": 5
+    },
+    {
+      "code": 98,
+      "advance": 6
+    },
+    {
+      "code": 99,
+      "advance": 5
+    },
+    {
+      "code": 100,
+      "advance": 6
+    },
+    {
+      "code": 101,
+      "advance": 6
+    },
+    {
+      "code": 102,
+      "advance": 3
+    },
+    {
+      "code": 103,
+      "advance": 6
+    },
+    {
+      "code": 104,
+      "advance": 7
+    },
+    {
+      "code": 105,
+      "advance": 3
+    },
+    {
+      "code": 106,
+      "advance": 3
+    },
+    {
+      "code": 107,
+      "advance": 6
+    },
+    {
+      "code": 108,
+      "advance": 3
+    },
+    {
+      "code": 109,
+      "advance": 9
+    },
+    {
+      "code": 110,
+      "advance": 7
+    },
+    {
+      "code": 111,
+      "advance": 5
+    },
+    {
+      "code": 112,
+      "advance": 6
+    },
+    {
+      "code": 113,
+      "advance": 6
+    },
+    {
+      "code": 114,
+      "advance": 4
+    },
+    {
+      "code": 115,
+      "advance": 4
+    },
+    {
+      "code": 116,
+      "advance": 3
+    },
+    {
+      "code": 117,
+      "advance": 7
+    },
+    {
+      "code": 118,
+      "advance": 5
+    },
+    {
+      "code": 119,
+      "advance": 8
+    },
+    {
+      "code": 120,
+      "advance": 5
+    },
+    {
+      "code": 121,
+      "advance": 5
+    },
+    {
+      "code": 122,
+      "advance": 6
+    },
+    {
+      "code": 123,
+      "advance": 3
+    },
+    {
+      "code": 124,
+      "advance": 3
+    },
+    {
+      "code": 125,
+      "advance": 3
+    },
+    {
+      "code": 126,
+      "advance": 6
+    },
+    {
+      "code": 199,
+      "advance": 7
+    },
+    {
+      "code": 286,
+      "advance": 7
+    },
+    {
+      "code": 304,
+      "advance": 3
+    },
+    {
+      "code": 214,
+      "advance": 7
+    },
+    {
+      "code": 350,
+      "advance": 6
+    },
+    {
+      "code": 220,
+      "advance": 7
+    },
+    {
+      "code": 231,
+      "advance": 5
+    },
+    {
+      "code": 287,
+      "advance": 6
+    },
+    {
+      "code": 305,
+      "advance": 3
+    },
+    {
+      "code": 246,
+      "advance": 5
+    },
+    {
+      "code": 351,
+      "advance": 4
+    },
+    {
+      "code": 252,
+      "advance": 7
+    }
+  ]
+}

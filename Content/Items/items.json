@@ -1,0 +1,106 @@
+{
+  "_comment": "Item tanimlari. 'icon' degeri icons_16.png seridindeki sutun indeksidir.",
+  "_localization_notu": "'name' su an dogrudan goruntulenen metin. Madde 23'te bu alan bir string tablo anahtarina donusecek (orn. 'item.wood'), metin Localization/ altindan gelecek.",
+  "slotCount": 24,
+  "_slot_notu": "WorldInventory slot sayisi. Dolu envanterde toplama basarisiz olur.",
+  "items": [
+    {
+      "id": "wood",
+      "name": "Odun",
+      "icon": 0,
+      "maxStack": 99,
+      "category": "material"
+    },
+    {
+      "id": "stone",
+      "name": "Taş",
+      "icon": 1,
+      "maxStack": 99,
+      "category": "material"
+    },
+    {
+      "id": "plank",
+      "name": "Tahta",
+      "icon": 2,
+      "maxStack": 99,
+      "category": "material"
+    },
+    {
+      "id": "stone_brick",
+      "name": "Taş Tuğla",
+      "icon": 3,
+      "maxStack": 99,
+      "category": "material"
+    },
+    {
+      "id": "stone_axe",
+      "name": "Taş Balta",
+      "icon": 4,
+      "maxStack": 1,
+      "category": "tool"
+    },
+    {
+      "id": "campfire",
+      "name": "Kamp Ateşi",
+      "icon": 5,
+      "maxStack": 10,
+      "category": "placeable"
+    },
+    {
+      "id": "wheat_seed",
+      "name": "Buğday Tohumu",
+      "icon": 6,
+      "maxStack": 99,
+      "category": "seed"
+    },
+    {
+      "id": "wheat",
+      "name": "Buğday",
+      "icon": 7,
+      "maxStack": 99,
+      "category": "produce"
+    },
+    {
+      "id": "pumpkin_seed",
+      "name": "Balkabağı Tohumu",
+      "icon": 8,
+      "maxStack": 99,
+      "category": "seed"
+    },
+    {
+      "id": "pumpkin",
+      "name": "Balkabağı",
+      "icon": 9,
+      "maxStack": 99,
+      "category": "produce"
+    },
+    {
+      "id": "fish",
+      "name": "Balık",
+      "icon": 10,
+      "maxStack": 99,
+      "category": "produce"
+    },
+    {
+      "id": "feed",
+      "name": "Yem",
+      "icon": 11,
+      "maxStack": 99,
+      "category": "material"
+    },
+    {
+      "id": "coin",
+      "name": "Altın",
+      "icon": 12,
+      "maxStack": 999,
+      "category": "currency"
+    },
+    {
+      "id": "relic",
+      "name": "Kalıntı",
+      "icon": 13,
+      "maxStack": 10,
+      "category": "treasure"
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "_comment": "Madde 16 — zindan/instance alanlari.",
+
+  "_giris_notu": "Dunyada bu tile'a rastlanirsa zindan girisidir. Uretici tarafindan degil, oyuncunun bulmasi icin seyrek serpistirilir.",
+  "entranceTile": "dungeon_entrance",
+  "exitTile": "dungeon_exit",
+  "entranceChancePerTile": 0.0009,
+  "entranceBiomeTiles": [ "stone" ],
+
+  "columns": 64,
+  "rows": 48,
+  "roomCount": 9,
+  "minRoomSize": 5,
+  "maxRoomSize": 11,
+
+  "_odul_notu": "Zindanda boss yenilince cikis acilir; bossun ganimeti enemies.json'da tanimli.",
+  "clearRewardItem": "coin",
+  "clearRewardAmount": 40
+}

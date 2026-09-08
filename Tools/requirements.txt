@@ -1,0 +1,2 @@
+# Placeholder sprite ureteci ve dogrulama araclarinin tek bagimliligi.
+pillow>=10.0

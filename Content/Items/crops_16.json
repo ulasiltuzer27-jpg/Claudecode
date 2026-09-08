@@ -1,0 +1,20 @@
+{
+  "asset": "Items/crops_16",
+  "frameWidth": 16,
+  "frameHeight": 16,
+  "columns": 3,
+  "rows": 2,
+  "placeholder": true,
+  "crops": [
+    {
+      "row": 0,
+      "key": "wheat",
+      "stages": 3
+    },
+    {
+      "row": 1,
+      "key": "pumpkin",
+      "stages": 3
+    }
+  ]
+}

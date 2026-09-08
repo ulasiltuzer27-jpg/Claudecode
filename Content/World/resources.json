@@ -1,0 +1,44 @@
+{
+  "_comment": "Toplanabilir kaynaklar. Hangi tile ne verir, ne kadar surer, sonrasinda neye donusur.",
+  "reachTiles": 1,
+  "_reach_comment": "Karakterin baktigi yonde kac tile uzaga uzanabildigi.",
+  "resources": [
+    {
+      "tile": "wood",
+      "resource": "wood",
+      "amount": 3,
+      "harvestSeconds": 0.9,
+      "becomesTile": "grass"
+    },
+    {
+      "tile": "stone",
+      "resource": "stone",
+      "amount": 2,
+      "harvestSeconds": 1.4,
+      "becomesTile": "dirt"
+    },
+    {
+      "tile": "plank_floor",
+      "resource": "plank",
+      "amount": 1,
+      "harvestSeconds": 0.35,
+      "becomesTile": "dirt"
+    },
+    {
+      "tile": "stone_wall",
+      "resource": "stone_brick",
+      "amount": 1,
+      "harvestSeconds": 0.5,
+      "becomesTile": "dirt"
+    },
+    {
+      "tile": "campfire",
+      "resource": "campfire",
+      "amount": 1,
+      "harvestSeconds": 0.5,
+      "becomesTile": "dirt"
+    }
+  ],
+  "_yeniden_dogma_notu": "Kaynaklar simdilik yeniden DOGMAZ. Dunya sonsuz oldugu icin tukenen bolgeden yurunup uzaklasilir. Yeniden dogma mekanigi kapsam disi birakildi - istenirse ayrica eklenir.",
+  "_sokme_notu": "Madde 9'da insa edilen tile'lar da buradan sokulur. Sokulen yapi 'dirt'e doner - altindaki orijinal zemin saklanmadigi icin geri getirilemiyor. Kabul edilen sinirlama."
+}

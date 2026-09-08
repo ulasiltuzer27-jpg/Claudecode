@@ -1,0 +1,19 @@
+{
+  "_comment": "Madde 13 — balikcilik mini oyunu. Suya bakip tut, isaret yesil bolgeye gelince birak.",
+
+  "castSeconds": 0.8,
+  "_cast_notu": "Olta atildiktan sonra isaretin belirmesine kadar gecen sure.",
+
+  "markerSpeed": 1.35,
+  "_hiz_notu": "Isaretin cubukta saniyede kac tam tur attigi.",
+
+  "catchZoneSize": 0.20,
+  "rainZoneBonus": 0.10,
+  "_yagmur_notu": "Yagmurda balik daha iyi vurur - yesil bolge genisler (madde 12 baglantisi).",
+
+  "nightZonePenalty": 0.05,
+
+  "catchItem": "fish",
+  "catchAmount": 1,
+  "failCooldownSeconds": 0.6
+}

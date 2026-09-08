@@ -1,0 +1,86 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>PixelSurvival</RootNamespace>
+    <AssemblyName>PixelSurvival</AssemblyName>
+    <!-- MonoGame sablonunun onerdigi ayarlar:
+         RollForward=Major       -> daha yeni .NET runtime'da da calisir
+         TieredCompilation=false -> ilk saniyelerdeki frame time dalgalanmasini keser -->
+    <RollForward>Major</RollForward>
+    <PublishReadyToRun>false</PublishReadyToRun>
+    <TieredCompilation>false</TieredCompilation>
+    <!-- Sablonda yok, bilerek eklendi: null-safety ve daha az using gurultusu -->
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Icon.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <!-- MonoGame DesktopGL pencere ikonunu gomulu kaynaktan okur -->
+  <ItemGroup>
+    <None Remove="Icon.ico" />
+    <None Remove="Icon.bmp" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Icon.ico" />
+    <EmbeddedResource Include="Icon.bmp" />
+  </ItemGroup>
+
+  <!-- Content Pipeline: build sirasinda Content.mgcb otomatik derlenir -->
+  <ItemGroup>
+    <MonoGameContentReference Include="Content\Content.mgcb" />
+  </ItemGroup>
+
+  <!-- Trimming acildiginda ContentTypeReader'lar reflection ile bulundugu icin
+       silinmemeli. Sablonun standart satiri. -->
+  <ItemGroup>
+    <TrimmerRootAssembly Include="Microsoft.Xna.Framework.Content.ContentTypeReader" Visible="false" />
+  </ItemGroup>
+
+  <!-- Madde 19: Steam derlemesi AYRI bir yapilandirma.
+       Varsayilan (Debug/Release) derleme Steamworks.NET'e ve kurulu bir
+       Steam istemcisine ihtiyac duymaz; boylece gelistirme ortami
+       Steam'e bagimli hale gelmiyor.
+
+           dotnet build                      -> LiteNetLib, Steam yok
+           dotnet build -c SteamRelease      -> Steamworks.NET + STEAM_BUILD
+  -->
+  <PropertyGroup Condition="'$(Configuration)' == 'SteamRelease'">
+    <DefineConstants>$(DefineConstants);STEAM_BUILD</DefineConstants>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Optimize>true</Optimize>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(Configuration)' == 'SteamRelease'">
+    <PackageReference Include="Steamworks.NET" Version="20.*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.5.1" />
+    <PackageReference Include="MonoGame.Content.Builder.Task" Version="3.8.5.1" />
+    <!-- Madde 10: gelistirme/test tasimasi. Yalnizca
+         Networking/LiteNetLibTransport.cs bu pakete dokunur. -->
+    <!-- Surum joker: dogrulayamadigim bir surum numarasini sabitlemektense
+         1.x icindeki en gunceli almak daha guvenli. Restore basarili
+         olduktan sonra `dotnet list package` ile gorup sabitleyin. -->
+    <PackageReference Include="LiteNetLib" Version="1.*" />
+  </ItemGroup>
+
+  <!-- .config/dotnet-tools.json icindeki MGCB araclarini otomatik indirir.
+       Bu olmadan Content Pipeline derlenmez. -->
+  <Target Name="RestoreDotnetTools" BeforeTargets="Restore">
+    <Message Text="MGCB araclari geri yukleniyor..." Importance="High" />
+    <Exec Command="dotnet tool restore" />
+  </Target>
+
+  <!-- Asama 1 kapsam kilidi: Entities/ Systems/ World/ Networking/ Inventory/
+       UI/ Localization/ Accessibility/ Achievements/ klasorleri bilerek bos.
+       .cs eklendiginde SDK otomatik derlemeye dahil eder, ek ayar gerekmez. -->
+
+</Project>

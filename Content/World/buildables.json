@@ -1,0 +1,14 @@
+{
+  "_comment": "Madde 9 — hangi item hangi tile'i insa eder. Yerlestirme kurallari da burada.",
+
+  "reachTiles": 1,
+
+  "_zemin_notu": "Sadece bu tile'larin uzerine insa edilebilir. Suya, kayaya veya mevcut bir yapinin uzerine insa edilemez.",
+  "buildableGround": [ "grass", "dirt", "sand" ],
+
+  "buildables": [
+    { "item": "plank",       "tile": "plank_floor", "cost": 1 },
+    { "item": "stone_brick", "tile": "stone_wall",  "cost": 1 },
+    { "item": "campfire",    "tile": "campfire",    "cost": 1 }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "_comment": "Madde 13 — tarim. Ekinler tile DEGIL; tile'in ustune cizilen ayri bir katman.",
+
+  "tilledTile": "soil_tilled",
+  "tillableGround": [ "grass", "dirt" ],
+  "reachTiles": 1,
+
+  "_yagmur_notu": "Yagmurda ekin daha hizli buyur - madde 12'deki hava sistemine baglanti.",
+  "rainGrowthMultiplier": 1.5,
+
+  "_mevsim_notu": "Ekin yalnizca kendi mevsiminde buyur. Mevsim disinda ekilebilir ama ilerlemez.",
+  "crops": [
+    {
+      "id": "wheat", "row": 0, "name": "Buğday",
+      "seed": "wheat_seed", "produce": "wheat", "produceAmount": 2, "seedReturn": 1,
+      "daysPerStage": 1, "seasons": [ "Ilkbahar", "Yaz" ]
+    },
+    {
+      "id": "pumpkin", "row": 1, "name": "Balkabağı",
+      "seed": "pumpkin_seed", "produce": "pumpkin", "produceAmount": 1, "seedReturn": 2,
+      "daysPerStage": 2, "seasons": [ "Sonbahar" ]
+    }
+  ]
+}

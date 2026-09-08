@@ -1,0 +1,14 @@
+# .NET
+bin/
+obj/
+*.user
+.vs/
+.idea/
+
+# MonoGame Content Pipeline ara ciktilari
+Content/bin/
+Content/obj/
+
+# OS
+.DS_Store
+Thumbs.db

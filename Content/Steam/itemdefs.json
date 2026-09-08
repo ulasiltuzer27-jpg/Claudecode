@@ -1,0 +1,29 @@
+{
+  "_comment": "Steamworks ItemDef'lerinin YEREL AYNASI. Gercek tanim Steamworks partner sitesinde; bu dosya yalnizca oyunun isim/nadirlik gostermesi icin.",
+  "_uyari": "Bu dosyada bir item'in bulunmasi oyuncunun ona SAHIP OLDUGU anlamina GELMEZ. Sahiplik yalnizca Steam Inventory Service'ten okunur.",
+  "_rarity_notu": "Nadirlik YALNIZCA kozmetik/gorsel farktir. Gameplay gucu VERMEZ - pay to win yaratir ve PvP/ekonomi dengesini bozar.",
+
+  "appId": 480,
+  "_appid_notu": "480 = Spacewar, Steam'in genel test appid'si. Gercek appid alinca degistirilecek.",
+
+  "items": [
+    { "defId": 1001, "name": "Furry Karakter Lisansi", "kind": "character_license", "rarity": "epic",      "marketable": true,  "tradable": true },
+    { "defId": 1002, "name": "Form Degistiren Savasci", "kind": "character_license", "rarity": "legendary","marketable": true,  "tradable": true },
+    { "defId": 1003, "name": "Mekanik Karakter",        "kind": "character_license", "rarity": "rare",     "marketable": true,  "tradable": true },
+    { "defId": 1004, "name": "Buz Yuruyusu Karakteri",  "kind": "character_license", "rarity": "rare",     "marketable": true,  "tradable": true },
+
+    { "defId": 2001, "name": "Gozde Yildiz Efekti",     "kind": "cosmetic", "rarity": "common", "marketable": true, "tradable": true },
+    { "defId": 2002, "name": "Golge Idle VFX",          "kind": "cosmetic", "rarity": "rare",   "marketable": true, "tradable": true },
+
+    { "defId": 3001, "name": "Ilkbahar 2026 Pelerini",  "kind": "seasonal", "rarity": "epic", "marketable": true, "tradable": true,
+      "availableFrom": "2026-03-01T00:00:00Z", "availableUntil": "2026-06-01T00:00:00Z" },
+
+    { "defId": 9001, "name": "Kozmetik Parcasi", "kind": "material", "rarity": "common", "marketable": false, "tradable": false }
+  ],
+
+  "_exchange_notu": "Girdiler DE Steam item'idir. Dunya kaynagi (odun, tas) girdi olamaz - tip sistemi zaten engelliyor.",
+  "exchanges": [
+    { "outputDefId": 2001, "inputs": [ { "defId": 9001, "count": 5 } ] },
+    { "outputDefId": 2002, "inputs": [ { "defId": 9001, "count": 15 } ] }
+  ]
+}

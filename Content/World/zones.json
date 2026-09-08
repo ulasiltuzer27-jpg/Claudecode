@@ -1,0 +1,25 @@
+{
+  "_comment": "Madde 18 — guvenli bolge / PvP bolgesi ayrimi ve baskin (raid) mekanigi.",
+
+  "_bolge_notu": "Spawn cevresi ve NPC cevresi guvenlidir. Disarisi PvP. Yeni oyuncunun ilk dakikalari korunmali.",
+  "safeRadiusTiles": 40,
+  "npcSafeRadiusTiles": 14,
+
+  "_guvenli_kurallar": "Guvenli bolgede oyuncular birbirine vuramaz, yapilar sokulemez, dusman dogmaz.",
+  "safeZoneBlocksPlayerDamage": true,
+  "safeZoneBlocksRaid": true,
+  "safeZoneBlocksEnemySpawn": true,
+
+  "_baskin_notu": "Yapilar yalnizca PvP bolgesinde kirilabilir. Sahibinin sokmesinden farkli: daha uzun surer ve malzemenin bir kismi kaybolur.",
+  "raid": {
+    "structureHealth": 5,
+    "damagePerHit": 1,
+    "materialReturnRatio": 0.5,
+    "cooldownSeconds": 0.5,
+    "decaySeconds": 30,
+    "_decay_notu": "Baskin yarim birakilirsa yapi bu sure sonunda canini geri kazanir."
+  },
+
+  "_raidable_notu": "Yalnizca oyuncunun INSA ETTIGI tile'lar kirilabilir; dogal arazi degil.",
+  "raidableTiles": [ "plank_floor", "stone_wall", "campfire", "soil_tilled" ]
+}

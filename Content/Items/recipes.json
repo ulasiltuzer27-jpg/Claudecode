@@ -1,0 +1,92 @@
+{
+  "_comment": "Crafting tarifleri. Aninda uretim - basili tutma yok, tek tusa tek uretim.",
+  "_denge_notu": "Taş Balta ve Kamp Atesi su an OYUN ICI ETKISI OLMAYAN item'lar. Alet etkisi ve yerlestirme madde 9+ isi. Simdilik zincirin calistigini gostermek icin varlar.",
+  "recipes": [
+    {
+      "id": "plank",
+      "output": {
+        "item": "plank",
+        "amount": 2
+      },
+      "inputs": [
+        {
+          "item": "wood",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "id": "stone_brick",
+      "output": {
+        "item": "stone_brick",
+        "amount": 1
+      },
+      "inputs": [
+        {
+          "item": "stone",
+          "amount": 3
+        }
+      ]
+    },
+    {
+      "id": "stone_axe",
+      "output": {
+        "item": "stone_axe",
+        "amount": 1
+      },
+      "inputs": [
+        {
+          "item": "plank",
+          "amount": 3
+        },
+        {
+          "item": "stone_brick",
+          "amount": 2
+        }
+      ]
+    },
+    {
+      "id": "campfire",
+      "output": {
+        "item": "campfire",
+        "amount": 1
+      },
+      "inputs": [
+        {
+          "item": "plank",
+          "amount": 4
+        },
+        {
+          "item": "stone",
+          "amount": 4
+        }
+      ]
+    },
+    {
+      "id": "feed",
+      "output": {
+        "item": "feed",
+        "amount": 4
+      },
+      "inputs": [
+        {
+          "item": "wheat",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "id": "wheat_seed",
+      "output": {
+        "item": "wheat_seed",
+        "amount": 2
+      },
+      "inputs": [
+        {
+          "item": "wheat",
+          "amount": 1
+        }
+      ]
+    }
+  ]
+}

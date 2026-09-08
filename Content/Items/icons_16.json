@@ -1,0 +1,65 @@
+{
+  "asset": "Items/icons_16",
+  "iconSize": 16,
+  "columns": 14,
+  "rows": 1,
+  "placeholder": true,
+  "icons": [
+    {
+      "index": 0,
+      "key": "wood"
+    },
+    {
+      "index": 1,
+      "key": "stone"
+    },
+    {
+      "index": 2,
+      "key": "plank"
+    },
+    {
+      "index": 3,
+      "key": "stone_brick"
+    },
+    {
+      "index": 4,
+      "key": "stone_axe"
+    },
+    {
+      "index": 5,
+      "key": "campfire"
+    },
+    {
+      "index": 6,
+      "key": "wheat_seed"
+    },
+    {
+      "index": 7,
+      "key": "wheat"
+    },
+    {
+      "index": 8,
+      "key": "pumpkin_seed"
+    },
+    {
+      "index": 9,
+      "key": "pumpkin"
+    },
+    {
+      "index": 10,
+      "key": "fish"
+    },
+    {
+      "index": 11,
+      "key": "feed"
+    },
+    {
+      "index": 12,
+      "key": "coin"
+    },
+    {
+      "index": 13,
+      "key": "relic"
+    }
+  ]
+}

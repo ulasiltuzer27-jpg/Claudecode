@@ -1,0 +1,51 @@
+{
+  "_comment": "Madde 15 — dusman ve boss rotasyonu.",
+
+  "_spawn_notu": "Dusmanlar oyuncunun cevresinde, GORUS ALANININ DISINDA dogar. Gozunun onunde belirmeleri adaletsiz hissettirir.",
+  "spawnRadiusTiles": 26,
+  "despawnRadiusTiles": 70,
+  "maxAlive": 8,
+  "spawnIntervalSeconds": 6,
+  "nightSpawnMultiplier": 2.5,
+  "_gece_notu": "Gece daha sik dogarlar - madde 12'deki saate baglanti.",
+
+  "enemies": [
+    {
+      "id": "husk", "name": "Kabuk", "sprite": "Characters/enemy_husk",
+      "health": 40, "damage": 8, "moveSpeed": 52,
+      "aggroRange": 120, "attackRange": 20, "attackCooldown": 1.2,
+      "drops": [ { "item": "stone", "amount": 1, "chance": 0.5 } ],
+      "spawnTiles": [ "grass", "dirt" ], "nightOnly": false
+    },
+    {
+      "id": "stalker", "name": "Sinsi", "sprite": "Characters/enemy_stalker",
+      "health": 26, "damage": 12, "moveSpeed": 78,
+      "aggroRange": 170, "attackRange": 18, "attackCooldown": 0.9,
+      "drops": [ { "item": "coin", "amount": 2, "chance": 0.6 } ],
+      "spawnTiles": [ "grass", "dirt", "sand" ], "nightOnly": true
+    }
+  ],
+
+  "_rotasyon_notu": "Aktif boss dunya gunune gore doner. Bir boss yenilirse siradaki gune kadar geri gelmez.",
+  "bossRotationDays": 3,
+  "bosses": [
+    {
+      "id": "moss_titan", "name": "Yosun Devi", "sprite": "Characters/boss_moss_titan",
+      "health": 320, "damage": 22, "moveSpeed": 44,
+      "aggroRange": 220, "attackRange": 34, "attackCooldown": 1.8,
+      "drops": [
+        { "item": "relic", "amount": 1, "chance": 1.0 },
+        { "item": "coin", "amount": 25, "chance": 1.0 }
+      ]
+    },
+    {
+      "id": "frost_maw", "name": "Buz Çenesi", "sprite": "Characters/boss_frost_maw",
+      "health": 260, "damage": 30, "moveSpeed": 58,
+      "aggroRange": 240, "attackRange": 30, "attackCooldown": 1.4,
+      "drops": [
+        { "item": "relic", "amount": 1, "chance": 1.0 },
+        { "item": "coin", "amount": 30, "chance": 1.0 }
+      ]
+    }
+  ]
+}
