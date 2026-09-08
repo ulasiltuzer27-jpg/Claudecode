@@ -277,6 +277,15 @@ public sealed class TamingSystem(CreatureTable table, SpriteSheet creatureSheet,
     public IReadOnlyList<Creature> Creatures => _creatures;
     public Creature? Mount { get; private set; }
 
+    /// <summary>
+    /// Bu dunyada evcillestirilen yaratik sayisi.
+    ///
+    /// Neden sayac: cagiran taraf sonucu <see cref="Interact"/>'in dondugu
+    /// METINDEN cikarsayamaz. O metin arayuz icin ve madde 23'te dile
+    /// cevrilecek; ona bagli bir kontrol dil degisince sessizce bozulurdu.
+    /// </summary>
+    public int TamedCount { get; private set; }
+
     /// <summary>Binekteyken hareket hızı çarpanı; binek yoksa 1.</summary>
     public float SpeedMultiplier => Mount?.Definition.MountSpeedMultiplier ?? 1f;
 
@@ -386,6 +395,7 @@ public sealed class TamingSystem(CreatureTable table, SpriteSheet creatureSheet,
 
         if (creature.Feed())
         {
+            TamedCount++;
             return $"{creature.Definition.Name} evcillesti!";
         }
 

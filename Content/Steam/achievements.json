@@ -1,0 +1,92 @@
+{
+  "_comment": "MADDE 21 - Steam achievement ve istatistik tanimlarinin YEREL AYNASI. Gercek tanim Steamworks partner sitesinde; bu dosya oyunun isim/aciklama gosterebilmesi ve esikleri bilmesi icin.",
+
+  "_kural_ayna": "Bu dosyadaki bir kayit, achievement'in Steam tarafinda TANIMLI oldugu anlamina gelmez. Kilit acma her zaman Steam'e bildirilir; Steam tanimasa da oyun calismaya devam eder.",
+
+  "_kural_odul": "Achievement acilmasi TEK BASINA marketable/tradable bir Steam item'i grant EDEMEZ. Odul verilecekse yol ISteamItemGrantAuthority uzerinden guvenilir backend'dir - client'in 'bunu hak ettim' iddiasina guvenilmez.",
+
+  "_kural_istatistik": "Esikler ISTATISTIKLERDEN turer, koda gomulmez. Yeni bir achievement eklemek icin C# dosyasina dokunmak gerekmez.",
+
+  "appId": 480,
+
+  "stats": [
+    { "key": "wood_gathered",   "name": "Toplanan odun" },
+    { "key": "stone_gathered",  "name": "Toplanan tas" },
+    { "key": "items_crafted",   "name": "Uretilen item" },
+    { "key": "structures_built","name": "Kurulan yapi" },
+    { "key": "enemies_killed",  "name": "Oldurulen dusman" },
+    { "key": "bosses_killed",   "name": "Yenilen boss" },
+    { "key": "fish_caught",     "name": "Tutulan balik" },
+    { "key": "crops_harvested", "name": "Hasat edilen ekin" },
+    { "key": "creatures_tamed", "name": "Evcillestirilen yaratik" },
+    { "key": "dungeons_entered","name": "Girilen zindan" },
+    { "key": "days_survived",   "name": "Hayatta kalinan gun" },
+    { "key": "cosmetics_worn",  "name": "Kusanilan kozmetik" }
+  ],
+
+  "achievements": [
+    { "id": "ACH_FIRST_WOOD", "name": "Ilk Darbe",
+      "description": "Ilk odununu topla.",
+      "stat": "wood_gathered", "threshold": 1 },
+
+    { "id": "ACH_LUMBERJACK", "name": "Oduncu",
+      "description": "100 odun topla.",
+      "stat": "wood_gathered", "threshold": 100 },
+
+    { "id": "ACH_QUARRY", "name": "Tas Ocagi",
+      "description": "50 tas topla.",
+      "stat": "stone_gathered", "threshold": 50 },
+
+    { "id": "ACH_ARTISAN", "name": "Zanaatkar",
+      "description": "25 item uret.",
+      "stat": "items_crafted", "threshold": 25 },
+
+    { "id": "ACH_SETTLER", "name": "Yerlesimci",
+      "description": "10 yapi kur.",
+      "stat": "structures_built", "threshold": 10 },
+
+    { "id": "ACH_FIRST_BLOOD", "name": "Ilk Zafer",
+      "description": "Bir dusmani yen.",
+      "stat": "enemies_killed", "threshold": 1 },
+
+    { "id": "ACH_SLAYER", "name": "Avci",
+      "description": "50 dusman yen.",
+      "stat": "enemies_killed", "threshold": 50 },
+
+    { "id": "ACH_BOSS_HUNTER", "name": "Boss Avcisi",
+      "description": "Bir bossu yen.",
+      "stat": "bosses_killed", "threshold": 1, "hidden": true },
+
+    { "id": "ACH_ANGLER", "name": "Balikci",
+      "description": "20 balik tut.",
+      "stat": "fish_caught", "threshold": 20 },
+
+    { "id": "ACH_FARMER", "name": "Ciftci",
+      "description": "30 ekin hasat et.",
+      "stat": "crops_harvested", "threshold": 30 },
+
+    { "id": "ACH_BEAST_FRIEND", "name": "Hayvan Dostu",
+      "description": "Bir yaratigi evcillestir.",
+      "stat": "creatures_tamed", "threshold": 1 },
+
+    { "id": "ACH_DELVER", "name": "Zindan Kasifi",
+      "description": "5 zindana gir.",
+      "stat": "dungeons_entered", "threshold": 5 },
+
+    { "id": "ACH_SURVIVOR", "name": "Hayatta Kalan",
+      "description": "10 gun hayatta kal.",
+      "stat": "days_survived", "threshold": 10 },
+
+    { "id": "ACH_DRESSED_UP", "name": "Sik Giyimli",
+      "description": "Bir kozmetik kusan.",
+      "stat": "cosmetics_worn", "threshold": 1 }
+  ],
+
+  "_leaderboard_notu": "Steam leaderboard'lari da partner sitesinde tanimlidir; buradaki liste yalnizca oyunun hangi tabloyu kullandigini soyler.",
+  "leaderboards": [
+    { "key": "LB_DAYS_SURVIVED", "name": "En uzun hayatta kalma",
+      "stat": "days_survived", "sort": "descending" },
+    { "key": "LB_ENEMIES_KILLED", "name": "En cok dusman",
+      "stat": "enemies_killed", "sort": "descending" }
+  ]
+}

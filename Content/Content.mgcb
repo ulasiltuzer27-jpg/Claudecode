@@ -416,3 +416,6 @@
 
 #begin Cosmetics/cosmetics.json
 /copy:Cosmetics/cosmetics.json
+
+#begin Steam/achievements.json
+/copy:Steam/achievements.json

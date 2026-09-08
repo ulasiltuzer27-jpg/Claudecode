@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
+using PixelSurvival.Achievements;
 using PixelSurvival.Cosmetics;
 using PixelSurvival.Inventory;
 using PixelSurvival.Systems.Crafting;
@@ -230,6 +231,157 @@ public sealed class HudRenderer
             _font.Draw(spriteBatch, rows[i].Text,
                 new Vector2(originX + padding, originY + padding + (i + 1) * lineHeight),
                 rows[i].Color, UiScale);
+        }
+    }
+
+    /// <summary>
+    /// MADDE 21 — başarım listesi.
+    ///
+    /// Gizli achievement'lar açılana kadar adı/açıklaması yerine "???"
+    /// gösterilir; sürpriz olmalarının tek anlamı bu. Açıldıktan sonra
+    /// normal satır olur.
+    /// </summary>
+    public void DrawAchievements(SpriteBatch spriteBatch, AchievementTracker tracker,
+                                 int windowWidth, int windowHeight)
+    {
+        var lineHeight = _font.LineHeight * UiScale;
+        var padding = 6 * UiScale;
+
+        var header = $"BASARIMLAR {tracker.UnlockedCount}/{tracker.TotalCount}  " +
+                     $"(F3 kapat) — {tracker.Status}";
+
+        var rows = new List<(string Text, Color Color)>();
+
+        foreach (var achievement in tracker.All)
+        {
+            var unlocked = tracker.IsUnlocked(achievement);
+
+            // Gizli VE acilmamis olan sakli kalir.
+            if (achievement.Hidden && !unlocked)
+            {
+                rows.Add(("[ ] ???", DimTextColor));
+                continue;
+            }
+
+            rows.Add(($"[{(unlocked ? "X" : " ")}] {achievement.Name} — {achievement.Description}",
+                      unlocked ? CraftableColor : DimTextColor));
+        }
+
+        var width = Math.Max(_font.Measure(header, UiScale),
+                             rows.Max(r => _font.Measure(r.Text, UiScale)));
+
+        var panelWidth = width + padding * 2;
+        var panelHeight = (rows.Count + 1) * lineHeight + padding * 2;
+
+        var originX = (windowWidth - panelWidth) / 2;
+        var originY = Math.Max(12, (windowHeight - panelHeight) / 2 - 40);
+
+        Fill(spriteBatch, new Rectangle(originX, originY, panelWidth, panelHeight),
+             PanelColor * 0.94f);
+
+        _font.Draw(spriteBatch, header, new Vector2(originX + padding, originY + padding),
+                   TextColor, UiScale);
+
+        for (var i = 0; i < rows.Count; i++)
+        {
+            _font.Draw(spriteBatch, rows[i].Text,
+                new Vector2(originX + padding, originY + padding + (i + 1) * lineHeight),
+                rows[i].Color, UiScale);
+        }
+    }
+
+    /// <summary>
+    /// MADDE 21 — leaderboard ekranı.
+    ///
+    /// Her tablonun başlığında kaynağı da yazar. Bu bilinçli: skor
+    /// CLIENT tarafında üretiliyor ve bu, Steam leaderboard'larının bilinen
+    /// bir sınırı. "Yerel" ile "Steam" arasındaki farkı gizlemek, oyuncuya
+    /// olduğundan güvenilir bir sıralama vaat etmek olurdu.
+    /// </summary>
+    public void DrawLeaderboard(SpriteBatch spriteBatch, ILeaderboardBackend backend,
+                                IReadOnlyList<LeaderboardDefinition> boards,
+                                AchievementTracker tracker,
+                                int windowWidth, int windowHeight)
+    {
+        var lineHeight = _font.LineHeight * UiScale;
+        var padding = 6 * UiScale;
+
+        var rows = new List<(string Text, Color Color)>
+        {
+            ($"SIRALAMALAR  (F4 kapat) — {backend.Status}", TextColor)
+        };
+
+        foreach (var board in boards)
+        {
+            rows.Add(($"  {board.Name}  [su anki skorun: {tracker.Value(board.StatKey)}]",
+                      CraftableColor));
+
+            var entries = backend.Top(board, 5);
+
+            if (entries.Count == 0)
+            {
+                rows.Add(("    (henuz kayit yok)", DimTextColor));
+                continue;
+            }
+
+            foreach (var entry in entries)
+            {
+                rows.Add(($"    {entry.Rank}. {entry.PlayerName,-16} {entry.Score}", TextColor));
+            }
+        }
+
+        var width = rows.Max(r => _font.Measure(r.Text, UiScale));
+        var panelWidth = width + padding * 2;
+        var panelHeight = rows.Count * lineHeight + padding * 2;
+
+        var originX = (windowWidth - panelWidth) / 2;
+        var originY = Math.Max(12, (windowHeight - panelHeight) / 2 - 40);
+
+        Fill(spriteBatch, new Rectangle(originX, originY, panelWidth, panelHeight),
+             PanelColor * 0.94f);
+
+        for (var i = 0; i < rows.Count; i++)
+        {
+            _font.Draw(spriteBatch, rows[i].Text,
+                new Vector2(originX + padding, originY + padding + i * lineHeight),
+                rows[i].Color, UiScale);
+        }
+    }
+
+    /// <summary>
+    /// MADDE 21 — başarım açılma bildirimi.
+    ///
+    /// Sağ altta, envanter çubuğunun üstünde. Steam'in kendi bildirimi
+    /// yalnızca Steam derlemesinde çıkar; bu banner her derlemede çıkar ki
+    /// tetikleme mantığı Steam olmadan da görülebilsin.
+    /// </summary>
+    public void DrawUnlockBanner(SpriteBatch spriteBatch, AchievementDefinition achievement,
+                                 int windowWidth, int windowHeight)
+    {
+        var lineHeight = _font.LineHeight * UiScale;
+        var padding = 6 * UiScale;
+
+        var lines = new[] { "BASARIM ACILDI", achievement.Name, achievement.Description };
+        var width = lines.Max(l => _font.Measure(l, UiScale));
+
+        var panelWidth = width + padding * 2;
+        var panelHeight = lines.Length * lineHeight + padding * 2;
+
+        var originX = windowWidth - panelWidth - 12;
+        var originY = windowHeight - panelHeight - 130;
+
+        Fill(spriteBatch, new Rectangle(originX, originY, panelWidth, panelHeight),
+             PanelColor * 0.95f);
+
+        // Ust kenarda altin serit: bildirimi diger panellerden ayirir.
+        Fill(spriteBatch, new Rectangle(originX, originY, panelWidth, 3),
+             new Color(240, 186, 74));
+
+        for (var i = 0; i < lines.Length; i++)
+        {
+            _font.Draw(spriteBatch, lines[i],
+                new Vector2(originX + padding, originY + padding + i * lineHeight),
+                i == 0 ? new Color(240, 186, 74) : TextColor, UiScale);
         }
     }
 

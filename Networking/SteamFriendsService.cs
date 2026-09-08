@@ -1,0 +1,104 @@
+namespace PixelSurvival.Networking;
+
+/// <summary>
+/// AŞAMA 2 / MADDE 21 — arkadaş daveti ve rich presence.
+///
+/// ── Davet nasıl çalışır ─────────────────────────────────────────────────
+/// Steam'de davet iki yoldan gelir:
+///   1. Oyuncu overlay'den arkadaşını davet eder (<c>ActivateGameOverlay</c>
+///      + "invite" sayfası).
+///   2. Arkadaş Steam arayüzünden "Katıl" der; Steam oyunu
+///      <c>+connect_lobby</c> / <c>connect</c> parametresiyle başlatır ya da
+///      çalışan oyuna <c>GameRichPresenceJoinRequested_t</c> callback'i düşer.
+///
+/// İkisi de aynı "connect string"e dayanır. Bu yüzden rich presence'a
+/// <c>connect</c> anahtarı yazılır: değeri host'un SteamID'sidir ve
+/// <see cref="SteamNetworkingTransport"/> tam olarak bunu bekliyor.
+/// Adres biçimini iki yerde ayrı tanımlamak, davetin sessizce çalışmadığı
+/// klasik hatadır.
+///
+/// ── Kapsam ──────────────────────────────────────────────────────────────
+/// Bu sınıf yalnızca DAVET yolunu kurar. Bağlantının kendisi
+/// <see cref="INetworkTransport"/> işidir ve değişmez.
+/// </summary>
+public sealed class SteamFriendsService
+{
+    /// <summary>
+    /// Davet kabul edildiğinde çağrılır; parametre bağlanılacak adres
+    /// (host'un SteamID'si). Oyun kabuğu bunu <c>Connect</c>'e verir.
+    /// </summary>
+    public event Action<string>? JoinRequested;
+
+#if STEAM_BUILD
+    private Steamworks.Callback<Steamworks.GameRichPresenceJoinRequested_t>? _joinCallback;
+
+    public bool IsAvailable => Steamworks.SteamAPI.IsSteamRunning();
+    public string Status => IsAvailable ? "Steam arkadaslari hazir" : "Steam calismiyor";
+
+    /// <summary>Yerel oyuncunun Steam profil adı.</summary>
+    public string LocalPlayerName =>
+        IsAvailable ? Steamworks.SteamFriends.GetPersonaName() : "Sen";
+
+    /// <summary>
+    /// Davet callback'ini bağlar. Oyun açılışında BİR KEZ çağrılmalı;
+    /// bağlanmazsa "Katıl" diyen arkadaş sessizce hiçbir şey yaşamaz.
+    /// </summary>
+    public void Initialize()
+    {
+        if (!IsAvailable) return;
+
+        _joinCallback = Steamworks.Callback<Steamworks.GameRichPresenceJoinRequested_t>.Create(
+            request => JoinRequested?.Invoke(request.m_rgchConnect));
+    }
+
+    /// <summary>
+    /// Oyuncu bir dünya açtığında çağrılır: arkadaşlar "Katıl" görebilsin.
+    /// </summary>
+    public void PublishHosting(ulong hostSteamId)
+    {
+        if (!IsAvailable) return;
+
+        // 'connect' Steam'in ozel anahtaridir: dolu oldugunda arkadas
+        // listesinde "Katil" dugmesi belirir. Deger, transport'un
+        // bekledigi adresin AYNISI olmali.
+        Steamworks.SteamFriends.SetRichPresence("connect", hostSteamId.ToString());
+        Steamworks.SteamFriends.SetRichPresence("status", "Dunyasini paylasiyor");
+    }
+
+    /// <summary>Oyuncu oturumdan ayrıldığında "Katıl" düğmesini kaldırır.</summary>
+    public void ClearHosting()
+    {
+        if (!IsAvailable) return;
+
+        Steamworks.SteamFriends.SetRichPresence("connect", "");
+        Steamworks.SteamFriends.SetRichPresence("status", "Tek basina");
+    }
+
+    /// <summary>Steam overlay'inin davet ekranını açar.</summary>
+    public bool OpenInviteOverlay()
+    {
+        if (!IsAvailable) return false;
+
+        Steamworks.SteamFriends.ActivateGameOverlay("friends");
+        return true;
+    }
+#else
+    // Steam'siz derleme: sinif var, davet yolu kapali. Cagiran taraf
+    // #if ile dallanmiyor; yalnizca IsAvailable false donuyor.
+    public bool IsAvailable => false;
+    public string Status => "Steam derlemesi degil";
+    public string LocalPlayerName => "Sen";
+
+    public void Initialize() { }
+    public void PublishHosting(ulong hostSteamId) { _ = hostSteamId; }
+    public void ClearHosting() { }
+    public bool OpenInviteOverlay() => false;
+#endif
+
+    /// <summary>
+    /// Davet olayını dışarıdan tetikler. Yalnızca otomatik doğrulama içindir:
+    /// Steam istemcisi olmadan "davet kabul edildi" yolunun çalıştığı
+    /// gösterilebilsin diye. Gerçek daveti Steam callback'i üretir.
+    /// </summary>
+    internal void SimulateJoinRequest(string address) => JoinRequested?.Invoke(address);
+}

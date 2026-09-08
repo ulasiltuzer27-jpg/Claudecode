@@ -5,6 +5,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using PixelSurvival.Entities;
 using PixelSurvival.Systems;
+using PixelSurvival.Achievements;
 using PixelSurvival.Cosmetics;
 using PixelSurvival.Systems.Animation;
 using PixelSurvival.Systems.Collision;
@@ -129,6 +130,32 @@ public class Game1 : Game
     /// </summary>
     private bool _showWardrobe;
 
+    // --- Madde 21: Steamworks (basarim / leaderboard / arkadas daveti) ---
+    private AchievementCatalog _achievementCatalog = null!;
+    private AchievementTracker _achievements = null!;
+    private ILeaderboardBackend _leaderboards = null!;
+    private SteamFriendsService _friends = null!;
+
+    private bool _showAchievements;
+    private bool _showLeaderboard;
+
+    /// <summary>Ekranda duran basarim bildirimi ve kalan suresi.</summary>
+    private AchievementDefinition? _unlockBanner;
+    private float _unlockBannerSeconds;
+
+    /// <summary>Basarim bildiriminin ekranda kalma suresi.</summary>
+    private const float UnlockBannerSeconds = 4f;
+
+    /// <summary>
+    /// Leaderboard skorlari kac saniyede bir yazilir.
+    ///
+    /// Her karede yazmak Steam'e saniyede 60 ag cagrisi demek olurdu ve
+    /// Valve tarafinda hiz sinirina takilirdi.
+    /// </summary>
+    private const float LeaderboardUploadSeconds = 10f;
+
+    private float _leaderboardTimer = LeaderboardUploadSeconds;
+
     /// <summary>Kısa ömürlü bilgi mesajı (üretim başarısız, envanter dolu vb.).</summary>
     private string _toast = "";
     private float _toastSeconds;
@@ -240,6 +267,26 @@ public class Game1 : Game
         _ownership = new FreeCosmeticsOnly();
         _loadout = new CosmeticLoadout(_ownership);
 
+        // Madde 21: basarim / istatistik / leaderboard.
+        // Hedef secimi TEK noktada (StatsBackendFactory); Game1 Steamworks
+        // tiplerini hic gormuyor.
+        _achievementCatalog = AchievementCatalog.Load(Content, "Steam/achievements");
+        _achievements = new AchievementTracker(_achievementCatalog,
+                                               StatsBackendFactory.CreateStats());
+        _leaderboards = StatsBackendFactory.CreateLeaderboard();
+
+        _friends = new SteamFriendsService();
+        _friends.Initialize();
+
+        // Arkadas "Katil" dedigi anda oyun ayni adrese baglanir. Adres
+        // bicimi rich presence ile transport arasinda ORTAK: iki yerde
+        // ayri tanimlanirsa davet sessizce calismaz.
+        _friends.JoinRequested += address =>
+        {
+            ShowToast($"Davet kabul edildi: {address}");
+            _session.Connect(address);
+        };
+
         _camera = new Camera2D(WindowWidth, WindowHeight, CameraZoom);
 
         GenerateWorld(DefaultSeed);
@@ -338,6 +385,16 @@ public class Game1 : Game
         // Madde 20: gardirop
         if (WasPressed(keyboard, Keys.K)) _showWardrobe = !_showWardrobe;
 
+        // Madde 21: basarim listesi / leaderboard / arkadas daveti
+        if (WasPressed(keyboard, Keys.F3)) _showAchievements = !_showAchievements;
+        if (WasPressed(keyboard, Keys.F4)) _showLeaderboard = !_showLeaderboard;
+        if (WasPressed(keyboard, Keys.F6))
+        {
+            ShowToast(_friends.OpenInviteOverlay()
+                ? "Steam davet ekrani acildi"
+                : "Davet icin Steam derlemesi gerekli");
+        }
+
         // Madde 9: yapı seçimi
         if (WasPressed(keyboard, Keys.Q)) _building.SelectPrevious();
         if (WasPressed(keyboard, Keys.Z)) _building.SelectNext();
@@ -346,7 +403,14 @@ public class Game1 : Game
         // Aşama 2 tuşları
         if (WasPressed(keyboard, Keys.X)) CycleSeed();
         if (WasPressed(keyboard, Keys.C)) DoFarmAction();
-        if (WasPressed(keyboard, Keys.G)) ShowToast(_taming.Interact(_player, _inventory));
+        if (WasPressed(keyboard, Keys.G))
+        {
+            ShowToast(_taming.Interact(_player, _inventory));
+
+            // Sayac uzerinden: Interact'in dondugu metne bakmak, madde 23'te
+            // metinler dile cevrilince sessizce bozulurdu.
+            _achievements.SetMax(new StatKey("creatures_tamed"), _taming.TamedCount);
+        }
         if (WasPressed(keyboard, Keys.T)) InteractWithNpc();
         if (WasPressed(keyboard, Keys.B)) ToggleDungeon();
 
@@ -389,9 +453,15 @@ public class Game1 : Game
             _climate.Update(delta);
             _farming.Update(_climate);
             _farming.DropOrphans(_map);
+
+            // Madde 21: hayatta kalinan gun BIRIKMEZ, en yuksek deger tutulur.
+            // Add() kullanilsaydi her karede gun sayisi tekrar eklenirdi.
+            _achievements.SetMax(new StatKey("days_survived"), _climate.Day);
         }
 
         // Madde 14: binek hız çarpanı
+        UpdateAchievements(delta);
+
         _player.SpeedMultiplier = _taming.SpeedMultiplier;
         _taming.Update(gameTime, _map, _player);
         _npcs.Update(gameTime);
@@ -410,6 +480,15 @@ public class Game1 : Game
             foreach (var drop in drops)
             {
                 ShowToast($"{drop.EnemyName}: +{drop.Amount} {_itemDatabase.Get(drop.Item).Name}");
+            }
+
+            // Madde 21: oldurmeler ganimetten BAGIMSIZ sayilir. Ganimet
+            // sansa bagli; drop'lari saysaydik sanssiz oldurmeler
+            // basarim ilerlemesine hic yazilmazdi.
+            foreach (var kill in _enemies.KillsThisFrame)
+            {
+                _achievements.Add(new StatKey("enemies_killed"));
+                if (kill.IsBoss) _achievements.Add(new StatKey("bosses_killed"));
             }
 
             // Madde 16: boss düşünce çıkış açılır ve ödül verilir.
@@ -443,6 +522,7 @@ public class Game1 : Game
         if (fishing is { } catchResult)
         {
             ShowToast($"+{catchResult.Amount} {_itemDatabase.Get(catchResult.Item).Name}!");
+            _achievements.Add(new StatKey("fish_caught"), catchResult.Amount);
         }
         else if (_fishing.State == FishingState.Failed && _fishing.Marker > 0f)
         {
@@ -493,6 +573,16 @@ public class Game1 : Game
             _session.NotifyTileChanged(result.Tile.X, result.Tile.Y,
                 _map.GetTileIndex(result.Tile.X, result.Tile.Y));
 
+            // Madde 21: toplama istatistigi. Envantere GIREN miktar sayilir,
+            // dusen degil - envanter doluyken kaybolan kaynak basarim
+            // ilerlemesi saymamali.
+            var stored = result.Amount - leftover;
+            if (stored > 0)
+            {
+                if (result.Resource == "wood") _achievements.Add(new StatKey("wood_gathered"), stored);
+                else if (result.Resource == "stone") _achievements.Add(new StatKey("stone_gathered"), stored);
+            }
+
             Console.WriteLine(
                 $"[toplama] +{result.Amount - leftover} {result.Resource} " +
                 $"@({result.Tile.X},{result.Tile.Y}) " +
@@ -515,6 +605,7 @@ public class Game1 : Game
                     var tile = _building.AimedTile;
                     _session.NotifyTileChanged(tile.X, tile.Y, _map.GetTileIndex(tile.X, tile.Y));
                     ShowToast($"{_itemDatabase.Get(_building.Selected.Item).Name} yerlestirildi");
+                    _achievements.Add(new StatKey("structures_built"));
                     Console.WriteLine($"[insa] {_building.Selected.Tile} @({tile.X},{tile.Y})");
                     break;
 
@@ -572,6 +663,46 @@ public class Game1 : Game
         current.IsKeyDown(key) && _previousKeyboard.IsKeyUp(key);
 
     /// <summary>
+    /// MADDE 21 — kare sonu başarım işleri.
+    ///
+    /// Üç iş burada toplanıyor: bekleyen açılış bildirimini ekrana almak,
+    /// istatistikleri hedefe TEK SEFERDE göndermek ve leaderboard skorlarını
+    /// yazmak. Steamworks'te <c>StoreStats</c> ve skor yükleme ağ
+    /// çağrılarıdır; her istatistik artışında çağrılmaları gereksiz trafik
+    /// olurdu.
+    /// </summary>
+    private void UpdateAchievements(float delta)
+    {
+        if (_achievements.TryDequeueUnlock(out var unlock))
+        {
+            _unlockBanner = unlock.Definition;
+            _unlockBannerSeconds = UnlockBannerSeconds;
+            Console.WriteLine($"[basarim] {unlock.Definition.Id} — {unlock.Definition.Name}");
+        }
+
+        if (_unlockBannerSeconds > 0f)
+        {
+            _unlockBannerSeconds -= delta;
+            if (_unlockBannerSeconds <= 0f) _unlockBanner = null;
+        }
+
+        _achievements.Flush();
+
+        // Skorlar istatistiklerden turer; hangi tablonun hangi istatistigi
+        // yazdigi achievements.json'da tanimli, koda gomulu degil.
+        _leaderboardTimer -= delta;
+        if (_leaderboardTimer <= 0f)
+        {
+            _leaderboardTimer = LeaderboardUploadSeconds;
+
+            foreach (var board in _achievementCatalog.Leaderboards)
+            {
+                _leaderboards.Upload(board, _achievements.Value(board.StatKey));
+            }
+        }
+    }
+
+    /// <summary>
     /// Madde 20: gardirop tuşları. 1-5, kuşanılabilir slotların sırasına
     /// karşılık gelir; her basış o slottaki kozmetiği bir sonrakine çevirir,
     /// listenin sonunda slotu boşaltır.
@@ -589,6 +720,11 @@ public class Game1 : Game
 
             var slot = slots[i];
             var equipped = _loadout.CycleSlot(_cosmetics, slot);
+
+            if (equipped is not null)
+            {
+                _achievements.Add(new StatKey("cosmetics_worn"));
+            }
 
             ShowToast(equipped is null
                 ? $"{slot}: cikarildi"
@@ -628,6 +764,7 @@ public class Game1 : Game
                 case CraftOutcome.Success:
                     var name = _itemDatabase.Get(recipe.Output.Item).Name;
                     ShowToast($"+{recipe.Output.Amount} {name}");
+                    _achievements.Add(new StatKey("items_crafted"), recipe.Output.Amount);
                     Console.WriteLine($"[uretim] {recipe.Id} -> {recipe.Output.Amount} {recipe.Output.Item}");
                     break;
 
@@ -769,6 +906,7 @@ public class Game1 : Game
         }
 
         var (dungeon, spawn) = _dungeons.Enter(_map, _player, tile);
+        _achievements.Add(new StatKey("dungeons_entered"));
         _map = dungeon;
         _player.Position = spawn;
         _camera.SnapTo(spawn, _map.Bounds);
@@ -816,6 +954,11 @@ public class Game1 : Game
             FarmOutcome.InventoryFull => "Envanter dolu",
             _ => "Burasi surulemez"
         });
+
+        if (outcome == FarmOutcome.Harvested)
+        {
+            _achievements.Add(new StatKey("crops_harvested"));
+        }
 
         if (outcome == FarmOutcome.Tilled)
         {
@@ -932,6 +1075,24 @@ public class Game1 : Game
             _hud.DrawZone(_spriteBatch,
                 _zones.ZoneAt(_player.Position, _map.TileSize) == ZoneKind.Safe,
                 _steam.Status, WindowWidth, WindowHeight);
+
+            // Madde 21: basarim listesi / siralamalar / acilma bildirimi.
+            if (_showAchievements)
+            {
+                _hud.DrawAchievements(_spriteBatch, _achievements, WindowWidth, WindowHeight);
+            }
+
+            if (_showLeaderboard)
+            {
+                _hud.DrawLeaderboard(_spriteBatch, _leaderboards,
+                                     _achievementCatalog.Leaderboards, _achievements,
+                                     WindowWidth, WindowHeight);
+            }
+
+            if (_unlockBanner is { } banner)
+            {
+                _hud.DrawUnlockBanner(_spriteBatch, banner, WindowWidth, WindowHeight);
+            }
 
             if (_showWardrobe)
             {

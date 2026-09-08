@@ -1,0 +1,53 @@
+# MADDE 21 dogrulamasi: basarim tetikleme, bildirim, liste, siralamalar.
+#
+# Rota deterministik: tohum 20260908'de spawn (0,0), tam SOLUNDA iki tile
+# otede (-2,0) bir agac var (Tools/verify_worldgen.py ile haritalandi).
+# Sola yurunce oyuncu agaca dayanip durur ve sola bakar; Space ile keser.
+
+wait 90
+shot 01_acilis
+
+# F3: basarim listesi — hicbiri acik degil, gizli olan ??? gorunur
+tap F3
+wait 20
+shot 02_basarim_listesi_kapali
+tap F3
+wait 15
+
+# Sola yuru: agac kati oldugu icin oyuncu ona dayanip durur
+down A
+wait 60
+up A
+wait 10
+shot 03_agacin_onunde
+
+# Basili tut: kesim 0.9 sn, iki kesim icin bolca sure
+down Space
+wait 150
+up Space
+wait 10
+shot 04_basarim_bildirimi
+
+# F3: liste artik acilmis basarimi gostermeli
+tap F3
+wait 25
+shot 05_basarim_listesi_acilmis
+tap F3
+wait 10
+
+# F4: siralamalar.
+# Skorlar 10 saniyede bir yaziliyor (her karede yazmak Steam'de hiz
+# sinirina takilirdi), bu yuzden ilk yazimin gecmesi beklenir.
+wait 700
+tap F4
+wait 25
+shot 06_siralamalar
+tap F4
+wait 10
+
+# F6: davet — Steam'siz derlemede uyari vermeli
+tap F6
+wait 20
+shot 07_davet_uyarisi
+
+quit

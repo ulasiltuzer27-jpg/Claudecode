@@ -13,6 +13,15 @@ namespace PixelSurvival.Systems.Hostiles;
 public readonly record struct EnemyDrop(string Item, int Amount, string EnemyName);
 
 /// <summary>
+/// Bu karede olen bir dusman.
+///
+/// Neden <see cref="EnemyDrop"/> yetmiyor: ganimet SANSA bagli. Butun
+/// sanslar tutmazsa olum hic drop uretmez ve drop'lari sayan bir taraf
+/// (orn. madde 21'deki basarim sayaci) oldurmeleri EKSIK sayar.
+/// </summary>
+public readonly record struct EnemyKill(string Name, bool IsBoss);
+
+/// <summary>
 /// AŞAMA 2 / MADDE 15 — düşman doğurma ve boss rotasyonu.
 ///
 /// ════════════════════════════════════════════════════════════════════════
@@ -50,6 +59,11 @@ public sealed class EnemySystem
 
     /// <summary>Bu rotasyondaki boss yenildi mi.</summary>
     public bool BossDefeated { get; private set; }
+
+    private readonly List<EnemyKill> _killsThisFrame = [];
+
+    /// <summary>Son <c>Update</c>'te olen dusmanlar. Ganimetten BAGIMSIZ.</summary>
+    public IReadOnlyList<EnemyKill> KillsThisFrame => _killsThisFrame;
 
     public EnemySystem(EnemyTable table, ContentManager content, Tileset tileset, int seed)
     {
@@ -93,6 +107,10 @@ public sealed class EnemySystem
                                            ClimateSystem climate, WorldInventory inventory,
                                            bool allowSpawning)
     {
+        // Oldurmeler kare basina raporlanir: onceki karenin listesi
+        // birikmemeli, yoksa ayni olum defalarca sayilir.
+        _killsThisFrame.Clear();
+
         var delta = (float)gameTime.ElapsedGameTime.TotalSeconds;
         List<EnemyDrop>? drops = null;
 
@@ -133,6 +151,7 @@ public sealed class EnemySystem
                 BossDefeated = true;
             }
 
+            _killsThisFrame.Add(new EnemyKill(enemy.Definition.Name, enemy.IsBoss));
             _enemies.RemoveAt(i);
         }
 
