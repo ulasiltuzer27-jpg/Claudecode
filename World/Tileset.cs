@@ -34,20 +34,13 @@ public sealed class Tileset
     /// </summary>
     public int Variants { get; }
 
-    /// <summary>
-    /// Tile başına varyant sayısı (atlasın satır sayısı).
-    ///
-    /// Tek varyant, geniş çim alanlarında gözle görülür bir ızgara deseni
-    /// oluşturuyordu. Varyant konuma göre seçilerek bu tekrar kırılıyor.
-    /// </summary>
-    public int Variants { get; }
-
     private Tileset(Texture2D texture, TilesetMetadata meta)
     {
         Texture = texture;
         TileSize = meta.TileSize;
-        Variants = Math.Max(1, meta.Variants);
-        Variants = Math.Max(1, meta.Variants > 0 ? meta.Variants : meta.Rows);
+        // Varyant sayisi atlasin SUTUN eksenidir; satirlar tile turleridir.
+        // 'variants' alani yoksa 'columns'a dusulur, o da yoksa tek varyant.
+        Variants = Math.Max(1, meta.Variants > 0 ? meta.Variants : meta.Columns);
         _tiles = meta.Tiles
             .Select(t => new TileDefinition(t.Index, t.Key, t.Solid))
             .OrderBy(t => t.Index)
@@ -125,9 +118,9 @@ public sealed class Tileset
     private sealed class TilesetMetadata
     {
         [JsonPropertyName("tileSize")] public int TileSize { get; set; }
-        [JsonPropertyName("variants")] public int Variants { get; set; } = 1;
+        [JsonPropertyName("columns")] public int Columns { get; set; } = 1;
         [JsonPropertyName("rows")] public int Rows { get; set; } = 1;
-        [JsonPropertyName("variants")] public int Variants { get; set; }
+        [JsonPropertyName("variants")] public int Variants { get; set; } = 1;
         [JsonPropertyName("tiles")] public List<TileMetadata> Tiles { get; set; } = [];
     }
 

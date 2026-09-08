@@ -64,7 +64,9 @@ public sealed class RemotePlayer
     public void Apply(PlayerState state)
     {
         TargetPosition = new Vector2(state.X, state.Y);
-        Facing = (Facing)Math.Clamp(state.Facing, 0, 3);
+        // state.Facing byte; 0/3 literalleri hem byte hem int'e uydugu icin
+        // Math.Clamp asiri yuklemesi belirsiz kaliyordu. int'e acikca cevriliyor.
+        Facing = (Facing)Math.Clamp((int)state.Facing, 0, 3);
         Health = state.Health;
         IsDead = state.IsDead;
 
