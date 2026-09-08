@@ -47,6 +47,7 @@ from dataclasses import dataclass, field
 from typing import NamedTuple
 
 import pixelart
+import pixelfont
 
 try:
     from PIL import Image, ImageChops, ImageDraw
@@ -1276,85 +1277,61 @@ def _remove_dot(glyph: Image.Image) -> None:
 
 
 def build_font(out_dir: str) -> dict:
-    from PIL import ImageFont
+    """
+    Elle cizilmis 5x7 pixel font atlasi (bkz. Tools/pixelfont.py).
 
-    font = ImageFont.load_default()
-    ascii_chars = [chr(c) for c in FONT_ASCII_RANGE]
+    Onceki surum Pillow'un varsayilan fontunu bir esikle siyah-beyaza
+    indiriyordu; sonuc pixel art degil, rasterlestirilmis bir vektor
+    fontuydu. Simdi her glif elle cizili: kalinlik butun alfabede 1 pixel,
+    Turkce harfler uydurma degil kendi glifleri, ve tam sayi olcekte
+    keskin kaliyor.
+    """
+    chars = pixelfont.charset()
 
-    # 1) Ortak dikey sınır: tüm glifleri AYNI taban çizgisine göre hizala.
-    #    Her glifi kendi kutusuna sığdırmak 'g', 'p', 'y' gibi alt uzantılı
-    #    harfleri yukarı kaydırır ve metin zıp zıp olur.
-    top, bottom = 10 ** 6, -(10 ** 6)
-    advance_of: dict[str, int] = {}
-    for ch in ascii_chars:
-        probe = Image.new("L", (64, 48), 0)
-        drawer = ImageDraw.Draw(probe)
-        drawer.text((0, 12), ch, font=font, fill=255)
-        box = probe.point(lambda v: 255 if v > FONT_INK_THRESHOLD else 0).getbbox()
-        if box:
-            top = min(top, box[1])
-            bottom = max(bottom, box[3])
-        advance_of[ch] = max(1, int(round(drawer.textlength(ch, font=font))))
+    cell_w = pixelfont.GLYPH_WIDTH + 1        # 1 pixel harf araligi
+    cell_h = pixelfont.FULL_HEIGHT            # aksan payi + govde + alt uzanti
 
-    cell_w = max(advance_of.values())
-    base_h = bottom - top
-    cell_h = base_h + FONT_TOP_PAD + FONT_BOTTOM_PAD
-
-    def render_base(ch: str) -> tuple[Image.Image, tuple[int, int, int, int]]:
-        """
-        Temel glifi hücreye yerleştirir.
-
-        Döndürülen kutu, glifin KENDİ mürekkep sınırıdır (hücre koordinatında).
-        Aksan konumu bundan hesaplanmalı: büyük 'O' ile küçük 'o' farklı
-        yükseklikte başlar, ortak taban çizgisine göre konumlandırılan bir
-        umlaut küçük harflerin çok yukarısında kalır.
-        """
-        canvas = Image.new("L", (64, 48), 0)
-        ImageDraw.Draw(canvas).text((0, 12), ch, font=font, fill=255)
-        binary = canvas.point(lambda v: 255 if v > FONT_INK_THRESHOLD else 0)
-        cropped = binary.crop((0, top, cell_w, bottom))
-
-        cell = Image.new("L", (cell_w, cell_h), 0)
-        cell.paste(cropped, (0, FONT_TOP_PAD))
-
-        box = cell.getbbox() or (0, FONT_TOP_PAD, cell_w, FONT_TOP_PAD + base_h)
-        return cell, box
-
-    # 2) Atlası doldur
-    entries: list[tuple[str, Image.Image, int]] = []
-    for ch in ascii_chars:
-        cell, _ = render_base(ch)
-        entries.append((ch, cell, advance_of[ch]))
-
-    for ch, base_char, mark in FONT_COMPOSED:
-        cell, ink = render_base(base_char)
-        if mark == "undot":
-            _remove_dot(cell)
-        else:
-            _apply_diacritic(cell, mark, ink)
-        entries.append((ch, cell, advance_of[base_char]))
-
-    rows = (len(entries) + FONT_COLUMNS - 1) // FONT_COLUMNS
+    rows = (len(chars) + FONT_COLUMNS - 1) // FONT_COLUMNS
     sheet = Image.new("RGBA", (FONT_COLUMNS * cell_w, rows * cell_h), TRANSPARENT)
 
-    for i, (_, cell, _) in enumerate(entries):
-        # Glifler beyaz + alfa: rengi C# tarafı tint ile verir.
-        rgba = Image.new("RGBA", cell.size, (255, 255, 255, 0))
-        rgba.putalpha(cell)
-        sheet.paste(rgba, ((i % FONT_COLUMNS) * cell_w, (i // FONT_COLUMNS) * cell_h))
+    entries: list[tuple[str, int]] = []
+
+    for index, ch in enumerate(chars):
+        body = pixelfont.glyph_rows(ch)
+        accent = pixelfont.ACCENTS.get(ch)
+
+        cx = (index % FONT_COLUMNS) * cell_w
+        cy = (index // FONT_COLUMNS) * cell_h
+
+        # Aksan hucrenin UST payinda; govde her zaman ayni taban cizgisinde
+        # baslar. Boylece 'O' ile 'Ö' hizali kaliyor.
+        if accent:
+            # Isaret bandin ALTINA hizalanir: ust hizalama, aksanla govde
+            # arasinda 2 pixel'lik bosluk birakip harfi kopuk gosteriyordu.
+            marks = [row for row in accent if "#" in row] or accent[:1]
+            offset = pixelfont.ACCENT - len(marks)
+
+            for y, line in enumerate(marks):
+                for x, cell in enumerate(line[:pixelfont.GLYPH_WIDTH]):
+                    if cell == "#":
+                        sheet.putpixel((cx + x, cy + offset + y), (255, 255, 255, 255))
+
+        for y, line in enumerate(body[:pixelfont.CELL_HEIGHT]):
+            for x, cell in enumerate(line[:pixelfont.GLYPH_WIDTH]):
+                if cell == "#":
+                    sheet.putpixel((cx + x, cy + pixelfont.ACCENT + y),
+                                   (255, 255, 255, 255))
+
+        entries.append((ch, pixelfont.advance_of(ch)))
 
     png_path = os.path.join(out_dir, "UI", "font_ascii.png")
     sheet.save(png_path)
 
-    # Metadata ATLAS SIRASINA göre: her glif kendi kod noktasını ve ilerleme
-    # genişliğini taşır. Böylece ASCII aralığı + Türkçe harfler tek tip bir
-    # listede yaşar, C# tarafı özel durum bilmez.
-    # Murekkebin hucre icindeki gercek dikey araligi olculuyor.
+    # Murekkebin hucre icindeki gercek dikey araligi.
     #
-    # Neden gerekli: hucre yuksekligi 16 ama gliflerin murekkebi ~13 satir
-    # ve ustte/altta bos pay var. Bir yazinin arkasina kutu cizen kod
-    # (madde 24'teki emote balonu, ping isareti) satir araligini
-    # kullanirsa kutu gozle gorulur bicimde yaziyi askin cikiyor.
+    # Bir yazinin arkasina kutu cizen kod (emote balonu, ping isareti)
+    # satir araligini kullanirsa kutu gozle gorulur bicimde yaziyi askin
+    # cikiyor; bu iki deger o kutuyu murekkebe oturtuyor.
     ink_top, ink_bottom = cell_h, -1
     pixels = sheet.load()
     for index in range(len(entries)):
@@ -1366,7 +1343,7 @@ def build_font(out_dir: str) -> dict:
                     ink_top = min(ink_top, y)
                     ink_bottom = max(ink_bottom, y)
 
-    if ink_bottom < ink_top:      # hic murekkep yoksa hucrenin tamami
+    if ink_bottom < ink_top:
         ink_top, ink_bottom = 0, cell_h - 1
 
     meta = {
@@ -1375,11 +1352,17 @@ def build_font(out_dir: str) -> dict:
         "rows": rows,
         "cellWidth": cell_w,
         "cellHeight": cell_h,
-        "lineSpacing": cell_h + 1,
+        # Satir araligi govde+alt uzantiya gore: aksan payi satirlar arasinda
+        # bosluk gibi gorunmesin diye tam hucre yuksekligi kullanilmiyor.
+        # Satir araligi: govde + alt uzanti + 2 pixel pay. Aksan bandi
+        # (ust 3 satir) araliga katilmiyor, yoksa aksansiz metinde satirlar
+        # gereksiz seyrek durur. 2 pixel pay, bir alt uzantinin (g, y) bir
+        # sonraki satirin aksanina degmesini onluyor.
+        "lineSpacing": pixelfont.CELL_HEIGHT + 2,
         "inkTop": ink_top,
         "inkHeight": ink_bottom - ink_top + 1,
-        "placeholder": True,
-        "glyphs": [{"code": ord(ch), "advance": adv} for ch, _, adv in entries],
+        "placeholder": False,
+        "glyphs": [{"code": ord(ch), "advance": adv} for ch, adv in entries],
     }
     write_meta(png_path, meta)
     return meta

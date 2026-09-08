@@ -44,6 +44,28 @@ public sealed class HudRenderer
     public AccessibilitySettings Accessibility { get; set; } = new();
 
     private int UiScale => Accessibility.TextScale;
+
+    /// <summary>
+    /// Envanter slotlarinin olcegi.
+    ///
+    /// Yazi olceginden AYRI: slotlar ikon, yazi degil. Ikisini birlikte
+    /// olceklemek, oyuncu yaziyi buyuttugunde envanter cubugunun pencere
+    /// disina tasmasina yol aciyordu (24 slot x 22 px x 3 = 1584 > 1280).
+    ///
+    /// Yazi olcegini takip eder ama cubugun pencereye SIGDIGI en buyuk
+    /// degerle sinirlanir; boylece kucuk olcekte ikisi ayni gorunur,
+    /// buyuk olcekte cubuk kirilmaz.
+    /// </summary>
+    private static int SlotScaleFor(int slotCount, int textScale, int windowWidth)
+    {
+        for (var scale = textScale; scale > 1; scale--)
+        {
+            var width = slotCount * (SlotSize + SlotGap) * scale + SlotGap * scale;
+            if (width <= windowWidth - 24) return scale;
+        }
+
+        return 1;
+    }
     private Color TextColor => Accessibility.Palette.Text;
     private Color DimTextColor => Accessibility.Palette.DimText;
     private Color CraftableColor => Accessibility.Palette.Positive;
@@ -78,14 +100,16 @@ public sealed class HudRenderer
     public void DrawInventory(SpriteBatch spriteBatch, WorldInventory inventory,
                               int windowWidth, int windowHeight)
     {
-        var slotPixels = (SlotSize + SlotGap) * UiScale;
-        var barWidth = inventory.SlotCount * slotPixels + SlotGap * UiScale;
+        var slotScale = SlotScaleFor(inventory.SlotCount, UiScale, windowWidth);
+
+        var slotPixels = (SlotSize + SlotGap) * slotScale;
+        var barWidth = inventory.SlotCount * slotPixels + SlotGap * slotScale;
 
         // Başlık bandı FONTTAN hesaplanır, sabit sayıdan değil: sabit bir
         // değer font satır yüksekliğinden küçük kalınca yazı slotların
         // üstüne taşıyor.
         var titleBand = _font.LineHeight * UiScale + 4;
-        var barHeight = titleBand + SlotSize * UiScale + SlotGap * 2 * UiScale;
+        var barHeight = titleBand + SlotSize * slotScale + SlotGap * 2 * slotScale;
 
         var originX = (windowWidth - barWidth) / 2;
         var originY = windowHeight - barHeight - 12;
@@ -101,8 +125,8 @@ public sealed class HudRenderer
 
         for (var i = 0; i < inventory.SlotCount; i++)
         {
-            var slotX = originX + SlotGap * UiScale + i * slotPixels;
-            var bounds = new Rectangle(slotX, slotY, SlotSize * UiScale, SlotSize * UiScale);
+            var slotX = originX + SlotGap * slotScale + i * slotPixels;
+            var bounds = new Rectangle(slotX, slotY, SlotSize * slotScale, SlotSize * slotScale);
 
             Fill(spriteBatch, bounds, SlotColor * 0.9f);
 
@@ -116,21 +140,23 @@ public sealed class HudRenderer
 
             if (_iconSources.TryGetValue(definition.Icon, out var source))
             {
-                var iconOffset = (SlotSize - IconSize) / 2 * UiScale;
+                var iconOffset = (SlotSize - IconSize) / 2 * slotScale;
                 spriteBatch.Draw(_icons,
                     new Rectangle(bounds.X + iconOffset, bounds.Y + iconOffset,
-                                  IconSize * UiScale, IconSize * UiScale),
+                                  IconSize * slotScale, IconSize * slotScale),
                     source, Color.White);
             }
 
             // Miktar sağ alta; 1'lik yığınlarda sayı gösterilmez (gürültü olur).
             if (stack.Count > 1)
             {
+                // Sayi da SLOT olceginde: yazi olceginde cizilirse buyuk
+                // olcekte slotun disina tasiyor.
                 var label = stack.Count.ToString();
                 _font.Draw(spriteBatch, label,
-                    new Vector2(bounds.Right - _font.Measure(label, UiScale) - 2,
-                                bounds.Bottom - _font.LineHeight * UiScale + 2),
-                    TextColor, UiScale);
+                    new Vector2(bounds.Right - _font.Measure(label, slotScale) - 2,
+                                bounds.Bottom - _font.LineHeight * slotScale + 2),
+                    TextColor, slotScale);
             }
         }
     }

@@ -2,16 +2,16 @@
   "asset": "UI/font_ascii",
   "columns": 16,
   "rows": 7,
-  "cellWidth": 10,
-  "cellHeight": 16,
-  "lineSpacing": 17,
-  "inkTop": 1,
-  "inkHeight": 13,
-  "placeholder": true,
+  "cellWidth": 6,
+  "cellHeight": 12,
+  "lineSpacing": 11,
+  "inkTop": 2,
+  "inkHeight": 10,
+  "placeholder": false,
   "glyphs": [
     {
       "code": 32,
-      "advance": 2
+      "advance": 4
     },
     {
       "code": 33,
@@ -19,7 +19,7 @@
     },
     {
       "code": 34,
-      "advance": 3
+      "advance": 6
     },
     {
       "code": 35,
@@ -27,19 +27,19 @@
     },
     {
       "code": 36,
-      "advance": 7
+      "advance": 6
     },
     {
       "code": 37,
-      "advance": 7
+      "advance": 6
     },
     {
       "code": 38,
-      "advance": 7
+      "advance": 6
     },
     {
       "code": 39,
-      "advance": 1
+      "advance": 2
     },
     {
       "code": 40,
@@ -47,31 +47,31 @@
     },
     {
       "code": 41,
-      "advance": 3
+      "advance": 4
     },
     {
       "code": 42,
-      "advance": 7
+      "advance": 6
     },
     {
       "code": 43,
-      "advance": 7
+      "advance": 6
     },
     {
       "code": 44,
-      "advance": 2
+      "advance": 3
     },
     {
       "code": 45,
-      "advance": 3
+      "advance": 6
     },
     {
       "code": 46,
-      "advance": 2
+      "advance": 3
     },
     {
       "code": 47,
-      "advance": 3
+      "advance": 6
     },
     {
       "code": 48,
@@ -115,11 +115,11 @@
     },
     {
       "code": 58,
-      "advance": 2
+      "advance": 3
     },
     {
       "code": 59,
-      "advance": 2
+      "advance": 3
     },
     {
       "code": 60,
@@ -135,11 +135,11 @@
     },
     {
       "code": 63,
-      "advance": 4
+      "advance": 6
     },
     {
       "code": 64,
-      "advance": 10
+      "advance": 6
     },
     {
       "code": 65,
@@ -151,11 +151,11 @@
     },
     {
       "code": 67,
-      "advance": 7
+      "advance": 6
     },
     {
       "code": 68,
-      "advance": 7
+      "advance": 6
     },
     {
       "code": 69,
@@ -167,15 +167,15 @@
     },
     {
       "code": 71,
-      "advance": 7
+      "advance": 6
     },
     {
       "code": 72,
-      "advance": 8
+      "advance": 6
     },
     {
       "code": 73,
-      "advance": 3
+      "advance": 5
     },
     {
       "code": 74,
@@ -191,15 +191,15 @@
     },
     {
       "code": 77,
-      "advance": 9
+      "advance": 6
     },
     {
       "code": 78,
-      "advance": 8
+      "advance": 6
     },
     {
       "code": 79,
-      "advance": 7
+      "advance": 6
     },
     {
       "code": 80,
@@ -207,7 +207,7 @@
     },
     {
       "code": 81,
-      "advance": 7
+      "advance": 6
     },
     {
       "code": 82,
@@ -223,7 +223,7 @@
     },
     {
       "code": 85,
-      "advance": 7
+      "advance": 6
     },
     {
       "code": 86,
@@ -231,7 +231,7 @@
     },
     {
       "code": 87,
-      "advance": 10
+      "advance": 6
     },
     {
       "code": 88,
@@ -243,19 +243,19 @@
     },
     {
       "code": 90,
-      "advance": 7
+      "advance": 6
     },
     {
       "code": 91,
-      "advance": 3
+      "advance": 4
     },
     {
       "code": 92,
-      "advance": 3
+      "advance": 6
     },
     {
       "code": 93,
-      "advance": 3
+      "advance": 4
     },
     {
       "code": 94,
@@ -263,15 +263,15 @@
     },
     {
       "code": 95,
-      "advance": 5
+      "advance": 6
     },
     {
       "code": 96,
-      "advance": 3
+      "advance": 6
     },
     {
       "code": 97,
-      "advance": 5
+      "advance": 6
     },
     {
       "code": 98,
@@ -279,7 +279,7 @@
     },
     {
       "code": 99,
-      "advance": 5
+      "advance": 6
     },
     {
       "code": 100,
@@ -291,7 +291,7 @@
     },
     {
       "code": 102,
-      "advance": 3
+      "advance": 5
     },
     {
       "code": 103,
@@ -299,7 +299,7 @@
     },
     {
       "code": 104,
-      "advance": 7
+      "advance": 6
     },
     {
       "code": 105,
@@ -307,7 +307,7 @@
     },
     {
       "code": 106,
-      "advance": 3
+      "advance": 4
     },
     {
       "code": 107,
@@ -319,15 +319,15 @@
     },
     {
       "code": 109,
-      "advance": 9
+      "advance": 6
     },
     {
       "code": 110,
-      "advance": 7
+      "advance": 6
     },
     {
       "code": 111,
-      "advance": 5
+      "advance": 6
     },
     {
       "code": 112,
@@ -339,35 +339,35 @@
     },
     {
       "code": 114,
-      "advance": 4
+      "advance": 5
     },
     {
       "code": 115,
-      "advance": 4
+      "advance": 6
     },
     {
       "code": 116,
-      "advance": 3
+      "advance": 5
     },
     {
       "code": 117,
-      "advance": 7
+      "advance": 6
     },
     {
       "code": 118,
-      "advance": 5
+      "advance": 6
     },
     {
       "code": 119,
-      "advance": 8
+      "advance": 6
     },
     {
       "code": 120,
-      "advance": 5
+      "advance": 6
     },
     {
       "code": 121,
-      "advance": 5
+      "advance": 6
     },
     {
       "code": 122,
@@ -375,7 +375,7 @@
     },
     {
       "code": 123,
-      "advance": 3
+      "advance": 4
     },
     {
       "code": 124,
@@ -383,7 +383,7 @@
     },
     {
       "code": 125,
-      "advance": 3
+      "advance": 4
     },
     {
       "code": 126,
@@ -391,19 +391,19 @@
     },
     {
       "code": 199,
-      "advance": 7
+      "advance": 6
     },
     {
       "code": 286,
-      "advance": 7
+      "advance": 6
     },
     {
       "code": 304,
-      "advance": 3
+      "advance": 5
     },
     {
       "code": 214,
-      "advance": 7
+      "advance": 6
     },
     {
       "code": 350,
@@ -411,11 +411,11 @@
     },
     {
       "code": 220,
-      "advance": 7
+      "advance": 6
     },
     {
       "code": 231,
-      "advance": 5
+      "advance": 6
     },
     {
       "code": 287,
@@ -427,15 +427,15 @@
     },
     {
       "code": 246,
-      "advance": 5
+      "advance": 6
     },
     {
       "code": 351,
-      "advance": 4
+      "advance": 6
     },
     {
       "code": 252,
-      "advance": 7
+      "advance": 6
     }
   ]
 }

@@ -65,7 +65,15 @@ public sealed class AccessibilitySettings
     public const int MinTextScale = 1;
     public const int MaxTextScale = 4;
 
-    private int _textScale = 2;
+    /// <summary>
+    /// Varsayilan yazi olcegi.
+    ///
+    /// 3, cunku 5x7 pixel font onceki (10x16 hucreli) fontun yaklasik
+    /// yarisi kadar: 2x olcekte kap yuksekligi 14 pixel kaliyordu ve
+    /// 1280x720'de kucuk duruyordu. 3x ile 21 pixel — onceki okunur
+    /// buyuklugun karsiligi, ama artik keskin.
+    /// </summary>
+    private int _textScale = 3;
     private ColorVisionMode _mode = ColorVisionMode.Default;
 
     /// <summary>Ayar değişti — arayüz yeniden ölçülmeli.</summary>
