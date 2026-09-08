@@ -646,7 +646,6 @@ ve tutmayan bağlantı reddediliyor. Kablo biçimi değiştiği için
   kendi kopyasını görür. Protokole varlık senkronizasyonu mesajı gerekiyor —
   şu an yalnızca oyuncular, tile'lar ve dünya saati senkron.
 * **Düşman yol bulma yok.** Düz çizgide yürüyorlar, duvar arkasına geçince takılırlar.
-* **Görev ilerlemesi kaydedilmiyor** (save sistemi henüz yok).
 * **Görev ilerlemesi ve tarım kaydedilmiyor.** Kayıt sistemi var (aşağıya bak)
   ama NPC görev durumu ile ekili tarlalar henüz kapsam dışında; ikisi de
   kendi sistemlerinde dışa aktarım arayüzü istiyor.
