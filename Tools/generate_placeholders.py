@@ -338,6 +338,29 @@ TILES: list[TileSpec] = [
 ]
 
 
+def _edge_dither(d: ImageDraw.ImageDraw, rng, size: int,
+                 color: tuple[int, int, int, int], count: int) -> None:
+    """
+    Tile'in KENARLARINA komsu malzemeden birkac pixel serpistirir.
+
+    Tile tabanli haritalarda her tile keskin bir kare olarak okunur ve
+    zemin satranc tahtasina doner. Gercek gecis tile'lari (48 parcali
+    autotile seti) cizmek yerine kenarlara azicik komsu rengi karistirmak
+    ayni isi cok daha ucuza yapiyor: komsu farkli malzemeyse gecis,
+    ayniysa doku olarak okunuyor.
+    """
+    for _ in range(count):
+        # Kenara yakin bir nokta: hangi kenar oldugu rastgele.
+        if rng.random() < 0.5:
+            x = rng.randrange(size)
+            y = rng.choice((rng.randrange(0, 3), rng.randrange(size - 3, size)))
+        else:
+            y = rng.randrange(size)
+            x = rng.choice((rng.randrange(0, 3), rng.randrange(size - 3, size)))
+
+        d.point((x, y), fill=color)
+
+
 def draw_tile(spec: TileSpec, variant: int) -> Image.Image:
     """
     Bir tile'in tek varyanti. 16x16, tam opak (zemin katmani).
@@ -346,33 +369,76 @@ def draw_tile(spec: TileSpec, variant: int) -> Image.Image:
     Isik her yerde SOL USTTEN gelir.
     """
     n = spec.ramp
-    img = Image.new("RGBA", (TILE_SIZE, TILE_SIZE), tone(n, 1))
-    d = ImageDraw.Draw(img)
     rng = seeded_rng("tile", spec.key, variant)
     S = TILE_SIZE
 
+    # DENENDI VE GERI ALINDI: varyantlara %4'luk taban tonu farki vermek.
+    #
+    # Amac genis cim alanlarinin tek duz levha gibi okunmasini kirmakti;
+    # sonuc tam tersi oldu. TileMap varyanti konumdan sectigi icin yan yana
+    # gelen ayni malzemeli tile'lar arasinda gozle gorulur parlaklik
+    # basamaklari olustu — yani kacinilmak istenen satranc deseninin
+    # daniskasi. Ton dalgalanmasi tile SINIRINDA degil, tile ICINDE
+    # olmali; bu yuzden cesitlilik yalnizca dokudan geliyor.
+    img = Image.new("RGBA", (TILE_SIZE, TILE_SIZE), tone(n, 1))
+    d = ImageDraw.Draw(img)
+
     if spec.kind == "grass":
+        # Zemin tek renk kalmasin: genis, yumusak yama kumeleri once
+        # cizilir, doku onlarin uzerine biner. Duz taban rengi ne kadar
+        # cok gorunurse tile o kadar "kutu" gibi okunuyor.
+        for _ in range(3):
+            cx, cy = rng.randrange(S), rng.randrange(S)
+            r = rng.randint(3, 5)
+            for dy in range(-r, r + 1):
+                for dx in range(-r, r + 1):
+                    if dx * dx + dy * dy > r * r:
+                        continue
+                    if rng.random() < 0.45:
+                        continue
+                    d.point(((cx + dx) % S, (cy + dy) % S), fill=tone(n, 2))
+
         # Kumeli koyu tutamlar: duzgun dagilmis benek televizyon karincasi
         # gibi durur, gercek dokuda detay kumelenir.
-        for x, y in pixelart.cluster_noise(rng, S, 2, 2):
+        for x, y in pixelart.cluster_noise(rng, S, 4, 2):
             d.point((x, y), fill=tone(n, 0))
-        # Cimen saplari: iki pixel dikey, acik tonda
-        for _ in range(9):
-            x, y = rng.randrange(S), rng.randrange(1, S)
+
+        # Cimen saplari: uc pixel dikey, ucu parlak. Iki pixel'lik sap
+        # 16x16'da doku degil gurultu gibi okunuyordu.
+        for _ in range(11):
+            x, y = rng.randrange(S), rng.randrange(2, S)
             d.point([(x, y), (x, y - 1)], fill=tone(n, 2))
-        for _ in range(4):
-            d.point((rng.randrange(S), rng.randrange(S)), fill=tone(n, 3))
+            d.point((x, y - 2), fill=tone(n, 3))
+
+        # Kenar ditheringi: birkac toprak tonlu pixel. Komsu tile toprak
+        # oldugunda gecis, cim oldugunda doku olarak okunuyor — tile
+        # tabanli haritalarda kenarlari yumusatmanin en ucuz yolu.
+        _edge_dither(d, rng, S, tone("dirt", 1), 4)
 
     elif spec.kind == "dirt":
-        for x, y in pixelart.cluster_noise(rng, S, 4, 1):
-            d.point((x, y), fill=tone(n, 0))
+        # Iki yumusak koyu yama. Ucu denendi ve toprak "kirli" degil
+        # GURULTULU gorunuyordu: doku, dikkat cekmeden derinlik vermeli.
+        for _ in range(2):
+            cx, cy = rng.randrange(S), rng.randrange(S)
+            r = rng.randint(3, 5)
+            for dy in range(-r, r + 1):
+                for dx in range(-r, r + 1):
+                    if dx * dx + dy * dy > r * r or rng.random() < 0.65:
+                        continue
+                    d.point(((cx + dx) % S, (cy + dy) % S), fill=tone(n, 0))
+
+        for x, y in pixelart.cluster_noise(rng, S, 3, 1):
+            d.point((x, y), fill=tone(n, 2))
+
         # Cakil: ustu isikli altı golgeli -> 2 pixel ile hacim
         for _ in range(4):
             x, y = rng.randrange(S - 1), rng.randrange(S - 1)
             d.point((x, y), fill=tone(n, 2))
             d.point((x + 1, y + 1), fill=tone(n, 0))
-        for _ in range(6):
+        for _ in range(4):
             d.point((rng.randrange(S), rng.randrange(S)), fill=tone(n, 3))
+
+        _edge_dither(d, rng, S, tone("grass", 1), 3)
 
     elif spec.kind == "rock":
         # Kirikli yuzey: fasetlerin sol ustu isikli, sag altı golgeli.
@@ -382,12 +448,19 @@ def draw_tile(spec: TileSpec, variant: int) -> Image.Image:
             d.polygon([(cx, cy), (cx + size, cy + 1), (cx + size - 1, cy + size),
                        (cx - 1, cy + size - 1)], fill=tone(n, 2))
             d.line([(cx + size, cy + 1), (cx + size - 1, cy + size)], fill=tone(n, 0))
-        for _ in range(2):
+        # Catlaklar: asagi dogru yurüyen koyu cizgiler.
+        for _ in range(4):
             x, y = rng.randrange(S), rng.randrange(S)
-            for _ in range(rng.randint(3, 6)):
+            for _ in range(rng.randint(4, 8)):
                 d.point((x % S, y % S), fill=tone(n, 0))
                 x += rng.choice((-1, 0, 1))
                 y += 1
+
+        # Mineral parlamalari: tasin olu gorunmesini engelliyor.
+        for _ in range(5):
+            d.point((rng.randrange(S), rng.randrange(S)), fill=tone(n, 3))
+
+        _edge_dither(d, rng, S, tone("dirt", 1), 5)
 
     elif spec.kind == "sand":
         # Ruzgar cizgileri ACIK tonda: kumda golge degil, isik parlar.
@@ -396,9 +469,18 @@ def draw_tile(spec: TileSpec, variant: int) -> Image.Image:
             y, x = rng.randrange(S), rng.randrange(S)
             for i in range(rng.randint(4, 8)):
                 d.point(((x + i) % S, y), fill=tone(n, 2))
+        # Kum tepecikleri: yumusak yatay bantlar.
+        for _ in range(3):
+            y = rng.randrange(S)
+            width = rng.randint(5, 10)
+            start = rng.randrange(S)
+            for i in range(width):
+                d.point(((start + i) % S, y), fill=tone(n, 3))
+                d.point(((start + i) % S, (y + 1) % S), fill=tone(n, 0))
+
         for _ in range(6):
             d.point((rng.randrange(S), rng.randrange(S)), fill=tone(n, 0))
-        for _ in range(4):
+        for _ in range(5):
             d.point((rng.randrange(S), rng.randrange(S)), fill=tone(n, 3))
 
     elif spec.kind == "water":
@@ -655,6 +737,9 @@ def draw_character_frame(spec: CharacterSpec, state: str, frame: int) -> Image.I
         d.rectangle([lx, top, lx + 3, 27 + oy], fill=C(pants, 1))
         d.line([(lx, top), (lx, 27 + oy)], fill=C(pants, 2))          # sol ışık
         d.line([(lx + 3, top), (lx + 3, 27 + oy)], fill=C(pants, 0))  # sağ gölge
+
+        # Diz: bacagi tek blok olmaktan cikaran tek pixel'lik golge.
+        d.point((lx + 1, top + 2), fill=C(pants, 0))
         # Bot: bacaktan koyu ve bir pixel geniş -> ayak hissi
         d.rectangle([lx - 1 + (1 if offset > 0 else 0), 28 + oy,
                      lx + 3, 29 + oy], fill=C(boot, 1))
@@ -671,6 +756,22 @@ def draw_character_frame(spec: CharacterSpec, state: str, frame: int) -> Image.I
     d.line([(body_left, 16 + oy), (body_right, 16 + oy)], fill=C(shirt, 2))
     d.line([(body_right, 16 + oy), (body_right - 1, 24 + oy)], fill=C(shirt, 0))
     d.line([(body_left + 2, 23 + oy), (body_right - 2, 23 + oy)], fill=C(shirt, 0))
+
+    # Yaka: kafayla govde arasindaki geciste ince bir parlama. Olmadan
+    # kafa dogrudan bir renk blogunun uzerinde duruyor gibi okunuyordu.
+    d.line([(body_left + 2, 16 + oy), (body_right - 2, 16 + oy)], fill=C(shirt, 3))
+
+    # Kumas kirisiklari: govdenin ortasinda iki kisa dikey golge. Duz
+    # renk blogunu kumasa cevirmenin en ucuz yolu.
+    if not side:
+        d.line([(body_left + 3, 19 + oy), (body_left + 3, 22 + oy)], fill=C(shirt, 0))
+        d.line([(body_right - 3, 20 + oy), (body_right - 3, 22 + oy)], fill=C(shirt, 0))
+    else:
+        d.line([(body_left + 4, 19 + oy), (body_left + 4, 22 + oy)], fill=C(shirt, 0))
+
+    # Bel hizasinda kemer: silueti ikiye bolup govdeyi kisaltiyor,
+    # karakter daha dengeli duruyor.
+    d.line([(body_left + 1, 24 + oy), (body_right - 1, 24 + oy)], fill=C("leather", 1))
 
     # =========================== KOLLAR ===========================
     # Kol = kısa gömlek kolu + ten. Yandan bakışta tek kol görünür.
@@ -726,11 +827,25 @@ def draw_character_frame(spec: CharacterSpec, state: str, frame: int) -> Image.I
     # Göz TEK pixel yüksekliğinde. İki katlı göz bloğu, 32x32'lik bir
     # kafada kaş gibi okunuyor ve karakter sürekli kızgın görünüyordu.
     eye = (34, 30, 46, alpha)
+    white = (238, 240, 248, alpha)
+
     if facing == "down" or state in ("harvest", "hurt", "death"):
+        # Goz: koyu bebek + tek pixel ak. Tek renk goz 32x32'de cansiz
+        # duruyor; ak, bakisi canlandiran en ucuz detay.
         d.rectangle([head_left + 2, 11 + oy, head_left + 3, 11 + oy], fill=eye)
+        d.point((head_left + 2, 11 + oy), fill=white)
         d.rectangle([head_right - 3, 11 + oy, head_right - 2, 11 + oy], fill=eye)
+        d.point((head_right - 3, 11 + oy), fill=white)
+
+        # Burun golgesi: yuzu duz birakmiyor.
+        d.point((15, 12 + oy), fill=C(skin, 0))
+
         d.point((head_left + 4, 13 + oy), fill=C(skin, 0))          # ağız
         d.point((head_left + 5, 13 + oy), fill=C(skin, 0))
+
+        # Yanaklar: hafif parlama, yuze hacim veriyor.
+        d.point((head_left + 1, 12 + oy), fill=C(skin, 2))
+        d.point((head_right - 1, 12 + oy), fill=C(skin, 2))
     elif facing == "left":
         d.point((head_left + 2, 11 + oy), fill=eye)
         d.point((head_left - 1, 11 + oy), fill=C(skin, 1))          # burun çıkıntısı
