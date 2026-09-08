@@ -7,21 +7,29 @@ MonoGame **3.8.5.1** (DesktopGL) · .NET 8 · C#
 > `.csproj` içindeki `RootNamespace` + `AssemblyName`, `.cs` dosyalarındaki `namespace`,
 > ve `app.manifest` içindeki `assemblyIdentity name`.
 
-> ⚠ **Bu proje henüz BİR KEZ BİLE derlenmedi.** 8900+ satır C# yazıldı, algoritmalar
-> Python'da bağımsız olarak doğrulandı, ama `dotnet build` hiç çalıştırılmadı.
-> İlk iş bu olmalı.
+**Durum: Aşama 1 (madde 1–11) ve Aşama 2 (madde 12–25) tamam.**
 
-**Durum: Aşama 1 tamam (madde 1–11) + Aşama 2 / madde 12–19.** Sprite üretici, hareket,
-çarpışma, kamera, chunk tabanlı prosedürel sonsuz dünya, kaynak toplama,
-WorldInventory, crafting, grid tabanlı inşa, ağ oturumu (host/istemci) ve dövüş
-çalışıyor.
+Proje derleniyor ve çalışıyor:
 
-Mevsim/hava, tarım+balıkçılık, evcil hayvan/binek, düşman+boss rotasyonu,
-zindanlar, NPC tüccar/görev, güvenli bölge/PvP ayrımı + baskın ve Steam
-envanteri + Steam taşıma katmanı eklendi.
+```
+dotnet build                    # 0 hata, 0 uyarı
+dotnet build -c SteamRelease    # 0 hata, 0 uyarı (Steamworks.NET dahil)
+dotnet run -- --self-test       # 68 denetim, hepsi geçiyor
+python3 Tools/verify_content.py    # 1600+ kontrol
+python3 Tools/verify_worldgen.py   # üretim algoritması
+python3 Tools/verify_protocol.py   # kablo protokolü
+```
 
-Henüz yok: Steamworks tam entegrasyonu (20–21), clan/trade (22),
-localization (23), photo mode (24), Workshop (25), kaydetme/yükleme.
+Sprite üretici, hareket, çarpışma, kamera, chunk tabanlı sonsuz dünya, kaynak
+toplama, envanter, crafting, inşa, ağ oturumu ve dövüş; mevsim/hava,
+tarım+balıkçılık, evcilleştirme/binek, düşman+boss rotasyonu, zindanlar, NPC
+ticaret/görev, güvenli bölge/PvP + baskın, Steam envanteri ve Steam taşıma
+katmanı; katmanlı kozmetikler + nadirlik + sezonluk item, Steamworks
+(başarım/leaderboard/davet), klan + host otoriter takas, EN/TR dil desteği +
+erişilebilirlik, photo mode + emote + ping + yama notları, Workshop altyapısı.
+
+Henüz yok: **kaydetme/yükleme**, düşman yol bulma, varlık (yaratık/düşman/NPC)
+ağ senkronizasyonu. Bkz. "Bilinen boşluklar".
 
 ## Kontroller
 
@@ -45,10 +53,26 @@ localization (23), photo mode (24), Workshop (25), kaydetme/yükleme.
 | F9 | sunucu aç (port 7777) |
 | F10 | localhost'a bağlan |
 | F11 | oturumdan ayrıl |
+| K | gardırop (madde 20) — açıkken 1-5 slot değiştirir, 0 hepsini çıkarır |
+| N | klan paneli (madde 22) — açıkken 1 kur, 2 davet et, 3 ayrıl |
+| Y | takas penceresi (madde 22) — ok tuşları seçer, Enter onaylar |
+| M | mod/Workshop paneli (madde 25) |
+| P | photo mode (madde 24) — arayüz gizlenir, kamera serbest kalır |
+| F12 | photo mode'da temiz kareyi `photos/` klasörüne kaydet |
+| Alt (**basılı tut**) | emote/ping tekerleği: 1-6 emote, Q/E/R/F ping türü |
 | F1 | asset denetim görünümü (ham sprite sheet'ler) |
 | F2 | debug görünümü (katı tile kırmızı, collider yeşil, chunk sınırı sarı) |
+| F3 | başarım listesi (madde 21) |
+| F4 | sıralamalar (madde 21) |
 | F5 | rastgele yeni tohumla dünyayı yeniden üret |
+| F6 | Steam arkadaş daveti (madde 21) |
+| F7 | ayarlar (madde 23) — 1 dil, 2 yazı boyutu, 3 renk paleti |
+| F8 | yama notları (madde 24) |
 | Escape / gamepad Back | çıkış |
+
+Sayı tuşlarını paylaşan paneller (üretim, gardırop, klan, ayarlar, emote
+tekerleği) **asla aynı anda aktif değildir**: tuşun hangi işlevi tetiklediği
+belirsiz kalmasın diye biri açılınca diğerleri kapanır.
 
 Hareket 8 yönlü, animasyon 4 yönlü (Stardew Valley yaklaşımı). Katı 4 yön isteniyorsa
 `Entities/Player.cs` içindeki `SnapToFourDirections` sabiti `true` yapılır.
@@ -177,7 +201,29 @@ Hata varsa çıkış kodu 1 → pre-commit hook veya CI'a doğrudan bağlanabili
 | 62 | PvP bölgesinde `F` ile yapıya 5 vuruş = yıkım | Baskın |
 | 63 | Yarım bırakılan baskın 30 sn sonra iyileşiyor | Yapı onarımı |
 | 64 | Sol altta "Steam yok (gelistirme derlemesi)" yazıyor | Steam katmanı (Madde 19) |
-| 65 | Escape pencereyi kapatıyor | — |
+| 65 | `K` gardırop açıyor, 1-5 katman ekliyor/çıkarıyor | Kozmetik (Madde 20) |
+| 66 | Şapka saçın ÜSTÜNDE, pelerin gövdenin ARKASINDA | Katman sırası |
+| 67 | Yürürken katmanlar bedenden ayrılmıyor | Ortak poz matematiği |
+| 68 | Aksesuar "(0 sahip)" diyor, kuşanılamıyor | Sahiplik kapısı |
+| 69 | Nadirlik renkleri satır satır farklı | Nadirlik SADECE renk |
+| 70 | İlk odunda altın şeritli başarım bildirimi çıkıyor | Başarım (Madde 21) |
+| 71 | `F3` listesinde 1/14, gizli olan "???" | Gizli başarım |
+| 72 | `F4` sıralamasında skorun 10 sn sonra tabloya düşüyor | Leaderboard |
+| 73 | `F6` Steam'siz derlemede doğru uyarıyı veriyor | Davet yolu |
+| 74 | `N` ile klan kuruluyor, "Lider" rütbesi görünüyor | Klan (Madde 22) |
+| 75 | Tek kişilik oyunda `Y` "ikinci oyuncu gerekli" diyor | Takas kapısı |
+| 76 | `F7` → `1` HUD'ın TAMAMINI İngilizceye çeviriyor | Dil (Madde 23) |
+| 77 | `2` yazıyı 4x yapıyor, paneller ekran içinde kalıyor | Yazı ölçeği |
+| 78 | `3` döteranopide güvenli/PvP ayrımını maviye çeviriyor | Renk paleti |
+| 79 | `F8` yama notlarını kaydırma çubuğuyla gösteriyor | Yama notları (Madde 24) |
+| 80 | Alt+1 kafanın üstünde emote balonu çıkarıyor | Emote |
+| 81 | Alt+E bakılan tile'a kırmızı ping koyuyor, soluyor | Ping |
+| 82 | 1.2 sn dolmadan ikinci işaret REDDEDİLİYOR | Spam koruması |
+| 83 | `P` arayüzü tamamen gizliyor, karakter DURUYOR | Photo mode |
+| 84 | `F12` ile kaydedilen PNG'de hiç arayüz YOK | Temiz kare |
+| 85 | `M` mod panelinde parmak izi ve örnek mod görünüyor | Workshop (Madde 25) |
+| 86 | Panel başlığı örnek modun yazdığı metne dönüşmüş | Mod bindirmesi |
+| 87 | Escape pencereyi kapatıyor | — |
 
 Referans kare üretip ekran görüntünüzle yan yana koyun:
 
@@ -269,17 +315,35 @@ Content/Steam/itemdefs.json   Steamworks ItemDef AYNASI (sahiplik kaniti DEGIL)
 Content/Items/icons_16.png    item ikonlari
 Content/UI/font_ascii.png     pisirilmis bitmap font atlasi
 World/          chunk, terrain generation, biome, PvP/guvenli bolge metadata
-Networking/     INetworkTransport + LiteNetLib / SteamNetworking implementasyonlari
-Inventory/      WorldInventory ve SteamInventory (AYRI siniflar)
-UI/             HUD, envanter, photo mode, achievement, trade, leaderboard, patch notes
-Localization/   EN/TR string tablolari
-Accessibility/  renk koru paleti, yazi boyutu
-Achievements/   Steam achievement tanimlari
+
+Cosmetics/      CosmeticSlot.cs (cizim sirasi), CosmeticRarity.cs (SADECE renk),
+                SeasonalWindow.cs (elde etme penceresi), CosmeticTable.cs,
+                CosmeticLoadout.cs, ICosmeticOwnership (sahiplik TEK okuma noktasi)
+Achievements/   AchievementCatalog.cs (esikler VERIDEN), AchievementTracker.cs
+                (istatistik tabanli tetikleme), IStatsBackend + Local/Steam,
+                LeaderboardService.cs, StatsBackendFactory.cs (secim TEK noktada)
+Clans/          ClanRank.cs (bayrak tabanli yetkiler), ClanSystem.cs
+                (uyelik + YAPI SAHIPLIGI)
+Trade/          TradeSession.cs (host otoriter escrow, atomik uygulama)
+Localization/   LocaleTable.cs, Loc.cs (eksik anahtar GIZLENMEZ, [key] gorunur)
+Accessibility/  AccessibilitySettings.cs (yazi olcegi + 4 renk paleti)
+Systems/Social/ PhotoMode.cs, SocialSignals.cs (emote + ping, spam korumasi)
+Workshop/       ModManifest.cs, ModRegistry.cs (kesif + PARMAK IZI),
+                WorkshopBackend.cs (ISteamUGC), WorkshopFactory.cs
+Diagnostics/    CaptureHarness.cs (script'ten tus oynatip PNG doker),
+                SelfTest.cs (gorunmeyen kurallarin denetimi)
+UI/             BitmapFont.cs, HudRenderer.cs (tum paneller), PatchNotes.cs
+
+Content/Cosmetics/cosmetics.json   kozmetik katalogu (VERI)
+Content/Steam/achievements.json    basarim/istatistik/leaderboard tanimlari (VERI)
+Content/Localization/tr.json       dil tablosu (VERI)
+Content/Localization/en.json       dil tablosu (VERI)
+Content/UI/patchnotes.json         yama notlari (VERI)
+mods/ornek_mod/                    ornek Workshop paketi
+Tools/captures/                    bassiz dogrulama script'leri
 ```
 
-`Networking/`, `Inventory/`, `UI/`, `Localization/`, `Accessibility/`,
-`Achievements/` **bilerek boş**. Her birinde hangi maddede doldurulacağını yazan bir
-`README.md` var.
+Tüm klasörler artık dolu; her biri kendi maddesinde yazıldı.
 
 ### Dünyayı ayarlamak
 
@@ -475,6 +539,70 @@ Baskın sökmekten **verimsiz**: malzemenin %50'si dönüyor. Yoksa yapı kurmak
 başkasınınkini kırmak her zaman daha kârlı olurdu. Yarım bırakılan baskın 30 saniye
 sonra iyileşiyor.
 
+### Madde 20-25: tasarım kararları
+
+**Nadirlik yalnızca renktir.** `CosmeticRarity`'nin tek davranışı bir `Color`
+döndürmek; sayısal bir çarpan üretmediği için bir yerde güç çarpanı olarak
+kullanılamıyor. `CosmeticDefinition`'da istatistik alanı yok ve
+`verify_content.py` `cosmetics.json` içinde `damage`/`health`/`speed`/`armor`
+gibi bir alan görürse hata veriyor. Beş kural da kasten bozulup test edildi.
+
+**Sezon penceresi elde etmeyi kapatır, kullanmayı değil.** Sahip olunan bir
+kozmetik sonsuza kadar kuşanılabilir kalır. Tersi, oyuncunun satın aldığını
+elinden almak olurdu — item marketable/tradable olduğu için gerçek bir
+mülkiyet sorunu.
+
+**Başarımlar istatistik tabanlı.** Oyun yalnızca olanı raporluyor
+(`Add`/`SetMax`); hangi başarımın hangi eşikte açılacağına veri karar veriyor.
+Alternatif, kodun her yerine `Unlock("ACH_X")` serpmekti: her yeni başarım bir
+kod değişikliği, unutulan bir çağrı ise sessizce hiç açılmayan bir başarım
+demek olurdu.
+
+**Takas host otoriter — ve bu sefer gerçekten.** README'nin madde 10 notu
+"istemci envanteri host'ta ayna tutulmuyor, madde 22 bu açık açıkken
+yapılamaz" diyordu. Doğruydu: önce o açık kapatıldı. Host artık her istemci
+için bir envanter aynası tutuyor, aynayı yalnızca kendi çözdüğü olaylar
+yazıyor, ve üretim de host'a taşındı (yoksa "malzemem yokken üretip takas
+etmek" doğrudan mümkün olurdu).
+
+Takas atomik: önce iki tarafın da verdiğine sahip olduğu VE alacağına yer
+olduğu doğrulanıyor, ancak ondan sonra envanterlere dokunuluyor. Sığma
+kontrolü envanterin **kopyası** üzerinde yapılıyor, böylece reddedilen bir
+takas hiçbir şeyi değiştirmiyor.
+
+**Yapı sahipliği klanla geldi.** Kendi klanının yapısını SÖKERSİN (malzemenin
+tamamı döner), yabancınınkine BASKIN yaparsın (yarısı döner, 5 vuruş sürer).
+Sahipsiz yapılar herkese açık — madde 9 davranışı korunuyor. Üye kurabilir ama
+sökemez: yeni katılanın klanın bütün yapılarını söküp kaçması, klan
+sistemlerinin klasik istismarı.
+
+**Renk tek başına anlam taşımaz.** Renk körlüğü paleti (protanopi/döteranopi/
+tritanopi) ayırt etmeyi hızlandırıyor ama bilginin tek taşıyıcısı değil:
+kritik bilgi her yerde metinle de veriliyor (`[X]`/`[ ]`, "GUVENLI BOLGE"/
+"PvP BOLGESI", "Nadir"/"Efsanevi").
+
+Yazı ölçeği tam sayı kat: 1.5x gibi bir kat pixel art yazıyı bulanıklaştırıp
+okunurluğu **düşürür**.
+
+**Emote'lar sembol tabanlı.** Çevrilebilir bir emote, çeviriyi bilmeyen oyuncu
+için işe yaramaz — emote'un bütün amacı dil bilmeden anlaşmak. Ping ve emote
+sohbeti olmayan bir oyunda en kolay taciz aracı olduğu için bekleme süresi
+veri sınıfında, arayüzde değil: arayüzde olsaydı ağdan gelen mesajlar sınırı
+atlardı.
+
+**Modlar kod çalıştırmaz.** Workshop'tan inen bir paketin kod çalıştırabilmesi,
+oyuncunun makinesinde rastgele kod çalıştırılması demek. Modlar yalnızca JSON
+veri ve PNG asset sağlıyor — bir kısıtlama değil, güvenlik sınırı. Oyunun
+bütün dengesi zaten veriden okunduğu için veri modlanabilirse oyunun neredeyse
+tamamı modlanabilir hale geliyor.
+
+**Mod parmak izi protokole girdi.** Harita ağdan gönderilmiyor; iki taraf aynı
+tohumdan üretiyor ve üretim modlanabilir veriden türüyor. Farklı mod kümesine
+sahip iki oyuncu aynı tohumdan **farklı dünya** üretir; ekranlar sessizce
+ayrışır. Bu yüzden aktif mod kümesinin parmak izi karşılama mesajıyla gidiyor
+ve tutmayan bağlantı reddediliyor. Kablo biçimi değiştiği için
+`ProtocolVersion` 1 → 2.
+
 ### Bilinen boşluklar (Aşama 2)
 
 * **Yaratıklar, düşmanlar, NPC'ler ve zindanlar ağda senkronize DEĞİL.** Her istemci
@@ -482,12 +610,25 @@ sonra iyileşiyor.
   şu an yalnızca oyuncular, tile'lar ve dünya saati senkron.
 * **Düşman yol bulma yok.** Düz çizgide yürüyorlar, duvar arkasına geçince takılırlar.
 * **Görev ilerlemesi kaydedilmiyor** (save sistemi henüz yok).
-* **Yapı sahipliği kaydı yok.** PvP bölgesindeki her yapı herkes tarafından
-  kırılabilir; kimin kurduğu tutulmuyor. Sahiplik madde 22'deki clan sistemiyle
-  birlikte gelmeli.
-* **Steam entegrasyonu hiç çalıştırılmadı.** `SteamNetworkingTransport` ve
-  `SteamInventory` gerçek bir Steam istemcisine karşı denenmedi. Steamworks.NET
-  sürümü de doğrulanmadı.
+* **Kaydetme/yükleme yok.** Dünya değişiklikleri (override katmanı), envanter,
+  klan üyeliği, yapı sahipliği ve görev ilerlemesi oyun kapanınca kayboluyor.
+  Diske yazılması gereken tek dünya verisi override katmanı; gerisi tohumdan
+  yeniden üretilebilir.
+
+* **Veri dosyalarındaki isimler tek dilli.** Dil altyapısı (madde 23) hazır ama
+  item, mevsim ve hava adları hâlâ tek dilde; her veri dosyasına dil başına
+  isim alanı eklemek ayrı bir veri modeli değişikliği.
+
+* **Mod içerik bindirmesi yalnızca dil tablolarında.** `ModRegistry` bütün
+  içerik dosyalarını keşfediyor ve parmak izine katıyor, ama şu an yalnızca
+  `Localization/` altındaki dosyalar temel tablonun üstüne bindiriliyor.
+  Tile/item/tarif bindirmesi aynı yolu izleyecek.
+* **Steam entegrasyonu gerçek bir Steam istemcisine karşı denenmedi.**
+  Steamworks.NET artık ÇÖZÜLÜYOR ve `STEAM_BUILD` gövdesi gerçekten
+  derleniyor (bloğa kasten hatalı bir satır konarak kanıtlandı: `Debug`
+  geçti, `SteamRelease` CS0103 ile patladı). Ama derlenmek çalışmak değil:
+  achievement'lar, leaderboard, davet, Workshop yükleme ve envanter
+  çağrıları çalışan bir Steam istemcisine karşı hiç denenmedi.
 * **Tarım istemcide çalışmıyor** — `C` tuşu istemci modunda uyarı veriyor.
   Madde 10'daki yetki notlarıyla birlikte kapatılmalı.
 * Dünya saati ve hava **host otoriter** ve senkronize (saniyede bir `WorldTime`
@@ -558,6 +699,55 @@ karakteri Aşama 2 / madde 20'de gelecek.
 
 ---
 
+## Otomatik doğrulama
+
+Bu projede "implemented successfully" bir kanıt sayılmıyor. Üç ayrı otomatik
+yol var ve üçü de gerçekten koşturuluyor:
+
+### 1. Kendi kendini denetleme
+
+```bash
+dotnet run -- --self-test        # çıkış kodu 0 = hepsi geçti
+```
+
+Ekran görüntüsüyle **görülemeyen** kuralları koşturur: takas atomik mi, teklif
+değişince onaylar düşüyor mu, klan rütbeleri yetki sınırını koruyor mu, mod
+parmak izi içerik değişimine duyarlı mı. 68 denetim.
+
+Bu denetim iki gerçek hata yakaladı ve ikisi de bu yüzden düzeltildi:
+onaydan sonra teklifi değiştirip "kabul" bekleme açığı, ve başarısız bir
+takas sonrası durumun tutarsız kalıp takasın kimsenin onaylamadığı halde
+yeniden uygulanabilmesi.
+
+### 2. Başsız kare yakalama
+
+```bash
+dotnet run -- --capture-script Tools/captures/madde20_kozmetik.txt \
+              --capture-out capture
+```
+
+`Tools/captures/` altındaki script'ler tuş dizisi oynatıp belirlenen karelerde
+PNG döküyor (`wait` / `down` / `up` / `tap` / `shot` / `quit`). Bir X sunucusu
+gerekiyor; CI'da `xvfb-run` yeterli:
+
+```bash
+xvfb-run -a --server-args="-screen 0 1280x720x24" dotnet run -- --capture-script ...
+```
+
+Madde 20-25'in görsel kanıtı bu script'lerle üretildi. Katman sırasının
+yanlış olduğu, panellerin üst üste bindiği, aynı tuşun iki işlevi birden
+tetiklediği ve büyük yazı ölçeğinde panellerin ekran dışına taştığı bu
+karelerde görüldü.
+
+### 3. Statik denetleyiciler
+
+`verify_content.py` artık madde 19'un Steam ayrımına ek olarak kozmetik
+kurallarını (nadirlik istatistik veremez, katalog ile sheet ayrışamaz, C# ve
+Python çizim sırası ayrışamaz) ve dil tablolarını (eksik/fazla anahtar, `{0}`
+yer tutucu uyuşmazlığı, kodda çağrılıp tabloda olmayan anahtar) da denetliyor.
+
+---
+
 ## Sıradaki adımlar (Aşama 1 vertical slice)
 
 ~~3. Top-down karakter hareketi (4 yön, klavye + gamepad)~~ ✔
@@ -580,21 +770,22 @@ karakteri Aşama 2 / madde 20'de gelecek.
 ~~17. NPC tüccar/görev sistemi~~ ✔
 ~~18. Güvenli bölge/PvP bölge ayrımı + raid~~ ✔
 ~~19. SteamInventory + SteamNetworkingTransport~~ ✔
-20. Karakter kozmetik/rarity/layered sprite + sezonluk item
-21. Steamworks.NET tam entegrasyonu
-22. Clan/guild + oyuncular arası trade
-23. Localization + erişilebilirlik
-24. Photo mode + emote + ping + patch notes
-25. Steam Workshop
+~~20. Karakter kozmetik/rarity/layered sprite + sezonluk item~~ ✔
+~~21. Steamworks.NET tam entegrasyonu~~ ✔
+~~22. Clan/guild + oyuncular arası trade~~ ✔
+~~23. Localization + erişilebilirlik~~ ✔
+~~24. Photo mode + emote + ping + patch notes~~ ✔
+~~25. Steam Workshop~~ ✔
 
 ## İlk yapılacak iş
 
-Kod yazmak değil: **`dotnet build` çalıştırmak.**
+**Arkadaşınla iki örnek açıp oynamak.**
 
-8900 satır hiç derlenmedi. Algoritmaları Python'da doğruladım (dünya üretimi,
-çarpışma, protokol, envanter, dövüş, iklim, tarım, balıkçılık, zindan üretimi,
-düşman dengesi, ticaret ekonomisi, bölge kuralları, Steam ayrım denetimi) ama bu
-derlemenin yerine geçmez. LiteNetLib ve Steamworks.NET sürümleri, MonoGame
-Content Pipeline ve 42 dosyalık C# hiç sınanmadı.
+Derleme artık geçiyor (ilk derlemede üç gerçek hata çıktı: tool manifest'inde
+joker sürüm, `Tileset`'te birleşme artığı olarak iki kez tanımlanmış alan,
+belirsiz `Math.Clamp` aşırı yüklemesi). Steam yapılandırması da derleniyor —
+`.sln`'de `SteamRelease` tanımlı değildi, yani madde 19'da yazılan bütün
+Steamworks kodu bir kez bile derlenmemişti.
 
-Derleme geçtikten sonra ikinci iş: arkadaşınla iki örnek açıp oynamak.
+Otomatik doğrulama sistemlerin **kurallarını** sınıyor; eğlenceli olup
+olmadığını sınamıyor. Sıradaki iş o.
