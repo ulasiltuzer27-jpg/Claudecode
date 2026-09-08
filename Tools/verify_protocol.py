@@ -32,7 +32,10 @@ import struct
 import sys
 
 # NetworkProtocol.cs ile ayni sabitler
-PROTOCOL_VERSION = 1
+# 2: Welcome mesajina MOD PARMAK IZI eklendi (madde 25). Harita agdan
+# gonderilmiyor; iki taraf ayni tohumdan uretiyor ve uretim modlanabilir
+# veriden turuyor.
+PROTOCOL_VERSION = 2
 TICKS_PER_SECOND = 20
 DEFAULT_PORT = 7777
 
@@ -44,8 +47,12 @@ WORLD_TIME = 7
 # Yazma — C#'taki Write* metodlarinin karsiligi. Hepsi LITTLE-ENDIAN.
 # ---------------------------------------------------------------------------
 
-def write_welcome(assigned_id: int, seed: int) -> bytes:
-    return struct.pack("<BBBi", WELCOME, PROTOCOL_VERSION, assigned_id, seed)
+def write_welcome(assigned_id: int, seed: int, mod_fingerprint: str = "modsuz") -> bytes:
+    raw = mod_fingerprint.encode("utf-8")
+    if len(raw) > 255:
+        raise ValueError("parmak izi 255 bayttan uzun olamaz")
+    return (struct.pack("<BBBi", WELCOME, PROTOCOL_VERSION, assigned_id, seed)
+            + bytes([len(raw)]) + raw)
 
 
 def write_client_input(tick: int, move_x: float, move_y: float, flags: int) -> bytes:
@@ -84,9 +91,13 @@ def write_world_time(seconds: float, weather: str) -> bytes:
 # ---------------------------------------------------------------------------
 
 def read_welcome(data: bytes):
-    if len(data) < 7 or data[1] != PROTOCOL_VERSION:
+    if len(data) < 8 or data[1] != PROTOCOL_VERSION:
         return None
-    return data[2], struct.unpack_from("<i", data, 3)[0]
+    length = data[7]
+    if len(data) < 8 + length:
+        return None
+    return (data[2], struct.unpack_from("<i", data, 3)[0],
+            data[8:8 + length].decode("utf-8"))
 
 
 def read_client_input(data: bytes):
@@ -149,7 +160,9 @@ def check(label: str, ok: bool, detail: str = "") -> None:
 def main() -> int:
     print("1) Bayt uzunluklari (C#'taki tampon boyutlariyla ayni olmali)\n")
     sizes = [
-        ("Welcome", write_welcome(3, 20260908), 7),
+        ("Welcome (modsuz)", write_welcome(3, 20260908), 8 + len(b"modsuz")),
+        ("Welcome (parmak izli)", write_welcome(3, 20260908, "A1B2C3D4E5F60718"),
+         8 + 16),
         ("ClientInput", write_client_input(42, 0.7, -0.7, 3), 8),
         ("Snapshot (0 oyuncu)", write_snapshot(1, []), 6),
         ("Snapshot (1 oyuncu)", write_snapshot(1, [(0, 1.0, 2.0, 1, 100, 0)]), 18),
@@ -165,10 +178,10 @@ def main() -> int:
 
     print("\n2) Gidis-donus")
     got = read_welcome(write_welcome(3, 20260908))
-    check("Welcome", got == (3, 20260908), str(got))
+    check("Welcome", got == (3, 20260908, "modsuz"), str(got))
 
     got = read_welcome(write_welcome(1, -2_000_000_000))
-    check("Welcome (negatif tohum)", got == (1, -2_000_000_000), str(got))
+    check("Welcome (negatif tohum)", got == (1, -2_000_000_000, "modsuz"), str(got))
 
     tick, mx, my, flags = read_client_input(write_client_input(999, 1.0, -1.0, 7))
     check("ClientInput", (tick, mx, my, flags) == (999, 1.0, -1.0, 7),

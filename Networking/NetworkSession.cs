@@ -149,6 +149,15 @@ public sealed class NetworkSession : IDisposable
     /// </summary>
     public WorldInventory? LocalInventory { get; set; }
 
+    /// <summary>
+    /// MADDE 25 — aktif mod kümesinin parmak izi.
+    ///
+    /// Karşılama mesajıyla gönderilir ve istemcide karşılaştırılır.
+    /// Oyun kabuğu doldurur; oturum kodu <see cref="Workshop.ModRegistry"/>
+    /// tipini görmez — hangi modların yüklü olduğu ağ katmanının işi değil.
+    /// </summary>
+    public string ModFingerprint { get; set; } = "modsuz";
+
     /// <summary>Takasın durumu değişti — arayüz yenilenmeli.</summary>
     public event Action? TradeChanged;
 
@@ -322,8 +331,25 @@ public sealed class NetworkSession : IDisposable
                 break;
 
             case MessageType.Welcome when Mode == SessionMode.Client:
-                if (NetworkProtocol.TryReadWelcome(data, out var assigned, out var seed))
+                if (NetworkProtocol.TryReadWelcome(data, out var assigned, out var seed,
+                                                   out var hostMods))
                 {
+                    // MADDE 25: harita agdan GONDERILMIYOR; iki taraf ayni
+                    // tohumdan uretiyor ve uretim modlanabilir veriden
+                    // turuyor. Mod kumeleri farkliysa ayni tohum FARKLI
+                    // dunya verir ve ekranlar sessizce ayrisir: oyuncu
+                    // duvarin icinde yurur, kestigi agac digerinde durur.
+                    // Baglantiyi reddetmek, sessizce ayrismis bir oyundan
+                    // iyidir.
+                    if (hostMods != ModFingerprint)
+                    {
+                        Notice?.Invoke(
+                            $"Mod kumesi uyusmuyor (host: {hostMods}, sen: {ModFingerprint}). " +
+                            "Ayni tohum farkli dunya uretirdi.");
+                        Leave();
+                        break;
+                    }
+
                     LocalPlayerId = assigned;
                     WorldSeed = seed;
                     SeedReceived?.Invoke(seed);
@@ -760,7 +786,7 @@ public sealed class NetworkSession : IDisposable
         // yalnizca kendi verdigini bilir.
         _hostInventories[id] = new WorldInventory(_items);
 
-        _transport!.Send(peerId, NetworkProtocol.WriteWelcome(id, WorldSeed));
+        _transport!.Send(peerId, NetworkProtocol.WriteWelcome(id, WorldSeed, ModFingerprint));
         Notice?.Invoke($"Oyuncu {id} katildi ({_transport.PeerCount} bagli)");
     }
 

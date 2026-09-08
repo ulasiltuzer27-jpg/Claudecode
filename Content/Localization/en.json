@@ -92,6 +92,20 @@
     "steam.notSteamBuild": "Not a Steam build",
     "steam.inviteOpened": "Steam invite overlay opened",
     "steam.inviteNeedsSteam": "Inviting requires a Steam build",
-    "lb.status.steam": "Leaderboard on Steam"
+    "lb.status.steam": "Leaderboard on Steam",
+    "workshop.title": "MODS  (M to close)",
+    "workshop.none": "No mods installed.",
+    "workshop.hint": "Mods load from the mods/ folder and Steam Workshop subscriptions.",
+    "workshop.noCode": "Mods DO NOT RUN CODE - only JSON data and PNG assets.",
+    "workshop.fingerprint": "Mod fingerprint: {0}",
+    "workshop.fingerprintNote": "The map is not sent over the network; a different mod set builds a different world.",
+    "workshop.source.local": "local",
+    "workshop.source.workshop": "Workshop",
+    "workshop.status.local": "Workshop local (no Steam)",
+    "workshop.status.steam": "Workshop connected",
+    "workshop.publishNeedsSteam": "Publishing requires a Steam build",
+    "workshop.createStarted": "Creating Workshop item...",
+    "workshop.updateStarted": "Updating Workshop item...",
+    "workshop.warnings": "{0} warning(s)"
   }
 }

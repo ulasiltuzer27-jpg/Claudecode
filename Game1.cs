@@ -31,6 +31,7 @@ using PixelSurvival.Systems.Input;
 using PixelSurvival.Inventory;
 using PixelSurvival.Localization;
 using PixelSurvival.UI;
+using PixelSurvival.Workshop;
 using PixelSurvival.World;
 
 namespace PixelSurvival;
@@ -143,6 +144,11 @@ public class Game1 : Game
 
     private bool _showAchievements;
     private bool _showLeaderboard;
+
+    // --- Madde 25: Workshop / modlar ---
+    private readonly ModRegistry _mods = new();
+    private IWorkshopBackend _workshop = null!;
+    private bool _showWorkshop;
 
     // --- Madde 24: photo mode, emote, ping, yama notlari ---
     private readonly PhotoMode _photoMode = new();
@@ -344,6 +350,24 @@ public class Game1 : Game
             _session.Connect(address);
         };
 
+        // Madde 25: modlar. Kaynak secimi TEK noktada (WorkshopFactory);
+        // Steam derlemesinde abone olunan Workshop klasorleri de taranir.
+        _workshop = WorkshopFactory.Create();
+        _mods.Discover(_workshop.ContentRoots());
+
+        // Parmak izi oturuma veriliyor: harita agdan gonderilmedigi ve
+        // uretim modlanabilir veriden turedigi icin, farkli mod kumesine
+        // sahip iki oyuncu ayni tohumdan FARKLI dunya uretir.
+        _session.ModFingerprint = _mods.Fingerprint;
+
+        // Modlarin dil satirlari temel tablonun USTUNE bindiriliyor.
+        // Bu, modlarin gercekten bir sey YAPTIGI ilk yol: kesif ve parmak
+        // izi tek basina modu etkisiz birakirdi.
+        var overlaid = _mods.ApplyLocalization();
+
+        Console.WriteLine($"[mod] {_mods.Summary}, {overlaid} dil satiri bindirildi");
+        foreach (var warning in _mods.Warnings) Console.WriteLine($"[mod] UYARI: {warning}");
+
         // Madde 24: yama notlari veriden okunuyor; surum cikarken kod
         // degismiyor.
         _patchNotes = PatchNotes.Load(Content, "UI/patchnotes");
@@ -460,6 +484,13 @@ public class Game1 : Game
         {
             _showWardrobe = !_showWardrobe;
             if (_showWardrobe) _showClan = false;
+        }
+
+        // Madde 25: mod paneli
+        if (WasPressed(keyboard, Keys.M))
+        {
+            _showWorkshop = !_showWorkshop;
+            if (_showWorkshop) { _showClan = false; _showWardrobe = false; _showSettings = false; }
         }
 
         // --- Madde 24: photo mode, emote/ping tekerlegi, yama notlari ---
@@ -1539,6 +1570,12 @@ public class Game1 : Game
             _hud.DrawZone(_spriteBatch,
                 _zones.ZoneAt(_player.Position, _map.TileSize) == ZoneKind.Safe,
                 _steam.Status, WindowWidth, WindowHeight);
+
+            // Madde 25: mod paneli
+            if (_showWorkshop)
+            {
+                _hud.DrawWorkshop(_spriteBatch, _mods, _workshop, WindowWidth, WindowHeight);
+            }
 
             // Madde 24: yama notlari
             if (_showPatchNotes)

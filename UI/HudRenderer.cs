@@ -12,6 +12,7 @@ using PixelSurvival.Inventory;
 using PixelSurvival.Localization;
 using PixelSurvival.Systems.Crafting;
 using PixelSurvival.Systems.Social;
+using PixelSurvival.Workshop;
 
 namespace PixelSurvival.UI;
 
@@ -803,6 +804,80 @@ public sealed class HudRenderer
              PanelColor * (0.8f * fade));
 
         _font.Draw(spriteBatch, symbol, new Vector2(x, y), color * fade, 1);
+    }
+
+    /// <summary>
+    /// MADDE 25 — mod/Workshop paneli.
+    ///
+    /// Parmak izi bilerek görünür: çok oyunculu bir oturum kurulamadığında
+    /// oyuncunun ilk bakacağı yer burası olmalı. Parmak izi gizli olsaydı
+    /// "neden bağlanamıyorum" sorusunun cevabı hiçbir ekranda olmazdı.
+    /// </summary>
+    public void DrawWorkshop(SpriteBatch spriteBatch, ModRegistry registry,
+                             IWorkshopBackend backend, int windowWidth, int windowHeight)
+    {
+        var lineHeight = _font.LineHeight * UiScale;
+        var padding = 6 * UiScale;
+
+        var rows = new List<(string Text, Color Color)>
+        {
+            ($"{Loc.T("workshop.title")}   {backend.Status}", TextColor),
+            ("", DimTextColor),
+            (Loc.T("workshop.fingerprint", registry.Fingerprint), CraftableColor),
+            ($"  {Loc.T("workshop.fingerprintNote")}", DimTextColor),
+            ("", DimTextColor)
+        };
+
+        if (registry.Mods.Count == 0)
+        {
+            rows.Add(($"  {Loc.T("workshop.none")}", DimTextColor));
+            rows.Add(($"  {Loc.T("workshop.hint")}", DimTextColor));
+        }
+        else
+        {
+            foreach (var mod in registry.Mods)
+            {
+                var source = Loc.T(mod.FromWorkshop
+                    ? "workshop.source.workshop"
+                    : "workshop.source.local");
+
+                var mark = mod.Enabled ? "X" : " ";
+
+                // Renk TEK BASINA anlam tasimasin (madde 23): acik/kapali
+                // durumu [X]/[ ] ile de veriliyor.
+                rows.Add(($"  [{mark}] {mod.Manifest.Name}  v{mod.Manifest.Version}  " +
+                          $"({source})  {mod.Files.Count} dosya",
+                          mod.Enabled ? CraftableColor : DimTextColor));
+
+                rows.Add(($"        {mod.Manifest.Description}", DimTextColor));
+            }
+        }
+
+        rows.Add(("", DimTextColor));
+        rows.Add(($"  {Loc.T("workshop.noCode")}", DimTextColor));
+
+        foreach (var warning in registry.Warnings)
+        {
+            rows.Add(($"  ! {warning}", Accessibility.Palette.Negative));
+        }
+
+        var width = rows.Max(r => _font.Measure(r.Text, UiScale));
+        var panelWidth = Math.Min(width + padding * 2, windowWidth - 24);
+        var panelHeight = rows.Count * lineHeight + padding * 2;
+
+        var origin = ClampToWindow((windowWidth - panelWidth) / 2,
+                                   (windowHeight - panelHeight) / 2 - 40,
+                                   panelWidth, panelHeight, windowWidth, windowHeight);
+
+        Fill(spriteBatch, new Rectangle(origin.X, origin.Y, panelWidth, panelHeight),
+             PanelColor * 0.95f);
+
+        for (var i = 0; i < rows.Count; i++)
+        {
+            _font.Draw(spriteBatch, Truncate(rows[i].Text, panelWidth - padding * 2),
+                new Vector2(origin.X + padding, origin.Y + padding + i * lineHeight),
+                rows[i].Color, UiScale);
+        }
     }
 
     /// <summary>Sol üstte seçili yapı ve ağ oturumu durumu.</summary>

@@ -3,6 +3,7 @@ using PixelSurvival.Clans;
 using PixelSurvival.Inventory;
 using PixelSurvival.Systems.Social;
 using PixelSurvival.Trade;
+using PixelSurvival.Workshop;
 
 namespace PixelSurvival.Diagnostics;
 
@@ -42,6 +43,7 @@ public static class SelfTest
         TradeAcceptanceRules(items);
         TradeAtomicityRules(items);
         SocialSignalRules();
+        WorkshopRules();
 
         Console.WriteLine($"\n{_passed} gecti, {_failed} kaldi.");
         return _failed;
@@ -101,6 +103,114 @@ public static class SelfTest
         single.TryPing(4, PingKind.Danger, new Microsoft.Xna.Framework.Vector2(9, 9));
         Check("oyuncu basina TEK ping kalir",
             single.Pings.Count(p => p.PlayerId == 4) == 1);
+    }
+
+    // ==================== WORKSHOP / MODLAR (madde 25) ====================
+
+    private static void WorkshopRules()
+    {
+        Section("6) Mod manifesti ve parmak izi");
+
+        var root = Path.Combine(Path.GetTempPath(), "pixelsurvival_selftest_mods");
+
+        // Onceki kosudan kalinti kalmasin: parmak izi dosya listesinden
+        // turedigi icin artik bir dosya sonucu degistirirdi.
+        if (Directory.Exists(root)) Directory.Delete(root, recursive: true);
+        Directory.CreateDirectory(root);
+
+        try
+        {
+            // --- Gecerli mod ---
+            WriteMod(root, "alpha", """
+                {"id":"alpha","name":"Alpha","version":"1.0.0","provides":["Items"],"loadOrder":10}
+                """, ("data.json", "{}"));
+
+            // --- Bozuk manifest: kimlik yok ---
+            WriteMod(root, "bozuk", """
+                {"name":"Kimliksiz","version":"1.0.0"}
+                """);
+
+            // --- mod.json'i olmayan klasor: mod DEGIL ---
+            Directory.CreateDirectory(Path.Combine(root, "modolmayan"));
+            File.WriteAllText(Path.Combine(root, "modolmayan", "readme.txt"), "selam");
+
+            var registry = new ModRegistry();
+            registry.Discover([(root, false)]);
+
+            Check("gecerli mod bulundu",
+                registry.Mods.Any(m => m.Manifest.Id == "alpha"));
+
+            // Bozuk mod OYUNU COKERTMEZ; atlanip raporlanir. Workshop'tan
+            // gelen tek bozuk abonelik oyunu acilmaz hale getirmemeli.
+            Check("bozuk manifest yuklenmedi",
+                registry.Mods.All(m => m.Manifest.Name != "Kimliksiz"));
+
+            Check("bozuk manifest UYARI uretti", registry.Warnings.Count > 0);
+
+            Check("mod.json'i olmayan klasor mod sayilmadi",
+                registry.Mods.Count == 1);
+
+            // Yalnizca .json/.png icerik sayilir (beyaz liste).
+            Check("izin verilmeyen uzanti icerik sayilmaz",
+                registry.Mods[0].Files.All(f => f.EndsWith(".json") || f.EndsWith(".png")));
+
+            var withAlpha = registry.Fingerprint;
+            Check("parmak izi modsuzdan farkli", withAlpha != "modsuz");
+
+            // Ayni kume -> ayni parmak izi. Deterministik olmazsa ayni
+            // modlara sahip iki oyuncu birbirine baglanamazdi.
+            var again = new ModRegistry();
+            again.Discover([(root, false)]);
+            Check("ayni kume AYNI parmak izi verir", again.Fingerprint == withAlpha);
+
+            // Icerik degisince parmak izi de degismeli: ayni kimlikli ama
+            // farkli icerikli mod, ayni tohumdan farkli dunya uretir.
+            File.WriteAllText(Path.Combine(root, "alpha", "yeni.json"), "{}");
+
+            var changed = new ModRegistry();
+            changed.Discover([(root, false)]);
+            Check("icerik degisince parmak izi DEGISIR",
+                changed.Fingerprint != withAlpha);
+
+            // Mod kapatilinca parmak izi modsuza donmeli.
+            changed.Mods[0].Enabled = false;
+            Check("tum modlar kapaliyken parmak izi 'modsuz'",
+                changed.Fingerprint == "modsuz");
+
+            // Kimlikte yol ayirici: mod klasorunun disina yazmaya acilan kapi.
+            var traversal = new ModManifest { Id = "../kotu", Name = "Kotu" };
+            var rejected = false;
+            try { traversal.Validate("test"); }
+            catch (InvalidOperationException) { rejected = true; }
+
+            Check("yol ayirici iceren mod kimligi REDDEDILIR", rejected);
+
+            // Bilinmeyen icerik turu de reddedilmeli: manifest ile icerigin
+            // ayrismasi "neden calismiyor"un en sik cevabi.
+            var badKind = new ModManifest { Id = "x", Name = "X", Provides = ["Scripts"] };
+            var kindRejected = false;
+            try { badKind.Validate("test"); }
+            catch (InvalidOperationException) { kindRejected = true; }
+
+            Check("bilinmeyen icerik turu REDDEDILIR", kindRejected);
+        }
+        finally
+        {
+            if (Directory.Exists(root)) Directory.Delete(root, recursive: true);
+        }
+    }
+
+    private static void WriteMod(string root, string id, string manifest,
+                                 params (string Name, string Body)[] files)
+    {
+        var folder = Path.Combine(root, id);
+        Directory.CreateDirectory(folder);
+        File.WriteAllText(Path.Combine(folder, ModManifest.FileName), manifest);
+
+        foreach (var (name, body) in files)
+        {
+            File.WriteAllText(Path.Combine(folder, name), body);
+        }
     }
 
     private static void Check(string what, bool condition)

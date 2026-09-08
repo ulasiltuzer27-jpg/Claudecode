@@ -95,18 +95,42 @@ public static class NetworkProtocol
 
     public const int DefaultPort = 7777;
 
-    /// <summary>Uyumsuz sürümlerin sessizce garip davranmasını engeller.</summary>
-    public const byte ProtocolVersion = 1;
+    /// <summary>
+    /// Uyumsuz sürümlerin sessizce garip davranmasını engeller.
+    ///
+    /// 2: Welcome mesajına MOD PARMAK İZİ eklendi (madde 25). Harita ağdan
+    /// gönderilmiyor, iki taraf aynı tohumdan üretiyor; üretim ise
+    /// modlanabilir veriden türüyor. Parmak izi olmadan farklı mod
+    /// kümesine sahip iki oyuncu sessizce farklı dünyalarda oynardı.
+    /// </summary>
+    public const byte ProtocolVersion = 2;
 
     // ---------------- yazma ----------------
 
-    public static byte[] WriteWelcome(byte assignedId, int worldSeed)
+    /// <summary>
+    /// Karşılama: atanan oyuncu kimliği, dünya tohumu ve MOD PARMAK İZİ.
+    ///
+    /// Parmak izi tohumla birlikte gidiyor çünkü ikisi aynı işi yapıyor:
+    /// dünyanın hangi kurallarla üretileceğini söylüyorlar. Tohum aynı ama
+    /// mod kümesi farklıysa üretilen dünya da farklı olur.
+    /// </summary>
+    public static byte[] WriteWelcome(byte assignedId, int worldSeed, string modFingerprint)
     {
-        var buffer = new byte[7];
+        var fingerprint = System.Text.Encoding.UTF8.GetBytes(modFingerprint);
+
+        if (fingerprint.Length > 255)
+        {
+            throw new ArgumentException("parmak izi 255 bayttan uzun olamaz",
+                                        nameof(modFingerprint));
+        }
+
+        var buffer = new byte[8 + fingerprint.Length];
         buffer[0] = (byte)MessageType.Welcome;
         buffer[1] = ProtocolVersion;
         buffer[2] = assignedId;
         WriteInt32(buffer, 3, worldSeed);
+        buffer[7] = (byte)fingerprint.Length;
+        fingerprint.CopyTo(buffer, 8);
         return buffer;
     }
 
@@ -198,18 +222,25 @@ public static class NetworkProtocol
     public static MessageType PeekType(ReadOnlySpan<byte> data) =>
         data.Length == 0 ? 0 : (MessageType)data[0];
 
-    public static bool TryReadWelcome(ReadOnlySpan<byte> data, out byte assignedId, out int seed)
+    public static bool TryReadWelcome(ReadOnlySpan<byte> data, out byte assignedId, out int seed,
+                                      out string modFingerprint)
     {
         assignedId = 0;
         seed = 0;
+        modFingerprint = "";
 
-        if (data.Length < 7 || data[1] != ProtocolVersion)
+        if (data.Length < 8 || data[1] != ProtocolVersion)
         {
             return false;
         }
 
         assignedId = data[2];
         seed = ReadInt32(data, 3);
+
+        var length = data[7];
+        if (data.Length < 8 + length) return false;
+
+        modFingerprint = System.Text.Encoding.UTF8.GetString(data.Slice(8, length));
         return true;
     }
 

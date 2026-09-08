@@ -1,0 +1,6 @@
+# MADDE 25 dogrulamasi: mod kesfi, manifest dogrulama, parmak izi.
+wait 90
+tap M
+wait 30
+shot 01_mod_paneli
+quit

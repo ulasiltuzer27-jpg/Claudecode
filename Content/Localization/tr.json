@@ -92,6 +92,20 @@
     "steam.notSteamBuild": "Steam derlemesi degil",
     "steam.inviteOpened": "Steam davet ekrani acildi",
     "steam.inviteNeedsSteam": "Davet icin Steam derlemesi gerekli",
-    "lb.status.steam": "Leaderboard Steam'de"
+    "lb.status.steam": "Leaderboard Steam'de",
+    "workshop.title": "MODLAR  (M kapat)",
+    "workshop.none": "Yuklu mod yok.",
+    "workshop.hint": "Modlar mods/ klasorunden ve Steam Workshop aboneliklerinden okunur.",
+    "workshop.noCode": "Modlar KOD CALISTIRMAZ - yalnizca JSON veri ve PNG asset.",
+    "workshop.fingerprint": "Mod parmak izi: {0}",
+    "workshop.fingerprintNote": "Harita agdan gonderilmiyor; farkli mod kumesi farkli dunya uretir.",
+    "workshop.source.local": "yerel",
+    "workshop.source.workshop": "Workshop",
+    "workshop.status.local": "Workshop yerel (Steam yok)",
+    "workshop.status.steam": "Workshop baglantisi hazir",
+    "workshop.publishNeedsSteam": "Yayinlama icin Steam derlemesi gerekli",
+    "workshop.createStarted": "Workshop ogesi olusturuluyor...",
+    "workshop.updateStarted": "Workshop ogesi guncelleniyor...",
+    "workshop.warnings": "{0} uyari"
   }
 }

@@ -31,6 +31,40 @@ public static class Loc
 
     private static LocaleTable? _current;
     private static LocaleTable? _fallback;
+    private static string[] _baseCodes = [];
+
+    /// <summary>
+    /// MADDE 25 — bir modun sağladığı dil satırlarını temel tablonun
+    /// ÜSTÜNE bindirir.
+    ///
+    /// Üzerine yazma bilinçli: mod'un amacı zaten mevcut bir satırı
+    /// değiştirebilmek. Sıra <see cref="Workshop.ModRegistry"/> tarafından
+    /// belirleniyor (küçük loadOrder önce), bu yüzden son yazan kazanır.
+    ///
+    /// Bilinmeyen bir dil kodu YOK SAYILIR: mod, oyunun desteklemediği bir
+    /// dil için satır sağlayabilir ve bu bir hata değil.
+    /// </summary>
+    public static int Overlay(string code, IReadOnlyDictionary<string, string> strings)
+    {
+        if (!Tables.TryGetValue(code, out var table)) return 0;
+
+        var applied = 0;
+
+        foreach (var (key, value) in strings)
+        {
+            table.Strings[key] = value;
+            applied++;
+        }
+
+        LanguageChanged?.Invoke();
+        return applied;
+    }
+
+    /// <summary>Modsuz temel tabloları yeniden yükler (mod kapatıldığında).</summary>
+    public static void Reload(ContentManager content)
+    {
+        if (_baseCodes.Length > 0) Load(content, _baseCodes);
+    }
 
     /// <summary>Yüklenmiş dillerin kodları — ayar ekranında listelemek için.</summary>
     public static IReadOnlyCollection<string> Available => Tables.Keys;
@@ -53,6 +87,8 @@ public static class Loc
         {
             Tables[code] = LocaleTable.Load(content, code);
         }
+
+        _baseCodes = codes;
 
         if (!Tables.TryGetValue(FallbackCode, out _fallback))
         {

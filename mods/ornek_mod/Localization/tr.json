@@ -1,0 +1,8 @@
+{
+  "_comment": "Mod dil eki ornegi. Ayni anahtari saglayan modlardan loadOrder'i BUYUK olan kazanir.",
+  "code": "tr",
+  "name": "Türkçe",
+  "strings": {
+    "workshop.title": "MODLAR  (M kapat)  [ornek mod tarafindan degistirildi]"
+  }
+}
