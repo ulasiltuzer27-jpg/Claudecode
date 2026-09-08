@@ -13,7 +13,24 @@ public enum MessageType : byte
     InventoryDelta = 6,
 
     /// <summary>Madde 12: dünya saati ve hava. Host otoriter.</summary>
-    WorldTime = 7
+    WorldTime = 7,
+
+    // --- Madde 22: takas. Hepsi NIYET bildirir; sahiplik iddiasi ETMEZ. ---
+
+    /// <summary>İstemci → host: "şu oyuncuyla takas açmak istiyorum".</summary>
+    TradeRequest = 8,
+
+    /// <summary>İstemci → host: teklife item ekle/çıkar. Miktar negatif olabilir.</summary>
+    TradeOffer = 9,
+
+    /// <summary>İstemci → host: onaylıyorum / onayı geri çekiyorum.</summary>
+    TradeAccept = 10,
+
+    /// <summary>Host → istemci: takasın güncel durumu (ekranı çizmek için).</summary>
+    TradeState = 11,
+
+    /// <summary>İstemci → host: üretim isteği. Host doğrular ve uygular.</summary>
+    CraftRequest = 12
 }
 
 /// <summary>Snapshot içindeki tek bir oyuncunun durumu.</summary>
@@ -286,6 +303,138 @@ public static class NetworkProtocol
         }
 
         itemId = System.Text.Encoding.UTF8.GetString(data.Slice(6, length));
+        return true;
+    }
+
+    // ---------------- Madde 22: takas ----------------
+    //
+    // Bu mesajlarin HICBIRI sahiplik bildirmez. Istemci yalnizca "sunu
+    // teklif ediyorum" der; neye sahip oldugunu host kendi aynasindan bilir.
+
+    /// <summary>İstemci → host: hedef oyuncuyla takas açma isteği.</summary>
+    public static byte[] WriteTradeRequest(byte targetPlayerId) =>
+        [(byte)MessageType.TradeRequest, targetPlayerId];
+
+    public static bool TryReadTradeRequest(ReadOnlySpan<byte> data, out byte targetPlayerId)
+    {
+        targetPlayerId = 0;
+        if (data.Length < 2) return false;
+
+        targetPlayerId = data[1];
+        return true;
+    }
+
+    /// <summary>İstemci → host: teklife item ekle/çıkar (miktar negatif olabilir).</summary>
+    public static byte[] WriteTradeOffer(string itemId, int amount)
+    {
+        var name = System.Text.Encoding.UTF8.GetBytes(itemId);
+        if (name.Length > 255)
+        {
+            throw new ArgumentException("item kimliği 255 bayttan uzun olamaz", nameof(itemId));
+        }
+
+        var buffer = new byte[6 + name.Length];
+        buffer[0] = (byte)MessageType.TradeOffer;
+        WriteInt32(buffer, 1, amount);
+        buffer[5] = (byte)name.Length;
+        name.CopyTo(buffer, 6);
+        return buffer;
+    }
+
+    public static bool TryReadTradeOffer(ReadOnlySpan<byte> data, out string itemId, out int amount)
+    {
+        itemId = "";
+        amount = 0;
+
+        if (data.Length < 6) return false;
+
+        amount = ReadInt32(data, 1);
+        var length = data[5];
+
+        if (data.Length < 6 + length) return false;
+
+        itemId = System.Text.Encoding.UTF8.GetString(data.Slice(6, length));
+        return true;
+    }
+
+    /// <summary>İstemci → host: onay (1) veya onayı geri çekme (0).</summary>
+    public static byte[] WriteTradeAccept(bool accepted) =>
+        [(byte)MessageType.TradeAccept, accepted ? (byte)1 : (byte)0];
+
+    public static bool TryReadTradeAccept(ReadOnlySpan<byte> data, out bool accepted)
+    {
+        accepted = false;
+        if (data.Length < 2) return false;
+
+        accepted = data[1] != 0;
+        return true;
+    }
+
+    /// <summary>
+    /// Host → istemci: takasın güncel durumu.
+    ///
+    /// Durum bir bayt (TradeState) + iki onay bayrağı. Teklif içeriği
+    /// ayrıca gönderilmiyor: istemci kendi teklifini zaten biliyor,
+    /// karşı tarafınki her değişiklikte tekrar yayınlanır.
+    /// </summary>
+    public static byte[] WriteTradeState(byte state, bool acceptedSelf, bool acceptedOther,
+                                         byte partnerId) =>
+    [
+        (byte)MessageType.TradeState,
+        state,
+        acceptedSelf ? (byte)1 : (byte)0,
+        acceptedOther ? (byte)1 : (byte)0,
+        partnerId
+    ];
+
+    public static bool TryReadTradeState(ReadOnlySpan<byte> data, out byte state,
+                                         out bool acceptedSelf, out bool acceptedOther,
+                                         out byte partnerId)
+    {
+        state = 0;
+        acceptedSelf = acceptedOther = false;
+        partnerId = 0;
+
+        if (data.Length < 5) return false;
+
+        state = data[1];
+        acceptedSelf = data[2] != 0;
+        acceptedOther = data[3] != 0;
+        partnerId = data[4];
+        return true;
+    }
+
+    /// <summary>
+    /// İstemci → host: üretim isteği.
+    ///
+    /// Madde 10'da üretim istemcide YEREL çalışıyordu ve host doğrulamıyordu.
+    /// Takas geldiğinde bu açık, "malzemem yokken üretip takas etmek"
+    /// anlamına gelirdi; bu yüzden üretim de host'a taşındı.
+    /// </summary>
+    public static byte[] WriteCraftRequest(string recipeId)
+    {
+        var name = System.Text.Encoding.UTF8.GetBytes(recipeId);
+        if (name.Length > 255)
+        {
+            throw new ArgumentException("tarif kimliği 255 bayttan uzun olamaz", nameof(recipeId));
+        }
+
+        var buffer = new byte[2 + name.Length];
+        buffer[0] = (byte)MessageType.CraftRequest;
+        buffer[1] = (byte)name.Length;
+        name.CopyTo(buffer, 2);
+        return buffer;
+    }
+
+    public static bool TryReadCraftRequest(ReadOnlySpan<byte> data, out string recipeId)
+    {
+        recipeId = "";
+        if (data.Length < 2) return false;
+
+        var length = data[1];
+        if (data.Length < 2 + length) return false;
+
+        recipeId = System.Text.Encoding.UTF8.GetString(data.Slice(2, length));
         return true;
     }
 

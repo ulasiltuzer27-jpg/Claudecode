@@ -4,6 +4,8 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using PixelSurvival.Achievements;
+using PixelSurvival.Clans;
+using PixelSurvival.Trade;
 using PixelSurvival.Cosmetics;
 using PixelSurvival.Inventory;
 using PixelSurvival.Systems.Crafting;
@@ -382,6 +384,131 @@ public sealed class HudRenderer
             _font.Draw(spriteBatch, lines[i],
                 new Vector2(originX + padding, originY + padding + i * lineHeight),
                 i == 0 ? new Color(240, 186, 74) : TextColor, UiScale);
+        }
+    }
+
+    /// <summary>MADDE 22 — klan paneli: üyeler, rütbeler, sahipli yapı sayısı.</summary>
+    public void DrawClan(SpriteBatch spriteBatch, ClanSystem clans, byte localPlayerId,
+                         int windowWidth, int windowHeight)
+    {
+        var lineHeight = _font.LineHeight * UiScale;
+        var padding = 6 * UiScale;
+
+        var rows = new List<(string Text, Color Color)>
+        {
+            ("KLAN  (N kapat)   1 kur   2 davet et   3 ayril", TextColor)
+        };
+
+        var clan = clans.ClanOf(localPlayerId);
+
+        if (clan is null)
+        {
+            rows.Add(("  Bir klanda degilsin.", DimTextColor));
+            rows.Add(("  Klan yapilarin sahipli olur: kendi yapini SOKERSIN", DimTextColor));
+            rows.Add(("  (malzemenin tamami doner), yabanci BASKIN yapar", DimTextColor));
+            rows.Add(("  (yarisi doner, 5 vurus surer).", DimTextColor));
+        }
+        else
+        {
+            rows.Add(($"  [{clan.Tag}] {clan.Name}   ({clan.Members.Count} uye)", CraftableColor));
+
+            foreach (var member in clan.Members.OrderByDescending(m => m.Rank))
+            {
+                var mine = member.PlayerId == localPlayerId ? " <- sen" : "";
+                rows.Add(($"    {member.Rank.Label(),-6} {member.Name}{mine}", TextColor));
+            }
+
+            rows.Add(($"  Sahipli yapi: {clans.OwnedStructureCount}", DimTextColor));
+        }
+
+        var width = rows.Max(r => _font.Measure(r.Text, UiScale));
+        var panelWidth = width + padding * 2;
+        var panelHeight = rows.Count * lineHeight + padding * 2;
+
+        var originX = 12;
+        var originY = (windowHeight - panelHeight) / 2;
+
+        Fill(spriteBatch, new Rectangle(originX, originY, panelWidth, panelHeight),
+             PanelColor * 0.94f);
+
+        for (var i = 0; i < rows.Count; i++)
+        {
+            _font.Draw(spriteBatch, rows[i].Text,
+                new Vector2(originX + padding, originY + padding + i * lineHeight),
+                rows[i].Color, UiScale);
+        }
+    }
+
+    /// <summary>
+    /// MADDE 22 — takas penceresi.
+    ///
+    /// İki sütun: senin teklifin ve karşı tarafınki. Onay durumu her iki
+    /// tarafta da görünür; teklif değiştiğinde iki onay da düşer ve bu
+    /// panelde anında görülür — takas arayüzlerinin klasik "onaydan sonra
+    /// teklifi değiştirme" dolandırıcılığına karşı oyuncunun tek savunması
+    /// bunu GÖREBİLMESİ.
+    /// </summary>
+    public void DrawTrade(SpriteBatch spriteBatch, TradeSession trade, ItemDatabase items,
+                          WorldInventory inventory, int selectedSlot,
+                          byte localPlayerId, bool localAccepted, bool partnerAccepted,
+                          string stateLabel, int windowWidth, int windowHeight)
+    {
+        var lineHeight = _font.LineHeight * UiScale;
+        var padding = 6 * UiScale;
+
+        var mineIsA = trade.PlayerA == localPlayerId;
+        var mine = mineIsA ? trade.OfferA : trade.OfferB;
+        var theirs = mineIsA ? trade.OfferB : trade.OfferA;
+
+        var rows = new List<(string Text, Color Color)>
+        {
+            ($"TAKAS  (Y kapat)   durum: {stateLabel}", TextColor),
+            ("  <- -> slot sec    yukari/asagi ekle-cikar    Enter onayla", DimTextColor),
+            ("", DimTextColor)
+        };
+
+        var slot = inventory[selectedSlot];
+        var slotText = slot.IsEmpty
+            ? "(bos)"
+            : $"{items.Get(slot.ItemId).Name} x{slot.Count}";
+
+        rows.Add(($"  Secili slot {selectedSlot + 1}: {slotText}", CraftableColor));
+        rows.Add(("", DimTextColor));
+
+        rows.Add(($"  SENIN TEKLIFIN {(localAccepted ? "[ONAYLANDI]" : "")}",
+                  localAccepted ? CraftableColor : TextColor));
+
+        if (mine.Count == 0) rows.Add(("    -", DimTextColor));
+        foreach (var stack in mine)
+        {
+            rows.Add(($"    {items.Get(stack.ItemId).Name} x{stack.Amount}", TextColor));
+        }
+
+        rows.Add(("", DimTextColor));
+        rows.Add(($"  KARSI TARAF {(partnerAccepted ? "[ONAYLANDI]" : "")}",
+                  partnerAccepted ? CraftableColor : TextColor));
+
+        if (theirs.Count == 0) rows.Add(("    -", DimTextColor));
+        foreach (var stack in theirs)
+        {
+            rows.Add(($"    {items.Get(stack.ItemId).Name} x{stack.Amount}", TextColor));
+        }
+
+        var width = rows.Max(r => _font.Measure(r.Text, UiScale));
+        var panelWidth = Math.Max(width + padding * 2, 380);
+        var panelHeight = rows.Count * lineHeight + padding * 2;
+
+        var originX = (windowWidth - panelWidth) / 2;
+        var originY = Math.Max(12, (windowHeight - panelHeight) / 2 - 40);
+
+        Fill(spriteBatch, new Rectangle(originX, originY, panelWidth, panelHeight),
+             PanelColor * 0.95f);
+
+        for (var i = 0; i < rows.Count; i++)
+        {
+            _font.Draw(spriteBatch, rows[i].Text,
+                new Vector2(originX + padding, originY + padding + i * lineHeight),
+                rows[i].Color, UiScale);
         }
     }
 

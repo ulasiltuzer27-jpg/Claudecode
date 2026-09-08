@@ -242,6 +242,22 @@ public sealed class WorldInventory(ItemDatabase database)
         Changed?.Invoke();
     }
 
+    /// <summary>
+    /// Bağımsız bir kopya.
+    ///
+    /// Madde 22'deki takas bunu KURU ÇALIŞTIRMA için kullanıyor: "bu takas
+    /// iki tarafa da sığar mı?" sorusu gerçek envantere dokunmadan
+    /// cevaplanmalı. <see cref="Snapshot"/>/<see cref="Restore"/> ile de
+    /// olurdu ama o yol, aradaki bir hata durumunda envanteri değişmiş
+    /// bırakma riskini açık tutuyor.
+    /// </summary>
+    public WorldInventory Clone()
+    {
+        var copy = new WorldInventory(database);
+        Array.Copy(_slots, copy._slots, _slots.Length);
+        return copy;
+    }
+
     /// <summary>Dolu slot sayısı — HUD ve doluluk kontrolü için.</summary>
     public int UsedSlots => _slots.Count(s => !s.IsEmpty);
 }

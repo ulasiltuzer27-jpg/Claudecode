@@ -6,6 +6,8 @@ using Microsoft.Xna.Framework.Input;
 using PixelSurvival.Entities;
 using PixelSurvival.Systems;
 using PixelSurvival.Achievements;
+using PixelSurvival.Clans;
+using PixelSurvival.Trade;
 using PixelSurvival.Cosmetics;
 using PixelSurvival.Systems.Animation;
 using PixelSurvival.Systems.Collision;
@@ -139,6 +141,14 @@ public class Game1 : Game
     private bool _showAchievements;
     private bool _showLeaderboard;
 
+    // --- Madde 22: klan ve takas ---
+    private readonly ClanSystem _clans = new();
+    private bool _showClan;
+    private bool _showTrade;
+
+    /// <summary>Takas penceresinde secili envanter slotu.</summary>
+    private int _tradeSlot;
+
     /// <summary>Ekranda duran basarim bildirimi ve kalan suresi.</summary>
     private AchievementDefinition? _unlockBanner;
     private float _unlockBannerSeconds;
@@ -172,9 +182,13 @@ public class Game1 : Game
     /// </summary>
     private readonly CaptureHarness? _capture;
 
-    public Game1(CaptureHarness? capture = null)
+    /// <summary>Acilista saf mantik denetimlerini kosturup cikilacak mi.</summary>
+    private readonly bool _selfTest;
+
+    public Game1(CaptureHarness? capture = null, bool selfTest = false)
     {
         _capture = capture;
+        _selfTest = selfTest;
 
         _graphics = new GraphicsDeviceManager(this)
         {
@@ -217,7 +231,24 @@ public class Game1 : Game
         _session = new NetworkSession(_playerSheet, _itemDatabase, _resourceTable);
         _session.Notice += message => ShowToast(message);
         _session.SeedReceived += seed => GenerateWorld(seed);
-        _session.ItemGranted += (itemId, amount) => _inventory.TryAdd(itemId, amount);
+        // Delta NEGATIF de olabilir: madde 22'de takas item goturur.
+        // Eskiden yalnizca TryAdd cagriliyordu ve negatif miktar sessizce
+        // yanlis davranirdi.
+        _session.ItemGranted += (itemId, amount) =>
+        {
+            if (amount > 0) _inventory.TryAdd(itemId, amount);
+            else if (amount < 0) _inventory.TryRemove(itemId, -amount);
+        };
+
+        // Madde 22: host kendi envanterini oturuma tanitir; takas iki
+        // tarafin envanterine de dokunacak.
+        _session.LocalInventory = _inventory;
+
+        // Madde 22: uretim artik HOST'ta dogrulanir. Istemci yalnizca
+        // tarif kimligini yollar; malzemesi olup olmadigina host kendi
+        // aynasindan karar verir.
+        _session.CraftRequested += (playerId, recipeId) => HostCraftFor(playerId, recipeId);
+
 
         // --- Aşama 2 sistemleri ---
         _climateTable = ClimateTable.Load(Content, "World/climate");
@@ -290,6 +321,14 @@ public class Game1 : Game
         _camera = new Camera2D(WindowWidth, WindowHeight, CameraZoom);
 
         GenerateWorld(DefaultSeed);
+
+        // Denetim modunda dunya kurulduktan sonra kosturulur (item veritabani
+        // Content Pipeline'dan geliyor, gercek veriyle test edilsin) ve cikilir.
+        if (_selfTest)
+        {
+            Environment.ExitCode = SelfTest.Run(_itemDatabase) == 0 ? 0 : 1;
+            Exit();
+        }
     }
 
     /// <summary>
@@ -384,6 +423,13 @@ public class Game1 : Game
 
         // Madde 20: gardirop
         if (WasPressed(keyboard, Keys.K)) _showWardrobe = !_showWardrobe;
+
+        // Madde 22: klan paneli ve takas penceresi
+        if (WasPressed(keyboard, Keys.N)) _showClan = !_showClan;
+        if (WasPressed(keyboard, Keys.Y)) ToggleTradeWindow();
+
+        if (_showTrade) HandleTradeKeys(keyboard);
+        if (_showClan) HandleClanKeys(keyboard);
 
         // Madde 21: basarim listesi / leaderboard / arkadas daveti
         if (WasPressed(keyboard, Keys.F3)) _showAchievements = !_showAchievements;
@@ -606,6 +652,11 @@ public class Game1 : Game
                     _session.NotifyTileChanged(tile.X, tile.Y, _map.GetTileIndex(tile.X, tile.Y));
                     ShowToast($"{_itemDatabase.Get(_building.Selected.Item).Name} yerlestirildi");
                     _achievements.Add(new StatKey("structures_built"));
+
+                    // Madde 22: yapinin sahibi kuranin klanidir. Kuran
+                    // klansizsa kayit acilmaz ve yapi sahipsiz kalir —
+                    // madde 9'daki davranis korunur.
+                    _clans.RegisterStructure(tile, _session.LocalPlayerId);
                     Console.WriteLine($"[insa] {_building.Selected.Tile} @({tile.X},{tile.Y})");
                     break;
 
@@ -661,6 +712,178 @@ public class Game1 : Game
 
     private bool WasPressed(KeyboardState current, Keys key) =>
         current.IsKeyDown(key) && _previousKeyboard.IsKeyUp(key);
+
+    /// <summary>
+    /// MADDE 22 — takas penceresini açar/kapatır.
+    ///
+    /// Takas iki oyuncu gerektirir: tek kişilik oyunda pencere açılmaz,
+    /// çünkü açılsaydı "karşı taraf" diye boş bir sütun çizmek zorunda
+    /// kalırdık ve oyuncu neyin eksik olduğunu anlamazdı.
+    /// </summary>
+    private void ToggleTradeWindow()
+    {
+        if (_showTrade)
+        {
+            _showTrade = false;
+            return;
+        }
+
+        if (_session.Mode == SessionMode.Offline)
+        {
+            ShowToast("Takas icin ikinci oyuncu gerekli (F9/F10)");
+            return;
+        }
+
+        if (_session.Mode == SessionMode.Host)
+        {
+            // Host, bagli ilk oyuncuyla takas acar. Hedef secimi bir
+            // oyuncu listesi ekrani ister; bu asamada kapsam disi.
+            var partner = _session.ConnectedPlayerIds.FirstOrDefault();
+
+            if (partner == 0)
+            {
+                ShowToast("Bagli oyuncu yok");
+                return;
+            }
+
+            var outcome = _session.BeginTrade(_session.LocalPlayerId, partner);
+
+            if (outcome != TradeOutcome.Success)
+            {
+                ShowToast($"Takas: {TradeSession.Describe(outcome)}");
+                return;
+            }
+        }
+        else
+        {
+            // Istemci host'tan takas acmasini ister; kararı host verir.
+            _session.RequestTrade(0);
+        }
+
+        _showTrade = true;
+        _tradeSlot = 0;
+    }
+
+    /// <summary>
+    /// MADDE 22 — takas penceresi tuşları.
+    ///
+    /// Sol/sağ slot seçer, yukarı/aşağı teklife ekler/çıkarır, Enter
+    /// onaylar. Onay, teklif her değiştiğinde İKİ tarafta da düşer —
+    /// kural <see cref="TradeSession"/> içinde, burada değil.
+    /// </summary>
+    private void HandleTradeKeys(KeyboardState keyboard)
+    {
+        if (WasPressed(keyboard, Keys.Left)) _tradeSlot = Math.Max(0, _tradeSlot - 1);
+        if (WasPressed(keyboard, Keys.Right))
+        {
+            _tradeSlot = Math.Min(_inventory.SlotCount - 1, _tradeSlot + 1);
+        }
+
+        var stack = _inventory[_tradeSlot];
+
+        if (WasPressed(keyboard, Keys.Up) && !stack.IsEmpty)
+        {
+            _session.OfferLocal(stack.ItemId, 1);
+        }
+
+        if (WasPressed(keyboard, Keys.Down) && !stack.IsEmpty)
+        {
+            _session.OfferLocal(stack.ItemId, -1);
+        }
+
+        if (WasPressed(keyboard, Keys.Enter))
+        {
+            var accepted = _session.Mode == SessionMode.Host
+                ? !_session.Trade.AcceptedA
+                : !_session.ClientTradeAcceptedSelf;
+
+            _session.SetLocalAccepted(accepted);
+            ShowToast(accepted ? "Takasi onayladin" : "Onayini geri cektin");
+        }
+    }
+
+    /// <summary>
+    /// MADDE 22 — klan paneli tuşları.
+    ///
+    /// 1 klan kurar, 2 bağlı oyuncuyu davet eder, 3 klandan ayrılır.
+    /// Klan adı bu aşamada sabit: metin girişi bir arayüz işi ve bu
+    /// maddenin kapsamı klan MANTIĞI.
+    /// </summary>
+    private void HandleClanKeys(KeyboardState keyboard)
+    {
+        var me = _session.LocalPlayerId;
+
+        if (WasPressed(keyboard, Keys.D1))
+        {
+            var outcome = _clans.Create(me, $"Oyuncu{me}", $"Klan{me}", $"K{me}", out var clan);
+
+            ShowToast(outcome == ClanOutcome.Success
+                ? $"Klan kuruldu: [{clan!.Tag}] {clan.Name}"
+                : ClanSystem.Describe(outcome));
+        }
+
+        if (WasPressed(keyboard, Keys.D2))
+        {
+            var target = _session.ConnectedPlayerIds.FirstOrDefault(id => id != me);
+
+            if (target == 0 && _session.Mode != SessionMode.Host)
+            {
+                target = 0;   // istemci icin host'un kimligi 0
+            }
+
+            var outcome = _clans.Invite(me, target, $"Oyuncu{target}");
+
+            ShowToast(outcome == ClanOutcome.Success
+                ? $"Oyuncu {target} klana katildi"
+                : ClanSystem.Describe(outcome));
+        }
+
+        if (WasPressed(keyboard, Keys.D3))
+        {
+            ShowToast(ClanSystem.Describe(_clans.Leave(me)));
+        }
+    }
+
+    /// <summary>
+    /// MADDE 22 — bir istemcinin üretim isteğini HOST tarafında çözer.
+    ///
+    /// Madde 10'da üretim istemcide yerel çalışıyordu ve host doğrulamıyordu.
+    /// Takas geldiğinde bu açık doğrudan "malzemem yokken üretip takas
+    /// etmek" anlamına gelirdi; bu yüzden üretim host'a taşındı.
+    ///
+    /// Karar host'un AYNASI üzerinden veriliyor; istemcinin gönderdiği tek
+    /// şey tarif kimliği.
+    /// </summary>
+    private void HostCraftFor(byte playerId, string recipeId)
+    {
+        var recipe = _crafting.Recipes.FirstOrDefault(r => r.Id == recipeId);
+
+        if (recipe is null)
+        {
+            Console.WriteLine($"[uretim] oyuncu {playerId} bilinmeyen tarif istedi: {recipeId}");
+            return;
+        }
+
+        var mirror = _session.InventoryOf(playerId);
+        if (mirror is null) return;
+
+        var outcome = _crafting.TryCraft(recipe, mirror);
+
+        if (outcome != CraftOutcome.Success)
+        {
+            Console.WriteLine($"[uretim] oyuncu {playerId} reddedildi ({outcome}): {recipeId}");
+            return;
+        }
+
+        // Ayna zaten degisti; istemciye yalnizca farki bildiriyoruz.
+        foreach (var ingredient in recipe.Inputs)
+        {
+            _session.GrantTo(playerId, ingredient.Item, -ingredient.Amount);
+        }
+
+        _session.GrantTo(playerId, recipe.Output.Item, recipe.Output.Amount);
+        Console.WriteLine($"[uretim] oyuncu {playerId} -> {recipeId} (host dogruladi)");
+    }
 
     /// <summary>
     /// MADDE 21 — kare sonu başarım işleri.
@@ -757,6 +980,18 @@ public class Game1 : Game
             }
 
             var recipe = recipes[i];
+
+            // Madde 22: ISTEMCI kendi envanterine dokunmaz. Istek host'a
+            // gider, host kendi aynasindan dogrular ve sonucu delta olarak
+            // geri yollar. Yerel uretim, host'un bilmedigi item yaratirdi
+            // ve takas o item'i gercek sayardi.
+            if (_session.Mode == SessionMode.Client)
+            {
+                _session.RequestCraft(recipe.Id);
+                ShowToast("Uretim istegi gonderildi");
+                continue;
+            }
+
             var outcome = _crafting.TryCraft(recipe, _inventory);
 
             switch (outcome)
@@ -796,6 +1031,17 @@ public class Game1 : Game
             return;
         }
 
+        // Madde 22: KENDI klaninin yapisina baskin yapilmaz — sokulur.
+        // Baskinla malzemenin yalnizca yarisi doner; oyuncunun kendi
+        // duvarini yikarken ceza odemesi anlamsiz olurdu.
+        var owner = _clans.OwnerOf(tile);
+
+        if (!owner.IsNone && _clans.CanDismantle(tile, _session.LocalPlayerId))
+        {
+            ShowToast("Kendi klaninin yapisi — Space ile sok");
+            return;
+        }
+
         // Kırılan yapının malzemesi: buildables tablosundan geri çözülür.
         var material = _buildableTable.Buildables
             .FirstOrDefault(b => _buildableTable.TileIndexFor(b) == tileIndex)?.Item;
@@ -806,6 +1052,11 @@ public class Game1 : Game
         {
             case RaidOutcome.Destroyed:
                 _session.NotifyTileChanged(tile.X, tile.Y, _map.GetTileIndex(tile.X, tile.Y));
+
+                // Yapi yok oldu: sahiplik kaydi da silinmeli, yoksa ayni
+                // tile'a baskasi insa ettiginde eski sahibin klani
+                // gorunurdu.
+                _clans.ForgetStructure(tile);
                 ShowToast("Yapi yikildi");
                 break;
 
@@ -1075,6 +1326,33 @@ public class Game1 : Game
             _hud.DrawZone(_spriteBatch,
                 _zones.ZoneAt(_player.Position, _map.TileSize) == ZoneKind.Safe,
                 _steam.Status, WindowWidth, WindowHeight);
+
+            // Madde 22: klan paneli ve takas penceresi.
+            if (_showClan)
+            {
+                _hud.DrawClan(_spriteBatch, _clans, _session.LocalPlayerId,
+                              WindowWidth, WindowHeight);
+            }
+
+            if (_showTrade)
+            {
+                var host = _session.Mode == SessionMode.Host;
+                var trade = _session.Trade;
+
+                var localAccepted = host
+                    ? (_session.LocalPlayerId == trade.PlayerA ? trade.AcceptedA : trade.AcceptedB)
+                    : _session.ClientTradeAcceptedSelf;
+
+                var partnerAccepted = host
+                    ? (_session.LocalPlayerId == trade.PlayerA ? trade.AcceptedB : trade.AcceptedA)
+                    : _session.ClientTradeAcceptedOther;
+
+                var stateLabel = host ? trade.State.ToString() : _session.ClientTradeState.ToString();
+
+                _hud.DrawTrade(_spriteBatch, trade, _itemDatabase, _inventory, _tradeSlot,
+                               _session.LocalPlayerId, localAccepted, partnerAccepted,
+                               stateLabel, WindowWidth, WindowHeight);
+            }
 
             // Madde 21: basarim listesi / siralamalar / acilma bildirimi.
             if (_showAchievements)

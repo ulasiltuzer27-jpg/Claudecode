@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using PixelSurvival.Entities;
 using PixelSurvival.Inventory;
+using PixelSurvival.Trade;
 using PixelSurvival.Systems.Animation;
 using PixelSurvival.Systems.Climate;
 using PixelSurvival.Systems.Combat;
@@ -76,7 +77,34 @@ public sealed class NetworkSession : IDisposable
     private readonly Dictionary<byte, Player> _hostPlayers = [];
     private readonly Dictionary<byte, GatheringSystem> _hostGathering = [];
     private readonly Dictionary<byte, InputFrame> _pendingInput = [];
+
+    /// <summary>
+    /// MADDE 22 — host'un her istemci için tuttuğu envanter AYNASI.
+    ///
+    /// Bu, madde 10'da açık bırakılan ve README'de "madde 22 bu açık
+    /// açıkken yapılamaz" diye işaretlenen boşluğun kapanışı. Takas,
+    /// istemcinin "bende şu var" iddiasına DEĞİL, bu aynaya bakar.
+    ///
+    /// Ayna host tarafında ÜRETİLİR: item'lar buraya yalnızca host'un
+    /// kendi çözdüğü olaylardan girer (toplama, doğrulanmış üretim,
+    /// takas). İstemciden gelen bir mesaj aynayı doğrudan yazamaz.
+    /// </summary>
+    private readonly Dictionary<byte, WorldInventory> _hostInventories = [];
+
     private byte _nextPlayerId = 1;
+
+    /// <summary>
+    /// MADDE 22 — açık takas. Host tarafında YALNIZCA BİR takas olur.
+    ///
+    /// Bilinçli bir sadeleştirme: eşzamanlı çok takas, aynı item'ı iki
+    /// takasa birden koymayı mümkün kılar ve doğrulamayı takas başına
+    /// değil, oyuncu başına kilitlemeyi gerektirir. Tek takas bu sınıfın
+    /// sorumluluğunu küçük tutuyor.
+    /// </summary>
+    private readonly TradeSession _trade = new();
+
+    /// <summary>Takasa katılanların takas ANINDAKİ envanterleri host tarafında.</summary>
+    public TradeSession Trade => _trade;
 
     // --- İstemci tarafı ---
     private readonly Dictionary<byte, RemotePlayer> _remotes = [];
@@ -89,6 +117,12 @@ public sealed class NetworkSession : IDisposable
     public int WorldSeed { get; private set; }
     public IReadOnlyCollection<RemotePlayer> RemotePlayers => _remotes.Values;
     public int ConnectedCount => _transport?.PeerCount ?? 0;
+
+    /// <summary>
+    /// Host tarafinda bagli olan oyuncu kimlikleri (host'un kendisi HARIC).
+    /// Takas ve klan daveti icin hedef secmekte kullanilir.
+    /// </summary>
+    public IReadOnlyCollection<byte> ConnectedPlayerIds => _hostPlayers.Keys;
 
     /// <summary>Host'tan dünya tohumu geldi — istemci dünyayı yeniden kurmalı.</summary>
     public event Action<int>? SeedReceived;
@@ -104,6 +138,18 @@ public sealed class NetworkSession : IDisposable
 
     /// <summary>Kullanıcıya gösterilecek durum mesajı.</summary>
     public event Action<string>? Notice;
+
+    /// <summary>
+    /// MADDE 22 — host'un yerel oyuncusunun (kendisinin) envanteri.
+    ///
+    /// Host kendi envanterini <see cref="_hostInventories"/> içinde
+    /// tutmuyor; onu oyun kabuğu yönetiyor. Takas host'un kendi
+    /// envanterine de dokunacağı için buradan erişiliyor.
+    /// </summary>
+    public WorldInventory? LocalInventory { get; set; }
+
+    /// <summary>Takasın durumu değişti — arayüz yenilenmeli.</summary>
+    public event Action? TradeChanged;
 
     public NetworkSession(SpriteSheet playerSheet, ItemDatabase items, ResourceTable resources)
     {
@@ -318,7 +364,283 @@ public sealed class NetworkSession : IDisposable
                 }
 
                 break;
+
+            // ---------- Madde 22: takas (host tarafi) ----------
+            // Bu mesajlarin hicbiri istemcinin sahiplik iddiasini tasimaz;
+            // host her seferinde KENDI aynasina bakar.
+
+            case MessageType.TradeRequest when Mode == SessionMode.Host:
+                if (_peerToPlayer.TryGetValue(netEvent.PeerId, out var requester) &&
+                    NetworkProtocol.TryReadTradeRequest(data, out var target))
+                {
+                    HandleTradeRequest(requester, target);
+                }
+
+                break;
+
+            case MessageType.TradeOffer when Mode == SessionMode.Host:
+                if (_peerToPlayer.TryGetValue(netEvent.PeerId, out var offerer) &&
+                    NetworkProtocol.TryReadTradeOffer(data, out var offerItem, out var offerAmount)
+                    && _items.Contains(offerItem))
+                {
+                    _trade.Offer(offerer, offerItem, offerAmount);
+                    BroadcastTradeState();
+                }
+
+                break;
+
+            case MessageType.TradeAccept when Mode == SessionMode.Host:
+                if (_peerToPlayer.TryGetValue(netEvent.PeerId, out var accepter) &&
+                    NetworkProtocol.TryReadTradeAccept(data, out var accepted))
+                {
+                    if (accepted) _trade.Accept(accepter);
+                    else _trade.Retract(accepter);
+
+                    TryCompleteTrade();
+                    BroadcastTradeState();
+                }
+
+                break;
+
+            case MessageType.CraftRequest when Mode == SessionMode.Host:
+                if (_peerToPlayer.TryGetValue(netEvent.PeerId, out var crafter) &&
+                    NetworkProtocol.TryReadCraftRequest(data, out var recipeId))
+                {
+                    CraftRequested?.Invoke(crafter, recipeId);
+                }
+
+                break;
+
+            case MessageType.TradeState when Mode == SessionMode.Client:
+                if (NetworkProtocol.TryReadTradeState(data, out var state, out var selfOk,
+                                                      out var otherOk, out var partner))
+                {
+                    ClientTradeState = (TradeState)state;
+                    ClientTradeAcceptedSelf = selfOk;
+                    ClientTradeAcceptedOther = otherOk;
+                    ClientTradePartner = partner;
+                    TradeChanged?.Invoke();
+                }
+
+                break;
         }
+    }
+
+    // ================= Madde 22: takas =================
+
+    /// <summary>
+    /// İstemci bir üretim istedi. Oyun kabuğu tarifi doğrulayıp host'un
+    /// aynası üzerinde uygular — <see cref="NetworkSession"/> tarif
+    /// kitabını tanımıyor, bu yüzden karar dışarıya bırakılıyor.
+    /// </summary>
+    public event Action<byte, string>? CraftRequested;
+
+    /// <summary>İstemcide görülen takas durumu (arayüz için).</summary>
+    public TradeState ClientTradeState { get; private set; } = TradeState.Idle;
+    public bool ClientTradeAcceptedSelf { get; private set; }
+    public bool ClientTradeAcceptedOther { get; private set; }
+    public byte ClientTradePartner { get; private set; }
+
+    /// <summary>Host tarafında bir oyuncunun envanteri (host kendisi dahil).</summary>
+    public WorldInventory? InventoryOf(byte playerId) =>
+        playerId == LocalPlayerId ? LocalInventory : _hostInventories.GetValueOrDefault(playerId);
+
+    /// <summary>Host: takası başlatır.</summary>
+    public TradeOutcome BeginTrade(byte a, byte b)
+    {
+        if (Mode != SessionMode.Host) return TradeOutcome.NotAuthoritative;
+
+        var outcome = _trade.Begin(a, b);
+        if (outcome == TradeOutcome.Success) BroadcastTradeState();
+        return outcome;
+    }
+
+    /// <summary>Host: kendi (yerel) teklifini değiştirir.</summary>
+    public void OfferLocal(string itemId, int amount)
+    {
+        if (Mode == SessionMode.Host)
+        {
+            _trade.Offer(LocalPlayerId, itemId, amount);
+            BroadcastTradeState();
+        }
+        else if (Mode == SessionMode.Client)
+        {
+            _transport?.Send(0, NetworkProtocol.WriteTradeOffer(itemId, amount));
+        }
+    }
+
+    /// <summary>Host veya istemci: onay durumunu bildirir.</summary>
+    public void SetLocalAccepted(bool accepted)
+    {
+        if (Mode == SessionMode.Host)
+        {
+            if (accepted) _trade.Accept(LocalPlayerId);
+            else _trade.Retract(LocalPlayerId);
+
+            TryCompleteTrade();
+            BroadcastTradeState();
+        }
+        else if (Mode == SessionMode.Client)
+        {
+            _transport?.Send(0, NetworkProtocol.WriteTradeAccept(accepted));
+        }
+    }
+
+    /// <summary>İstemci: host'tan takas açmasını ister.</summary>
+    public void RequestTrade(byte targetPlayerId) =>
+        _transport?.Send(0, NetworkProtocol.WriteTradeRequest(targetPlayerId));
+
+    /// <summary>İstemci: üretim isteğini host'a yollar.</summary>
+    public void RequestCraft(string recipeId) =>
+        _transport?.Send(0, NetworkProtocol.WriteCraftRequest(recipeId));
+
+    /// <summary>
+    /// Host: istemciye envanter deltası gönderir ve AYNAYI da günceller.
+    ///
+    /// İkisi tek metotta: ayrı çağrılar olsaydı biri unutulduğunda ayna
+    /// sessizce gerçekten ayrışırdı ve bu, takasın yanlış karar vermesi
+    /// demek olurdu.
+    /// </summary>
+    public void GrantTo(byte playerId, string itemId, int amount)
+    {
+        if (Mode != SessionMode.Host || amount == 0) return;
+
+        if (playerId == LocalPlayerId)
+        {
+            if (amount > 0) LocalInventory?.TryAdd(itemId, amount);
+            else LocalInventory?.TryRemove(itemId, -amount);
+            return;
+        }
+
+        if (_hostInventories.TryGetValue(playerId, out var mirror))
+        {
+            if (amount > 0) mirror.TryAdd(itemId, amount);
+            else mirror.TryRemove(itemId, -amount);
+        }
+
+        if (_playerToPeer.TryGetValue(playerId, out var peer))
+        {
+            _transport?.Send(peer, NetworkProtocol.WriteInventoryDelta(itemId, amount));
+        }
+    }
+
+    private void HandleTradeRequest(byte requester, byte target)
+    {
+        // Hedef gercekten oturumda mi? Olmayan bir oyuncuyla takas acmak,
+        // istemcinin uydurdugu bir kimlikle envanter kilitlemesine yol acardi.
+        var targetExists = target == LocalPlayerId || _hostPlayers.ContainsKey(target);
+
+        if (!targetExists)
+        {
+            Notice?.Invoke($"Takas: oyuncu {target} oturumda yok");
+            return;
+        }
+
+        var outcome = _trade.Begin(requester, target);
+
+        Notice?.Invoke(outcome == TradeOutcome.Success
+            ? $"Takas acildi: {requester} <-> {target}"
+            : $"Takas acilamadi: {TradeSession.Describe(outcome)}");
+
+        if (outcome == TradeOutcome.Success) BroadcastTradeState();
+    }
+
+    /// <summary>
+    /// İki taraf da onayladıysa takası uygular.
+    ///
+    /// Envanterler host'un AYNALARIDIR. Uygulama atomiktir: sığmazsa veya
+    /// item yoksa hiçbir şey değişmez ve takas pazarlığa geri döner.
+    /// </summary>
+    private void TryCompleteTrade()
+    {
+        if (_trade.State != TradeState.BothAccepted) return;
+
+        var inventoryA = InventoryOf(_trade.PlayerA);
+        var inventoryB = InventoryOf(_trade.PlayerB);
+
+        if (inventoryA is null || inventoryB is null)
+        {
+            _trade.Cancel();
+            Notice?.Invoke("Takas iptal: taraflardan birinin envanteri yok");
+            return;
+        }
+
+        // Uygulamadan ONCEKI durum, deltalari cikarmak icin gerekli:
+        // istemciye "sende artik su kadar var" degil, "su kadar degisti"
+        // gonderiliyor.
+        var beforeA = SnapshotCounts(inventoryA, _trade);
+        var beforeB = SnapshotCounts(inventoryB, _trade);
+
+        var outcome = _trade.TryExecute(inventoryA, inventoryB);
+
+        if (outcome != TradeOutcome.Success)
+        {
+            Notice?.Invoke($"Takas basarisiz: {TradeSession.Describe(outcome)}");
+
+            // Basarisiz takas iptal EDILMEZ: taraflar teklifi duzeltip
+            // tekrar deneyebilsin. Yalnizca onaylar duser.
+            _trade.Retract(_trade.PlayerA);
+            _trade.Retract(_trade.PlayerB);
+            return;
+        }
+
+        SendTradeDeltas(_trade.PlayerA, inventoryA, beforeA);
+        SendTradeDeltas(_trade.PlayerB, inventoryB, beforeB);
+
+        Notice?.Invoke("Takas tamamlandi");
+        TradeChanged?.Invoke();
+    }
+
+    /// <summary>Takasa konu item'ların işlem ÖNCESİ adetleri.</summary>
+    private static Dictionary<string, int> SnapshotCounts(WorldInventory inventory,
+                                                          TradeSession trade)
+    {
+        var counts = new Dictionary<string, int>(StringComparer.Ordinal);
+
+        foreach (var stack in trade.OfferA.Concat(trade.OfferB))
+        {
+            counts[stack.ItemId] = inventory.CountOf(stack.ItemId);
+        }
+
+        return counts;
+    }
+
+    /// <summary>Takas sonrası farkı ilgili istemciye bildirir.</summary>
+    private void SendTradeDeltas(byte playerId, WorldInventory inventory,
+                                 Dictionary<string, int> before)
+    {
+        if (playerId == LocalPlayerId) return;   // host kendi envanterini zaten degistirdi
+        if (!_playerToPeer.TryGetValue(playerId, out var peer)) return;
+
+        foreach (var (itemId, previous) in before)
+        {
+            var delta = inventory.CountOf(itemId) - previous;
+            if (delta != 0)
+            {
+                _transport?.Send(peer, NetworkProtocol.WriteInventoryDelta(itemId, delta));
+            }
+        }
+    }
+
+    /// <summary>Takasın durumunu iki tarafa da bildirir.</summary>
+    private void BroadcastTradeState()
+    {
+        TradeChanged?.Invoke();
+
+        if (_transport is null) return;
+
+        SendTradeStateTo(_trade.PlayerA, _trade.AcceptedA, _trade.AcceptedB, _trade.PlayerB);
+        SendTradeStateTo(_trade.PlayerB, _trade.AcceptedB, _trade.AcceptedA, _trade.PlayerA);
+    }
+
+    private void SendTradeStateTo(byte playerId, bool acceptedSelf, bool acceptedOther,
+                                  byte partnerId)
+    {
+        if (playerId == LocalPlayerId) return;
+        if (!_playerToPeer.TryGetValue(playerId, out var peer)) return;
+
+        _transport!.Send(peer, NetworkProtocol.WriteTradeState(
+            (byte)_trade.State, acceptedSelf, acceptedOther, partnerId));
     }
 
     // ================= host =================
@@ -331,6 +653,10 @@ public sealed class NetworkSession : IDisposable
         _playerToPeer[id] = peerId;
         _hostPlayers[id] = new Player(_playerSheet, spawnPosition);
         _hostGathering[id] = new GatheringSystem(_resources);
+
+        // Ayna bos baslar: istemci neye sahip oldugunu SOYLEYEMEZ, host
+        // yalnizca kendi verdigini bilir.
+        _hostInventories[id] = new WorldInventory(_items);
 
         _transport!.Send(peerId, NetworkProtocol.WriteWelcome(id, WorldSeed));
         Notice?.Invoke($"Oyuncu {id} katildi ({_transport.PeerCount} bagli)");
@@ -346,6 +672,7 @@ public sealed class NetworkSession : IDisposable
         _playerToPeer.Remove(id);
         _hostPlayers.Remove(id);
         _hostGathering.Remove(id);
+        _hostInventories.Remove(id);
         _pendingInput.Remove(id);
 
         _transport!.Broadcast(NetworkProtocol.WritePlayerLeft(id));
@@ -380,10 +707,20 @@ public sealed class NetworkSession : IDisposable
                 _transport!.Broadcast(
                     NetworkProtocol.WriteTileChange(result.Tile.X, result.Tile.Y, (ushort)tileIndex));
 
-                if (_playerToPeer.TryGetValue(id, out var peer))
+                // Aynaya da yazilir: istemciye verilen item host'un
+                // defterinde de gorunmeli, yoksa takas dogrulamasi
+                // istemcinin gercekten sahip oldugu seyi reddederdi.
+                var granted = result.Amount;
+
+                if (_hostInventories.TryGetValue(id, out var mirror))
+                {
+                    granted -= mirror.TryAdd(result.Resource, result.Amount);
+                }
+
+                if (granted > 0 && _playerToPeer.TryGetValue(id, out var peer))
                 {
                     _transport.Send(peer,
-                        NetworkProtocol.WriteInventoryDelta(result.Resource, result.Amount));
+                        NetworkProtocol.WriteInventoryDelta(result.Resource, granted));
                 }
             }
 

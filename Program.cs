@@ -10,5 +10,12 @@ using PixelSurvival.Diagnostics;
 //
 var harness = CaptureHarness.FromArguments(args);
 
-using var game = new Game1(harness);
+// --self-test: saf mantik denetimlerini kosturup cikar. Grafik penceresi
+// yine acilir (envanter ItemDatabase'i Content Pipeline'dan geliyor), ama
+// denetim biter bitmez kapanir ve cikis kodu sonucu tasir.
+var selfTest = args.Contains("--self-test");
+
+using var game = new Game1(harness, selfTest);
 game.Run();
+
+return Environment.ExitCode;
