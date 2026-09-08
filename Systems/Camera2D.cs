@@ -20,7 +20,23 @@ public sealed class Camera2D(int viewportWidth, int viewportHeight, float zoom)
     /// <summary>Kameranın dünya koordinatlarında baktığı merkez nokta.</summary>
     public Vector2 Position { get; private set; }
 
-    public float Zoom { get; } = zoom;
+    /// <summary>Varsayılan yakınlaştırma — photo mode'dan (madde 24) çıkışta buna dönülür.</summary>
+    public float DefaultZoom { get; } = zoom;
+
+    private float _zoom = zoom;
+
+    /// <summary>
+    /// Yakınlaştırma. Madde 24'teki photo mode bunu değiştirebiliyor.
+    ///
+    /// Alt sınır 1: daha küçük değerlerde ekranda o kadar çok chunk görünür ki
+    /// TileMap her karede yükleme yapmaya başlar. Üst sınır 8: 32x32 sprite
+    /// ekranın dörtte birini kaplar, ötesi bir şey göstermez.
+    /// </summary>
+    public float Zoom
+    {
+        get => _zoom;
+        set => _zoom = Math.Clamp(value, 1f, 8f);
+    }
 
     /// <summary>Görüntülenen dünya alanının pixel cinsinden boyutu.</summary>
     public Vector2 ViewSize => new(viewportWidth / Zoom, viewportHeight / Zoom);

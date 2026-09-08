@@ -41,6 +41,15 @@ public sealed class RemotePlayer
     private readonly SpriteAnimator _animator;
 
     /// <summary>Ekranda görünen (yumuşatılmış) konum.</summary>
+    /// <summary>
+    /// Bu uzak oyuncunun oturum kimliği.
+    ///
+    /// Madde 24'te gerekti: emote balonu "hangi oyuncunun üstünde"
+    /// çizileceğini bilmek zorunda. Kimlik zaten <see cref="PlayerState"/>
+    /// içinde geliyordu, yalnızca saklanmıyordu.
+    /// </summary>
+    public byte PlayerId { get; }
+
     public Vector2 Position { get; private set; }
 
     /// <summary>Host'tan gelen son otoriter konum.</summary>
@@ -55,6 +64,7 @@ public sealed class RemotePlayer
         _sheet = sheet;
         _animator = new SpriteAnimator(sheet, "idle_down");
 
+        PlayerId = initial.PlayerId;
         Position = new Vector2(initial.X, initial.Y);
         TargetPosition = Position;
         Apply(initial);

@@ -12,3 +12,6 @@ Content/obj/
 # OS
 .DS_Store
 Thumbs.db
+
+# Madde 24: photo mode ciktilari
+photos/

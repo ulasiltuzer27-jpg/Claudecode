@@ -26,12 +26,29 @@ public sealed class BitmapFont
 
     public int LineHeight { get; }
 
+    /// <summary>
+    /// Mürekkebin hücre içindeki üst kenarı ve yüksekliği.
+    ///
+    /// Hücre 16 pixel ama gliflerin mürekkebi 13 satır; üstte ve altta boş
+    /// pay var. Bir yazının arkasına kutu çizen kod (madde 24'teki emote
+    /// balonu, ping işareti) satır aralığını kullanırsa kutu gözle görülür
+    /// biçimde yazıyı aşkın çıkar. Bu iki değer veriden okunuyor ki
+    /// sanatçı fontu değiştirdiğinde C# tarafı aynı kalsın.
+    /// </summary>
+    public int InkTop { get; }
+    public int InkHeight { get; }
+
     private readonly record struct Glyph(Rectangle Source, int Advance);
 
     private BitmapFont(Texture2D texture, FontMetadata meta)
     {
         _texture = texture;
         LineHeight = meta.LineSpacing > 0 ? meta.LineSpacing : meta.CellHeight + 1;
+
+        // Metadata'da yoksa tum hucre murekkep sayilir: eski bir font
+        // dosyasi yuklendiginde davranis en azindan bozulmaz.
+        InkTop = meta.InkHeight > 0 ? meta.InkTop : 0;
+        InkHeight = meta.InkHeight > 0 ? meta.InkHeight : meta.CellHeight;
 
         for (var i = 0; i < meta.Glyphs.Count; i++)
         {
@@ -118,6 +135,8 @@ public sealed class BitmapFont
         [JsonPropertyName("cellWidth")] public int CellWidth { get; set; }
         [JsonPropertyName("cellHeight")] public int CellHeight { get; set; }
         [JsonPropertyName("lineSpacing")] public int LineSpacing { get; set; }
+        [JsonPropertyName("inkTop")] public int InkTop { get; set; }
+        [JsonPropertyName("inkHeight")] public int InkHeight { get; set; }
         [JsonPropertyName("glyphs")] public List<GlyphMetadata> Glyphs { get; set; } = [];
     }
 

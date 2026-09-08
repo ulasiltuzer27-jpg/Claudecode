@@ -30,7 +30,15 @@ public enum MessageType : byte
     TradeState = 11,
 
     /// <summary>İstemci → host: üretim isteği. Host doğrular ve uygular.</summary>
-    CraftRequest = 12
+    CraftRequest = 12,
+
+    // --- Madde 24: emote ve ping ---
+
+    /// <summary>Emote. İstemci → host istek, host → herkes yayın.</summary>
+    Emote = 13,
+
+    /// <summary>Dünya ping'i. İstemci → host istek, host → herkes yayın.</summary>
+    Ping = 14
 }
 
 /// <summary>Snapshot içindeki tek bir oyuncunun durumu.</summary>
@@ -435,6 +443,54 @@ public static class NetworkProtocol
         if (data.Length < 2 + length) return false;
 
         recipeId = System.Text.Encoding.UTF8.GetString(data.Slice(2, length));
+        return true;
+    }
+
+    // ---------------- Madde 24: emote ve ping ----------------
+    //
+    // Ikisi de kucuk ve SIK gonderilebilen mesajlar; bu yuzden sabit
+    // boyutlu ve mumkun oldugunca dar tutuldu. Emote 3 bayt, ping 11.
+
+    /// <summary>Emote. playerId host tarafindan doldurulur (istemci 0 yollar).</summary>
+    public static byte[] WriteEmote(byte playerId, byte kind) =>
+        [(byte)MessageType.Emote, playerId, kind];
+
+    public static bool TryReadEmote(ReadOnlySpan<byte> data, out byte playerId, out byte kind)
+    {
+        playerId = 0;
+        kind = 0;
+
+        if (data.Length < 3) return false;
+
+        playerId = data[1];
+        kind = data[2];
+        return true;
+    }
+
+    /// <summary>Dünya ping'i: kimin, hangi tür, nerede.</summary>
+    public static byte[] WritePing(byte playerId, byte kind, float x, float y)
+    {
+        var buffer = new byte[11];
+        buffer[0] = (byte)MessageType.Ping;
+        buffer[1] = playerId;
+        buffer[2] = kind;
+        WriteSingle(buffer, 3, x);
+        WriteSingle(buffer, 7, y);
+        return buffer;
+    }
+
+    public static bool TryReadPing(ReadOnlySpan<byte> data, out byte playerId, out byte kind,
+                                   out Vector2 position)
+    {
+        playerId = 0;
+        kind = 0;
+        position = Vector2.Zero;
+
+        if (data.Length < 11) return false;
+
+        playerId = data[1];
+        kind = data[2];
+        position = new Vector2(ReadSingle(data, 3), ReadSingle(data, 7));
         return true;
     }
 

@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using PixelSurvival.Entities;
 using PixelSurvival.Inventory;
+using PixelSurvival.Systems.Social;
 using PixelSurvival.Trade;
 using PixelSurvival.Systems.Animation;
 using PixelSurvival.Systems.Climate;
@@ -150,6 +151,19 @@ public sealed class NetworkSession : IDisposable
 
     /// <summary>Takasın durumu değişti — arayüz yenilenmeli.</summary>
     public event Action? TradeChanged;
+
+    /// <summary>
+    /// MADDE 24 — bir oyuncu emote yaptı (kendi emote'un dahil).
+    ///
+    /// Host olayı ONAYLAYIP herkese yayınlar; oyun kabuğu yalnızca
+    /// onaylanmış olayı görür. Yerel emote'u anında göstermek cazip
+    /// olurdu ama o zaman spam koruması host'ta reddettiğinde oyuncu
+    /// kendi ekranında olmayan bir emote görürdü.
+    /// </summary>
+    public event Action<byte, EmoteKind>? EmoteReceived;
+
+    /// <summary>MADDE 24 — bir oyuncu ping koydu.</summary>
+    public event Action<byte, PingKind, Vector2>? PingReceived;
 
     public NetworkSession(SpriteSheet playerSheet, ItemDatabase items, ResourceTable resources)
     {
@@ -411,6 +425,45 @@ public sealed class NetworkSession : IDisposable
 
                 break;
 
+            // ---------- Madde 24: emote ve ping ----------
+            case MessageType.Emote:
+                if (NetworkProtocol.TryReadEmote(data, out var emotePlayer, out var emoteKind))
+                {
+                    if (Mode == SessionMode.Host)
+                    {
+                        // Host gonderenin KIMLIGINI kendisi koyar; istemcinin
+                        // yazdigi kimlige guvenilmez, yoksa baskasi adina
+                        // emote yapilabilirdi.
+                        if (!_peerToPlayer.TryGetValue(netEvent.PeerId, out var sender)) break;
+
+                        BroadcastEmote(sender, emoteKind);
+                    }
+                    else
+                    {
+                        EmoteReceived?.Invoke(emotePlayer, (EmoteKind)emoteKind);
+                    }
+                }
+
+                break;
+
+            case MessageType.Ping:
+                if (NetworkProtocol.TryReadPing(data, out var pingPlayer, out var pingKind,
+                                                out var pingPos))
+                {
+                    if (Mode == SessionMode.Host)
+                    {
+                        if (!_peerToPlayer.TryGetValue(netEvent.PeerId, out var sender)) break;
+
+                        BroadcastPing(sender, pingKind, pingPos);
+                    }
+                    else
+                    {
+                        PingReceived?.Invoke(pingPlayer, (PingKind)pingKind, pingPos);
+                    }
+                }
+
+                break;
+
             case MessageType.TradeState when Mode == SessionMode.Client:
                 if (NetworkProtocol.TryReadTradeState(data, out var state, out var selfOk,
                                                       out var otherOk, out var partner))
@@ -424,6 +477,55 @@ public sealed class NetworkSession : IDisposable
 
                 break;
         }
+    }
+
+    // ================= Madde 24: emote ve ping =================
+
+    /// <summary>
+    /// Yerel oyuncunun emote'u. Host'ta anında yayınlanır, istemcide
+    /// host'a istek olarak gider.
+    /// </summary>
+    public void SendEmote(EmoteKind kind)
+    {
+        if (Mode == SessionMode.Client)
+        {
+            // Kimlik alanina 0 yaziliyor; host onu KENDI bildigi kimlikle
+            // degistiriyor.
+            _transport?.Send(0, NetworkProtocol.WriteEmote(0, (byte)kind));
+            return;
+        }
+
+        BroadcastEmote(LocalPlayerId, (byte)kind);
+    }
+
+    /// <summary>Yerel oyuncunun ping'i.</summary>
+    public void SendPing(PingKind kind, Vector2 position)
+    {
+        if (Mode == SessionMode.Client)
+        {
+            _transport?.Send(0, NetworkProtocol.WritePing(0, (byte)kind, position.X, position.Y));
+            return;
+        }
+
+        BroadcastPing(LocalPlayerId, (byte)kind, position);
+    }
+
+    private void BroadcastEmote(byte playerId, byte kind)
+    {
+        // Bilinmeyen tur sessizce dusurulur: eski bir istemci yeni bir
+        // emote gonderirse oyun cokmemeli.
+        if (!Enum.IsDefined((EmoteKind)kind)) return;
+
+        EmoteReceived?.Invoke(playerId, (EmoteKind)kind);
+        _transport?.Broadcast(NetworkProtocol.WriteEmote(playerId, kind));
+    }
+
+    private void BroadcastPing(byte playerId, byte kind, Vector2 position)
+    {
+        if (!Enum.IsDefined((PingKind)kind)) return;
+
+        PingReceived?.Invoke(playerId, (PingKind)kind, position);
+        _transport?.Broadcast(NetworkProtocol.WritePing(playerId, kind, position.X, position.Y));
     }
 
     // ================= Madde 22: takas =================

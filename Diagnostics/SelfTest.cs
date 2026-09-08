@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using PixelSurvival.Clans;
 using PixelSurvival.Inventory;
+using PixelSurvival.Systems.Social;
 using PixelSurvival.Trade;
 
 namespace PixelSurvival.Diagnostics;
@@ -40,9 +41,66 @@ public static class SelfTest
         StructureOwnershipRules();
         TradeAcceptanceRules(items);
         TradeAtomicityRules(items);
+        SocialSignalRules();
 
         Console.WriteLine($"\n{_passed} gecti, {_failed} kaldi.");
         return _failed;
+    }
+
+    // ==================== EMOTE / PING (madde 24) ====================
+
+    private static void SocialSignalRules()
+    {
+        Section("5) Emote ve ping (spam korumasi, omur)");
+
+        var social = new SocialSystem();
+
+        Check("ilk emote gecer", social.TryEmote(0, EmoteKind.Wave));
+
+        // Ping ve emote, sohbeti olmayan bir oyunda en kolay taciz araci.
+        // Bekleme suresi VERI sinifinda, arayuzde degil: arayuzde olsaydi
+        // agdan gelen mesajlar siniri atlardi.
+        Check("bekleme suresi dolmadan ikinci isaret REDDEDILIR",
+            !social.TryEmote(0, EmoteKind.Laugh));
+
+        Check("reddedilen isaret listeye EKLENMEZ", social.Emotes.Count == 1);
+
+        // Baska bir oyuncunun beklemesi ayri.
+        Check("baska oyuncu ayni anda isaret verebilir",
+            social.TryPing(1, PingKind.Danger, new Microsoft.Xna.Framework.Vector2(10, 10)));
+
+        // Bekleme suresi 1.2 sn; 1.5 sn ilerlet.
+        social.Update(1.5f);
+        Check("bekleme suresi dolunca tekrar isaret verilebilir",
+            social.TryEmote(0, EmoteKind.Yes));
+
+        // Ayni oyuncunun onceki emote'u dusmeli: iki balon ust uste binmesin.
+        Check("oyuncu basina TEK emote kalir",
+            social.Emotes.Count(e => e.PlayerId == 0) == 1);
+
+        Check("en son emote gecerli",
+            social.Emotes.First(e => e.PlayerId == 0).Kind == EmoteKind.Yes);
+
+        // Omur dolunca temizlenmeli.
+        social.Update(SocialSystem.EmoteSeconds + 0.1f);
+        Check("omru dolan emote silinir", social.Emotes.Count == 0);
+
+        social.Update(SocialSystem.PingSeconds);
+        Check("omru dolan ping silinir", social.Pings.Count == 0);
+
+        // Oyuncu ayrilinca isaretleri de gitmeli.
+        var leaving = new SocialSystem();
+        leaving.TryPing(3, PingKind.Go, Microsoft.Xna.Framework.Vector2.Zero);
+        leaving.Forget(3);
+        Check("ayrilan oyuncunun isaretleri temizlenir", leaving.Pings.Count == 0);
+
+        // Ping oyuncu basina TEK: harita isaret coplugune donmesin.
+        var single = new SocialSystem();
+        single.TryPing(4, PingKind.Look, new Microsoft.Xna.Framework.Vector2(1, 1));
+        single.Update(2f);
+        single.TryPing(4, PingKind.Danger, new Microsoft.Xna.Framework.Vector2(9, 9));
+        Check("oyuncu basina TEK ping kalir",
+            single.Pings.Count(p => p.PlayerId == 4) == 1);
     }
 
     private static void Check(string what, bool condition)

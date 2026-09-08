@@ -1,0 +1,75 @@
+# MADDE 24 dogrulamasi: photo mode, emote, ping, yama notlari.
+
+wait 90
+shot 01_normal
+
+# F8: yama notlari
+tap F8
+wait 25
+shot 02_yama_notlari
+
+# Asagi kaydir
+tap Down
+tap Down
+tap Down
+tap Down
+tap Down
+tap Down
+wait 25
+shot 03_yama_notlari_kaydirilmis
+tap F8
+wait 15
+
+# Emote: Alt basili tut + 1 (el sallama)
+down LeftAlt
+wait 5
+tap D1
+wait 20
+shot 04_emote_el_sallama
+up LeftAlt
+
+# Bekleme suresi 1.2 sn (spam korumasi) — ping reddedilmesin diye beklenir.
+wait 90
+
+# Ping: Alt + E (tehlike)
+down LeftAlt
+wait 5
+tap E
+wait 20
+shot 05_ping_tehlike
+up LeftAlt
+wait 90
+
+# Emote 5 (yardim) — bekleme suresi dolmus olmali
+down LeftAlt
+wait 5
+tap D5
+wait 20
+shot 06_emote_yardim
+up LeftAlt
+wait 10
+
+# P: photo mode — arayuz gizlenmeli
+tap P
+wait 25
+shot 07_photo_mode_arayuz_gizli
+
+# Kamerayi sag-asagi sur (karakter DURMALI)
+down D
+down S
+wait 45
+up D
+up S
+wait 15
+shot 08_photo_serbest_kamera
+
+# F12: temiz kare kaydet
+tap F12
+wait 30
+
+# P: cik
+tap P
+wait 25
+shot 09_photo_moddan_cikis
+
+quit

@@ -23,6 +23,7 @@ using PixelSurvival.Systems.Hostiles;
 using PixelSurvival.Systems.Npcs;
 using PixelSurvival.Systems.Zones;
 using PixelSurvival.Inventory.Steam;
+using PixelSurvival.Systems.Social;
 using PixelSurvival.Systems.Taming;
 using PixelSurvival.Systems.Crafting;
 using PixelSurvival.Systems.Gathering;
@@ -142,6 +143,17 @@ public class Game1 : Game
 
     private bool _showAchievements;
     private bool _showLeaderboard;
+
+    // --- Madde 24: photo mode, emote, ping, yama notlari ---
+    private readonly PhotoMode _photoMode = new();
+    private readonly SocialSystem _social = new();
+    private PatchNotes _patchNotes = null!;
+
+    private bool _showPatchNotes;
+    private int _patchScroll;
+
+    /// <summary>Emote/ping tekerlegi acik mi (sayi tuslari onu dolasir).</summary>
+    private bool _showEmoteWheel;
 
     // --- Madde 23: dil ve erisilebilirlik ---
     private readonly AccessibilitySettings _accessibility = new();
@@ -332,6 +344,14 @@ public class Game1 : Game
             _session.Connect(address);
         };
 
+        // Madde 24: yama notlari veriden okunuyor; surum cikarken kod
+        // degismiyor.
+        _patchNotes = PatchNotes.Load(Content, "UI/patchnotes");
+
+        _session.EmoteReceived += (playerId, kind) => _social.TryEmote(playerId, kind);
+        _session.PingReceived += (playerId, kind, position) =>
+            _social.TryPing(playerId, kind, position);
+
         _camera = new Camera2D(WindowWidth, WindowHeight, CameraZoom);
 
         GenerateWorld(DefaultSeed);
@@ -442,6 +462,27 @@ public class Game1 : Game
             if (_showWardrobe) _showClan = false;
         }
 
+        // --- Madde 24: photo mode, emote/ping tekerlegi, yama notlari ---
+        if (WasPressed(keyboard, Keys.P)) _photoMode.Toggle(_camera);
+        if (WasPressed(keyboard, Keys.F12) && _photoMode.IsActive) _photoMode.RequestShot();
+
+        if (WasPressed(keyboard, Keys.F8))
+        {
+            _showPatchNotes = !_showPatchNotes;
+            _patchScroll = 0;
+        }
+
+        if (_showPatchNotes)
+        {
+            if (WasPressed(keyboard, Keys.Down)) _patchScroll++;
+            if (WasPressed(keyboard, Keys.Up)) _patchScroll = Math.Max(0, _patchScroll - 1);
+        }
+
+        // Emote tekerlegi basili TUTULARAK acilir: tek basisla acilip
+        // kapanan bir tekerlek, sayi tuslarini uretimden surekli calardi.
+        _showEmoteWheel = keyboard.IsKeyDown(Keys.LeftAlt) || keyboard.IsKeyDown(Keys.RightAlt);
+        if (_showEmoteWheel) HandleSocialKeys(keyboard);
+
         // Madde 23: ayarlar paneli
         if (WasPressed(keyboard, Keys.F7))
         {
@@ -473,8 +514,14 @@ public class Game1 : Game
         }
 
         // Madde 9: yapı seçimi
-        if (WasPressed(keyboard, Keys.Q)) _building.SelectPrevious();
-        if (WasPressed(keyboard, Keys.Z)) _building.SelectNext();
+        // Emote tekerlegi acikken Q/E/R/F ping turu seciyor; ayni tuslar
+        // ayni anda yapi secimi/toplama/saldiri da yapmamali. (Ayni cift
+        // baglama hatasi madde 22'de sayi tuslarinda cikmisti.)
+        if (!_showEmoteWheel)
+        {
+            if (WasPressed(keyboard, Keys.Q)) _building.SelectPrevious();
+            if (WasPressed(keyboard, Keys.Z)) _building.SelectNext();
+        }
 
         // Madde 10: oturum tuşları
         // Aşama 2 tuşları
@@ -501,7 +548,8 @@ public class Game1 : Game
         // ayrilmamisti: klan paneli acikken 1'e basmak hem klan kuruyor
         // hem uretim deniyordu ("Malzeme yetersiz" toast'i cikiyordu).
         // Zincir if/else bu cakismayi yapisal olarak imkansiz kiliyor.
-        if (_showSettings) HandleSettingsKeys(keyboard);
+        if (_showEmoteWheel) { /* sayi tuslari HandleSocialKeys'te islendi */ }
+        else if (_showSettings) HandleSettingsKeys(keyboard);
         else if (_showWardrobe) HandleWardrobeKeys(keyboard);
         else if (_showClan) HandleClanKeys(keyboard);
         else if (!_showTrade) HandleCraftingKeys(keyboard);
@@ -514,6 +562,17 @@ public class Game1 : Game
         _previousKeyboard = keyboard;
 
         var input = InputReader.Read();
+
+        // Madde 24: photo mode'da AYNI tuslar kamerayi suruyor. Oyuncuya
+        // da verilirse karakter kadrajdan cikar; girdi bos gecirilerek
+        // karakter oldugu yerde duruyor (oyun DURMUYOR - hava, saat ve
+        // yaratiklar akmaya devam ediyor, fotograf hareketli bir ani
+        // yakalasin diye).
+        //
+        // Emote tekerlegi de girdiyi yutuyor: E toplama, R insa, F saldiri
+        // tusuydu ve tekerlek acikken bunlar ping turu seciyor.
+        if (_photoMode.IsActive || _showEmoteWheel) input = PlayerInput.None;
+
         var buildPressed = input.Build && !_previousBuildHeld;
         _previousBuildHeld = input.Build;
 
@@ -615,9 +674,28 @@ public class Game1 : Game
             ShowToast("Yeniden dogdun");
         }
 
-        // Üst dünyada sınır yok (Bounds null), zindanda harita sınırına clamp
-        // edilir — madde 5'te Camera2D'nin sınırını Rectangle? yapmamızın sebebi.
-        _camera.Follow(_player.Position, gameTime, _map.Bounds);
+        // Madde 24: kisa omurlu isaretlerin sayaclari.
+        _social.Update(delta);
+
+        // Madde 24: photo mode'da kamera oyuncudan AYRILIR. Ayni yon
+        // tuslari kamerayi surer; ikisini birden surselerdi oyuncu
+        // fotografini cekerken karakteri kadrajdan cikarirdi.
+        if (_photoMode.IsActive)
+        {
+            var pan = InputReader.Read().Move;
+
+            var zoomDelta = (keyboard.IsKeyDown(Keys.OemPlus) || keyboard.IsKeyDown(Keys.Add) ? 1f : 0f)
+                          - (keyboard.IsKeyDown(Keys.OemMinus) || keyboard.IsKeyDown(Keys.Subtract) ? 1f : 0f);
+
+            _photoMode.Update(delta, pan, zoomDelta, _camera);
+            _camera.SnapTo(_player.Position + _photoMode.Offset, _map.Bounds);
+        }
+        else
+        {
+            // Üst dünyada sınır yok (Bounds null), zindanda harita sınırına clamp
+            // edilir — madde 5'te Camera2D'nin sınırını Rectangle? yapmamızın sebebi.
+            _camera.Follow(_player.Position, gameTime, _map.Bounds);
+        }
 
         // Chunk akışı, kamera hareket ettikten SONRA güncellenir; aksi halde
         // hızlı hareket ederken kenarda bir kare gecikmeli boşluk görünür.
@@ -742,6 +820,53 @@ public class Game1 : Game
 
     private bool WasPressed(KeyboardState current, Keys key) =>
         current.IsKeyDown(key) && _previousKeyboard.IsKeyUp(key);
+
+    /// <summary>
+    /// MADDE 24 — emote ve ping tuşları (Alt basılı tutulurken).
+    ///
+    /// 1-6 emote, Q/E/R/F ping türü. Ping, oyuncunun BAKTIĞI tile'a
+    /// konur — imleç yok, o yüzden hedef yön tuşlarından türüyor.
+    ///
+    /// İkisi de host'tan geçer: yerel olarak anında göstermek cazip
+    /// olurdu ama spam koruması host'ta reddettiğinde oyuncu kendi
+    /// ekranında olmayan bir işaret görürdü.
+    /// </summary>
+    private void HandleSocialKeys(KeyboardState keyboard)
+    {
+        var emotes = Enum.GetValues<EmoteKind>();
+
+        for (var i = 0; i < emotes.Length && i < 9; i++)
+        {
+            if (WasPressed(keyboard, Keys.D1 + i))
+            {
+                _session.SendEmote(emotes[i]);
+            }
+        }
+
+        var pings = new (Keys Key, PingKind Kind)[]
+        {
+            (Keys.Q, PingKind.Look),
+            (Keys.E, PingKind.Danger),
+            (Keys.R, PingKind.Go),
+            (Keys.F, PingKind.Resource)
+        };
+
+        foreach (var (key, kind) in pings)
+        {
+            if (!WasPressed(keyboard, key)) continue;
+
+            // Bakilan tile'in merkezi: BuildingSystem.AimTile zaten
+            // "oyuncunun onundeki tile"i cozuyor, ayni hesabi tekrar
+            // yazmak iki tarafin ayrismasina yol acardi.
+            var tile = BuildingSystem.AimTile(_player, _map, 1);
+
+            var position = new Vector2(
+                tile.X * _map.TileSize + _map.TileSize / 2f,
+                tile.Y * _map.TileSize + _map.TileSize / 2f);
+
+            _session.SendPing(kind, position);
+        }
+    }
 
     /// <summary>
     /// MADDE 23 — ayar tuşları: 1 dil, 2 yazı boyutu, 3 renk paleti.
@@ -1333,6 +1458,25 @@ public class Game1 : Game
             DrawHealthBar(_player.Position, _player.Health);
         }
 
+        // Madde 24: ping'ler ve emote balonlari DUNYA katmaninda —
+        // kamerayla birlikte hareket etmeliler.
+        foreach (var ping in _social.Pings)
+        {
+            _hud.DrawPing(_spriteBatch, ping);
+        }
+
+        foreach (var emote in _social.Emotes)
+        {
+            var position = emote.PlayerId == _session.LocalPlayerId
+                ? _player.Position
+                : _session.RemotePlayers.FirstOrDefault(r => r.PlayerId == emote.PlayerId)?.Position;
+
+            if (position is { } worldPosition)
+            {
+                _hud.DrawEmote(_spriteBatch, worldPosition, emote.Kind);
+            }
+        }
+
         if (_showCollisionDebug)
         {
             DrawCollisionDebug(visible);
@@ -1356,7 +1500,19 @@ public class Game1 : Game
         // --- Arayüz katmanı: kamera matrisi YOK, ekran koordinatlarında ---
         _spriteBatch.Begin(samplerState: SamplerState.PointClamp);
 
-        if (_showAssetView)
+        if (_photoMode.IsActive)
+        {
+            // Photo mode: arayuz GIZLI. Tek istisna alttaki bilgi seridi,
+            // o da yalnizca kare KAYDEDILMEYEN karelerde ciziliyor —
+            // yoksa kaydedilen PNG'de gorunur ve photo mode'un "temiz
+            // kare" amaci kalmazdi.
+            if (!_photoMode.ShotPending)
+            {
+                _hud.DrawPhotoModeBar(_spriteBatch, _photoMode.LastSavedPath,
+                                      WindowWidth, WindowHeight);
+            }
+        }
+        else if (_showAssetView)
         {
             DrawAssetInspector();
         }
@@ -1383,6 +1539,13 @@ public class Game1 : Game
             _hud.DrawZone(_spriteBatch,
                 _zones.ZoneAt(_player.Position, _map.TileSize) == ZoneKind.Safe,
                 _steam.Status, WindowWidth, WindowHeight);
+
+            // Madde 24: yama notlari
+            if (_showPatchNotes)
+            {
+                _hud.DrawPatchNotes(_spriteBatch, _patchNotes, _patchScroll,
+                                    WindowWidth, WindowHeight);
+            }
 
             // Madde 23: ayarlar paneli
             if (_showSettings)
@@ -1463,6 +1626,7 @@ public class Game1 : Game
         // Her sey cizildikten SONRA: yakalama script'i bu kareyi istediyse
         // back buffer PNG'ye yazilir.
         _capture?.CaptureIfRequested(GraphicsDevice);
+        _photoMode.CaptureIfRequested(GraphicsDevice);
     }
 
     /// <summary>

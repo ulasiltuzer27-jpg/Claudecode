@@ -5,6 +5,8 @@
   "cellWidth": 10,
   "cellHeight": 16,
   "lineSpacing": 17,
+  "inkTop": 1,
+  "inkHeight": 13,
   "placeholder": true,
   "glyphs": [
     {

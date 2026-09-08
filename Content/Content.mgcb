@@ -425,3 +425,6 @@
 
 #begin Localization/tr.json
 /copy:Localization/tr.json
+
+#begin UI/patchnotes.json
+/copy:UI/patchnotes.json

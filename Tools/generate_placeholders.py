@@ -1349,6 +1349,26 @@ def build_font(out_dir: str) -> dict:
     # Metadata ATLAS SIRASINA göre: her glif kendi kod noktasını ve ilerleme
     # genişliğini taşır. Böylece ASCII aralığı + Türkçe harfler tek tip bir
     # listede yaşar, C# tarafı özel durum bilmez.
+    # Murekkebin hucre icindeki gercek dikey araligi olculuyor.
+    #
+    # Neden gerekli: hucre yuksekligi 16 ama gliflerin murekkebi ~13 satir
+    # ve ustte/altta bos pay var. Bir yazinin arkasina kutu cizen kod
+    # (madde 24'teki emote balonu, ping isareti) satir araligini
+    # kullanirsa kutu gozle gorulur bicimde yaziyi askin cikiyor.
+    ink_top, ink_bottom = cell_h, -1
+    pixels = sheet.load()
+    for index in range(len(entries)):
+        cx = (index % FONT_COLUMNS) * cell_w
+        cy = (index // FONT_COLUMNS) * cell_h
+        for y in range(cell_h):
+            for x in range(cell_w):
+                if pixels[cx + x, cy + y][3] > 0:
+                    ink_top = min(ink_top, y)
+                    ink_bottom = max(ink_bottom, y)
+
+    if ink_bottom < ink_top:      # hic murekkep yoksa hucrenin tamami
+        ink_top, ink_bottom = 0, cell_h - 1
+
     meta = {
         "asset": "UI/font_ascii",
         "columns": FONT_COLUMNS,
@@ -1356,6 +1376,8 @@ def build_font(out_dir: str) -> dict:
         "cellWidth": cell_w,
         "cellHeight": cell_h,
         "lineSpacing": cell_h + 1,
+        "inkTop": ink_top,
+        "inkHeight": ink_bottom - ink_top + 1,
         "placeholder": True,
         "glyphs": [{"code": ord(ch), "advance": adv} for ch, _, adv in entries],
     }

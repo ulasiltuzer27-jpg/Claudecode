@@ -1,0 +1,82 @@
+{
+  "_comment": "MADDE 24 - yama notlari (VERI). Oyun icinden okunur; surum cikarken bu dosyaya yeni bir giris eklenir, kod degismez.",
+
+  "_siralama_notu": "En yeni surum EN USTTE. Oyun listeyi oldugu gibi cizer, siralamayi kod yapmaz.",
+
+  "releases": [
+    {
+      "version": "0.24.0",
+      "date": "2026-09-08",
+      "title": "Photo mode, emote, ping ve yama notlari",
+      "changes": [
+        "Photo mode: P ile arayuz gizlenir, kamera serbest kalir, F12 kareyi photos/ klasorune yazar.",
+        "Emote: 6 emote (el sallama, evet, hayir, tesekkur, yardim, gulme). Sembol tabanli - dil bilmeden anlasilir.",
+        "Ping: dunyaya 4 turde isaret konur (bak / tehlike / gidelim / kaynak). Aga senkron.",
+        "Yama notlari ekrani: bu ekran. Veri dosyasindan okunuyor.",
+        "Emote ve ping icin oyuncu basina bekleme suresi - sohbeti olmayan bir oyunda spam en kolay taciz araci."
+      ]
+    },
+    {
+      "version": "0.23.0",
+      "date": "2026-09-08",
+      "title": "Dil destegi ve erisilebilirlik",
+      "changes": [
+        "EN/TR dil tablolari; F7 ayar panelinden aninda gecis.",
+        "Yazi boyutu 1x-4x (tam sayi kat: kesirli olcek pixel art yaziyi bulaniklastirir).",
+        "Renk korlugu paletleri: protanopi, doteranopi, tritanopi.",
+        "Renk tek basina anlam tasimiyor - kritik bilgi metinle de veriliyor.",
+        "Duzeltme: Steam durum satiri cevrilmis metni sakliyordu ve dil degisince eski dilde kaliyordu.",
+        "Duzeltme: buyuk yazi olceginde paneller pencere disina tasiyordu."
+      ]
+    },
+    {
+      "version": "0.22.0",
+      "date": "2026-09-08",
+      "title": "Klan sistemi ve oyuncular arasi takas",
+      "changes": [
+        "Klan: rutbeler (uye/subay/lider) ve bayrak tabanli yetkiler.",
+        "Yapi sahipligi: kendi klaninin yapisini SOKERSIN (malzemenin tamami doner), yabancininkine BASKIN yaparsin (yarisi doner).",
+        "Takas: host otoriter escrow. Sahiplik ve yer kontrolu envanterlere DOKUNMADAN once yapiliyor - takas ya tamamen olur ya hic.",
+        "Host artik her istemci icin envanter aynasi tutuyor; uretim de host'ta dogrulaniyor.",
+        "Duzeltme: iki taraf onayladiktan sonra teklif degistirilince onaylar dusmuyordu.",
+        "Duzeltme: basarisiz takas sonrasi durum tutarsiz kaliyor ve takas kimsenin onaylamadigi halde uygulanabiliyordu."
+      ]
+    },
+    {
+      "version": "0.21.0",
+      "date": "2026-09-08",
+      "title": "Steamworks entegrasyonu",
+      "changes": [
+        "14 basarim, istatistik tabanli tetikleme (esikler veriden, koddan degil).",
+        "Leaderboard yukleme/okuma; skorlar 10 saniyede bir yaziliyor.",
+        "Arkadas daveti: rich presence 'connect' anahtari ve overlay.",
+        "Duzeltme: .sln'de SteamRelease yapilandirmasi yoktu; Steam kodu bir kez bile derlenmemisti.",
+        "Duzeltme: dusman oldurmeleri ganimet uzerinden sayiliyordu; ganimet sansa bagli oldugu icin sanssiz oldurmeler sayilmiyordu."
+      ]
+    },
+    {
+      "version": "0.20.0",
+      "date": "2026-09-08",
+      "title": "Kozmetikler ve katmanli karakter",
+      "changes": [
+        "Katmanli sprite: pelerin > beden > kiyafet > sac > sapka > aksesuar.",
+        "11 kozmetik katman, 5 nadirlik kademesi.",
+        "Sezonluk item altyapisi: pencere elde edilebilirligi kapatir, KULLANIMI degil.",
+        "Nadirlik yalnizca gorsel - gameplay gucu veren kozmetik pay-to-win yaratir.",
+        "Duzeltme: dunya gece yarisinda basliyordu ve oyuncu yeni urettigi dunyayi goremiyordu."
+      ]
+    },
+    {
+      "version": "0.19.0",
+      "date": "2026-09-08",
+      "title": "Ilk derleme",
+      "changes": [
+        "8900+ satir C# ilk kez derlendi.",
+        "Duzeltme: tool manifest'i joker surum kabul etmiyordu.",
+        "Duzeltme: Tileset'te birlesme artigi olarak iki kez tanimlanmis alan.",
+        "Duzeltme: Math.Clamp asiri yuklemesi belirsizdi.",
+        "Bassiz dogrulama harness'i: script'ten tus oynatip PNG kare dokuyor."
+      ]
+    }
+  ]
+}

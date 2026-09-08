@@ -11,6 +11,7 @@ using PixelSurvival.Cosmetics;
 using PixelSurvival.Inventory;
 using PixelSurvival.Localization;
 using PixelSurvival.Systems.Crafting;
+using PixelSurvival.Systems.Social;
 
 namespace PixelSurvival.UI;
 
@@ -640,6 +641,168 @@ public sealed class HudRenderer
                               swatchWidth - 4, lineHeight - 4),
                 swatches[i]);
         }
+    }
+
+    /// <summary>
+    /// MADDE 24 — yama notları ekranı.
+    ///
+    /// Sürümler dosyadaki sırayla çizilir. Ekran uzun olabildiği için
+    /// <paramref name="scroll"/> ile kaydırılır; sığmayan satırlar
+    /// çizilmez (kırpma yerine atlama: kesik yarım satır, listenin
+    /// bittiği izlenimi verirdi).
+    /// </summary>
+    public void DrawPatchNotes(SpriteBatch spriteBatch, PatchNotes notes, int scroll,
+                               int windowWidth, int windowHeight)
+    {
+        var lineHeight = _font.LineHeight * UiScale;
+        var padding = 6 * UiScale;
+
+        var rows = new List<(string Text, Color Color)>
+        {
+            ($"YAMA NOTLARI  (F8 kapat, yukari/asagi kaydir)  v{notes.LatestVersion}", TextColor)
+        };
+
+        foreach (var release in notes.Releases)
+        {
+            rows.Add(("", DimTextColor));
+            rows.Add(($"v{release.Version}  {release.Date}  —  {release.Title}", CraftableColor));
+
+            foreach (var change in release.Changes)
+            {
+                rows.Add(($"   - {change}", DimTextColor));
+            }
+        }
+
+        // Panel pencerenin cogunu kaplar; ic yukseklik kac satir
+        // sigacagini belirler.
+        var panelWidth = windowWidth - 80;
+        var panelHeight = windowHeight - 100;
+        var visibleRows = Math.Max(1, (panelHeight - padding * 2) / lineHeight);
+
+        var maxScroll = Math.Max(0, rows.Count - visibleRows);
+        var offset = Math.Clamp(scroll, 0, maxScroll);
+
+        var originX = (windowWidth - panelWidth) / 2;
+        var originY = (windowHeight - panelHeight) / 2;
+
+        Fill(spriteBatch, new Rectangle(originX, originY, panelWidth, panelHeight),
+             PanelColor * 0.96f);
+
+        for (var i = 0; i < visibleRows && offset + i < rows.Count; i++)
+        {
+            var row = rows[offset + i];
+
+            _font.Draw(spriteBatch, Truncate(row.Text, panelWidth - padding * 2),
+                new Vector2(originX + padding, originY + padding + i * lineHeight),
+                row.Color, UiScale);
+        }
+
+        // Kaydirma gostergesi: liste devam ediyor mu, oyuncu gorsun.
+        if (maxScroll > 0)
+        {
+            var barHeight = Math.Max(12, panelHeight * visibleRows / rows.Count);
+            var barY = originY + (panelHeight - barHeight) * offset / maxScroll;
+
+            Fill(spriteBatch, new Rectangle(originX + panelWidth - 6, barY, 4, barHeight),
+                 DimTextColor);
+        }
+    }
+
+    /// <summary>
+    /// Metni verilen pixel genişliğine sığacak kadar kısaltır.
+    ///
+    /// Yama notu satırları uzun olabiliyor; taşan metin panelin dışına
+    /// çıkıp arka plana karışıyordu.
+    /// </summary>
+    private string Truncate(string text, int maxWidth)
+    {
+        if (_font.Measure(text, UiScale) <= maxWidth) return text;
+
+        // Karakter karakter kisaltmak yerine oransal bir tahminle baslamak
+        // uzun satirlarda cok daha az olcum yapar.
+        var estimate = Math.Max(1, text.Length * maxWidth / Math.Max(1, _font.Measure(text, UiScale)));
+        var result = text[..Math.Min(text.Length, estimate)];
+
+        while (result.Length > 1 && _font.Measure(result + "...", UiScale) > maxWidth)
+        {
+            result = result[..^1];
+        }
+
+        return result + "...";
+    }
+
+    /// <summary>
+    /// MADDE 24 — photo mode bilgi şeridi.
+    ///
+    /// Photo mode arayüzü gizler; bu şerit TEK istisnadır ve yalnızca
+    /// kareyi kaydetmeden ÖNCE görünür. Kaydedilen karede hiçbir arayüz
+    /// olmamalı, yoksa photo mode'un amacı kalmaz.
+    /// </summary>
+    public void DrawPhotoModeBar(SpriteBatch spriteBatch, string lastSaved,
+                                 int windowWidth, int windowHeight)
+    {
+        var lineHeight = _font.LineHeight * UiScale;
+        var padding = 5 * UiScale;
+
+        var line = "PHOTO MODE  -  yon: kamera   +/-: zoom   F12: kaydet   P: cik";
+        if (lastSaved.Length > 0) line += $"   [{lastSaved}]";
+
+        var width = _font.Measure(line, UiScale);
+        var x = (windowWidth - width) / 2 - padding;
+        var y = windowHeight - lineHeight - padding * 3;
+
+        Fill(spriteBatch, new Rectangle(x, y, width + padding * 2, lineHeight + padding),
+             PanelColor * 0.85f);
+
+        _font.Draw(spriteBatch, line, new Vector2(x + padding, y + padding / 2), TextColor, UiScale);
+    }
+
+    /// <summary>
+    /// MADDE 24 — oyuncunun üstündeki emote balonu.
+    ///
+    /// DÜNYA katmanında, kamera matrisi altında çizilir: balon karakterle
+    /// birlikte hareket etmeli.
+    /// </summary>
+    public void DrawEmote(SpriteBatch spriteBatch, Vector2 worldPosition, EmoteKind kind)
+    {
+        var symbol = SocialSystem.Symbol(kind);
+
+        // Dunya katmaninda arayuz olcegi kullanilmaz: kamera zaten
+        // yakinlastiriyor, ustune UiScale eklenirse balon devasa olur.
+        var width = _font.Measure(symbol, 1);
+        var x = (int)worldPosition.X - width / 2;
+        var y = (int)worldPosition.Y - 44;
+
+        // Kutu SATIR ARALIGINA degil MUREKKEBE gore: hucrenin bos payi da
+        // boyansa balon gozle gorulur bicimde yaziyi askin cikiyor.
+        Fill(spriteBatch,
+             new Rectangle(x - 2, y + _font.InkTop - 2, width + 4, _font.InkHeight + 4),
+             PanelColor * 0.85f);
+
+        _font.Draw(spriteBatch, symbol, new Vector2(x, y), TextColor, 1);
+    }
+
+    /// <summary>
+    /// MADDE 24 — dünyadaki ping işareti.
+    ///
+    /// Ömrü doldukça SOLAR: aniden kaybolan bir işaret, oyuncuya hâlâ
+    /// orada mı diye baktırır.
+    /// </summary>
+    public void DrawPing(SpriteBatch spriteBatch, WorldPing ping)
+    {
+        var (symbol, color) = SocialSystem.PingStyle(ping.Kind);
+
+        var width = _font.Measure(symbol, 1);
+        var x = (int)ping.Position.X - width / 2;
+        var y = (int)ping.Position.Y - 20;
+
+        var fade = Math.Clamp(ping.Freshness, 0f, 1f);
+
+        Fill(spriteBatch,
+             new Rectangle(x - 2, y + _font.InkTop - 2, width + 4, _font.InkHeight + 4),
+             PanelColor * (0.8f * fade));
+
+        _font.Draw(spriteBatch, symbol, new Vector2(x, y), color * fade, 1);
     }
 
     /// <summary>Sol üstte seçili yapı ve ağ oturumu durumu.</summary>
