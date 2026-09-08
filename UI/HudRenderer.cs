@@ -116,8 +116,12 @@ public sealed class HudRenderer
     }
 
     /// <summary>Sağ üstte crafting paneli. Tuş numarası = tarif sırası.</summary>
+    /// <param name="topY">
+    /// Panelin baslayabilecegi en ust Y. Iklim seridi de sag ust kosede
+    /// duruyor; sabit 12 yazilinca ikisi ust uste biniyordu.
+    /// </param>
     public void DrawCrafting(SpriteBatch spriteBatch, CraftingSystem crafting,
-                             WorldInventory inventory, int windowWidth)
+                             WorldInventory inventory, int windowWidth, int topY = 12)
     {
         var lineHeight = _font.LineHeight * UiScale;
         var rows = crafting.Recipes.Count;
@@ -134,7 +138,7 @@ public sealed class HudRenderer
         var panelWidth = width + padding * 2;
         var panelHeight = (rows + 1) * lineHeight + padding * 2;
         var originX = windowWidth - panelWidth - 12;
-        var originY = 12;
+        var originY = topY;
 
         Fill(spriteBatch, new Rectangle(originX, originY, panelWidth, panelHeight),
              PanelColor * 0.88f);
@@ -202,17 +206,24 @@ public sealed class HudRenderer
     }
 
     /// <summary>Sağ altta gün/saat/mevsim/hava (madde 12).</summary>
-    public void DrawClimate(SpriteBatch spriteBatch, string line, int windowWidth)
+    /// <returns>
+    /// Seridin alt kenari. Cagiran taraf sag ust kosedeki diger panelleri
+    /// bunun altina yerlestirir; boylece cakisma yerlesim hatasi olmaktan
+    /// cikip hesaplanan bir deger haline gelir.
+    /// </returns>
+    public int DrawClimate(SpriteBatch spriteBatch, string line, int windowWidth)
     {
         var width = _font.Measure(line, UiScale);
         var padding = 5 * UiScale;
         var x = windowWidth - width - padding * 2 - 12;
+        var height = _font.LineHeight * UiScale + padding;
 
-        Fill(spriteBatch,
-            new Rectangle(x, 12, width + padding * 2, _font.LineHeight * UiScale + padding),
-            PanelColor * 0.82f);
+        Fill(spriteBatch, new Rectangle(x, 12, width + padding * 2, height),
+             PanelColor * 0.82f);
 
         _font.Draw(spriteBatch, line, new Vector2(x + padding, 12 + padding / 2), TextColor, UiScale);
+
+        return 12 + height;
     }
 
     /// <summary>

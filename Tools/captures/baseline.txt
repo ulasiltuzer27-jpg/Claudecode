@@ -1,0 +1,28 @@
+# Taban dogrulama: dunya yuklendi mi, HUD ciziliyor mu, hareket calisiyor mu.
+# 60 kare = 1 saniye (sabit adim).
+
+wait 90
+shot 01_acilis
+
+# Karakteri asagi surup hareketin gercekten oldugunu goster.
+down S
+wait 60
+up S
+wait 10
+shot 02_hareket_sonrasi
+
+# F1: ham sprite sheet denetim gorunumu.
+tap F1
+wait 20
+shot 03_asset_denetimi
+tap F1
+wait 20
+
+# F2: collision/chunk debug gorunumu.
+tap F2
+wait 20
+shot 04_collision_debug
+tap F2
+wait 20
+
+quit

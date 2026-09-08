@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using PixelSurvival.Diagnostics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -124,8 +125,16 @@ public class Game1 : Game
     private bool _showCollisionDebug;
     private KeyboardState _previousKeyboard;
 
-    public Game1()
+    /// <summary>
+    /// Otomatik dogrulama surucusu. Normal calistirmada <c>null</c>'dur ve
+    /// oyun davranisi hicbir sekilde degismez.
+    /// </summary>
+    private readonly CaptureHarness? _capture;
+
+    public Game1(CaptureHarness? capture = null)
     {
+        _capture = capture;
+
         _graphics = new GraphicsDeviceManager(this)
         {
             PreferredBackBufferWidth = WindowWidth,
@@ -245,7 +254,11 @@ public class Game1 : Game
         _enemies = new EnemySystem(_enemyTable, Content, _tileset, seed);
         _npcs?.Populate(start, _map.TileSize);
 
-        if (_zones is not null)
+        // Guvenli bolge merkezleri NPC konumlarindan turer, bu yuzden iki
+        // sistem BIRLIKTE hazir olmali. Ayri ayri null kontrolu, _npcs
+        // hazir degilken _zones'a bos liste yazip guvenli bolgeyi sessizce
+        // yok ederdi.
+        if (_zones is not null && _npcs is not null)
         {
             _zones.Reset();
             _zones.SafeCenter = start;
@@ -268,7 +281,14 @@ public class Game1 : Game
 
     protected override void Update(GameTime gameTime)
     {
-        var keyboard = Keyboard.GetState();
+        // Yakalama script'i once islenir: bastigi tuslar AYNI karede okunsun.
+        if (_capture is not null)
+        {
+            _capture.Update();
+            if (_capture.ShouldExit) Exit();
+        }
+
+        var keyboard = InputSource.GetKeyboard();
 
         if (keyboard.IsKeyDown(Keys.Escape) ||
             GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed)
@@ -822,18 +842,21 @@ public class Game1 : Game
                 selectedBuild: _itemDatabase.Get(_building.Selected.Item).Name,
                 sessionLine: DescribeSession());
 
+            // Iklim seridi ONCE cizilir: sag ust kosedeki uretim paneli
+            // onun altindan baslasin diye alt kenarini geri veriyor.
+            var climateBottom = _hud.DrawClimate(_spriteBatch,
+                $"Gun {_climate.Day}  {_climate.ClockText}  {_climate.Season.Name}  " +
+                $"{_climate.Weather.Name}", WindowWidth);
+
             if (_showCrafting)
             {
-                _hud.DrawCrafting(_spriteBatch, _crafting, _inventory, WindowWidth);
+                _hud.DrawCrafting(_spriteBatch, _crafting, _inventory, WindowWidth,
+                                  climateBottom + 6);
             }
 
             _hud.DrawZone(_spriteBatch,
                 _zones.ZoneAt(_player.Position, _map.TileSize) == ZoneKind.Safe,
                 _steam.Status, WindowWidth, WindowHeight);
-
-            _hud.DrawClimate(_spriteBatch,
-                $"Gun {_climate.Day}  {_climate.ClockText}  {_climate.Season.Name}  " +
-                $"{_climate.Weather.Name}", WindowWidth);
 
             if (_fishing.IsActive)
             {
@@ -851,6 +874,10 @@ public class Game1 : Game
         _spriteBatch.End();
 
         base.Draw(gameTime);
+
+        // Her sey cizildikten SONRA: yakalama script'i bu kareyi istediyse
+        // back buffer PNG'ye yazilir.
+        _capture?.CaptureIfRequested(GraphicsDevice);
     }
 
     /// <summary>

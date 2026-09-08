@@ -28,7 +28,9 @@ public static class InputReader
 
     public static PlayerInput Read()
     {
-        var keyboard = Keyboard.GetState();
+        // Dogrudan Keyboard.GetState() DEGIL: tek okuma noktasi InputSource,
+        // boylece otomatik dogrulama surucusu sanal tus besleyebiliyor.
+        var keyboard = InputSource.GetKeyboard();
         var pad = GamePad.GetState(PlayerIndex.One, GamePadDeadZone.Circular);
 
         var move = Vector2.Zero;
