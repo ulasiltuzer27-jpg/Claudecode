@@ -422,14 +422,24 @@ public class Game1 : Game
         if (WasPressed(keyboard, Keys.Tab)) _showCrafting = !_showCrafting;
 
         // Madde 20: gardirop
-        if (WasPressed(keyboard, Keys.K)) _showWardrobe = !_showWardrobe;
+        if (WasPressed(keyboard, Keys.K))
+        {
+            _showWardrobe = !_showWardrobe;
+            if (_showWardrobe) _showClan = false;
+        }
 
-        // Madde 22: klan paneli ve takas penceresi
-        if (WasPressed(keyboard, Keys.N)) _showClan = !_showClan;
+        // Madde 22: klan paneli ve takas penceresi.
+        // Sayi tuslarini paylasan paneller ayni anda acik kalmasin:
+        // hangisinin tusu isledigi oyuncu icin belirsiz olurdu.
+        if (WasPressed(keyboard, Keys.N))
+        {
+            _showClan = !_showClan;
+            if (_showClan) _showWardrobe = false;
+        }
+
         if (WasPressed(keyboard, Keys.Y)) ToggleTradeWindow();
 
         if (_showTrade) HandleTradeKeys(keyboard);
-        if (_showClan) HandleClanKeys(keyboard);
 
         // Madde 21: basarim listesi / leaderboard / arkadas daveti
         if (WasPressed(keyboard, Keys.F3)) _showAchievements = !_showAchievements;
@@ -464,17 +474,15 @@ public class Game1 : Game
         if (WasPressed(keyboard, Keys.F10)) _session.Connect(TransportFactory.DefaultConnectTarget);
         if (WasPressed(keyboard, Keys.F11)) { _session.Leave(); ShowToast("Oturum kapatildi"); }
 
-        // Gardirop acikken sayi tuslari kozmetik slotlarini dolasir; kapaliyken
-        // uretim tariflerini uygular. Ayni tusun iki islevi ASLA ayni anda
-        // aktif degil.
-        if (_showWardrobe)
-        {
-            HandleWardrobeKeys(keyboard);
-        }
-        else
-        {
-            HandleCraftingKeys(keyboard);
-        }
+        // Sayi tuslarinin sahibi HER ZAMAN tek bir panel.
+        //
+        // Onceki surumde gardirop uretimle ayrilmisti ama klan paneli
+        // ayrilmamisti: klan paneli acikken 1'e basmak hem klan kuruyor
+        // hem uretim deniyordu ("Malzeme yetersiz" toast'i cikiyordu).
+        // Zincir if/else bu cakismayi yapisal olarak imkansiz kiliyor.
+        if (_showWardrobe) HandleWardrobeKeys(keyboard);
+        else if (_showClan) HandleClanKeys(keyboard);
+        else if (!_showTrade) HandleCraftingKeys(keyboard);
 
         if (_toastSeconds > 0f)
         {

@@ -1,0 +1,30 @@
+# MADDE 22 gorsel dogrulama: klan paneli.
+# Takas penceresi iki oyuncu gerektirir; onun MANTIGI --self-test ile
+# dogrulaniyor (46 denetim). Burada klan paneli ve tek kisilik oyunda
+# takasin dogru sekilde reddedilmesi gosteriliyor.
+
+wait 90
+
+# N: klan paneli (henuz klansiz)
+tap N
+wait 20
+shot 01_klan_yok
+
+# 1: klan kur
+tap D1
+wait 25
+shot 02_klan_kuruldu
+
+# 3: klandan ayril
+tap D3
+wait 25
+shot 03_klandan_ayrildi
+tap N
+wait 10
+
+# Y: tek kisilik oyunda takas acilmamali
+tap Y
+wait 25
+shot 04_takas_tek_kisilik_uyarisi
+
+quit
