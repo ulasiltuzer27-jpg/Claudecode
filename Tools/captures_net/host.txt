@@ -1,0 +1,19 @@
+# Iki islemli ag dogrulamasinin HOST tarafi.
+#
+# Bu klasor Tools/captures/ DISINDA: run_captures.sh tek islemli
+# script'leri kosturuyor ve bu ikisi tek basina anlamsiz (host'suz
+# istemci baglanamaz, istemcisiz host'un kanitlayacagi bir sey yok).
+# Ikisini birlikte Tools/verify_network.sh kosturuyor.
+
+screen Playing
+
+# Dunyanin oturmasi icin kisa bir bekleme, sonra sunucuyu ac.
+wait 30
+tap F9
+
+# Istemcinin baglanmasi, varlik snapshot'larinin akmasi ve
+# yaratiklarin biraz dolasmasi icin 15 saniye.
+wait 900
+shot host
+
+quit

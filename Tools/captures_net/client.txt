@@ -1,0 +1,16 @@
+# Iki islemli ag dogrulamasinin ISTEMCI tarafi.
+#
+# Istemcide yerel yaratik listesi BOSALTILIYOR (host otoriter). Yani bu
+# karede gorunen her yaratik ve dusman AGDAN gelmis demektir; ekranda
+# hicbir sey yoksa senkronizasyon calismiyor.
+
+screen Playing
+
+wait 30
+tap F10
+
+# Baglanti + karsilama + ilk snapshot'lar icin 7 saniye.
+wait 420
+shot client
+
+quit

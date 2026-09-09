@@ -423,15 +423,48 @@ oyuncuların yaptığı değişiklikler (kesilen ağaç, konan duvar) tile mesaj
 `Networking/NetworkSession.cs` başındaki nota bakın. Özetle:
 
 **Host otoriter:** oyuncu konumları, can/hasar/ölüm/dirilme, dünya tile'ları,
-istemcilerin toplayarak kazandığı item'lar.
+istemcilerin toplayarak kazandığı item'lar, üretim (madde 22'de host'a taşındı),
+istemci envanterlerinin **aynası**, dünya saati ve hava, **düşmanlar ve
+yaratıklar**.
 
-**Henüz otoriter DEĞİL — kapatılacak açıklar:**
-* Crafting istemcide yerel çalışıyor, host doğrulamıyor.
+**Henüz otoriter DEĞİL:**
 * İnşa yalnızca host'ta çalışıyor; istemci inşa edemiyor.
-* İstemci envanteri host'ta ayna tutulmuyor.
+* Tarım ve evcilleştirme istemcide kapalı — ikisi de dünyayı değiştiriyor ve
+  isteğin host'a taşınması gerekiyor.
+* Zindanlar ağ oturumunda tamamen kapalı (aşağıya bakın).
 
-Bunlar PvP ve ekonomi anlam kazanmadan **önce** kapatılmalı. Madde 18 (PvP bölgesi)
-ve madde 22 (oyuncular arası trade) bu açıklar açıkken yapılamaz.
+### Varlık senkronizasyonu (düşman ve yaratıklar)
+
+Düşmanlar ve yaratıklar madde 14-15'ten beri **yereldi**: her istemci kendi
+sürüsünü görüyordu. İki taraf aynı tohumdan başlasa bile saniyeler içinde
+ayrışıyorlardı — gezinme hedefi rastgele ve ekran hızına bağlı.
+
+Artık host otoriter. `MessageType.EntitySnapshot` her tick tam durumu yayınlıyor:
+
+* **Tam durum, fark değil.** Listede olmayan varlık istemcide silinir. Fark
+  tabanlı bir düzende kaybolan tek bir "öldü" mesajı istemcide kalıcı bir
+  hayalet düşman bırakırdı; tam durumda böyle bir hata bir sonraki snapshot'ta
+  kendini düzeltiyor.
+* **Kimlik uzayı ikiye bölünmüş.** Düşmanlar `1..0x7FFF`, yaratıklar
+  `0x8000..0xFFFF`. İki sistem birbirinin sayacını bilmiyor ama istemcide tek
+  bir sözlükte yaşıyorlar; bölme, haberleşme gerekmeden benzersizliği garanti
+  ediyor.
+* **İstemcide simülasyon kodu YOK.** `Enemy`'yi istemcide de çalıştırıp
+  "yapay zekâyı kapatmak" cazipti, ama bir bayrakla kapatılan simülasyon bir gün
+  birinin o bayrağı unutmasıyla geri gelir. `RemoteEntity` ayrı bir sınıf ve
+  içinde yol bulma, çarpışma veya hasar hiç yok.
+* **Can yüzde olarak gidiyor.** Boss'un canı 320; tek bayta sığmıyor ve ham
+  değeri kırpmak can çubuğunu yalancı yapardı.
+* **NPC'ler gönderilmiyor.** Sabit konumlarda duruyorlar ve konumları tohumdan
+  türüyor: iki taraf da aynı yere koyuyor. Hiç değişmeyen bir veriyi saniyede
+  20 kez yollamak anlamsız olurdu. Görev ilerlemesi de bilinçli olarak oyuncuya
+  özel.
+
+**Zindanlar ağ oturumunda kapalı.** Zindan ayrı bir harita: host zindana
+girerse tile değişiklikleri zindan koordinatlarıyla yayınlanır ve üst dünyadaki
+istemcilerin haritasını bozar. "Her oyuncunun ayrı zindanı mı, ortak mı?"
+sorusu yanıtlanana kadar `B` tuşu ağ oturumunda uyarı veriyor — sessizce
+bozulmasındansa açıkça kapalı olması iyi.
 
 `Send()` ileride teslim modu (Reliable/Unreliable) parametresi alacak şekilde
 tasarlandı — pozisyon unreliable, saldırı reliable gitmeli. **Bu aşamada
@@ -638,13 +671,8 @@ tohumdan üretiyor ve üretim modlanabilir veriden türüyor. Farklı mod kümes
 sahip iki oyuncu aynı tohumdan **farklı dünya** üretir; ekranlar sessizce
 ayrışır. Bu yüzden aktif mod kümesinin parmak izi karşılama mesajıyla gidiyor
 ve tutmayan bağlantı reddediliyor. Kablo biçimi değiştiği için
-`ProtocolVersion` 1 → 2.
+`ProtocolVersion` 1 → 2. Varlık senkronizasyonu eklenirken 2 → 3.
 
-### Bilinen boşluklar (Aşama 2)
-
-* **Yaratıklar, düşmanlar, NPC'ler ve zindanlar ağda senkronize DEĞİL.** Her istemci
-  kendi kopyasını görür. Protokole varlık senkronizasyonu mesajı gerekiyor —
-  şu an yalnızca oyuncular, tile'lar ve dünya saati senkron.
 ### Düşman yol bulma
 
 Düşmanlar madde 15'ten beri düz çizgide yürüyordu: oyuncu bir kayanın arkasına
@@ -668,6 +696,9 @@ Doğrulaması iki katmanlı: `--self-test` içinde hem yol bulucunun kendisi ell
 çarpışma koduyla bir kovalama koşturuluyor (düşman 6.7 tile dolaşarak
 391 karede oyuncuya varıyor). İkisi ayrı olmalı: doğru bir yol bulucu, yolu
 takip etmeyen bir düşmanla birlikte de var olabilir.
+
+### Bilinen boşluklar (Aşama 2)
+
 * **Görev ilerlemesi ve tarım kaydedilmiyor.** Kayıt sistemi var (aşağıya bak)
   ama NPC görev durumu ile ekili tarlalar henüz kapsam dışında; ikisi de
   kendi sistemlerinde dışa aktarım arayüzü istiyor.
@@ -686,8 +717,11 @@ takip etmeyen bir düşmanla birlikte de var olabilir.
   geçti, `SteamRelease` CS0103 ile patladı). Ama derlenmek çalışmak değil:
   achievement'lar, leaderboard, davet, Workshop yükleme ve envanter
   çağrıları çalışan bir Steam istemcisine karşı hiç denenmedi.
-* **Tarım istemcide çalışmıyor** — `C` tuşu istemci modunda uyarı veriyor.
-  Madde 10'daki yetki notlarıyla birlikte kapatılmalı.
+* **Tarım ve evcilleştirme istemcide çalışmıyor** — `C` ve `G` tuşları istemci
+  modunda uyarı veriyor. İkisi de dünyayı değiştiriyor, yani host'a istek
+  olarak taşınmaları gerekiyor.
+* **Zindanlar ağ oturumunda kapalı** — bilinçli bir kısıt, bkz. "Ağda ne
+  otoriter, ne değil".
 * Dünya saati ve hava **host otoriter** ve senkronize (saniyede bir `WorldTime`
   mesajı). Ekin büyümesi de otomatik olarak host'ta kalıyor.
 
@@ -758,8 +792,8 @@ karakteri Aşama 2 / madde 20'de gelecek.
 
 ## Otomatik doğrulama
 
-Bu projede "implemented successfully" bir kanıt sayılmıyor. Üç ayrı otomatik
-yol var ve üçü de gerçekten koşturuluyor:
+Bu projede "implemented successfully" bir kanıt sayılmıyor. Dört ayrı otomatik
+yol var ve dördü de gerçekten koşturuluyor:
 
 ### 1. Kendi kendini denetleme
 
@@ -769,7 +803,8 @@ dotnet run -- --self-test        # çıkış kodu 0 = hepsi geçti
 
 Ekran görüntüsüyle **görülemeyen** kuralları koşturur: takas atomik mi, teklif
 değişince onaylar düşüyor mu, klan rütbeleri yetki sınırını koruyor mu, mod
-parmak izi içerik değişimine duyarlı mı. 68 denetim.
+parmak izi içerik değişimine duyarlı mı, düşman duvarı gerçekten dolaşıyor mu,
+varlık snapshot'ı gidiş-dönüşte bozuluyor mu. 123 denetim.
 
 Bu denetim iki gerçek hata yakaladı ve ikisi de bu yüzden düzeltildi:
 onaydan sonra teklifi değiştirip "kabul" bekleme açığı, ve başarısız bir
@@ -796,7 +831,23 @@ yanlış olduğu, panellerin üst üste bindiği, aynı tuşun iki işlevi birde
 tetiklediği ve büyük yazı ölçeğinde panellerin ekran dışına taştığı bu
 karelerde görüldü.
 
-### 3. Statik denetleyiciler
+### 3. İki işlemli ağ doğrulaması
+
+```bash
+bash Tools/verify_network.sh
+```
+
+`run_captures.sh` her script'i tek başına koşturuyor; ağ ise iki taraflı.
+Bu script **iki gerçek işlem** başlatıyor (biri host, biri istemci) ve
+gerçek UDP üzerinden konuşturuyor.
+
+Kanıt şuradan geliyor: istemcide yerel yaratık listesi boşaltılıyor, yani
+istemci ekranında görünen her yaratık host'tan gelmiş demektir. İstemci her
+değişimde `[ag] uzak varlık: N` yazıyor; N > 0 ise snapshot'lar akmış.
+Son koşumda **9 varlık** senkronlandı. Yayın kasten kapatılarak denetimin
+gerçekten tetiklendiği doğrulandı (0 varlık, iki kontrol kaldı).
+
+### 4. Statik denetleyiciler
 
 `verify_content.py` artık madde 19'un Steam ayrımına ek olarak kozmetik
 kurallarını (nadirlik istatistik veremez, katalog ile sheet ayrışamaz, C# ve

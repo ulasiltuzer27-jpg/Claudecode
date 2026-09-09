@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using PixelSurvival.Entities;
 using PixelSurvival.Inventory;
+using PixelSurvival.Networking;
 using PixelSurvival.Systems.Animation;
 using PixelSurvival.Systems.Climate;
 using PixelSurvival.World;
@@ -61,6 +62,16 @@ public sealed class EnemySystem
     private float _spawnTimer;
     private uint _randomState;
     private int _lastBossDay = -1;
+
+    /// <summary>
+    /// Sıradaki ağ kimliği.
+    ///
+    /// 0 "kimliksiz" için ayrıldı, bu yüzden 1'den başlıyor. Üst sınıra
+    /// gelindiğinde başa sarıyor: 32766 kimlik, aynı anda en çok 8 düşman
+    /// varken saatlerce yetiyor ve sarma anında o kimlikli bir düşmanın
+    /// hâlâ yaşıyor olma ihtimali yok denecek kadar düşük.
+    /// </summary>
+    private ushort _nextNetworkId = 1;
 
     public IReadOnlyList<Enemy> Enemies => _enemies;
 
@@ -221,7 +232,8 @@ public sealed class EnemySystem
             var position = new Vector2(
                 tileX * map.TileSize + map.TileSize / 2f, (tileY + 1) * map.TileSize);
 
-            _enemies.Add(new Enemy(definition, _sheets[definition.Id], position, isBoss: false));
+            _enemies.Add(new Enemy(definition, _sheets[definition.Id], position, isBoss: false,
+                                   NextNetworkId()));
             return;
         }
     }
@@ -229,8 +241,32 @@ public sealed class EnemySystem
     /// <summary>Zindanda boss doğurur (madde 16).</summary>
     public void SpawnBoss(Vector2 position)
     {
-        _enemies.Add(new Enemy(ActiveBoss, _sheets[ActiveBoss.Id], position, isBoss: true));
+        _enemies.Add(new Enemy(ActiveBoss, _sheets[ActiveBoss.Id], position, isBoss: true,
+                               NextNetworkId()));
     }
+
+    private ushort NextNetworkId()
+    {
+        var id = _nextNetworkId++;
+
+        // EntityState.CreatureIdBase'e kadar: ust yarisi yaratiklarin.
+        if (_nextNetworkId >= EntityState.CreatureIdBase) _nextNetworkId = 1;
+
+        return id;
+    }
+
+    /// <summary>
+    /// Bir tanım indeksinin sprite sayfası — istemci uzak düşmanı bununla çizer.
+    ///
+    /// İndeks <see cref="EnemyTable.All"/> sırasına göre; tanımsız indekste
+    /// <c>null</c> döner ve varlık sessizce atlanır (sürüm farkı oyunu
+    /// çökertmemeli).
+    /// </summary>
+    public SpriteSheet? SheetFor(byte typeIndex) =>
+        typeIndex < _table.All.Count ? _sheets[_table.All[typeIndex].Id] : null;
+
+    /// <summary>Bir düşmanın tanım indeksi — snapshot'a yazmak için.</summary>
+    public byte TypeIndexOf(Enemy enemy) => (byte)_table.IndexOf(enemy.Definition.Id);
 
     /// <summary>Harita değiştiğinde (zindana giriş/çıkış) düşmanları temizler.</summary>
     public void Clear() => _enemies.Clear();

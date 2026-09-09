@@ -83,7 +83,7 @@
     "settings.colorvision.tritanopia": "Tritanopi",
     "common.none": "-",
     "hud.session.host": "SUNUCU  {0} bagli  (F11 kapat)",
-    "hud.session.client": "ISTEMCI  oyuncu {0}  (F11 ayril)",
+    "hud.session.client": "ISTEMCI  oyuncu {0}  {1} varlik  (F11 ayril)",
     "hud.climate": "Gun {0}  {1}  {2}  {3}",
     "steam.absent": "Steam yok (gelistirme derlemesi)",
     "steam.notRunning": "Steam calismiyor",
@@ -129,6 +129,8 @@
     "save.modMismatch": "Kayit farkli bir mod kumesiyle alinmis",
     "menu.newGame": "Yeni oyun",
     "menu.newGameWarn": "(mevcut kayit silinir)",
-    "menu.saveHint": "F5 kaydet"
+    "menu.saveHint": "F5 kaydet",
+    "net.creatureHostOnly": "Yaratiklar host tarafinda cozuluyor",
+    "net.dungeonOfflineOnly": "Zindan su an yalnizca tek kisilik oyunda"
   }
 }

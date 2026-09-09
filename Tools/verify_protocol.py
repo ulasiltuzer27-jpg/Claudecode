@@ -35,12 +35,19 @@ import sys
 # 2: Welcome mesajina MOD PARMAK IZI eklendi (madde 25). Harita agdan
 # gonderilmiyor; iki taraf ayni tohumdan uretiyor ve uretim modlanabilir
 # veriden turuyor.
-PROTOCOL_VERSION = 2
+# 3: EntitySnapshot eklendi. Dusmanlar ve yaratiklar artik host otoriter.
+PROTOCOL_VERSION = 3
 TICKS_PER_SECOND = 20
 DEFAULT_PORT = 7777
 
 WELCOME, CLIENT_INPUT, SNAPSHOT, TILE_CHANGE, PLAYER_LEFT, INVENTORY_DELTA = 1, 2, 3, 4, 5, 6
 WORLD_TIME = 7
+ENTITY_SNAPSHOT = 15
+
+# Varlik basina kablo boyutu: 2 kimlik + 1 tur + 1 tanim + 4 x + 4 y
+# + 1 yon + 1 can + 1 bayrak.
+ENTITY_STATE_BYTES = 15
+MAX_ENTITIES_PER_SNAPSHOT = 64
 
 
 # ---------------------------------------------------------------------------
@@ -79,6 +86,14 @@ def write_player_left(pid: int) -> bytes:
 def write_inventory_delta(item_id: str, amount: int) -> bytes:
     name = item_id.encode("utf-8")
     return struct.pack("<BiB", INVENTORY_DELTA, amount, len(name)) + name
+
+
+def write_entity_snapshot(tick: int, entities: list[tuple]) -> bytes:
+    count = min(len(entities), MAX_ENTITIES_PER_SNAPSHOT)
+    out = struct.pack("<BIB", ENTITY_SNAPSHOT, tick, count)
+    for eid, kind, type_index, x, y, facing, health, flags in entities[:count]:
+        out += struct.pack("<HBBffBBB", eid, kind, type_index, x, y, facing, health, flags)
+    return out
 
 
 def write_world_time(seconds: float, weather: str) -> bytes:
@@ -127,6 +142,19 @@ def read_player_left(data: bytes):
     return None if len(data) < 2 else data[1]
 
 
+def read_entity_snapshot(data: bytes):
+    if len(data) < 6:
+        return None
+    tick = struct.unpack_from("<I", data, 1)[0]
+    count = data[5]
+    if len(data) < 6 + count * ENTITY_STATE_BYTES:
+        return None
+    out = []
+    for i in range(count):
+        out.append(struct.unpack_from("<HBBffBBB", data, 6 + i * ENTITY_STATE_BYTES))
+    return tick, out
+
+
 def read_world_time(data: bytes):
     if len(data) < 10:
         return None
@@ -172,6 +200,12 @@ def main() -> int:
         ("PlayerLeft", write_player_left(2), 2),
         ("InventoryDelta", write_inventory_delta("wood", 3), 10),
         ("WorldTime", write_world_time(1234.5, "rain"), 14),
+        ("EntitySnapshot (0 varlik)", write_entity_snapshot(1, []), 6),
+        ("EntitySnapshot (1 varlik)",
+         write_entity_snapshot(1, [(1, 0, 0, 1.0, 2.0, 1, 100, 0)]), 21),
+        ("EntitySnapshot (14 varlik)",
+         write_entity_snapshot(1, [(i, 0, 0, 0.0, 0.0, 0, 100, 0)
+                                   for i in range(14)]), 6 + 14 * 15),
     ]
     for name, packet, expected in sizes:
         check(name, len(packet) == expected, f"{len(packet)} bayt (beklenen {expected})")
@@ -204,6 +238,29 @@ def main() -> int:
           read_world_time(write_world_time(big + 0.05, "clear"))[0] == big + 0.05,
           f"{big + 0.05:.2f} sn")
 
+    # Kimlik ushort: 255'ten fazla varlik kimligi gerekiyor cunku olen
+    # dusmanin kimligi geri kullanilmiyor.
+    entities = [
+        (1, 0, 3, 328.5, -224.25, 2, 100, 0b10001),      # boss, olu
+        (0x8000, 1, 0, -1e6, 1e6, 3, 100, 0b1010),        # evcil yaratik
+        (40000, 0, 1, 12.25, -12.25, 0, 37, 0b110),
+    ]
+    tick, back = read_entity_snapshot(write_entity_snapshot(9, entities))
+    check("EntitySnapshot", tick == 9 and back == entities, f"{len(back)} varlik")
+
+    # Kimlik uzayinin ust yarisi yaratiklarin: iki sistem birbirinin
+    # sayacini bilmeden benzersizlik saglanabilsin.
+    check("yaratik kimligi 0x8000 uzerinde", back[1][0] >= 0x8000, hex(back[1][0]))
+
+    # Sayac tek bayt; tavan MTU yuzunden 64'te tutuluyor.
+    capped = read_entity_snapshot(
+        write_entity_snapshot(0, [(i, 0, 0, 0.0, 0.0, 0, 100, 0) for i in range(200)]))
+    check("varlik sayisi 64'te kirpiliyor", len(capped[1]) == MAX_ENTITIES_PER_SNAPSHOT,
+          f"{len(capped[1])} varlik")
+    check("64 varlik tipik MTU altinda",
+          6 + MAX_ENTITIES_PER_SNAPSHOT * ENTITY_STATE_BYTES < 1200,
+          f"{6 + MAX_ENTITIES_PER_SNAPSHOT * ENTITY_STATE_BYTES} bayt")
+
     print("\n3) Hareket vektoru sikistirmasi (float -> sbyte)")
     # RASTGELE degerler kullaniliyor: i/100 gibi tam katlar zaten hatasiz
     # gidip geliyor ve testi yaniltici sekilde mukemmel gosteriyordu.
@@ -231,6 +288,9 @@ def main() -> int:
     check("kirpik InventoryDelta",
           read_inventory_delta(write_inventory_delta("wood", 1)[:8]) is None)
     check("kirpik WorldTime", read_world_time(write_world_time(1.0, "rain")[:11]) is None)
+    check("kirpik EntitySnapshot",
+          read_entity_snapshot(
+              write_entity_snapshot(1, [(1, 0, 0, 1.0, 2.0, 0, 100, 0)])[:14]) is None)
 
     print("\n5) Bant genisligi (20 tick/sn)")
     for count in (2, 4, 8):
@@ -240,6 +300,15 @@ def main() -> int:
               f"-> {per_second:5d} bayt/sn ({per_second * 8 / 1000:.1f} kbit/sn)")
     inp = len(write_client_input(0, 0, 0, 0)) * TICKS_PER_SECOND
     print(f"       istemci girdisi: {inp} bayt/sn")
+
+    # Oyunda ayni anda en cok 8 dusman + 6 yaratik oluyor.
+    typical = len(write_entity_snapshot(0, [(i, 0, 0, 0.0, 0.0, 0, 100, 0)
+                                            for i in range(14)]))
+    print(f"       14 varlik: {typical:3d} bayt/snapshot "
+          f"-> {typical * TICKS_PER_SECOND} bayt/sn "
+          f"({typical * TICKS_PER_SECOND * 8 / 1000:.1f} kbit/sn)")
+    check("14 varlikta snapshot < 50 kbit/sn",
+          typical * TICKS_PER_SECOND * 8 / 1000 < 50)
     check("8 oyuncuda snapshot < 50 kbit/sn",
           len(write_snapshot(0, [(i, 0.0, 0.0, 0, 100, 0)
                                  for i in range(8)])) * TICKS_PER_SECOND * 8 / 1000 < 50)

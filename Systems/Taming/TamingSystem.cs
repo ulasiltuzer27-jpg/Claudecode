@@ -5,6 +5,7 @@ using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using PixelSurvival.Entities;
 using PixelSurvival.Inventory;
+using PixelSurvival.Networking;
 using PixelSurvival.Systems.Animation;
 using PixelSurvival.Systems.Collision;
 using PixelSurvival.World;
@@ -113,6 +114,18 @@ public sealed class Creature
     public Facing Facing { get; private set; } = Facing.Down;
     public CreatureState State { get; private set; } = CreatureState.Wandering;
 
+    /// <summary>
+    /// Ağ kimliği. Host atar, istemci bununla eşleştirir.
+    ///
+    /// Yaratıklar dolaşıyor, yani konum kimlik olamaz; liste indeksi de
+    /// olamaz çünkü evcilleşen yaratık listede yer değiştirmese bile
+    /// ileride silinme/eklenme indeksleri kaydırır.
+    /// </summary>
+    public ushort NetworkId { get; }
+
+    /// <summary>Son karede gerçekten yer değiştirdi mi (ağ bayrağı).</summary>
+    public bool IsMoving { get; private set; }
+
     /// <summary>Kaç kez beslendi. Eşiğe ulaşınca evcilleşir.</summary>
     public int Feedings { get; private set; }
 
@@ -122,9 +135,11 @@ public sealed class Creature
         Position.X - ColliderWidth / 2f, Position.Y - ColliderHeight,
         ColliderWidth, ColliderHeight);
 
-    public Creature(CreatureDefinition definition, SpriteSheet sheet, Vector2 position, uint seed)
+    public Creature(CreatureDefinition definition, SpriteSheet sheet, Vector2 position, uint seed,
+                    ushort networkId = 0)
     {
         Definition = definition;
+        NetworkId = networkId;
         _sheet = sheet;
         _animator = new SpriteAnimator(sheet, "idle_down");
 
@@ -146,6 +161,7 @@ public sealed class Creature
             // Binilirken yaratık çizilmez; konumu binicide tutulur ki
             // inildiğinde doğru yerde belirsin.
             Position = owner.Position;
+            IsMoving = false;
             return;
         }
 
@@ -158,6 +174,7 @@ public sealed class Creature
 
         if (distance <= stopDistance)
         {
+            IsMoving = false;
             _animator.Play($"idle_{Facing.ToString().ToLowerInvariant()}");
             _animator.Update(gameTime);
             return;
@@ -166,7 +183,11 @@ public sealed class Creature
         var direction = toTarget / distance;
         var desired = direction * Definition.MoveSpeed * delta;
 
-        Position += TileCollider.Move(map, Collider, desired);
+        var applied = TileCollider.Move(map, Collider, desired);
+        Position += applied;
+
+        // Duvara dayanmis bir yaratik "yuruyor" gorunmemeli.
+        IsMoving = applied.LengthSquared() > 0.0001f;
 
         Facing = Math.Abs(direction.X) >= Math.Abs(direction.Y)
             ? direction.X < 0 ? Facing.Left : Facing.Right
@@ -322,8 +343,12 @@ public sealed class TamingSystem(CreatureTable table, SpriteSheet creatureSheet,
                 var position = new Vector2(
                     tx * map.TileSize + map.TileSize / 2f, (ty + 1) * map.TileSize);
 
+                // Kimlik uzayinin ust yarisi yaratiklarin (bkz.
+                // EntityState.CreatureIdBase): dusman sistemiyle
+                // haberlesmeden benzersizlik garanti ediliyor.
                 _creatures.Add(new Creature(definition, creatureSheet, position,
-                    (uint)(seed + placed * 7919)));
+                    (uint)(seed + placed * 7919),
+                    (ushort)(EntityState.CreatureIdBase + placed)));
                 placed++;
             }
         }
@@ -336,6 +361,35 @@ public sealed class TamingSystem(CreatureTable table, SpriteSheet creatureSheet,
             creature.Update(gameTime, map, owner);
         }
     }
+
+    /// <summary>
+    /// Yerel sürüyü boşaltır.
+    ///
+    /// İstemci olarak bağlanınca çağrılır: yaratıklar artık host otoriter
+    /// ve istemci onları <see cref="Entities.RemoteEntity"/> olarak
+    /// çiziyor. Yerel kopyalar silinmezse aynı yaratık İKİ KEZ görünür —
+    /// biri host'un otoriter konumunda, biri istemcinin kendi başına
+    /// dolaştırdığı hayalette.
+    /// </summary>
+    public void Clear()
+    {
+        _creatures.Clear();
+        Mount = null;
+    }
+
+    /// <summary>
+    /// Bir tanım indeksinin sprite sayfası — istemci uzak yaratığı bununla çizer.
+    ///
+    /// Şu an tek yaratık türü var ve hepsi aynı sayfayı paylaşıyor; imza
+    /// yine de indeks alıyor ki ikinci tür eklendiğinde ağ tarafı
+    /// değişmesin.
+    /// </summary>
+    public SpriteSheet? SheetFor(byte typeIndex) =>
+        typeIndex < table.Creatures.Count ? creatureSheet : null;
+
+    /// <summary>Bir yaratığın tanım indeksi — snapshot'a yazmak için.</summary>
+    public byte TypeIndexOf(Creature creature) =>
+        (byte)Math.Max(0, table.Creatures.FindIndex(c => c.Id == creature.Definition.Id));
 
     /// <summary>Menzildeki en yakın yaratık — etkileşim için.</summary>
     public Creature? Nearest(Vector2 position)

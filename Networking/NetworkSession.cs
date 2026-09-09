@@ -110,7 +110,45 @@ public sealed class NetworkSession : IDisposable
     // --- İstemci tarafı ---
     private readonly Dictionary<byte, RemotePlayer> _remotes = [];
 
+    /// <summary>İstemcide gösterilen düşman/yaratık kopyaları.</summary>
+    private readonly Dictionary<ushort, RemoteEntity> _remoteEntities = [];
+
+    /// <summary>
+    /// Host'un her tick topladığı varlık listesi.
+    ///
+    /// Alan olarak tutuluyor ve her tick TEMİZLENİP yeniden dolduruluyor:
+    /// tick başına yeni bir liste ayırmak saniyede 20 çöp nesne demekti.
+    /// </summary>
+    private readonly List<EntityState> _entityBuffer = [];
+
     public SessionMode Mode { get; private set; } = SessionMode.Offline;
+
+    /// <summary>
+    /// HOST: bu tick yayınlanacak varlıkları verilen listeye doldurur.
+    ///
+    /// Neden geri çağrı: <see cref="NetworkSession"/> düşman ve yaratık
+    /// sistemlerini TANIMIYOR ve tanımamalı — ağ katmanının oyun
+    /// sistemlerine bağlanması, her yeni varlık türünde ağ kodunu
+    /// değiştirmek demek olurdu. Oyun kabuğu neyin gönderileceğine karar
+    /// veriyor, oturum yalnızca taşıyor.
+    ///
+    /// Liste her çağrıdan önce temizlenir; doldurmak dışında bir şey
+    /// yapılmamalı.
+    /// </summary>
+    public Action<List<EntityState>>? CollectEntities { get; set; }
+
+    /// <summary>
+    /// İSTEMCİ: bir varlık türü + tanım indeksi için sprite sayfası.
+    ///
+    /// Sayfalar düşman ve yaratık sistemlerinin içinde yaşıyor; oturum
+    /// onları görmeden yalnızca sonucu istiyor. <c>null</c> dönerse
+    /// (tanımsız indeks — eski/yeni istemci karışımı) varlık sessizce
+    /// atlanır, oyun çökmez.
+    /// </summary>
+    public Func<EntityKind, byte, SpriteSheet?>? EntitySheet { get; set; }
+
+    /// <summary>İstemcide çizilecek uzak varlıklar.</summary>
+    public IReadOnlyCollection<RemoteEntity> RemoteEntities => _remoteEntities.Values;
 
     /// <summary>Host her zaman 0'dır; istemciler 1'den başlar.</summary>
     public byte LocalPlayerId { get; private set; }
@@ -227,6 +265,7 @@ public sealed class NetworkSession : IDisposable
         _hostGathering.Clear();
         _pendingInput.Clear();
         _remotes.Clear();
+        _remoteEntities.Clear();
     }
 
     public void Dispose() => Leave();
@@ -251,6 +290,14 @@ public sealed class NetworkSession : IDisposable
         foreach (var remote in _remotes.Values)
         {
             remote.Update(gameTime);
+        }
+
+        // Uzak varliklar da EKRAN hizinda yumusatilir: snapshot saniyede
+        // 20 kez geliyor, cizim 60+ FPS. Ham snapshot konumuna atlamak
+        // dusmanlari kekeleterek yururdu.
+        foreach (var entity in _remoteEntities.Values)
+        {
+            entity.Update(gameTime);
         }
 
         _tickAccumulator += (float)gameTime.ElapsedGameTime.TotalSeconds;
@@ -367,6 +414,14 @@ public sealed class NetworkSession : IDisposable
                 if (NetworkProtocol.TryReadSnapshot(data, out _, out var states))
                 {
                     ApplySnapshot(states, localPlayer);
+                }
+
+                break;
+
+            case MessageType.EntitySnapshot when Mode == SessionMode.Client:
+                if (NetworkProtocol.TryReadEntitySnapshot(data, out _, out var entityStates))
+                {
+                    ApplyEntitySnapshot(entityStates);
                 }
 
                 break;
@@ -877,6 +932,26 @@ public sealed class NetworkSession : IDisposable
         combat.UpdateRespawns(everyone, spawnPosition);
 
         BroadcastSnapshot(everyone, combat);
+        BroadcastEntities();
+    }
+
+    /// <summary>
+    /// Düşman ve yaratıkların otoriter durumunu yayınlar.
+    ///
+    /// Oyuncu snapshot'ıyla AYNI tick'te gidiyor: ikisi farklı hızlarda
+    /// yayınlansaydı istemcide düşman oyuncunun bir tick gerisinde ya da
+    /// ilerisinde görünürdü ve saldırı mesafesi yanlış hissettirirdi.
+    /// </summary>
+    private void BroadcastEntities()
+    {
+        if (CollectEntities is null) return;
+
+        // Ayni tampon yeniden kullaniliyor: tick basina yeni liste
+        // ayirmak saniyede 20 cop nesne demekti.
+        _entityBuffer.Clear();
+        CollectEntities(_entityBuffer);
+
+        _transport!.Broadcast(NetworkProtocol.WriteEntitySnapshot(_tick, _entityBuffer));
     }
 
     private void BroadcastSnapshot(Dictionary<byte, Player> everyone, CombatSystem combat)
@@ -957,6 +1032,43 @@ public sealed class NetworkSession : IDisposable
             {
                 _remotes.Remove(id);
             }
+        }
+    }
+
+    /// <summary>
+    /// Varlık snapshot'ını uygular.
+    ///
+    /// TAM durum geliyor: listede olmayan varlık SİLİNİR. Bu, "öldü"
+    /// mesajının kaybolmasıyla istemcide hayalet düşman kalmasını yapısal
+    /// olarak imkânsız kılıyor — aynı yaklaşım uzak oyuncularda da
+    /// kullanılıyor.
+    /// </summary>
+    private void ApplyEntitySnapshot(List<EntityState> states)
+    {
+        var seen = new HashSet<ushort>();
+
+        foreach (var state in states)
+        {
+            seen.Add(state.EntityId);
+
+            if (_remoteEntities.TryGetValue(state.EntityId, out var existing))
+            {
+                existing.Apply(state);
+                continue;
+            }
+
+            // Sprite cozulemezse varlik SESSIZCE atlanir. Bilinmeyen bir
+            // tanim indeksi (surum farki) oyunu cokertmemeli; bir sonraki
+            // snapshot'ta yeniden denenir.
+            var sheet = EntitySheet?.Invoke(state.KindValue, state.TypeIndex);
+            if (sheet is null) continue;
+
+            _remoteEntities[state.EntityId] = new RemoteEntity(sheet, state);
+        }
+
+        foreach (var id in _remoteEntities.Keys.ToArray())
+        {
+            if (!seen.Contains(id)) _remoteEntities.Remove(id);
         }
     }
 

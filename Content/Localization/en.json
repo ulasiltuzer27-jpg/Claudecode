@@ -83,7 +83,7 @@
     "settings.colorvision.tritanopia": "Tritanopia",
     "common.none": "-",
     "hud.session.host": "HOSTING  {0} connected  (F11 close)",
-    "hud.session.client": "CLIENT  player {0}  (F11 leave)",
+    "hud.session.client": "CLIENT  player {0}  {1} entities  (F11 leave)",
     "hud.climate": "Day {0}  {1}  {2}  {3}",
     "steam.absent": "No Steam (development build)",
     "steam.notRunning": "Steam is not running",
@@ -129,6 +129,8 @@
     "save.modMismatch": "This save was made with a different mod set",
     "menu.newGame": "New game",
     "menu.newGameWarn": "(deletes current save)",
-    "menu.saveHint": "F5 to save"
+    "menu.saveHint": "F5 to save",
+    "net.creatureHostOnly": "Creatures are resolved on the host",
+    "net.dungeonOfflineOnly": "Dungeons are single-player only for now"
   }
 }

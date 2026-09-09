@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using PixelSurvival.Clans;
 using PixelSurvival.Inventory;
+using PixelSurvival.Networking;
 using PixelSurvival.Entities;
 using PixelSurvival.Systems.Animation;
 using PixelSurvival.Systems.Climate;
@@ -58,6 +59,7 @@ public static class SelfTest
         SaveGameRules();
         PathfindingRules();
         EnemyChaseRules(items, tileset, playerSheet, enemies, climate);
+        EntitySnapshotRules();
 
         Console.WriteLine($"\n{_passed} gecti, {_failed} kaldi.");
         return _failed;
@@ -430,6 +432,64 @@ public static class SelfTest
     }
 
     /// <summary>
+    /// Varlık snapshot'ının C# tarafındaki kuralları.
+    ///
+    /// Bayt düzenini <c>Tools/verify_protocol.py</c> BAĞIMSIZ olarak
+    /// doğruluyor (iki implementasyon kasten ayrı). Burada onun
+    /// göremediği iki şey sınanıyor: kimlik uzayının bölünmesi ve
+    /// sayı tavanının gerçekten kırpması.
+    /// </summary>
+    private static void EntitySnapshotRules()
+    {
+        Section("10) Varlik snapshot'i (protokol)");
+
+        var sent = new List<EntityState>
+        {
+            new(1, (byte)EntityKind.Enemy, 3, 328.5f, -224.25f, 2, 100,
+                EntityState.FlagDead | EntityState.FlagBoss),
+            new(EntityState.CreatureIdBase, (byte)EntityKind.Creature, 0, -1e6f, 1e6f, 3, 100,
+                EntityState.FlagMoving | EntityState.FlagTamed)
+        };
+
+        var packet = NetworkProtocol.WriteEntitySnapshot(9, sent);
+
+        Check("snapshot okunabiliyor",
+            NetworkProtocol.TryReadEntitySnapshot(packet, out var tick, out var back));
+
+        Check("tick korunuyor", tick == 9);
+        Check("gidis-donus degeri koruyor", back.SequenceEqual(sent));
+
+        Check("boss bayragi tasindi", back[0].IsBoss && back[0].IsDead);
+        Check("evcil bayragi tasindi", back[1].IsTamed && back[1].IsMoving);
+
+        // Kimlik uzayi bolunmus olmali: dusman ve yaratik sistemleri
+        // birbirinin sayacini bilmiyor ama istemcide TEK sozlukte
+        // yasiyorlar.
+        Check("dusman kimligi alt yarida", back[0].EntityId < EntityState.CreatureIdBase);
+        Check("yaratik kimligi ust yarida", back[1].EntityId >= EntityState.CreatureIdBase);
+
+        // Tavan MTU yuzunden var: 255 varlik her tick parcalanmis paket
+        // demek olurdu.
+        var many = Enumerable.Range(0, 200)
+            .Select(i => new EntityState((ushort)i, 0, 0, 0f, 0f, 0, 100, 0))
+            .ToList();
+
+        NetworkProtocol.TryReadEntitySnapshot(
+            NetworkProtocol.WriteEntitySnapshot(0, many), out _, out var capped);
+
+        Check("varlik sayisi tavanda kirpiliyor",
+            capped.Count == NetworkProtocol.MaxEntitiesPerSnapshot, $"{capped.Count} varlik");
+
+        Check("tavandaki paket tipik MTU altinda",
+            6 + NetworkProtocol.MaxEntitiesPerSnapshot * NetworkProtocol.EntityStateBytes < 1200);
+
+        // Kirpik paket cokme yerine false donmeli: bozuk bir paket oyunu
+        // kapatmamali.
+        Check("kirpik paket false doner",
+            !NetworkProtocol.TryReadEntitySnapshot(packet.AsSpan(0, 14), out _, out _));
+    }
+
+    /// <summary>
     /// Elle çizilmiş sınama haritası: uzun bir duvar ve iki yanı açık arazi.
     ///
     /// <c>x = WallColumn</c> sütunu <c>y = -6..6</c> arasında kapalı.
@@ -577,17 +637,23 @@ public static class SelfTest
         return true;
     }
 
-    private static void Check(string what, bool condition)
+    /// <param name="detail">
+    /// Başarısızlıkta işe yarayan ek bilgi (beklenen/bulunan değer).
+    /// Sonuç satırının sonuna eklenir.
+    /// </param>
+    private static void Check(string what, bool condition, string detail = "")
     {
+        var suffix = detail.Length > 0 ? $"  ({detail})" : "";
+
         if (condition)
         {
             _passed++;
-            Console.WriteLine($"  GECTI  {what}");
+            Console.WriteLine($"  GECTI  {what}{suffix}");
         }
         else
         {
             _failed++;
-            Console.WriteLine($"  KALDI  {what}");
+            Console.WriteLine($"  KALDI  {what}{suffix}");
         }
     }
 

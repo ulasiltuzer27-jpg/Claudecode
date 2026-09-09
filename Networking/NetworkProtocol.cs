@@ -38,7 +38,17 @@ public enum MessageType : byte
     Emote = 13,
 
     /// <summary>Dünya ping'i. İstemci → host istek, host → herkes yayın.</summary>
-    Ping = 14
+    Ping = 14,
+
+    /// <summary>
+    /// Host → istemci: düşman ve yaratıkların otoriter durumu.
+    ///
+    /// Oyuncu snapshot'ından AYRI bir mesaj: oyuncular her tick, varlıklar
+    /// ise sayıca değişken bir liste. Tek mesajda birleştirmek, iki
+    /// listeden birinin uzunluğunu diğerinin ayrıştırmasını bozacak hale
+    /// getirirdi.
+    /// </summary>
+    EntitySnapshot = 15
 }
 
 /// <summary>Snapshot içindeki tek bir oyuncunun durumu.</summary>
@@ -102,8 +112,12 @@ public static class NetworkProtocol
     /// gönderilmiyor, iki taraf aynı tohumdan üretiyor; üretim ise
     /// modlanabilir veriden türüyor. Parmak izi olmadan farklı mod
     /// kümesine sahip iki oyuncu sessizce farklı dünyalarda oynardı.
+    ///
+    /// 3: <see cref="MessageType.EntitySnapshot"/> eklendi. Düşmanlar ve
+    /// yaratıklar artık host otoriter; istemci onları simüle etmiyor,
+    /// yalnızca çiziyor.
     /// </summary>
-    public const byte ProtocolVersion = 2;
+    public const byte ProtocolVersion = 3;
 
     // ---------------- yazma ----------------
 
@@ -166,6 +180,91 @@ public static class NetworkProtocol
         }
 
         return buffer;
+    }
+
+    /// <summary>
+    /// Varlık başına kablo boyutu: 2 kimlik + 1 tür + 1 tanım + 4 x + 4 y
+    /// + 1 yön + 1 can + 1 bayrak.
+    /// </summary>
+    public const int EntityStateBytes = 15;
+
+    /// <summary>
+    /// Tek snapshot'ta gönderilebilecek en fazla varlık.
+    ///
+    /// Sayaç bir bayt olduğu için teorik sınır 255 ama pratik sınır MTU:
+    /// 255 varlık 3.8 KB eder ve her tick parçalanmış paket demek olurdu.
+    /// 64 varlık ≈ 966 bayt, tipik 1200 baytlık yolun altında. Oyunda aynı
+    /// anda en çok 8 düşman + 6 yaratık oluyor; 64 bol bir tavan.
+    /// </summary>
+    public const int MaxEntitiesPerSnapshot = 64;
+
+    /// <summary>
+    /// Düşman ve yaratıkların otoriter durumu.
+    ///
+    /// TAM durum gönderiliyor, fark değil: listede olmayan varlık
+    /// istemcide SİLİNİR. Fark tabanlı bir düzen "öldü" mesajının
+    /// kaybolmasıyla istemcide hayalet düşman bırakırdı; tam durumda
+    /// böyle bir hata kendini bir sonraki snapshot'ta düzeltiyor.
+    /// </summary>
+    public static byte[] WriteEntitySnapshot(uint tick, IReadOnlyList<EntityState> entities)
+    {
+        var count = Math.Min(entities.Count, MaxEntitiesPerSnapshot);
+
+        var buffer = new byte[6 + count * EntityStateBytes];
+        buffer[0] = (byte)MessageType.EntitySnapshot;
+        WriteUInt32(buffer, 1, tick);
+        buffer[5] = (byte)count;
+
+        var offset = 6;
+        for (var i = 0; i < count; i++)
+        {
+            var entity = entities[i];
+
+            WriteUInt16(buffer, offset, entity.EntityId);
+            buffer[offset + 2] = entity.Kind;
+            buffer[offset + 3] = entity.TypeIndex;
+            WriteSingle(buffer, offset + 4, entity.X);
+            WriteSingle(buffer, offset + 8, entity.Y);
+            buffer[offset + 12] = entity.Facing;
+            buffer[offset + 13] = entity.HealthPercent;
+            buffer[offset + 14] = entity.Flags;
+
+            offset += EntityStateBytes;
+        }
+
+        return buffer;
+    }
+
+    public static bool TryReadEntitySnapshot(ReadOnlySpan<byte> data, out uint tick,
+                                             out List<EntityState> entities)
+    {
+        tick = 0;
+        entities = [];
+
+        if (data.Length < 6) return false;
+
+        tick = ReadUInt32(data, 1);
+        var count = data[5];
+
+        if (data.Length < 6 + count * EntityStateBytes) return false;
+
+        var offset = 6;
+        for (var i = 0; i < count; i++)
+        {
+            entities.Add(new EntityState(
+                ReadUInt16(data, offset),
+                data[offset + 2],
+                data[offset + 3],
+                ReadSingle(data, offset + 4),
+                ReadSingle(data, offset + 8),
+                data[offset + 12],
+                data[offset + 13],
+                data[offset + 14]));
+
+            offset += EntityStateBytes;
+        }
+
+        return true;
     }
 
     public static byte[] WriteTileChange(int tileX, int tileY, ushort tileIndex)

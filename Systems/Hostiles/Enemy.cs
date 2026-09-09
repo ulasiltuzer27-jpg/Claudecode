@@ -49,6 +49,21 @@ public sealed class EnemyTable
     [JsonPropertyName("enemies")] public List<HostileDefinition> Enemies { get; init; } = [];
     [JsonPropertyName("bosses")] public List<HostileDefinition> Bosses { get; init; } = [];
 
+    private readonly List<HostileDefinition> _all = [];
+    private readonly Dictionary<string, int> _indexById = new(StringComparer.Ordinal);
+
+    /// <summary>
+    /// Düşmanlar ve boss'lar tek sırada — ağdaki "tanım indeksi" bu sıra.
+    ///
+    /// Sıra kablo sözleşmesinin parçası: <c>enemies.json</c> içinde bir
+    /// satırın yeri değişirse eski ve yeni istemci farklı sprite çizer.
+    /// Yeni tanımlar SONA eklenmeli.
+    /// </summary>
+    public IReadOnlyList<HostileDefinition> All => _all;
+
+    /// <summary>Kimliğin <see cref="All"/> içindeki indeksi; yoksa -1.</summary>
+    public int IndexOf(string id) => _indexById.GetValueOrDefault(id, -1);
+
     public static EnemyTable Load(ContentManager content, string assetName, ItemDatabase items)
     {
         var relativePath = $"{content.RootDirectory}/{assetName}.json";
@@ -85,6 +100,26 @@ public sealed class EnemyTable
                         $"'{relativePath}': '{hostile.Id}' tanımsız '{drop.Item}' düşürüyor.");
                 }
             }
+        }
+
+        // Ag icin duz sira: once dusmanlar, sonra boss'lar.
+        foreach (var hostile in table.Enemies.Concat(table.Bosses))
+        {
+            if (!table._indexById.TryAdd(hostile.Id, table._all.Count))
+            {
+                throw new InvalidOperationException(
+                    $"'{relativePath}': '{hostile.Id}' kimliği iki kez tanımlı — " +
+                    $"ağdaki tanım indeksi belirsiz kalırdı.");
+            }
+
+            table._all.Add(hostile);
+        }
+
+        if (table._all.Count > byte.MaxValue)
+        {
+            throw new InvalidOperationException(
+                $"'{relativePath}': 255'ten fazla düşman tanımı var; ağdaki " +
+                $"tanım indeksi tek bayta sığmıyor.");
         }
 
         return table;
@@ -155,6 +190,21 @@ public sealed class Enemy
     public bool IsBoss { get; }
     public bool IsDead => Health <= 0;
 
+    /// <summary>
+    /// Ağ kimliği. Host atar, istemci bununla eşleştirir.
+    ///
+    /// Konum kimlik olarak kullanılamaz: düşman hareket ediyor. Liste
+    /// indeksi de kullanılamaz: ölen bir düşman silinince indeksler
+    /// kayar ve istemci yanlış düşmanı taşırdı.
+    /// </summary>
+    public ushort NetworkId { get; }
+
+    /// <summary>Son karede gerçekten yer değiştirdi mi (ağ bayrağı).</summary>
+    public bool IsMoving { get; private set; }
+
+    /// <summary>Son karede saldırı menzilinde miydi (ağ bayrağı).</summary>
+    public bool IsAttacking { get; private set; }
+
     /// <summary>Ölüm animasyonunun bitmesi için beklenen süre.</summary>
     public float SecondsDead { get; private set; }
 
@@ -172,13 +222,15 @@ public sealed class Enemy
     /// <summary>Takip edilen yolun uzunluğu — teşhis ve test için.</summary>
     public int PathLength => _path.Count;
 
-    public Enemy(HostileDefinition definition, SpriteSheet sheet, Vector2 position, bool isBoss)
+    public Enemy(HostileDefinition definition, SpriteSheet sheet, Vector2 position, bool isBoss,
+                 ushort networkId = 0)
     {
         Definition = definition;
         _sheet = sheet;
         Position = position;
         Health = definition.Health;
         IsBoss = isBoss;
+        NetworkId = networkId;
 
         _sheet.RequireStates("idle_down", "walk_down", "hurt", "death");
         _animator = new SpriteAnimator(sheet, "idle_down");
@@ -208,6 +260,8 @@ public sealed class Enemy
         if (IsDead)
         {
             SecondsDead += delta;
+            IsMoving = IsAttacking = false;
+
             _animator.Play("death");
             _animator.Update(gameTime);
             return 0;
@@ -225,6 +279,7 @@ public sealed class Enemy
             // Kovalama bitti: yol da unutulur. Yoksa oyuncu menzile geri
             // girdiginde dusman once ESKI yolu yurumeye calisirdi.
             _path.Clear();
+            IsMoving = IsAttacking = false;
 
             _animator.Play(_hurtSeconds > 0f ? "hurt" : $"idle_{Facing.ToString().ToLowerInvariant()}");
             _animator.Update(gameTime);
@@ -237,6 +292,8 @@ public sealed class Enemy
         if (distance <= Definition.AttackRange)
         {
             _path.Clear();
+            IsMoving = false;
+            IsAttacking = true;
 
             if (_attackCooldown <= 0f)
             {
@@ -254,8 +311,15 @@ public sealed class Enemy
             // oyuncuya degil, YURUDUGU yone bakmali.
             heading = direction;
 
-            Position += TileCollider.Move(map, Collider, direction * Definition.MoveSpeed * delta);
+            var applied = TileCollider.Move(map, Collider, direction * Definition.MoveSpeed * delta);
+            Position += applied;
             UpdateStuckDetection(delta);
+
+            // Bayrak GERCEKTEN yer degistirmeye bakiyor: duvara dayanmis
+            // bir dusman "yuruyor" gorunmemeli, istemcide ayaklarini
+            // bosluga vururdu.
+            IsMoving = applied.LengthSquared() > 0.0001f;
+            IsAttacking = false;
 
             _animator.Play(_hurtSeconds > 0f
                 ? "hurt"

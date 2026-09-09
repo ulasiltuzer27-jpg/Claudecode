@@ -267,7 +267,16 @@ public class Game1 : Game
         _combat = new CombatSystem();
 
         _session = new NetworkSession(_playerSheet, _itemDatabase, _resourceTable);
-        _session.Notice += message => ShowToast(message);
+        _session.Notice += message =>
+        {
+            ShowToast(message);
+
+            // Konsola da: oturum olaylari (katilma, karsilama, kopma) yalnizca
+            // ekranda kalirsa iki islemli dogrulama onlari goremez ve
+            // "bagli miydi" sorusu ancak dolayli olarak yanitlanabilir.
+            // Diger teshis satirlariyla ayni bicim: [alan] mesaj.
+            Console.WriteLine($"[ag] {message}");
+        };
         _session.SeedReceived += seed => GenerateWorld(seed);
         // Delta NEGATIF de olabilir: madde 22'de takas item goturur.
         // Eskiden yalnizca TryAdd cagriliyordu ve negatif miktar sessizce
@@ -286,6 +295,17 @@ public class Game1 : Game
         // tarif kimligini yollar; malzemesi olup olmadigina host kendi
         // aynasindan karar verir.
         _session.CraftRequested += (playerId, recipeId) => HostCraftFor(playerId, recipeId);
+
+        // Varlik senkronizasyonu: host neyin yayinlanacagini burada
+        // topluyor, istemci sprite'i buradan cozuyor. NetworkSession iki
+        // yonde de dusman/yaratik sistemlerini TANIMIYOR.
+        _session.CollectEntities = CollectNetworkEntities;
+        _session.EntitySheet = (kind, typeIndex) => kind switch
+        {
+            EntityKind.Enemy => _enemies.SheetFor(typeIndex),
+            EntityKind.Creature => _taming.SheetFor(typeIndex),
+            _ => null
+        };
 
 
         // --- Aşama 2 sistemleri ---
@@ -433,7 +453,13 @@ public class Game1 : Game
         _climate = new ClimateSystem(_climateTable, seed);
         _farming = new FarmingSystem(_cropTable, 3);
         _fishing?.Cancel();
-        _taming?.Populate(generator, _map, start, seed);
+
+        // Istemcide yaratiklar HOST OTORITER: yerel suru hic olusturulmaz.
+        // Olusturulsaydi ayni yaratik iki kez gorunurdu — biri host'un
+        // otoriter konumunda, biri istemcinin kendi basina dolastirdigi
+        // hayalette.
+        if (_session?.Mode == SessionMode.Client) _taming?.Clear();
+        else _taming?.Populate(generator, _map, start, seed);
 
         _enemies = new EnemySystem(_enemyTable, Content, _tileset, seed);
         _npcs?.Populate(start, _map.TileSize);
@@ -563,18 +589,39 @@ public class Game1 : Game
         if (WasPressed(keyboard, Keys.C)) DoFarmAction();
         if (WasPressed(keyboard, Keys.G))
         {
-            ShowToast(_taming.Interact(_player, _inventory));
+            // Yaratiklar host otoriter oldugundan istemcide besleme/binme
+            // YEREL calisamaz: yerel liste bos ve degistirilse bile host'u
+            // baglamazdi. Istekle host'a tasinmasi ayri bir is.
+            if (_session.Mode == SessionMode.Client)
+            {
+                ShowToast(Loc.T("net.creatureHostOnly"));
+            }
+            else
+            {
+                ShowToast(_taming.Interact(_player, _inventory));
 
-            // Sayac uzerinden: Interact'in dondugu metne bakmak, madde 23'te
-            // metinler dile cevrilince sessizce bozulurdu.
-            _achievements.SetMax(new StatKey("creatures_tamed"), _taming.TamedCount);
+                // Sayac uzerinden: Interact'in dondugu metne bakmak, madde 23'te
+                // metinler dile cevrilince sessizce bozulurdu.
+                _achievements.SetMax(new StatKey("creatures_tamed"), _taming.TamedCount);
+            }
         }
         if (WasPressed(keyboard, Keys.T)) InteractWithNpc();
         if (WasPressed(keyboard, Keys.B)) ToggleDungeon();
 
         if (WasPressed(keyboard, Keys.F9)) _session.StartHost(_map.Seed);
         if (WasPressed(keyboard, Keys.F10)) _session.Connect(TransportFactory.DefaultConnectTarget);
-        if (WasPressed(keyboard, Keys.F11)) { _session.Leave(); ShowToast("Oturum kapatildi"); }
+        if (WasPressed(keyboard, Keys.F11))
+        {
+            // Istemciyken yerel suru bosaltilmisti (host otoriterdi).
+            // Oturumdan cikinca dunya yeniden tek kisilik oluyor; suru
+            // geri kurulmazsa harita kalici olarak yaratiksiz kalirdi.
+            var wasClient = _session.Mode == SessionMode.Client;
+
+            _session.Leave();
+            if (wasClient) _taming.Populate(_worldGenerator, _map, _spawnPosition, _map.Seed);
+
+            ShowToast("Oturum kapatildi");
+        }
 
         // Sayi tuslarinin sahibi HER ZAMAN tek bir panel.
         //
@@ -631,8 +678,16 @@ public class Game1 : Game
         // Madde 14: binek hız çarpanı
         UpdateAchievements(delta);
 
-        _player.SpeedMultiplier = _taming.SpeedMultiplier;
-        _taming.Update(gameTime, _map, _player);
+        // Yaratiklar artik host otoriter: istemcide simule EDILMEZ, uzak
+        // kopyalari (RemoteEntity) ciziliyor. Istemcide de calistirilsaydi
+        // iki taraf ayni tohumdan baslayip saniyeler icinde ayrisirdi —
+        // gezinme hedefi rastgele ve ekran hizina bagli.
+        if (_session.Mode != SessionMode.Client)
+        {
+            _player.SpeedMultiplier = _taming.SpeedMultiplier;
+            _taming.Update(gameTime, _map, _player);
+        }
+
         _npcs.Update(gameTime);
         _zones.Update(delta);
 
@@ -699,6 +754,17 @@ public class Game1 : Game
         }
 
         _session.Update(gameTime, _player, input, _map, _combat, _spawnPosition, _climate);
+
+        // Uzak varlik sayisi degisince tek satir. Iki islemli dogrulama
+        // (Tools/verify_network.sh) tam olarak bu satiri ariyor: ekran
+        // goruntusu "bir sey cizildi" der, bu satir "host'tan kac varlik
+        // geldi" der.
+        if (_session.Mode == SessionMode.Client &&
+            _session.RemoteEntities.Count != _lastRemoteEntityCount)
+        {
+            _lastRemoteEntityCount = _session.RemoteEntities.Count;
+            Console.WriteLine($"[ag] uzak varlik: {_lastRemoteEntityCount}");
+        }
 
         // Offline'da yeniden doğmayı da yerel taraf yürütür.
         if (_session.Mode == SessionMode.Offline && _player.IsDead &&
@@ -851,6 +917,64 @@ public class Game1 : Game
     }
 
     private bool _previousBuildHeld;
+
+    /// <summary>Son bildirilen uzak varlık sayısı — sadece değişince yazmak için.</summary>
+    private int _lastRemoteEntityCount = -1;
+
+    /// <summary>
+    /// HOST: bu tick yayınlanacak varlıkları toplar.
+    ///
+    /// Düşmanlar ve yaratıklar tek listede: istemci tarafında ikisi de
+    /// aynı <see cref="RemoteEntity"/> ile çiziliyor ve tür bilgisi zaten
+    /// mesajın içinde. İki ayrı mesaj türü, iki ayrı ayrıştırma yolu ve
+    /// iki ayrı "listede yoksa sil" mantığı isterdi.
+    ///
+    /// Ölü düşmanlar da gönderiliyor: ölüm animasyonu host'ta 0.8 saniye
+    /// oynuyor, listeden düşerlerse istemcide düşman vurulduğu anda
+    /// yok olurdu.
+    /// </summary>
+    private void CollectNetworkEntities(List<EntityState> buffer)
+    {
+        foreach (var enemy in _enemies.Enemies)
+        {
+            byte flags = 0;
+            if (enemy.IsDead) flags |= EntityState.FlagDead;
+            if (enemy.IsMoving) flags |= EntityState.FlagMoving;
+            if (enemy.IsAttacking) flags |= EntityState.FlagAttacking;
+            if (enemy.IsBoss) flags |= EntityState.FlagBoss;
+
+            buffer.Add(new EntityState(
+                enemy.NetworkId,
+                (byte)EntityKind.Enemy,
+                _enemies.TypeIndexOf(enemy),
+                enemy.Position.X,
+                enemy.Position.Y,
+                (byte)enemy.Facing,
+                (byte)(enemy.Health * 100 / Math.Max(1, enemy.Definition.Health)),
+                flags));
+        }
+
+        foreach (var creature in _taming.Creatures)
+        {
+            // Binilen yaratik cizilmiyor (binicinin altinda); gondermek
+            // istemcide sahibinin uzerinde duran bir hayalet birakirdi.
+            if (creature.State == CreatureState.Ridden) continue;
+
+            byte flags = 0;
+            if (creature.IsMoving) flags |= EntityState.FlagMoving;
+            if (creature.IsTamed) flags |= EntityState.FlagTamed;
+
+            buffer.Add(new EntityState(
+                creature.NetworkId,
+                (byte)EntityKind.Creature,
+                _taming.TypeIndexOf(creature),
+                creature.Position.X,
+                creature.Position.Y,
+                (byte)creature.Facing,
+                100,
+                flags));
+        }
+    }
 
     private bool WasPressed(KeyboardState current, Keys key) =>
         current.IsKeyDown(key) && _previousKeyboard.IsKeyUp(key);
@@ -1616,6 +1740,18 @@ public class Game1 : Game
     /// </summary>
     private void ToggleDungeon()
     {
+        // Zindan AYRI bir harita. Host zindana girerse tile degisiklikleri
+        // zindan koordinatlariyla yayinlanir ve ust dunyadaki istemcilerin
+        // haritasini bozar; istemci girerse kendi haritasini degistirmis
+        // olur ve host'unkiyle ayrisir. Zindan senkronizasyonu ayri bir is
+        // (her oyuncunun ayri ornegi mi, ortak mi?) — o karar verilene
+        // kadar ag oturumunda zindan KAPALI.
+        if (_session.Mode != SessionMode.Offline)
+        {
+            ShowToast(Loc.T("net.dungeonOfflineOnly"));
+            return;
+        }
+
         var tile = new Point(
             (int)MathF.Floor(_player.Position.X / _map.TileSize),
             (int)MathF.Floor((_player.Position.Y - 4) / _map.TileSize));
@@ -1715,7 +1851,15 @@ public class Game1 : Game
     private string DescribeSession() => _session.Mode switch
     {
         SessionMode.Host => Loc.T("hud.session.host", _session.ConnectedCount),
-        SessionMode.Client => Loc.T("hud.session.client", _session.LocalPlayerId),
+
+        // Uzak varlik sayisi burada gorunuyor: istemcide dusman ve
+        // yaratiklarin host'tan gelip gelmedigini anlamanin baska bir yolu
+        // yok — ekranda bir yaratik gorunuyorsa zaten dogru calisiyordur,
+        // ama GORUNMUYORSA sayinin sifir mi yoksa cizimin mi bozuk oldugu
+        // ayirt edilemezdi.
+        SessionMode.Client => Loc.T("hud.session.client", _session.LocalPlayerId,
+                                    _session.RemoteEntities.Count),
+
         _ => Loc.T("hud.session.solo")
     };
 
@@ -1762,6 +1906,19 @@ public class Game1 : Game
             if (!enemy.IsDead)
             {
                 DrawHealthBar(enemy.Position, enemy.Health * 100 / enemy.Definition.Health);
+            }
+        }
+
+        // Istemcide dusman ve yaratiklar YEREL degil: host'un otoriter
+        // kopyalari ciziliyor. Yerel listeler istemcide bos oldugu icin
+        // yukaridaki donguler zaten hicbir sey cizmiyor.
+        foreach (var entity in _session.RemoteEntities)
+        {
+            entity.Draw(_spriteBatch);
+
+            if (!entity.IsDead && entity.Kind == EntityKind.Enemy)
+            {
+                DrawHealthBar(entity.Position, entity.HealthPercent);
             }
         }
 

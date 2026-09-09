@@ -1,0 +1,5 @@
+[mod] 1/1 mod aktif  (9C54C3034A4569B0), 1 dil satiri bindirildi
+[worldgen] tohum=20260908 spawn=(0,0) chunk(0,0) sağlama=0x49C29A30
+[ag] Sunucu acildi (LiteNetLib (gelistirme)) — tohum 20260908
+[ag] Oyuncu 1 katildi (1 bagli)
+[capture] kare 939: capture/ag/host/host.png
