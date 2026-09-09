@@ -1,0 +1,15 @@
+{
+  "_comment": "MADDE 25 - icerik bindirmesi ornegi. Bu dosya temel Content/Items/items.json'un USTUNE bindiriliyor: 'items' dizisi kimlige gore birlesiyor, yani buradaki yeni item EKLENIYOR ve temel item'lar oldugu gibi kaliyor.",
+  "_ikon_notu": "Ikon atlasi (icons_16.png) 14 ikon iceriyor. Mod kendi PNG'sini getirse bile atlas bindirmesi ayri bir is; bu yuzden mevcut bir ikon indeksi yeniden kullaniliyor.",
+
+  "items": [
+    {
+      "id": "mod_charcoal",
+      "name": "Odun Komuru",
+      "nameKey": "mod.item.charcoal",
+      "icon": 0,
+      "maxStack": 99,
+      "category": "material"
+    }
+  ]
+}

@@ -6,6 +6,8 @@ using PixelSurvival.Entities;
 using PixelSurvival.Inventory;
 using PixelSurvival.World;
 
+using PixelSurvival.Workshop;
+
 namespace PixelSurvival.Systems.Building;
 
 public sealed class BuildableDefinition
@@ -36,7 +38,9 @@ public sealed class BuildableTable
                                       Tileset tileset, ItemDatabase items)
     {
         var relativePath = $"{content.RootDirectory}/{assetName}.json";
-        using var stream = TitleContainer.OpenStream(relativePath);
+        // Mod bindirmesinden GECIYOR: bir mod bu tabloyu degistirebilir
+        // ya da yeni satir ekleyebilir (bkz. ModdedContent).
+        using var stream = ModdedContent.Open(content, assetName);
 
         var table = JsonSerializer.Deserialize<BuildableTable>(stream, JsonOptions)
                     ?? throw new InvalidOperationException($"'{relativePath}' okunamadı.");

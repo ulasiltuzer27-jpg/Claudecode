@@ -3,6 +3,8 @@ using System.Text.Json.Serialization;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 
+using PixelSurvival.Workshop;
+
 namespace PixelSurvival.UI;
 
 /// <summary>Tek bir sürümün notları.</summary>
@@ -35,7 +37,9 @@ public sealed class PatchNotes
     public static PatchNotes Load(ContentManager content, string assetName)
     {
         var relativePath = $"{content.RootDirectory}/{assetName}.json";
-        using var stream = TitleContainer.OpenStream(relativePath);
+        // Mod bindirmesinden GECIYOR: bir mod bu tabloyu degistirebilir
+        // ya da yeni satir ekleyebilir (bkz. ModdedContent).
+        using var stream = ModdedContent.Open(content, assetName);
 
         var notes = JsonSerializer.Deserialize<PatchNotes>(stream, JsonOptions)
                     ?? throw new InvalidOperationException($"'{relativePath}' okunamadi.");

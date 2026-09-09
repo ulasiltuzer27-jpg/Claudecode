@@ -8,6 +8,8 @@ using PixelSurvival.Entities;
 using PixelSurvival.Inventory;
 using PixelSurvival.Systems.Animation;
 
+using PixelSurvival.Workshop;
+
 namespace PixelSurvival.Systems.Npcs;
 
 public sealed class TradeOffer
@@ -84,7 +86,9 @@ public sealed class NpcTable
     public static NpcTable Load(ContentManager content, string assetName, ItemDatabase items)
     {
         var relativePath = $"{content.RootDirectory}/{assetName}.json";
-        using var stream = TitleContainer.OpenStream(relativePath);
+        // Mod bindirmesinden GECIYOR: bir mod bu tabloyu degistirebilir
+        // ya da yeni satir ekleyebilir (bkz. ModdedContent).
+        using var stream = ModdedContent.Open(content, assetName);
 
         var table = JsonSerializer.Deserialize<NpcTable>(stream, JsonOptions)
                     ?? throw new InvalidOperationException($"'{relativePath}' okunamadı.");

@@ -5,6 +5,8 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using PixelSurvival.Systems.Animation;
 
+using PixelSurvival.Workshop;
+
 namespace PixelSurvival.Cosmetics;
 
 /// <summary>
@@ -128,7 +130,9 @@ public sealed class CosmeticTable
     public static CosmeticTable Load(ContentManager content, string assetName, SpriteSheet reference)
     {
         var relativePath = $"{content.RootDirectory}/{assetName}.json";
-        using var stream = TitleContainer.OpenStream(relativePath);
+        // Mod bindirmesinden GECIYOR: bir mod bu tabloyu degistirebilir
+        // ya da yeni satir ekleyebilir (bkz. ModdedContent).
+        using var stream = ModdedContent.Open(content, assetName);
 
         var table = JsonSerializer.Deserialize<CosmeticTable>(stream, JsonOptions)
                     ?? throw new InvalidOperationException($"'{relativePath}' okunamadi.");

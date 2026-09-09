@@ -819,9 +819,11 @@ def main() -> int:
                         if "JsonPropertyName" in line or "DataName.Of" in line:
                             continue
 
-                        # Bilincli istisna: ham adi MANTIK anahtari olarak
-                        # kullanan tek yer (mevsim). Isaret ELLE konuyor ki
-                        # bir dahaki sefere kimse dusunmeden gecmesin.
+                        # Bilincli istisna. Isaret ELLE konuyor ki kimse
+                        # dusunmeden gecmesin; su an iki yerde var:
+                        #   - mevsimin mantik anahtari (geriye donuk uyum),
+                        #   - denetimin "anahtarsiz veri" senaryosunu
+                        #     kurdugu satirlar.
                         if "ham ad kasten" in line:
                             continue
 

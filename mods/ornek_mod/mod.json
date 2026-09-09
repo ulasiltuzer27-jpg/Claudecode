@@ -1,14 +1,16 @@
 {
   "_comment": "MADDE 25 - ornek mod. Workshop paketlerinin bicimi budur.",
   "_kural": "Modlar KOD CALISTIRMAZ. Yalnizca JSON veri ve PNG asset saglar - Workshop'tan inen bir paketin kod calistirmasi, oyuncunun makinesinde rastgele kod calistirilmasi demektir.",
-
   "id": "ornek_mod",
   "name": "Ornek Mod",
   "author": "PixelSurvival",
   "version": "1.0.0",
-  "description": "Mod bicimini gosteren ornek. Yeni bir kozmetik nadirlik etiketi ve dil satiri ekler.",
-
-  "provides": ["Cosmetics", "Localization"],
+  "description": "Mod bicimini gosteren ornek. Yeni bir item (odun komuru) ve tarifi ekler, ayrica bir dil satirini degistirir.",
+  "provides": [
+    "Items",
+    "Cosmetics",
+    "Localization"
+  ],
   "loadOrder": 100,
   "gameVersion": "0.25.0",
   "publishedFileId": 0

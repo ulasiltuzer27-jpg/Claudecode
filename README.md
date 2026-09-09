@@ -753,12 +753,43 @@ ad dil tablosundan, yoksa veri dosyasındaki `name` alanından geliyor.
 **bütün** dil tablolarında karşılığı olduğunu denetliyor; ikisi de kasten
 bozularak denetimlerin tetiklendiği doğrulandı.
 
+### Mod içerik bindirmesi
+
+`ModRegistry` baştan beri bütün mod dosyalarını keşfediyor ve parmak izine
+katıyordu, ama bindirme yalnızca dil tablolarında çalışıyordu: bir mod yeni
+item ya da tarif ekleyemiyordu — keşfedilmiş ama etkisiz kalıyordu.
+
+`Workshop/ModdedContent.cs` bunu kapattı. Mod klasöründeki yol, Content
+klasöründeki yolun aynısı: modun `Items/items.json` dosyası temel
+`Content/Items/items.json` üstüne bindirilir.
+
+Birleştirme **JSON düğüm düzeyinde**, tabloların kendisini tanımadan
+yapılıyor — alternatif on yedi tablo için on yedi ayrı birleştirme kodu
+yazmaktı:
+
+* Nesne + nesne → alan alan birleşir; mod yalnızca *değiştirdiği* alanı yazar.
+* Dizi + dizi → `id`/`key` eşleşen öğeler birleşir, eşleşmeyen **eklenir**.
+  Diziyi tümden değiştirmek daha basit olurdu ama o zaman tek bir fiyatı
+  değiştirmek isteyen mod bütün listeyi kopyalamak zorunda kalır ve o kopya
+  temel oyun bir item eklediği anda eskirdi.
+* Öğe **silme yok**: temel bir item'ı silmek, ona atıfta bulunan bütün
+  tarifleri ve düşman ganimetlerini geçersiz kılar ve oyun açılışta patlar.
+
+**`Steam/` altı bindirmeye kapalı.** `itemdefs.json`'a yazabilen bir Workshop
+paketi pazarlanabilir item tanımları uydurabilirdi; `achievements.json`'a
+yazabilen ise eşikleri 1'e çekip Steam profilinde gerçek değeri olan
+başarımları bedavaya açabilirdi.
+
+**Keşif artık içerik yüklemesinden ÖNCE.** Eskiden mod keşfi `LoadContent`
+sonlarındaydı; bindirme oraya bağlansaydı tablolar çoktan bindirilmemiş
+halleriyle yüklenmiş olurdu ve mod sessizce etkisiz kalırdı.
+
+`mods/ornek_mod` artık gerçekten bir şey yapıyor: yeni bir item (odun kömürü)
+ve tarifini ekliyor. Üretim panelinde yedinci satır olarak görünüyor —
+mod'un etkisinin ekrandaki kanıtı.
+
 ### Bilinen boşluklar (Aşama 2)
 
-* **Mod içerik bindirmesi yalnızca dil tablolarında.** `ModRegistry` bütün
-  içerik dosyalarını keşfediyor ve parmak izine katıyor, ama şu an yalnızca
-  `Localization/` altındaki dosyalar temel tablonun üstüne bindiriliyor.
-  Tile/item/tarif bindirmesi aynı yolu izleyecek.
 * **Steam entegrasyonu gerçek bir Steam istemcisine karşı denenmedi.**
   Steamworks.NET artık ÇÖZÜLÜYOR ve `STEAM_BUILD` gövdesi gerçekten
   derleniyor (bloğa kasten hatalı bir satır konarak kanıtlandı: `Debug`
@@ -850,7 +881,8 @@ Ekran görüntüsüyle **görülemeyen** kuralları koşturur: takas atomik mi, 
 değişince onaylar düşüyor mu, klan rütbeleri yetki sınırını koruyor mu, mod
 parmak izi içerik değişimine duyarlı mı, düşman duvarı gerçekten dolaşıyor mu,
 varlık snapshot'ı gidiş-dönüşte bozuluyor mu, kayıttan dönen oyuncu aynı
-görevde mi kalıyor, mevsim anahtarı dile göre kayıyor mu. 158 denetim.
+görevde mi kalıyor, mevsim anahtarı dile göre kayıyor mu, mod bindirmesi
+yazılmayan alanı koruyor mu. 171 denetim.
 
 Bu denetim iki gerçek hata yakaladı ve ikisi de bu yüzden düzeltildi:
 onaydan sonra teklifi değiştirip "kabul" bekleme açığı, ve başarısız bir

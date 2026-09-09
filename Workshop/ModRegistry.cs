@@ -73,6 +73,15 @@ public sealed class ModRegistry
     private readonly List<string> _warnings = [];
 
     /// <summary>
+    /// Dışarıdan (içerik bindirmesinden) gelen uyarıyı ekler.
+    ///
+    /// Uyarılar TEK yerde toplanıyor: keşif sırasında bulunan bozuk
+    /// manifestle, bindirme sırasında bulunan bozuk JSON aynı listede
+    /// görünmeli — oyuncu için ikisi de "şu mod sorunlu" demek.
+    /// </summary>
+    public void AddWarning(string message) => _warnings.Add(message);
+
+    /// <summary>
     /// Verilen klasörleri tarar ve mod'ları yükler.
     /// </summary>
     /// <param name="directories">

@@ -1,3 +1,4 @@
+using System.Text.Json.Nodes;
 using Microsoft.Xna.Framework;
 using PixelSurvival.Clans;
 using PixelSurvival.Inventory;
@@ -81,6 +82,7 @@ public static class SelfTest
         EntitySnapshotRules();
         ProgressPersistenceRules(world);
         DataNameRules(world);
+        ModOverlayRules();
 
         Console.WriteLine($"\n{_passed} gecti, {_failed} kaldi.");
         return _failed;
@@ -620,6 +622,87 @@ public static class SelfTest
     }
 
     /// <summary>
+    /// Mod içerik bindirmesinin birleştirme kuralları.
+    ///
+    /// Gerçek bir modun gerçekten etki ettiği <c>mods/ornek_mod</c> ile
+    /// ve ekran görüntüsüyle gösteriliyor (üretim panelinde yedinci satır).
+    /// Burada sınanan, o gösterimin KENARLARI: modun yalnızca değiştirdiği
+    /// alanı yazması yeterli mi, kimlik eşleşmesi doğru mu, yeni öğe
+    /// ekleniyor mu, Steam yolları gerçekten kapalı mı.
+    /// </summary>
+    private static void ModOverlayRules()
+    {
+        Section("13) Mod icerik bindirmesi");
+
+        static JsonObject Parse(string json) => (JsonObject)JsonNode.Parse(json)!;
+
+        // --- Alan duzeyinde birlesme ---
+        var target = Parse("""
+            {"slotCount": 24, "items": [
+                {"id": "wood", "name": "Odun", "icon": 0, "maxStack": 99}
+            ]}
+            """);
+
+        ModdedContent.Merge(target, Parse("""
+            {"items": [{"id": "wood", "maxStack": 64}]}
+            """));
+
+        var wood = target["items"]!.AsArray().OfType<JsonObject>().First();
+
+        Check("mod'un yazdigi alan kazaniyor", wood["maxStack"]!.GetValue<int>() == 64);
+        Check("yazilmayan alanlar KORUNUYOR", wood["name"]!.GetValue<string>() == "Odun",
+              wood["name"]!.GetValue<string>());
+        Check("dizi disindaki alanlar korunuyor", target["slotCount"]!.GetValue<int>() == 24);
+
+        // Diziyi tumden degistirmek daha basit olurdu ama o zaman tek bir
+        // alani degistirmek isteyen mod BUTUN listeyi kopyalamak zorunda
+        // kalirdi -- ve o kopya, temel oyun bir item ekledigi anda eskirdi.
+        Check("temel oge silinmedi", target["items"]!.AsArray().Count == 1);
+
+        // --- Yeni oge EKLENIYOR ---
+        ModdedContent.Merge(target, Parse("""
+            {"items": [{"id": "mod_charcoal", "name": "Odun Komuru", "icon": 0}]}
+            """));
+
+        Check("yeni kimlik ekleniyor", target["items"]!.AsArray().Count == 2);
+        Check("eklenen oge dogru", target["items"]![1]!["id"]!.GetValue<string>() == "mod_charcoal");
+
+        // --- 'key' de kimlik sayiliyor (istatistikler ve hava turleri) ---
+        var keyed = Parse("""{"stats": [{"key": "wood_gathered", "name": "Odun"}]}""");
+        ModdedContent.Merge(keyed, Parse("""{"stats": [{"key": "wood_gathered", "name": "Kutuk"}]}"""));
+
+        Check("'key' alani da kimlik sayiliyor", keyed["stats"]!.AsArray().Count == 1);
+        Check("'key' ile eslesen oge birlesti",
+            keyed["stats"]![0]!["name"]!.GetValue<string>() == "Kutuk");
+
+        // --- Ic ice nesneler ---
+        var nested = Parse("""{"a": {"x": 1, "y": 2}}""");
+        ModdedContent.Merge(nested, Parse("""{"a": {"y": 9}}"""));
+
+        Check("ic ice nesne alan alan birlesiyor",
+            nested["a"]!["x"]!.GetValue<int>() == 1 && nested["a"]!["y"]!.GetValue<int>() == 9);
+
+        // --- Kimliksiz oge sadece EKLENIR ---
+        var plain = Parse("""{"list": [1, 2]}""");
+        ModdedContent.Merge(plain, Parse("""{"list": [3]}"""));
+        Check("kimliksiz oge ekleniyor", plain["list"]!.AsArray().Count == 3);
+
+        // --- Steam yollari KAPALI ---
+        //
+        // Bir Workshop paketi itemdefs'e yazabilseydi pazarlanabilir item
+        // uydurabilir, achievements'a yazabilseydi esikleri 1'e cekip
+        // Steam profilinde gercek degeri olan basarimlari bedavaya acardi.
+        Check("Steam/itemdefs bindirmeye KAPALI",
+            !ModdedContent.IsOverlayAllowed("Steam/itemdefs"));
+        Check("Steam/achievements bindirmeye KAPALI",
+            !ModdedContent.IsOverlayAllowed("Steam/achievements"));
+
+        Check("oyun verisi bindirmeye ACIK",
+            ModdedContent.IsOverlayAllowed("Items/items") &&
+            ModdedContent.IsOverlayAllowed("World/crops"));
+    }
+
+    /// <summary>
     /// Veri dosyalarındaki adların dile çevrilmesi.
     ///
     /// ── Asıl tehlike ────────────────────────────────────────────────────
@@ -666,13 +749,15 @@ public static class SelfTest
                 world.Crops.Crops.Any(c => c.Seasons.Contains(enKey)),
                 $"'{enKey}' -> {world.Crops.Crops.Count(c => c.Seasons.Contains(enKey))} ekin");
 
-            // Anahtar verilmemis (eski/mod) veri hala calismali.
-            var legacy = new SeasonDefinition { RawName = "Ilkbahar" };
+            // Anahtar verilmemis (eski/mod) veri hala calismali. Ham adi
+            // burada ELLE kurmak sart: sinanan sey tam olarak "anahtar
+            // yokken ne oluyor".
+            var legacy = new SeasonDefinition { RawName = "Ilkbahar" };  // ham ad kasten
             Check("anahtarsiz mevsim ham ada dusuyor", legacy.Key == "Ilkbahar", legacy.Key);
 
             // Anahtari olmayan tanim, veri dosyasindaki ada dusmeli:
             // modlar dil satiri saglamak ZORUNDA olmamali.
-            var modItem = new ItemDefinition { RawName = "Mod Item" };
+            var modItem = new ItemDefinition { RawName = "Mod Item" };  // ham ad kasten
             Check("anahtarsiz ad veri dosyasindaki adi kullanir",
                 modItem.Name == "Mod Item", modItem.Name);
         }

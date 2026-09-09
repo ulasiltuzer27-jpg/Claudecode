@@ -243,10 +243,29 @@ public class Game1 : Game
     {
         _spriteBatch = new SpriteBatch(GraphicsDevice);
 
+        // Madde 25: modlar EN ONCE kesfediliyor.
+        //
+        // Sira onemli: mod bindirmesi BUTUN icerik tablolarina uygulaniyor
+        // (item, tarif, tile, dusman...). Kesif tablolardan sonra
+        // yapilsaydi, o tablolar bindirilmemis halleriyle yuklenmis olurdu
+        // ve mod sessizce etkisiz kalirdi -- tam olarak duzeltilen hata.
+        // Kaynak secimi TEK noktada (WorkshopFactory); Steam derlemesinde
+        // abone olunan Workshop klasorleri de taranir.
+        _workshop = WorkshopFactory.Create();
+        _mods.Discover(_workshop.ContentRoots());
+
+        ModdedContent.Use(_mods);
+
         // Madde 23: dil tablolari EN ONCE yuklenir — sonraki her sistem
         // (nadirlik etiketleri, klan rutbeleri, takas sonuclari) ceviri
         // istiyor. Ilk kod varsayilan dil; "en" yedek olarak sart.
         Loc.Load(Content, "tr", "en");
+
+        // Modlarin dil satirlari temel tablonun USTUNE bindiriliyor.
+        // Dil tablolari ModdedContent'ten GECMIYOR: Loc.Overlay zaten
+        // ayni isi yapiyor ve iki yoldan birden bindirmek hangisinin son
+        // yazdigini belirsiz kilardi.
+        var overlaidLines = _mods.ApplyLocalization();
 
         _pixel = new Texture2D(GraphicsDevice, 1, 1);
         _pixel.SetData([Color.White]);
@@ -401,27 +420,21 @@ public class Game1 : Game
             _session.Connect(address);
         };
 
-        // Madde 25: modlar. Kaynak secimi TEK noktada (WorkshopFactory);
-        // Steam derlemesinde abone olunan Workshop klasorleri de taranir.
-        _workshop = WorkshopFactory.Create();
-        _mods.Discover(_workshop.ContentRoots());
-
         // Parmak izi oturuma veriliyor: harita agdan gonderilmedigi ve
         // uretim modlanabilir veriden turedigi icin, farkli mod kumesine
         // sahip iki oyuncu ayni tohumdan FARKLI dunya uretir.
         _session.ModFingerprint = _mods.Fingerprint;
 
-        // Modlarin dil satirlari temel tablonun USTUNE bindiriliyor.
-        // Bu, modlarin gercekten bir sey YAPTIGI ilk yol: kesif ve parmak
-        // izi tek basina modu etkisiz birakirdi.
-        var overlaid = _mods.ApplyLocalization();
-
-        Console.WriteLine($"[mod] {_mods.Summary}, {overlaid} dil satiri bindirildi");
-        foreach (var warning in _mods.Warnings) Console.WriteLine($"[mod] UYARI: {warning}");
-
         // Madde 24: yama notlari veriden okunuyor; surum cikarken kod
         // degismiyor.
         _patchNotes = PatchNotes.Load(Content, "UI/patchnotes");
+
+        // Rapor BUTUN tablolar yuklendikten sonra: bindirme sayisi ancak
+        // o zaman kesin.
+        Console.WriteLine($"[mod] {_mods.Summary}, {overlaidLines} dil satiri, " +
+                          $"{ModdedContent.AppliedOverlays} icerik bindirmesi");
+
+        foreach (var warning in _mods.Warnings) Console.WriteLine($"[mod] UYARI: {warning}");
 
         _session.EmoteReceived += (playerId, kind) => _social.TryEmote(playerId, kind);
         _session.PingReceived += (playerId, kind, position) =>

@@ -1,0 +1,9 @@
+{
+  "_comment": "Mod dil eki - Ingilizce. Mod kendi satirlarini her dil icin ayri dosyada saglar.",
+  "code": "en",
+  "name": "English",
+  "strings": {
+    "workshop.title": "Installed mods  [changed by the example mod]",
+    "mod.item.charcoal": "Charcoal"
+  }
+}

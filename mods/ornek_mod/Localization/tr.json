@@ -3,6 +3,7 @@
   "code": "tr",
   "name": "Türkçe",
   "strings": {
-    "workshop.title": "Yuklu modlar  [ornek mod tarafindan degistirildi]"
+    "workshop.title": "Yuklu modlar  [ornek mod tarafindan degistirildi]",
+    "mod.item.charcoal": "Odun Komuru"
   }
 }

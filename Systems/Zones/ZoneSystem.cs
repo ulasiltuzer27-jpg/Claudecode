@@ -5,6 +5,8 @@ using Microsoft.Xna.Framework.Content;
 using PixelSurvival.Inventory;
 using PixelSurvival.World;
 
+using PixelSurvival.Workshop;
+
 namespace PixelSurvival.Systems.Zones;
 
 public sealed class RaidSettings
@@ -37,7 +39,9 @@ public sealed class ZoneTable
     public static ZoneTable Load(ContentManager content, string assetName, Tileset tileset)
     {
         var relativePath = $"{content.RootDirectory}/{assetName}.json";
-        using var stream = TitleContainer.OpenStream(relativePath);
+        // Mod bindirmesinden GECIYOR: bir mod bu tabloyu degistirebilir
+        // ya da yeni satir ekleyebilir (bkz. ModdedContent).
+        using var stream = ModdedContent.Open(content, assetName);
 
         var table = JsonSerializer.Deserialize<ZoneTable>(stream, JsonOptions)
                     ?? throw new InvalidOperationException($"'{relativePath}' okunamadı.");

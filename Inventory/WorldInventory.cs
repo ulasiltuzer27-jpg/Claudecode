@@ -4,6 +4,8 @@ using PixelSurvival.Localization;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 
+using PixelSurvival.Workshop;
+
 namespace PixelSurvival.Inventory;
 
 /// <summary>Bir envanter slotunun içeriği. Boş slot <see cref="Empty"/>.</summary>
@@ -47,7 +49,9 @@ public sealed class ItemDatabase
     public static ItemDatabase Load(ContentManager content, string assetName)
     {
         var relativePath = $"{content.RootDirectory}/{assetName}.json";
-        using var stream = TitleContainer.OpenStream(relativePath);
+        // Mod bindirmesinden GECIYOR: bir mod bu tabloyu degistirebilir
+        // ya da yeni satir ekleyebilir (bkz. ModdedContent).
+        using var stream = ModdedContent.Open(content, assetName);
 
         var database = JsonSerializer.Deserialize<ItemDatabase>(stream, JsonOptions)
                        ?? throw new InvalidOperationException($"'{relativePath}' okunamadı.");

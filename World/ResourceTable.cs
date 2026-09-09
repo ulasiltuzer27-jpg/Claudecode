@@ -3,6 +3,8 @@ using System.Text.Json.Serialization;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 
+using PixelSurvival.Workshop;
+
 namespace PixelSurvival.World;
 
 /// <summary>Tek bir toplanabilir kaynağın tanımı.</summary>
@@ -43,7 +45,9 @@ public sealed class ResourceTable
     public static ResourceTable Load(ContentManager content, string assetName, Tileset tileset)
     {
         var relativePath = $"{content.RootDirectory}/{assetName}.json";
-        using var stream = TitleContainer.OpenStream(relativePath);
+        // Mod bindirmesinden GECIYOR: bir mod bu tabloyu degistirebilir
+        // ya da yeni satir ekleyebilir (bkz. ModdedContent).
+        using var stream = ModdedContent.Open(content, assetName);
 
         var table = JsonSerializer.Deserialize<ResourceTable>(stream, JsonOptions)
                     ?? throw new InvalidOperationException($"'{relativePath}' okunamadı.");

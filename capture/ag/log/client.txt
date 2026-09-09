@@ -1,4 +1,4 @@
-[mod] 1/1 mod aktif  (9C54C3034A4569B0), 1 dil satiri bindirildi
+[mod] 1/1 mod aktif  (27461038E16E23B7), 4 dil satiri, 2 icerik bindirmesi
 [worldgen] tohum=20260908 spawn=(0,0) chunk(0,0) sağlama=0x49C29A30
 [ag] localhost:7777 adresine baglaniliyor...
 [ag] uzak varlik: 0

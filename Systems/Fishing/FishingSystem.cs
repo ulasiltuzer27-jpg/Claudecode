@@ -7,6 +7,8 @@ using PixelSurvival.Inventory;
 using PixelSurvival.Systems.Climate;
 using PixelSurvival.World;
 
+using PixelSurvival.Workshop;
+
 namespace PixelSurvival.Systems.Fishing;
 
 /// <summary><c>Content/World/fishing.json</c> dosyasının kod karşılığı.</summary>
@@ -29,7 +31,9 @@ public sealed class FishingTable
     public static FishingTable Load(ContentManager content, string assetName, ItemDatabase items)
     {
         var relativePath = $"{content.RootDirectory}/{assetName}.json";
-        using var stream = TitleContainer.OpenStream(relativePath);
+        // Mod bindirmesinden GECIYOR: bir mod bu tabloyu degistirebilir
+        // ya da yeni satir ekleyebilir (bkz. ModdedContent).
+        using var stream = ModdedContent.Open(content, assetName);
 
         var table = JsonSerializer.Deserialize<FishingTable>(stream, JsonOptions)
                     ?? throw new InvalidOperationException($"'{relativePath}' okunamadı.");

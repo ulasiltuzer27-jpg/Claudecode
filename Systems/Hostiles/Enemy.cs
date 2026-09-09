@@ -11,6 +11,8 @@ using PixelSurvival.Systems.Climate;
 using PixelSurvival.Systems.Collision;
 using PixelSurvival.World;
 
+using PixelSurvival.Workshop;
+
 namespace PixelSurvival.Systems.Hostiles;
 
 public sealed class DropDefinition
@@ -72,7 +74,9 @@ public sealed class EnemyTable
     public static EnemyTable Load(ContentManager content, string assetName, ItemDatabase items)
     {
         var relativePath = $"{content.RootDirectory}/{assetName}.json";
-        using var stream = TitleContainer.OpenStream(relativePath);
+        // Mod bindirmesinden GECIYOR: bir mod bu tabloyu degistirebilir
+        // ya da yeni satir ekleyebilir (bkz. ModdedContent).
+        using var stream = ModdedContent.Open(content, assetName);
 
         var table = JsonSerializer.Deserialize<EnemyTable>(stream, JsonOptions)
                     ?? throw new InvalidOperationException($"'{relativePath}' okunamadı.");

@@ -11,6 +11,8 @@ using PixelSurvival.Systems.Animation;
 using PixelSurvival.Systems.Collision;
 using PixelSurvival.World;
 
+using PixelSurvival.Workshop;
+
 namespace PixelSurvival.Systems.Taming;
 
 public sealed class CreatureDefinition
@@ -46,7 +48,9 @@ public sealed class CreatureTable
     public static CreatureTable Load(ContentManager content, string assetName, ItemDatabase items)
     {
         var relativePath = $"{content.RootDirectory}/{assetName}.json";
-        using var stream = TitleContainer.OpenStream(relativePath);
+        // Mod bindirmesinden GECIYOR: bir mod bu tabloyu degistirebilir
+        // ya da yeni satir ekleyebilir (bkz. ModdedContent).
+        using var stream = ModdedContent.Open(content, assetName);
 
         var table = JsonSerializer.Deserialize<CreatureTable>(stream, JsonOptions)
                     ?? throw new InvalidOperationException($"'{relativePath}' okunamadı.");

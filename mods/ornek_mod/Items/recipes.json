@@ -1,0 +1,11 @@
+{
+  "_comment": "Yeni item'in tarifi. Temel tarif listesine EKLENIYOR; uretim panelinde yedinci satir olarak gorunuyor.",
+
+  "recipes": [
+    {
+      "id": "mod_charcoal",
+      "output": { "item": "mod_charcoal", "amount": 1 },
+      "inputs": [{ "item": "wood", "amount": 2 }]
+    }
+  ]
+}

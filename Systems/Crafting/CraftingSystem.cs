@@ -4,6 +4,8 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using PixelSurvival.Inventory;
 
+using PixelSurvival.Workshop;
+
 namespace PixelSurvival.Systems.Crafting;
 
 public sealed class RecipeIngredient
@@ -30,7 +32,9 @@ public sealed class RecipeBook
     public static RecipeBook Load(ContentManager content, string assetName, ItemDatabase items)
     {
         var relativePath = $"{content.RootDirectory}/{assetName}.json";
-        using var stream = TitleContainer.OpenStream(relativePath);
+        // Mod bindirmesinden GECIYOR: bir mod bu tabloyu degistirebilir
+        // ya da yeni satir ekleyebilir (bkz. ModdedContent).
+        using var stream = ModdedContent.Open(content, assetName);
 
         var book = JsonSerializer.Deserialize<RecipeBook>(stream, JsonOptions)
                    ?? throw new InvalidOperationException($"'{relativePath}' okunamadı.");

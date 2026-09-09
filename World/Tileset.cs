@@ -4,6 +4,8 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 
+using PixelSurvival.Workshop;
+
 namespace PixelSurvival.World;
 
 /// <summary>Bir tile türünün tanımı. <c>Solid</c> çarpışma için kullanılır.</summary>
@@ -55,7 +57,9 @@ public sealed class Tileset
         // TitleContainer: `dotnet run` calisma dizinini proje klasoru yapar,
         // exe'nin klasorunu degil. File.OpenRead burada yanlis yere bakardi.
         var relativePath = $"{content.RootDirectory}/{assetName}.json";
-        using var stream = TitleContainer.OpenStream(relativePath);
+        // Mod bindirmesinden GECIYOR: bir mod bu tabloyu degistirebilir
+        // ya da yeni satir ekleyebilir (bkz. ModdedContent).
+        using var stream = ModdedContent.Open(content, assetName);
 
         var meta = JsonSerializer.Deserialize<TilesetMetadata>(stream, JsonOptions)
                    ?? throw new InvalidOperationException($"'{relativePath}' okunamadı.");
