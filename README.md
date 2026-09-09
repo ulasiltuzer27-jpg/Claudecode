@@ -26,9 +26,13 @@ tarım+balıkçılık, evcilleştirme/binek, düşman+boss rotasyonu, zindanlar,
 ticaret/görev, güvenli bölge/PvP + baskın, Steam envanteri ve Steam taşıma
 katmanı; katmanlı kozmetikler + nadirlik + sezonluk item, Steamworks
 (başarım/leaderboard/davet), klan + host otoriter takas, EN/TR dil desteği +
-erişilebilirlik, photo mode + emote + ping + yama notları, Workshop altyapısı.
+erişilebilirlik, photo mode + emote + ping + yama notları, Workshop altyapısı;
+kaydetme/yükleme, düşman yol bulma, varlık (düşman/yaratık) ağ
+senkronizasyonu, host otoriter tarım/evcilleştirme, veri adlarının
+çevrilmesi ve mod içerik bindirmesi.
 
-Henüz yok: varlık (yaratık/düşman/NPC) ağ senkronizasyonu.
+Kalan bilinen boşluklar kısa: Steam gerçek bir istemciye karşı denenmedi,
+inşa yalnızca host'ta çalışıyor ve zindanlar ağ oturumunda kapalı.
 Bkz. "Bilinen boşluklar".
 
 ## Kontroller
@@ -796,8 +800,14 @@ mod'un etkisinin ekrandaki kanıtı.
   geçti, `SteamRelease` CS0103 ile patladı). Ama derlenmek çalışmak değil:
   achievement'lar, leaderboard, davet, Workshop yükleme ve envanter
   çağrıları çalışan bir Steam istemcisine karşı hiç denenmedi.
+* **İnşa yalnızca host'ta çalışıyor**; istemci inşa edemiyor. Tarım ve
+  evcilleştirme host'a taşındı (`WorldAction`), inşa aynı yolu izleyecek.
 * **Zindanlar ağ oturumunda kapalı** — bilinçli bir kısıt, bkz. "Ağda ne
   otoriter, ne değil".
+* **Mod sprite/atlas bindirmesi yok.** Modlar PNG getirebiliyor ve parmak
+  izine katılıyor ama atlas birleştirme (yeni ikon, yeni tile) ayrı bir iş;
+  şu an bir mod yeni item eklerken mevcut bir ikon indeksini yeniden
+  kullanıyor.
 * Dünya saati ve hava **host otoriter** ve senkronize (saniyede bir `WorldTime`
   mesajı). Ekin büyümesi de otomatik olarak host'ta kalıyor.
 
