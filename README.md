@@ -723,11 +723,37 @@ Doğrulaması iki katmanlı: `--self-test` içinde hem yol bulucunun kendisi ell
 391 karede oyuncuya varıyor). İkisi ayrı olmalı: doğru bir yol bulucu, yolu
 takip etmeyen bir düşmanla birlikte de var olabilir.
 
-### Bilinen boşluklar (Aşama 2)
+### Veri dosyalarındaki adlar da çevriliyor
 
-* **Veri dosyalarındaki isimler tek dilli.** Dil altyapısı (madde 23) hazır ama
-  item, mevsim ve hava adları hâlâ tek dilde; her veri dosyasına dil başına
-  isim alanı eklemek ayrı bir veri modeli değişikliği.
+Madde 23'te arayüz metinleri dil tablosuna taşındı ama VERİ dosyalarındaki
+adlar tek dilde kalmıştı: dil İngilizce'ye alındığında menüler İngilizce,
+envanterdeki item adları Türkçe görünüyordu.
+
+Her tanım artık isteğe bağlı bir `nameKey` taşıyor (`greetingKey`,
+`titleKey`, `textKey`, `descriptionKey` de aynı şekilde). Anahtar varsa
+ad dil tablosundan, yoksa veri dosyasındaki `name` alanından geliyor.
+
+* **`name` yedek olarak KALDI.** Adı tamamen anahtara çevirip alanı silmek,
+  her veri dosyasını dil tablosuna bağımlı yapardı: modun eklediği bir item,
+  mod dil satırı da sağlamadıkça ekranda `[mod.item.x]` görünürdü. Modlar
+  böylece tek dilli kalmayı seçebiliyor.
+* **JSON alanı `RawName`, ekranda kullanılan `Name`.** Bu ayrım sayesinde
+  mevcut yüzlerce `.Name` çağrısı hiç değişmeden çevrilmiş adı almaya
+  başladı — birini atlamak, o adın sessizce çevrilmemesi demek olurdu.
+  `verify_content.py` `RawName`'in tanım dosyalarının dışında
+  kullanılmadığını denetliyor.
+* **Mevsimin ayrı bir `key`'i var.** En ince nokta bu: `crops.json` bir
+  ekinin hangi mevsimlerde büyüdüğünü mevsim ADIYLA yazıyordu ve
+  karşılaştırma `Season.Name` ile yapılıyordu. Ad çevrilir çevrilmez o
+  karşılaştırma İngilizce oynayan oyuncuda hiç tutmaz ve **ekinler sessizce
+  hiç büyümezdi** — ekranda görünmeyen, günler sonra fark edilecek bir hata.
+  Aynı ayrım sezonluk kozmetiklerde de gerekti.
+
+`verify_content.py` ayrıca veri dosyalarında geçen her `*Key` değerinin
+**bütün** dil tablolarında karşılığı olduğunu denetliyor; ikisi de kasten
+bozularak denetimlerin tetiklendiği doğrulandı.
+
+### Bilinen boşluklar (Aşama 2)
 
 * **Mod içerik bindirmesi yalnızca dil tablolarında.** `ModRegistry` bütün
   içerik dosyalarını keşfediyor ve parmak izine katıyor, ama şu an yalnızca
@@ -824,7 +850,7 @@ Ekran görüntüsüyle **görülemeyen** kuralları koşturur: takas atomik mi, 
 değişince onaylar düşüyor mu, klan rütbeleri yetki sınırını koruyor mu, mod
 parmak izi içerik değişimine duyarlı mı, düşman duvarı gerçekten dolaşıyor mu,
 varlık snapshot'ı gidiş-dönüşte bozuluyor mu, kayıttan dönen oyuncu aynı
-görevde mi kalıyor. 152 denetim.
+görevde mi kalıyor, mevsim anahtarı dile göre kayıyor mu. 158 denetim.
 
 Bu denetim iki gerçek hata yakaladı ve ikisi de bu yüzden düzeltildi:
 onaydan sonra teklifi değiştirip "kabul" bekleme açığı, ve başarısız bir

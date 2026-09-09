@@ -9,98 +9,112 @@
       "name": "Odun",
       "icon": 0,
       "maxStack": 99,
-      "category": "material"
+      "category": "material",
+      "nameKey": "item.wood"
     },
     {
       "id": "stone",
       "name": "Taş",
       "icon": 1,
       "maxStack": 99,
-      "category": "material"
+      "category": "material",
+      "nameKey": "item.stone"
     },
     {
       "id": "plank",
       "name": "Tahta",
       "icon": 2,
       "maxStack": 99,
-      "category": "material"
+      "category": "material",
+      "nameKey": "item.plank"
     },
     {
       "id": "stone_brick",
       "name": "Taş Tuğla",
       "icon": 3,
       "maxStack": 99,
-      "category": "material"
+      "category": "material",
+      "nameKey": "item.stone_brick"
     },
     {
       "id": "stone_axe",
       "name": "Taş Balta",
       "icon": 4,
       "maxStack": 1,
-      "category": "tool"
+      "category": "tool",
+      "nameKey": "item.stone_axe"
     },
     {
       "id": "campfire",
       "name": "Kamp Ateşi",
       "icon": 5,
       "maxStack": 10,
-      "category": "placeable"
+      "category": "placeable",
+      "nameKey": "item.campfire"
     },
     {
       "id": "wheat_seed",
       "name": "Buğday Tohumu",
       "icon": 6,
       "maxStack": 99,
-      "category": "seed"
+      "category": "seed",
+      "nameKey": "item.wheat_seed"
     },
     {
       "id": "wheat",
       "name": "Buğday",
       "icon": 7,
       "maxStack": 99,
-      "category": "produce"
+      "category": "produce",
+      "nameKey": "item.wheat"
     },
     {
       "id": "pumpkin_seed",
       "name": "Balkabağı Tohumu",
       "icon": 8,
       "maxStack": 99,
-      "category": "seed"
+      "category": "seed",
+      "nameKey": "item.pumpkin_seed"
     },
     {
       "id": "pumpkin",
       "name": "Balkabağı",
       "icon": 9,
       "maxStack": 99,
-      "category": "produce"
+      "category": "produce",
+      "nameKey": "item.pumpkin"
     },
     {
       "id": "fish",
       "name": "Balık",
       "icon": 10,
       "maxStack": 99,
-      "category": "produce"
+      "category": "produce",
+      "nameKey": "item.fish"
     },
     {
       "id": "feed",
       "name": "Yem",
       "icon": 11,
       "maxStack": 99,
-      "category": "material"
+      "category": "material",
+      "nameKey": "item.feed"
     },
     {
       "id": "coin",
       "name": "Altın",
       "icon": 12,
       "maxStack": 999,
-      "category": "currency"
+      "category": "currency",
+      "nameKey": "item.coin"
     },
     {
       "id": "relic",
       "name": "Kalıntı",
       "icon": 13,
       "maxStack": 10,
-      "category": "treasure"
+      "category": "treasure",
+      "nameKey": "item.relic"
     }
   ]
 }

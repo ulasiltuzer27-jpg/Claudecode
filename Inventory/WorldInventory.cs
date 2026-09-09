@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using PixelSurvival.Localization;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 
@@ -20,7 +21,11 @@ public sealed class ItemDefinition
     /// Görüntülenen ad. Madde 23'te bu alan bir string tablo anahtarına
     /// dönüşecek; metin Localization/ altından gelecek.
     /// </summary>
-    [JsonPropertyName("name")] public string Name { get; init; } = "";
+    [JsonPropertyName("name")] public string RawName { get; init; } = "";
+    [JsonPropertyName("nameKey")] public string NameKey { get; init; } = "";
+
+    /// <summary>Ekranda gosterilecek ad — anahtar varsa cevrilir.</summary>
+    [JsonIgnore] public string Name => DataName.Of(NameKey, RawName);
 
     /// <summary>icons_16.png şeridindeki sütun indeksi.</summary>
     [JsonPropertyName("icon")] public int Icon { get; init; }

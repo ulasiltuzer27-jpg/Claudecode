@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using PixelSurvival.Localization;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 
@@ -18,7 +19,11 @@ public readonly record struct StatKey(string Value)
 public sealed class StatDefinition
 {
     [JsonPropertyName("key")] public string Key { get; init; } = "";
-    [JsonPropertyName("name")] public string Name { get; init; } = "";
+    [JsonPropertyName("name")] public string RawName { get; init; } = "";
+    [JsonPropertyName("nameKey")] public string NameKey { get; init; } = "";
+
+    /// <summary>Ekranda gosterilecek ad — anahtar varsa cevrilir.</summary>
+    [JsonIgnore] public string Name => DataName.Of(NameKey, RawName);
 }
 
 /// <summary>
@@ -32,8 +37,17 @@ public sealed class AchievementDefinition
     /// <summary>Steamworks'teki API adı (örn. <c>ACH_FIRST_WOOD</c>).</summary>
     [JsonPropertyName("id")] public string Id { get; init; } = "";
 
-    [JsonPropertyName("name")] public string Name { get; init; } = "";
-    [JsonPropertyName("description")] public string Description { get; init; } = "";
+    [JsonPropertyName("name")] public string RawName { get; init; } = "";
+    [JsonPropertyName("nameKey")] public string NameKey { get; init; } = "";
+
+    /// <summary>Ekranda gosterilecek ad — anahtar varsa cevrilir.</summary>
+    [JsonIgnore] public string Name => DataName.Of(NameKey, RawName);
+
+    [JsonPropertyName("description")] public string RawDescription { get; init; } = "";
+    [JsonPropertyName("descriptionKey")] public string DescriptionKey { get; init; } = "";
+
+    /// <summary>Ekranda gosterilecek aciklama — anahtar varsa cevrilir.</summary>
+    [JsonIgnore] public string Description => DataName.Of(DescriptionKey, RawDescription);
 
     /// <summary>Hangi istatistiği izlediği.</summary>
     [JsonPropertyName("stat")] public string Stat { get; init; } = "";
@@ -51,7 +65,11 @@ public sealed class AchievementDefinition
 public sealed class LeaderboardDefinition
 {
     [JsonPropertyName("key")] public string Key { get; init; } = "";
-    [JsonPropertyName("name")] public string Name { get; init; } = "";
+    [JsonPropertyName("name")] public string RawName { get; init; } = "";
+    [JsonPropertyName("nameKey")] public string NameKey { get; init; } = "";
+
+    /// <summary>Ekranda gosterilecek ad — anahtar varsa cevrilir.</summary>
+    [JsonIgnore] public string Name => DataName.Of(NameKey, RawName);
     [JsonPropertyName("stat")] public string Stat { get; init; } = "";
 
     /// <summary><c>descending</c> = büyük skor daha iyi.</summary>

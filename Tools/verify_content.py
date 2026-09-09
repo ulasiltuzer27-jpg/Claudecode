@@ -728,6 +728,107 @@ def main() -> int:
                 if key not in tables["en"]:
                     fail(f"Loc.T(\"{key}\") cagriliyor ama en.json'da tanimli degil.")
 
+        # --- Veri dosyalarindaki *Key alanlari dil tablosunda var mi ---
+        #
+        # Madde 17'de item/mevsim/hava/ekin/dusman/NPC adlari dil tablosuna
+        # baglandi. Anahtar yazilip karsiligi unutulursa ekranda [anahtar]
+        # gorunur; bunu oyunu acmadan yakalamak icin.
+        DATA_KEY_FIELDS = ("nameKey", "greetingKey", "titleKey",
+                           "textKey", "descriptionKey")
+
+        def collect_data_keys(node, found: set[str]) -> None:
+            """Ic ice JSON'da *Key alanlarinin degerlerini toplar."""
+            if isinstance(node, dict):
+                for key, value in node.items():
+                    if key in DATA_KEY_FIELDS and isinstance(value, str) and value:
+                        found.add(value)
+                    else:
+                        collect_data_keys(value, found)
+            elif isinstance(node, list):
+                for item in node:
+                    collect_data_keys(item, found)
+
+        data_keys: dict[str, set[str]] = {}
+        for dirpath, dirnames, filenames in os.walk(CONTENT):
+            dirnames[:] = [d for d in dirnames if d not in ("bin", "obj")]
+            for name in filenames:
+                if not name.endswith(".json"):
+                    continue
+                path = os.path.join(dirpath, name)
+                rel = os.path.relpath(path, CONTENT)
+
+                # Dil tablolarinin kendisi taranmaz: oradaki degerler
+                # anahtar degil, cevirinin ta kendisi.
+                if rel.startswith("Localization" + os.sep):
+                    continue
+
+                try:
+                    with open(path, encoding="utf-8") as f:
+                        node = json.load(f)
+                except (OSError, ValueError):
+                    continue   # bozuk/okunamayan dosyalar baska kontrolun isi
+
+                found: set[str] = set()
+                collect_data_keys(node, found)
+                if found:
+                    data_keys[rel] = found
+
+        for rel, keys in sorted(data_keys.items()):
+            for key in sorted(keys):
+                for code, strings in sorted(tables.items()):
+                    checks += 1
+                    if key not in strings:
+                        fail(f"{rel}: '{key}' anahtari {code}.json'da yok — "
+                             f"ekranda [{key}] gorunur.")
+
+        # --- Ham ad alanlari tanim dosyalarinin DISINDA kullanilmamali ---
+        #
+        # Tanim siniflarinda JSON'dan gelen alan RawName, ekranda kullanilan
+        # ise Name. Bir cagri yeri RawName'e giderse o ad sessizce
+        # CEVRILMEDEN kalir ve ekranda tek dilli gorunur -- gozle fark
+        # edilmesi zor bir hata.
+        RAW_FIELDS = ("RawName", "RawGreeting", "RawTitle",
+                      "RawText", "RawDescription")
+
+        for dirpath, dirnames, filenames in os.walk(ROOT):
+            dirnames[:] = [d for d in dirnames if d not in ("bin", "obj", ".git", ".config")]
+            for name in filenames:
+                if not name.endswith(".cs"):
+                    continue
+
+                path = os.path.join(dirpath, name)
+                rel = os.path.relpath(path, ROOT)
+
+                with open(path, encoding="utf-8") as f:
+                    lines = f.readlines()
+
+                for number, line in enumerate(lines, start=1):
+                    stripped = line.lstrip()
+                    if stripped.startswith(("//", "///", "*")):
+                        continue
+
+                    for field in RAW_FIELDS:
+                        if field not in line:
+                            continue
+
+                        checks += 1
+
+                        # Tanimin KENDISI ve DataName.Of(...) cagrisi
+                        # mesru: biri alani kuruyor, digeri cevirisini
+                        # uretiyor.
+                        if "JsonPropertyName" in line or "DataName.Of" in line:
+                            continue
+
+                        # Bilincli istisna: ham adi MANTIK anahtari olarak
+                        # kullanan tek yer (mevsim). Isaret ELLE konuyor ki
+                        # bir dahaki sefere kimse dusunmeden gecmesin.
+                        if "ham ad kasten" in line:
+                            continue
+
+                        fail(f"{rel}:{number}: '{field}' tanim disinda "
+                             f"kullaniliyor — o ad cevrilmeden kalir. "
+                             f"Bunun yerine cevrilmis ozelligi kullan.")
+
     # --- Rapor
     print(f"{checks} kontrol calistirildi.\n")
     for w in warnings:

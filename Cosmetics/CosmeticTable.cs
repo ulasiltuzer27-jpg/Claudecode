@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using PixelSurvival.Localization;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using PixelSurvival.Systems.Animation;
@@ -26,7 +27,11 @@ public readonly record struct CosmeticId(string Value)
 public sealed class CosmeticDefinition
 {
     [JsonPropertyName("id")] public string Id { get; init; } = "";
-    [JsonPropertyName("name")] public string Name { get; init; } = "";
+    [JsonPropertyName("name")] public string RawName { get; init; } = "";
+    [JsonPropertyName("nameKey")] public string NameKey { get; init; } = "";
+
+    /// <summary>Ekranda gosterilecek ad — anahtar varsa cevrilir.</summary>
+    [JsonIgnore] public string Name => DataName.Of(NameKey, RawName);
 
     /// <summary>Uzantısız asset adı, örn. <c>Cosmetics/cos_hat_crown</c>.</summary>
     [JsonPropertyName("asset")] public string Asset { get; init; } = "";

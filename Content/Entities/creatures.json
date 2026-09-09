@@ -1,6 +1,5 @@
 {
   "_comment": "Madde 14 — evcillestirme ve binek.",
-
   "creatures": [
     {
       "id": "capra",
@@ -15,7 +14,10 @@
       "mountSpeedMultiplier": 1.8,
       "maxAlive": 6,
       "spawnRadiusTiles": 40,
-      "spawnBiomeTiles": [ "grass" ]
+      "spawnBiomeTiles": [
+        "grass"
+      ],
+      "nameKey": "creature.capra"
     }
   ]
 }

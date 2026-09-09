@@ -1,9 +1,7 @@
 {
   "_comment": "Madde 17 — NPC tuccar ve gorev veren. Fiyatlar ve gorevler koda gomulu degil.",
-
   "interactRange": 34,
   "currency": "coin",
-
   "_konum_notu": "NPC'ler spawn noktasinin cevresine yerlestirilir; oyuncu ilk dakikada bulabilmeli.",
   "npcs": [
     {
@@ -11,51 +9,124 @@
       "name": "Tüccar Deniz",
       "sprite": "Characters/npc_trader",
       "role": "trade",
-      "offsetTiles": { "x": 4, "y": -2 },
+      "offsetTiles": {
+        "x": 4,
+        "y": -2
+      },
       "greeting": "Ne alirsin, ne satarsin?",
       "buys": [
-        { "item": "wood",   "price": 2 },
-        { "item": "stone",  "price": 3 },
-        { "item": "fish",   "price": 8 },
-        { "item": "wheat",  "price": 6 },
-        { "item": "pumpkin","price": 14 },
-        { "item": "relic",  "price": 120 }
+        {
+          "item": "wood",
+          "price": 2
+        },
+        {
+          "item": "stone",
+          "price": 3
+        },
+        {
+          "item": "fish",
+          "price": 8
+        },
+        {
+          "item": "wheat",
+          "price": 6
+        },
+        {
+          "item": "pumpkin",
+          "price": 14
+        },
+        {
+          "item": "relic",
+          "price": 120
+        }
       ],
       "sells": [
-        { "item": "wheat_seed",   "price": 10 },
-        { "item": "pumpkin_seed", "price": 24 },
-        { "item": "feed",         "price": 6 }
-      ]
+        {
+          "item": "wheat_seed",
+          "price": 10
+        },
+        {
+          "item": "pumpkin_seed",
+          "price": 24
+        },
+        {
+          "item": "feed",
+          "price": 6
+        }
+      ],
+      "nameKey": "npc.trader",
+      "greetingKey": "npc.trader.greeting"
     },
     {
       "id": "elder",
       "name": "İhtiyar Kaya",
       "sprite": "Characters/npc_elder",
       "role": "quest",
-      "offsetTiles": { "x": -4, "y": -3 },
-      "greeting": "Bir isim var, ilgilenir misin?"
+      "offsetTiles": {
+        "x": -4,
+        "y": -3
+      },
+      "greeting": "Bir isim var, ilgilenir misin?",
+      "nameKey": "npc.elder",
+      "greetingKey": "npc.elder.greeting"
     }
   ],
-
   "_gorev_notu": "Getir-goturme gorevleri. Sirayla acilirlar; biri bitmeden sonraki gorunmez.",
   "quests": [
     {
-      "id": "first_wood", "title": "Odun Topla",
-      "require": { "item": "wood", "amount": 10 },
-      "reward": [ { "item": "coin", "amount": 25 } ],
-      "text": "Kis geliyor. On odun getir, karsiligini veririm."
+      "id": "first_wood",
+      "title": "Odun Topla",
+      "require": {
+        "item": "wood",
+        "amount": 10
+      },
+      "reward": [
+        {
+          "item": "coin",
+          "amount": 25
+        }
+      ],
+      "text": "Kis geliyor. On odun getir, karsiligini veririm.",
+      "titleKey": "quest.first_wood.title",
+      "textKey": "quest.first_wood.text"
     },
     {
-      "id": "stone_walls", "title": "Tas Getir",
-      "require": { "item": "stone_brick", "amount": 4 },
-      "reward": [ { "item": "coin", "amount": 60 }, { "item": "feed", "amount": 4 } ],
-      "text": "Duvarlarim yikildi. Dort tas tugla lazim."
+      "id": "stone_walls",
+      "title": "Tas Getir",
+      "require": {
+        "item": "stone_brick",
+        "amount": 4
+      },
+      "reward": [
+        {
+          "item": "coin",
+          "amount": 60
+        },
+        {
+          "item": "feed",
+          "amount": 4
+        }
+      ],
+      "text": "Duvarlarim yikildi. Dort tas tugla lazim.",
+      "titleKey": "quest.stone_walls.title",
+      "textKey": "quest.stone_walls.text"
     },
     {
-      "id": "relic_hunt", "title": "Kalintiyi Bul",
-      "require": { "item": "relic", "amount": 1 },
-      "reward": [ { "item": "coin", "amount": 200 } ],
-      "text": "Zindanin dibinde bir kalinti var. Getirirsen zengin olursun."
+      "id": "relic_hunt",
+      "title": "Kalintiyi Bul",
+      "require": {
+        "item": "relic",
+        "amount": 1
+      },
+      "reward": [
+        {
+          "item": "coin",
+          "amount": 200
+        }
+      ],
+      "text": "Zindanin dibinde bir kalinti var. Getirirsen zengin olursun.",
+      "titleKey": "quest.relic_hunt.title",
+      "textKey": "quest.relic_hunt.text"
     }
   ]
 }

@@ -2357,8 +2357,10 @@ public class Game1 : Game
                 break;
 
             case GameScreen.Wardrobe:
+                // Season.KEY: sezonluk kozmetiklerin penceresi cosmetics.json'da
+                // sabit anahtarla yaziliyor, cevrilen adla degil.
                 _hud.DrawWardrobe(_spriteBatch, _cosmetics, _loadout, _ownership,
-                                  _climate.Season.Name, WindowWidth, WindowHeight);
+                                  _climate.Season.Key, WindowWidth, WindowHeight);
                 break;
 
             case GameScreen.Clan:

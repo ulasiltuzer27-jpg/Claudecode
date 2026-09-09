@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using PixelSurvival.Clans;
 using PixelSurvival.Inventory;
+using PixelSurvival.Localization;
 using PixelSurvival.Networking;
 using PixelSurvival.Entities;
 using PixelSurvival.Systems.Animation;
@@ -79,6 +80,7 @@ public static class SelfTest
                         world.Climate);
         EntitySnapshotRules();
         ProgressPersistenceRules(world);
+        DataNameRules(world);
 
         Console.WriteLine($"\n{_passed} gecti, {_failed} kaldi.");
         return _failed;
@@ -615,6 +617,71 @@ public static class SelfTest
         clamped.Restore([(tile, cropId, 0, -5.0)]);
         Check("negatif buyume sifira kirpiliyor", clamped.At(tile)!.GrowthDays >= 0,
               clamped.At(tile)!.GrowthDays.ToString("F2"));
+    }
+
+    /// <summary>
+    /// Veri dosyalarındaki adların dile çevrilmesi.
+    ///
+    /// ── Asıl tehlike ────────────────────────────────────────────────────
+    /// Adları çevirmek görünürde masum bir iş. Tehlike, o adların bazı
+    /// yerlerde MANTIK anahtarı olarak kullanılıyor olması:
+    /// <c>crops.json</c> bir ekinin mevsimlerini mevsim adıyla yazıyordu.
+    /// Ad çevrilir çevrilmez karşılaştırma İngilizce oynayan oyuncuda
+    /// hiç tutmaz ve ekinler **sessizce hiç büyümezdi** — ekranda
+    /// görünmeyen, ancak günler sonra fark edilecek bir hata.
+    ///
+    /// Bu yüzden burada iki şey ayrı ayrı sınanıyor: adın dile göre
+    /// DEĞİŞTİĞİ ve anahtarın DEĞİŞMEDİĞİ.
+    /// </summary>
+    private static void DataNameRules(SelfTestWorld world)
+    {
+        Section("12) Veri adlarinin dile cevrilmesi");
+
+        var startingLanguage = Loc.CurrentCode;
+
+        try
+        {
+            var season = world.ClimateTable.Seasons[0];
+            var item = world.Items.Items[0];
+
+            Loc.Use("tr");
+            var trSeason = season.Name;
+            var trItem = item.Name;
+            var trKey = season.Key;
+
+            Loc.Use("en");
+            var enSeason = season.Name;
+            var enItem = item.Name;
+            var enKey = season.Key;
+
+            Check("item adi dile gore degisiyor", trItem != enItem, $"{trItem} / {enItem}");
+            Check("mevsim adi dile gore degisiyor", trSeason != enSeason,
+                  $"{trSeason} / {enSeason}");
+
+            Check("mevsim ANAHTARI dile gore DEGISMIYOR", trKey == enKey, trKey);
+
+            // Asil kural: ekin tablosu anahtari taniyor mu. Tanimiyorsa
+            // ekinler o dilde hic buyumez.
+            Check("ekin tablosu mevsim anahtarini taniyor",
+                world.Crops.Crops.Any(c => c.Seasons.Contains(enKey)),
+                $"'{enKey}' -> {world.Crops.Crops.Count(c => c.Seasons.Contains(enKey))} ekin");
+
+            // Anahtar verilmemis (eski/mod) veri hala calismali.
+            var legacy = new SeasonDefinition { RawName = "Ilkbahar" };
+            Check("anahtarsiz mevsim ham ada dusuyor", legacy.Key == "Ilkbahar", legacy.Key);
+
+            // Anahtari olmayan tanim, veri dosyasindaki ada dusmeli:
+            // modlar dil satiri saglamak ZORUNDA olmamali.
+            var modItem = new ItemDefinition { RawName = "Mod Item" };
+            Check("anahtarsiz ad veri dosyasindaki adi kullanir",
+                modItem.Name == "Mod Item", modItem.Name);
+        }
+        finally
+        {
+            // Denetim dili degistirdi; sonraki denetimler ve oyun
+            // baslangic dilinde devam etmeli.
+            Loc.Use(startingLanguage);
+        }
     }
 
     /// <summary>

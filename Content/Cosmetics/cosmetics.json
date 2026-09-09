@@ -1,12 +1,8 @@
 {
   "_comment": "MADDE 20 - kozmetik katalogu (VERI). Hangi kozmetik var, hangi slota giriyor, nadirligi ne, ne zaman elde edilebiliyor.",
-
   "_kural_nadirlik": "NADIRLIK YALNIZCA GORSEL BIR ETIKETTIR. Bu dosyaya damage/health/speed/armor gibi bir alan EKLENMEZ - pay-to-win yaratir ve PvP (madde 18) ile ekonomi (madde 22) dengesini bozar. Tools/verify_content.py bunu denetler.",
-
   "_kural_sahiplik": "steamDefId burada yalnizca bir NUMARADIR, sahiplik kaniti DEGILDIR. Oyuncunun sahip olup olmadigi yalnizca Steam Inventory'den okunur (ICosmeticOwnership). steamDefId = 0 ucretsiz baslangic kozmetigi demektir.",
-
   "_kural_sezon": "season penceresi item'in ELDE EDILEBILIRLIGINI kapatir, KULLANIMINI degil. Bir kez sahip olunan kozmetik sonsuza kadar kusanilabilir kalir.",
-
   "cosmetics": [
     {
       "id": "hair_long",
@@ -14,7 +10,8 @@
       "asset": "Cosmetics/cos_hair_long",
       "slot": "hair",
       "rarity": "common",
-      "steamDefId": 0
+      "steamDefId": 0,
+      "nameKey": "cosmetic.hair_long"
     },
     {
       "id": "hair_spiky",
@@ -22,7 +19,8 @@
       "asset": "Cosmetics/cos_hair_spiky",
       "slot": "hair",
       "rarity": "uncommon",
-      "steamDefId": 0
+      "steamDefId": 0,
+      "nameKey": "cosmetic.hair_spiky"
     },
     {
       "id": "hair_frost",
@@ -30,16 +28,17 @@
       "asset": "Cosmetics/cos_hair_frost",
       "slot": "hair",
       "rarity": "rare",
-      "steamDefId": 2101
+      "steamDefId": 2101,
+      "nameKey": "cosmetic.hair_frost"
     },
-
     {
       "id": "outfit_tunic",
       "name": "Kasaba Tunigi",
       "asset": "Cosmetics/cos_outfit_tunic",
       "slot": "outfit",
       "rarity": "common",
-      "steamDefId": 0
+      "steamDefId": 0,
+      "nameKey": "cosmetic.outfit_tunic"
     },
     {
       "id": "outfit_plate",
@@ -47,7 +46,8 @@
       "asset": "Cosmetics/cos_outfit_plate",
       "slot": "outfit",
       "rarity": "epic",
-      "steamDefId": 2102
+      "steamDefId": 2102,
+      "nameKey": "cosmetic.outfit_plate"
     },
     {
       "id": "outfit_robe",
@@ -55,16 +55,17 @@
       "asset": "Cosmetics/cos_outfit_robe",
       "slot": "outfit",
       "rarity": "rare",
-      "steamDefId": 2103
+      "steamDefId": 2103,
+      "nameKey": "cosmetic.outfit_robe"
     },
-
     {
       "id": "hat_cap",
       "name": "Yun Bere",
       "asset": "Cosmetics/cos_hat_cap",
       "slot": "hat",
       "rarity": "common",
-      "steamDefId": 0
+      "steamDefId": 0,
+      "nameKey": "cosmetic.hat_cap"
     },
     {
       "id": "hat_crown",
@@ -72,16 +73,17 @@
       "asset": "Cosmetics/cos_hat_crown",
       "slot": "hat",
       "rarity": "legendary",
-      "steamDefId": 2104
+      "steamDefId": 2104,
+      "nameKey": "cosmetic.hat_crown"
     },
-
     {
       "id": "cape_cloak",
       "name": "Gezgin Pelerini",
       "asset": "Cosmetics/cos_cape_cloak",
       "slot": "cape",
       "rarity": "uncommon",
-      "steamDefId": 0
+      "steamDefId": 0,
+      "nameKey": "cosmetic.cape_cloak"
     },
     {
       "id": "cape_spring",
@@ -94,16 +96,17 @@
         "from": "2026-03-01T00:00:00Z",
         "until": "2026-06-01T00:00:00Z",
         "worldSeason": "Ilkbahar"
-      }
+      },
+      "nameKey": "cosmetic.cape_spring"
     },
-
     {
       "id": "fx_star",
       "name": "Gozde Yildiz Efekti",
       "asset": "Cosmetics/cos_fx_star",
       "slot": "accessory",
       "rarity": "common",
-      "steamDefId": 2001
+      "steamDefId": 2001,
+      "nameKey": "cosmetic.fx_star"
     }
   ]
 }

@@ -15,7 +15,8 @@
         52,
         96
       ],
-      "intensity": 0.72
+      "intensity": 0.72,
+      "nameKey": "phase.gece"
     },
     {
       "name": "safak",
@@ -25,7 +26,8 @@
         130,
         110
       ],
-      "intensity": 0.34
+      "intensity": 0.34,
+      "nameKey": "phase.safak"
     },
     {
       "name": "gunduz",
@@ -35,7 +37,8 @@
         255,
         255
       ],
-      "intensity": 0.0
+      "intensity": 0.0,
+      "nameKey": "phase.gunduz"
     },
     {
       "name": "aksam",
@@ -45,7 +48,8 @@
         140,
         90
       ],
-      "intensity": 0.3
+      "intensity": 0.3,
+      "nameKey": "phase.aksam"
     },
     {
       "name": "gece2",
@@ -55,11 +59,13 @@
         52,
         96
       ],
-      "intensity": 0.72
+      "intensity": 0.72,
+      "nameKey": "phase.gece2"
     }
   ],
   "seasons": [
     {
+      "key": "Ilkbahar",
       "name": "Ilkbahar",
       "tint": [
         235,
@@ -70,9 +76,11 @@
         "clear": 0.55,
         "rain": 0.42,
         "snow": 0.03
-      }
+      },
+      "nameKey": "season.Ilkbahar"
     },
     {
+      "key": "Yaz",
       "name": "Yaz",
       "tint": [
         255,
@@ -83,9 +91,11 @@
         "clear": 0.82,
         "rain": 0.18,
         "snow": 0.0
-      }
+      },
+      "nameKey": "season.Yaz"
     },
     {
+      "key": "Sonbahar",
       "name": "Sonbahar",
       "tint": [
         255,
@@ -96,9 +106,11 @@
         "clear": 0.6,
         "rain": 0.38,
         "snow": 0.02
-      }
+      },
+      "nameKey": "season.Sonbahar"
     },
     {
+      "key": "Kis",
       "name": "Kis",
       "tint": [
         226,
@@ -109,7 +121,8 @@
         "clear": 0.45,
         "rain": 0.1,
         "snow": 0.45
-      }
+      },
+      "nameKey": "season.Kis"
     }
   ],
   "weatherMinSeconds": 45,
@@ -119,19 +132,22 @@
       "key": "clear",
       "name": "Acik",
       "darken": 0.0,
-      "particles": 0
+      "particles": 0,
+      "nameKey": "weather.clear"
     },
     {
       "key": "rain",
       "name": "Yagmur",
       "darken": 0.18,
-      "particles": 220
+      "particles": 220,
+      "nameKey": "weather.rain"
     },
     {
       "key": "snow",
       "name": "Kar",
       "darken": 0.1,
-      "particles": 140
+      "particles": 140,
+      "nameKey": "weather.snow"
     }
   ]
 }

@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using PixelSurvival.Localization;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
@@ -13,7 +14,11 @@ namespace PixelSurvival.Systems.Farming;
 public sealed class CropDefinition
 {
     [JsonPropertyName("id")] public string Id { get; init; } = "";
-    [JsonPropertyName("name")] public string Name { get; init; } = "";
+    [JsonPropertyName("name")] public string RawName { get; init; } = "";
+    [JsonPropertyName("nameKey")] public string NameKey { get; init; } = "";
+
+    /// <summary>Ekranda gosterilecek ad — anahtar varsa cevrilir.</summary>
+    [JsonIgnore] public string Name => DataName.Of(NameKey, RawName);
 
     /// <summary>crops_16.png içindeki satır indeksi.</summary>
     [JsonPropertyName("row")] public int Row { get; init; }
@@ -204,13 +209,16 @@ public sealed class FarmingSystem(CropTable table, int stageCount)
             return;
         }
 
-        var seasonName = climate.Season.Name;
+        // Season.KEY, Name DEGIL: crops.json mevsimleri sabit anahtarla
+        // yaziyor. Cevrilen ad kullanilsaydi Ingilizce oynayan oyuncuda
+        // karsilastirma hic tutmaz ve ekinler sessizce hic buyumezdi.
+        var seasonKey = climate.Season.Key;
         var rainy = climate.Weather.Key == "rain";
 
         foreach (var crop in _crops.Values)
         {
             // Yanlış mevsimde ekin durur — çürümez, sadece beklemeye geçer.
-            if (!crop.Definition.Seasons.Contains(seasonName))
+            if (!crop.Definition.Seasons.Contains(seasonKey))
             {
                 continue;
             }

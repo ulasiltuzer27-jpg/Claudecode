@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using PixelSurvival.Localization;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
@@ -22,7 +23,11 @@ public sealed class DropDefinition
 public sealed class HostileDefinition
 {
     [JsonPropertyName("id")] public string Id { get; init; } = "";
-    [JsonPropertyName("name")] public string Name { get; init; } = "";
+    [JsonPropertyName("name")] public string RawName { get; init; } = "";
+    [JsonPropertyName("nameKey")] public string NameKey { get; init; } = "";
+
+    /// <summary>Ekranda gosterilecek ad — anahtar varsa cevrilir.</summary>
+    [JsonIgnore] public string Name => DataName.Of(NameKey, RawName);
     [JsonPropertyName("sprite")] public string Sprite { get; init; } = "";
     [JsonPropertyName("health")] public int Health { get; init; } = 30;
     [JsonPropertyName("damage")] public int Damage { get; init; } = 8;

@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using PixelSurvival.Localization;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 
@@ -7,7 +8,11 @@ namespace PixelSurvival.Systems.Climate;
 
 public sealed class DayPhase
 {
-    [JsonPropertyName("name")] public string Name { get; init; } = "";
+    [JsonPropertyName("name")] public string RawName { get; init; } = "";
+    [JsonPropertyName("nameKey")] public string NameKey { get; init; } = "";
+
+    /// <summary>Ekranda gosterilecek ad — anahtar varsa cevrilir.</summary>
+    [JsonIgnore] public string Name => DataName.Of(NameKey, RawName);
 
     /// <summary>Bu fazın bittiği gün kesri (0..1).</summary>
     [JsonPropertyName("until")] public float Until { get; init; }
@@ -21,7 +26,33 @@ public sealed class DayPhase
 
 public sealed class SeasonDefinition
 {
-    [JsonPropertyName("name")] public string Name { get; init; } = "";
+    [JsonPropertyName("name")] public string RawName { get; init; } = "";
+    [JsonPropertyName("nameKey")] public string NameKey { get; init; } = "";
+
+    /// <summary>
+    /// Mevsimin MANTIKTA kullanılan sabit anahtarı.
+    ///
+    /// ── Neden ad yetmiyor ───────────────────────────────────────────────
+    /// <c>crops.json</c> bir ekinin hangi mevsimlerde büyüdüğünü mevsim
+    /// ADIYLA yazıyordu ve karşılaştırma <c>Season.Name</c> ile
+    /// yapılıyordu. Ad dile çevrilir çevrilmez o karşılaştırma İngilizce
+    /// oynayan oyuncuda hiçbir zaman tutmaz ve **ekinler hiç büyümezdi** —
+    /// ekranda görünmeyen, ancak günler sonra fark edilecek bir hata.
+    ///
+    /// Anahtar verilmemişse ham ada düşülüyor: <c>key</c> alanı olmayan
+    /// eski veri dosyalarında ve modlarda mevsimin ADI zaten anahtar
+    /// görevi görüyordu ve onları kırmanın anlamı yok. Çevrilmemiş metnin
+    /// mantıkta kullanıldığı TEK yer burası; satırdaki
+    /// <c>ham ad kasten</c> işareti <c>verify_content.py</c>'nin bu tek
+    /// istisnayı tanımasını sağlıyor.
+    /// </summary>
+    [JsonPropertyName("key")] public string RawKey { get; init; } = "";
+
+    [JsonIgnore]
+    public string Key => string.IsNullOrEmpty(RawKey) ? RawName : RawKey;  // ham ad kasten
+
+    /// <summary>Ekranda gosterilecek ad — anahtar varsa cevrilir.</summary>
+    [JsonIgnore] public string Name => DataName.Of(NameKey, RawName);
     [JsonPropertyName("tint")] public int[] Tint { get; init; } = [255, 255, 255];
 
     /// <summary>Hava anahtarı → ağırlık. Toplamları 1 olmalı.</summary>
@@ -31,7 +62,11 @@ public sealed class SeasonDefinition
 public sealed class WeatherType
 {
     [JsonPropertyName("key")] public string Key { get; init; } = "";
-    [JsonPropertyName("name")] public string Name { get; init; } = "";
+    [JsonPropertyName("name")] public string RawName { get; init; } = "";
+    [JsonPropertyName("nameKey")] public string NameKey { get; init; } = "";
+
+    /// <summary>Ekranda gosterilecek ad — anahtar varsa cevrilir.</summary>
+    [JsonIgnore] public string Name => DataName.Of(NameKey, RawName);
 
     /// <summary>Ek karartma (0..1). Yağmurlu hava güneşliden koyudur.</summary>
     [JsonPropertyName("darken")] public float Darken { get; init; }

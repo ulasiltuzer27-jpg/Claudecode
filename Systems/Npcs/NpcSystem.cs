@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using PixelSurvival.Localization;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
@@ -18,14 +19,23 @@ public sealed class TradeOffer
 public sealed class NpcDefinition
 {
     [JsonPropertyName("id")] public string Id { get; init; } = "";
-    [JsonPropertyName("name")] public string Name { get; init; } = "";
+    [JsonPropertyName("name")] public string RawName { get; init; } = "";
+    [JsonPropertyName("nameKey")] public string NameKey { get; init; } = "";
+
+    /// <summary>Ekranda gosterilecek ad — anahtar varsa cevrilir.</summary>
+    [JsonIgnore] public string Name => DataName.Of(NameKey, RawName);
     [JsonPropertyName("sprite")] public string Sprite { get; init; } = "";
 
     /// <summary>"trade" veya "quest".</summary>
     [JsonPropertyName("role")] public string Role { get; init; } = "trade";
 
     [JsonPropertyName("offsetTiles")] public TileOffset OffsetTiles { get; init; } = new();
-    [JsonPropertyName("greeting")] public string Greeting { get; init; } = "";
+
+    [JsonPropertyName("greeting")] public string RawGreeting { get; init; } = "";
+    [JsonPropertyName("greetingKey")] public string GreetingKey { get; init; } = "";
+
+    /// <summary>Ekranda gosterilecek selamlama — anahtar varsa cevrilir.</summary>
+    [JsonIgnore] public string Greeting => DataName.Of(GreetingKey, RawGreeting);
 
     /// <summary>NPC'nin oyuncudan SATIN ALDIĞI item'lar (oyuncu satar).</summary>
     [JsonPropertyName("buys")] public List<TradeOffer> Buys { get; init; } = [];
@@ -49,8 +59,17 @@ public sealed class QuestRequirement
 public sealed class QuestDefinition
 {
     [JsonPropertyName("id")] public string Id { get; init; } = "";
-    [JsonPropertyName("title")] public string Title { get; init; } = "";
-    [JsonPropertyName("text")] public string Text { get; init; } = "";
+    [JsonPropertyName("title")] public string RawTitle { get; init; } = "";
+    [JsonPropertyName("titleKey")] public string TitleKey { get; init; } = "";
+
+    [JsonPropertyName("text")] public string RawText { get; init; } = "";
+    [JsonPropertyName("textKey")] public string TextKey { get; init; } = "";
+
+    /// <summary>Ekranda gosterilecek baslik — anahtar varsa cevrilir.</summary>
+    [JsonIgnore] public string Title => DataName.Of(TitleKey, RawTitle);
+
+    /// <summary>Ekranda gosterilecek aciklama — anahtar varsa cevrilir.</summary>
+    [JsonIgnore] public string Text => DataName.Of(TextKey, RawText);
     [JsonPropertyName("require")] public QuestRequirement Require { get; init; } = new();
     [JsonPropertyName("reward")] public List<QuestRequirement> Reward { get; init; } = [];
 }
