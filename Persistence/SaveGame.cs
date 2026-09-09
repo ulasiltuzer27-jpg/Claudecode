@@ -7,13 +7,19 @@ public enum LoadOutcome
 {
     Success,
 
+    /// <summary>
+    /// Daha eski ama okunabilir bir sürümden yüklendi; sonradan eklenen
+    /// alanlar boş. Yükleme BAŞARILI — çağıran taraf veriyi kullanabilir.
+    /// </summary>
+    Migrated,
+
     /// <summary>Kayıt dosyası yok — ilk açılış.</summary>
     NotFound,
 
     /// <summary>Dosya var ama okunamadı (bozuk JSON, disk hatası).</summary>
     Unreadable,
 
-    /// <summary>Kayıt başka bir sürümle yazılmış.</summary>
+    /// <summary>Kayıt okunabilir sürüm aralığının dışında.</summary>
     VersionMismatch
 }
 
@@ -117,13 +123,26 @@ public static class SaveGame
             return LoadOutcome.Unreadable;
         }
 
-        if (data.Version != SaveData.CurrentVersion)
+        // Aralik disi: ya cok eski (alanlarin anlami degismis) ya da
+        // GELECEKTEN (bu surumun hic bilmedigi alanlar var). Ikisinde de
+        // okumak, alanlarin yanlis yerlere oturmasi demek.
+        if (data.Version < SaveData.MinimumReadableVersion ||
+            data.Version > SaveData.CurrentVersion)
         {
-            // Eski bir kaydi yeni alan duzeniyle okumak, alanlarin yanlis
-            // yerlere oturmasi demek. Acikca reddetmek daha iyi.
-            message = $"kayit surumu {data.Version}, beklenen {SaveData.CurrentVersion}";
+            message = $"kayit surumu {data.Version}, okunabilir aralik " +
+                      $"{SaveData.MinimumReadableVersion}-{SaveData.CurrentVersion}";
             data = null;
             return LoadOutcome.VersionMismatch;
+        }
+
+        if (data.Version < SaveData.CurrentVersion)
+        {
+            // Eski ama okunabilir: eklenen alanlar bos kalir. Sessiz
+            // gecmiyoruz — oyuncu kaydinda gorev/tarla bulamazsa sebebini
+            // bilmeli.
+            message = $"kayit surum {data.Version} -> {SaveData.CurrentVersion} " +
+                      $"olarak okundu; yeni alanlar bos";
+            return LoadOutcome.Migrated;
         }
 
         return LoadOutcome.Success;

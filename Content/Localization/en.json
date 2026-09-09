@@ -131,6 +131,7 @@
     "menu.newGameWarn": "(deletes current save)",
     "menu.saveHint": "F5 to save",
     "net.creatureHostOnly": "Creatures are resolved on the host",
-    "net.dungeonOfflineOnly": "Dungeons are single-player only for now"
+    "net.dungeonOfflineOnly": "Dungeons are single-player only for now",
+    "save.migrated": "Loaded a save from an older version"
   }
 }

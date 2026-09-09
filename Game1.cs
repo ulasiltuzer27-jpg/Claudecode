@@ -413,8 +413,11 @@ public class Game1 : Game
         // Content Pipeline'dan geliyor, gercek veriyle test edilsin) ve cikilir.
         if (_selfTest)
         {
-            Environment.ExitCode = SelfTest.Run(_itemDatabase, _tileset, _playerSheet,
-                                                _enemies, _climate) == 0 ? 0 : 1;
+            var world = new SelfTest.SelfTestWorld(_itemDatabase, _tileset, _playerSheet,
+                                                  _enemies, _climate, _npcs, _cropTable,
+                                                  _climateTable);
+
+            Environment.ExitCode = SelfTest.Run(world) == 0 ? 0 : 1;
             Exit();
         }
     }
@@ -996,6 +999,14 @@ public class Game1 : Game
         _loadout.ClearAll();
         _clans.Reset();
         _social.Clear();
+
+        // Gorevler _npcs'te yasiyor ve _npcs dunyayla birlikte yeniden
+        // KURULMUYOR (sprite'lari bir kez yukleniyor). Sifirlanmazsa
+        // "yeni oyun" butun gorevleri tamamlanmis halde baslardi.
+        _npcs.RestoreQuests([]);
+
+        // Ekili tarlalar GenerateWorld'de yeni bir FarmingSystem ile
+        // zaten gidiyor; burada tekrarlamak yaniltici olurdu.
     }
 
     /// <summary>
@@ -1048,6 +1059,17 @@ public class Game1 : Game
                                                         StringComparer.Ordinal),
             Unlocked = [.. _achievements.UnlockedIds],
 
+            Quests = [.. _npcs.CompletedQuestIds],
+
+            Crops = [.. _farming.Crops.Select(pair => new SavedCrop
+            {
+                X = pair.Key.X,
+                Y = pair.Key.Y,
+                Crop = pair.Value.Definition.Id,
+                PlantedAtDay = pair.Value.PlantedAtDay,
+                GrowthDays = pair.Value.GrowthDays
+            })],
+
             Clan = clan is null ? null : new SavedClan
             {
                 Name = clan.Name,
@@ -1070,7 +1092,8 @@ public class Game1 : Game
             : Loc.T("save.failed", error));
 
         Console.WriteLine(error is null
-            ? $"[kayit] yazildi: {SaveGame.Path} ({data.Tiles.Count} tile degisikligi)"
+            ? $"[kayit] yazildi: {SaveGame.Path} ({data.Tiles.Count} tile degisikligi, " +
+              $"{data.Crops.Count} tarla, {data.Quests.Count} gorev)"
             : $"[kayit] YAZILAMADI: {error}");
     }
 
@@ -1082,7 +1105,7 @@ public class Game1 : Game
     {
         var outcome = SaveGame.Load(out var data, out var message);
 
-        if (outcome != LoadOutcome.Success || data is null)
+        if (outcome is not (LoadOutcome.Success or LoadOutcome.Migrated) || data is null)
         {
             if (outcome != LoadOutcome.NotFound)
             {
@@ -1091,6 +1114,14 @@ public class Game1 : Game
             }
 
             return false;
+        }
+
+        // Eski ama okunabilir kayit: yukleniyor, ama sessizce degil.
+        // Oyuncu gorevlerini/tarlalarini bulamazsa sebebini bilmeli.
+        if (outcome == LoadOutcome.Migrated)
+        {
+            Console.WriteLine($"[kayit] {message}");
+            ShowToast(Loc.T("save.migrated"));
         }
 
         // Modlar dunya uretimini besleyen veriyi degistirebiliyor; farkli
@@ -1132,6 +1163,12 @@ public class Game1 : Game
         }
 
         _achievements.Restore(data.Stats, data.Unlocked);
+        _npcs.RestoreQuests(data.Quests);
+
+        // Surulmus toprak tile'lari zaten override katmanindan geldi;
+        // burada geri gelen yalnizca o topragin USTUNDEKI ekin.
+        var crops = _farming.Restore(data.Crops.Select(c =>
+            (new Point(c.X, c.Y), c.Crop, c.PlantedAtDay, c.GrowthDays)));
 
         if (data.Clan is { } savedClan)
         {
@@ -1146,7 +1183,8 @@ public class Game1 : Game
         _worldReady = true;
         Console.WriteLine($"[kayit] yuklendi: tohum={data.Seed} " +
                           $"{data.Tiles.Count} tile degisikligi, " +
-                          $"{data.Inventory.Count} dolu slot");
+                          $"{data.Inventory.Count} dolu slot, " +
+                          $"{crops} tarla, {_npcs.CompletedQuests} gorev");
 
         return true;
     }

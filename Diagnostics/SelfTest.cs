@@ -5,6 +5,8 @@ using PixelSurvival.Networking;
 using PixelSurvival.Entities;
 using PixelSurvival.Systems.Animation;
 using PixelSurvival.Systems.Climate;
+using PixelSurvival.Systems.Farming;
+using PixelSurvival.Systems.Npcs;
 using PixelSurvival.Systems.Hostiles;
 using PixelSurvival.Systems.Social;
 using PixelSurvival.Trade;
@@ -38,13 +40,27 @@ public static class SelfTest
     private static int _passed;
     private static int _failed;
 
+    /// <summary>
+    /// Denetimlerin ihtiyaç duyduğu, Content Pipeline'dan yüklenmiş GERÇEK veri.
+    ///
+    /// Neden bir kayıt: denetimler büyüdükçe parametre listesi de büyüyor ve
+    /// yedi konumsal argüman, çağrı yerinde hangisinin hangisi olduğunu
+    /// okunamaz hale getiriyordu. Sahte veri yerine gerçeğinin kullanılması
+    /// bilinçli — sınamanın oyunun yüklediği veriyle aynı şeyi görmesi
+    /// isteniyor.
+    /// </summary>
+    public sealed record SelfTestWorld(
+        ItemDatabase Items,
+        Tileset Tileset,
+        SpriteSheet PlayerSheet,
+        EnemySystem Enemies,
+        ClimateSystem Climate,
+        NpcSystem Npcs,
+        CropTable Crops,
+        ClimateTable ClimateTable);
+
     /// <summary>Tüm denetimleri koşturur; başarısız sayısını döndürür.</summary>
-    /// <param name="tileset">Duvarlı sınama haritası için katılık tablosu.</param>
-    /// <param name="playerSheet">Sınama oyuncusunun sprite'ı.</param>
-    /// <param name="enemies">Gerçek düşman sistemi — sınama düşmanı buradan doğar.</param>
-    /// <param name="climate">Düşman güncellemesinin istediği dünya saati.</param>
-    public static int Run(ItemDatabase items, Tileset tileset, SpriteSheet playerSheet,
-                          EnemySystem enemies, ClimateSystem climate)
+    public static int Run(SelfTestWorld world)
     {
         _passed = _failed = 0;
 
@@ -52,14 +68,16 @@ public static class SelfTest
 
         ClanRankRules();
         StructureOwnershipRules();
-        TradeAcceptanceRules(items);
-        TradeAtomicityRules(items);
+        TradeAcceptanceRules(world.Items);
+        TradeAtomicityRules(world.Items);
         SocialSignalRules();
         WorkshopRules();
         SaveGameRules();
         PathfindingRules();
-        EnemyChaseRules(items, tileset, playerSheet, enemies, climate);
+        EnemyChaseRules(world.Items, world.Tileset, world.PlayerSheet, world.Enemies,
+                        world.Climate);
         EntitySnapshotRules();
+        ProgressPersistenceRules(world);
 
         Console.WriteLine($"\n{_passed} gecti, {_failed} kaldi.");
         return _failed;
@@ -261,6 +279,15 @@ public static class SelfTest
                 Tiles = [new SavedTile { X = -2, Y = 0, Tile = 0 }],
                 Inventory = [new SavedSlot { Slot = 0, Item = "wood", Count = 3 }],
                 Unlocked = ["ACH_FIRST_WOOD"],
+                Quests = ["q_first_wood"],
+                Crops =
+                [
+                    new SavedCrop
+                    {
+                        X = 7, Y = -3, Crop = "wheat",
+                        PlantedAtDay = 1.25, GrowthDays = 0.75
+                    }
+                ]
             };
             data.Stats["wood_gathered"] = 3;
             data.Cosmetics["Hat"] = "hat_cap";
@@ -291,6 +318,19 @@ public static class SelfTest
             Check("istatistik korunuyor", loaded.Stats.GetValueOrDefault("wood_gathered") == 3);
             Check("acilan basarim korunuyor", loaded.Unlocked.Contains("ACH_FIRST_WOOD"));
 
+            Check("tamamlanan gorev korunuyor", loaded.Quests.Contains("q_first_wood"));
+
+            // Ekinin AŞAMASI degil, biriken buyumesi kaydediliyor: asama
+            // buyumeden turuyor ve ikisini birden yazmak ayrisma kapisi
+            // acardi.
+            Check("ekili tarla korunuyor",
+                loaded.Crops.Count == 1 && loaded.Crops[0].X == 7 && loaded.Crops[0].Y == -3 &&
+                loaded.Crops[0].Crop == "wheat");
+
+            Check("tarlanin buyumesi korunuyor",
+                Math.Abs(loaded.Crops[0].GrowthDays - 0.75) < 1e-9 &&
+                Math.Abs(loaded.Crops[0].PlantedAtDay - 1.25) < 1e-9);
+
             // Ikinci yazim once mevcut kaydi yedeklemeli: atomik yazim
             // yarim dosyaya karsi korur, yedek MANTIK hatasina karsi.
             SaveGame.Save(data);
@@ -300,15 +340,41 @@ public static class SelfTest
             // gormemeli.
             Check("gecici dosya temizlenmis", !File.Exists(SaveGame.Path + ".tmp"));
 
-            // Surum uyusmazligi SESSIZCE okunmamali: eski bir kaydi yeni
-            // alan duzeniyle okumak alanlari yanlis yerlere oturtur.
+            // GELECEKTEN gelen kayit reddedilmeli: bu surumun hic bilmedigi
+            // alanlar var ve okumak alanlari yanlis yerlere oturtur.
             var raw = File.ReadAllText(SaveGame.Path);
             File.WriteAllText(SaveGame.Path,
                 raw.Replace($"\"version\": {SaveData.CurrentVersion}", "\"version\": 99"));
 
-            Check("surum uyusmazligi reddediliyor",
+            Check("gelecekten gelen surum reddediliyor",
                 SaveGame.Load(out var rejected, out _) == LoadOutcome.VersionMismatch
                 && rejected is null);
+
+            // Okunabilir aralik ALTINDAKI surum de reddedilmeli.
+            File.WriteAllText(SaveGame.Path,
+                raw.Replace($"\"version\": {SaveData.CurrentVersion}", "\"version\": 0"));
+
+            Check("cok eski surum reddediliyor",
+                SaveGame.Load(out _, out _) == LoadOutcome.VersionMismatch);
+
+            // ESKI ama okunabilir surum yuklenmeli: JSON alanlari isimle
+            // eslesiyor, yani EKLENEN bir alan eski kaydi bozmuyor. Sirf
+            // yeni alan eklendi diye oyuncunun kaydini comege atmak
+            // korumanin amacini asan bir ceza olurdu.
+            File.WriteAllText(SaveGame.Path,
+                raw.Replace($"\"version\": {SaveData.CurrentVersion}",
+                            $"\"version\": {SaveData.MinimumReadableVersion}"));
+
+            Check("eski ama okunabilir surum yukleniyor",
+                SaveGame.Load(out var old, out var note) == LoadOutcome.Migrated &&
+                old is not null);
+
+            Check("eski surum sessizce gecmiyor (aciklama var)", note.Length > 0, note);
+
+            // Eski surumden gelen kayitta eski alanlar YERINDE olmali:
+            // "okunabilir" demek "bos donuyor" demek degil.
+            Check("eski surumde envanter yerinde",
+                old!.Inventory.Count == 1 && old.Inventory[0].Item == "wood");
 
             // Bozuk dosya COKERTMEMELI.
             File.WriteAllText(SaveGame.Path, "{ bu gecerli json degil");
@@ -429,6 +495,139 @@ public static class SelfTest
         Check("baslangic = hedef ise yol bostur",
             pathfinder.FindPath(open, new Point(4, 4), new Point(4, 4), path)
                 == PathResult.Complete && path.Count == 0);
+    }
+
+    /// <summary>
+    /// Görev ilerlemesi ve ekili tarlaların kaydı — SİSTEM düzeyinde.
+    ///
+    /// <see cref="SaveGameRules"/> yalnızca <see cref="SaveData"/> alanlarının
+    /// diske gidip geldiğini sınıyor. Asıl soru ise başka: kayıttaki veri
+    /// GERÇEK sistemlere geri yüklendiğinde oyuncu kaldığı yerden mi devam
+    /// ediyor? Bir alan doğru yazılıp yanlış yere yüklenirse ilk sınama
+    /// bunu göremez — oyuncu ilk görevi ikinci kez yapmak zorunda kalır.
+    ///
+    /// Bu yüzden burada gerçek <see cref="NpcSystem"/> ve
+    /// <see cref="FarmingSystem"/> kullanılıyor.
+    /// </summary>
+    private static void ProgressPersistenceRules(SelfTestWorld world)
+    {
+        Section("11) Gorev ve tarla kaydi (sistem duzeyinde)");
+
+        // --- Gorev ilerlemesi ---
+        var npcs = world.Npcs;
+        npcs.RestoreQuests([]);
+
+        var firstQuest = npcs.ActiveQuest;
+        Check("temiz baslangicta ilk gorev aktif", firstQuest is not null, firstQuest?.Id ?? "yok");
+
+        var inventory = new WorldInventory(world.Items);
+        inventory.TryAdd(firstQuest!.Require.Item, firstQuest.Require.Amount);
+
+        npcs.TurnInQuest(inventory);
+        Check("gorev teslim edildi", npcs.CompletedQuests == 1);
+
+        var secondQuest = npcs.ActiveQuest;
+        Check("siradaki gorev degisti", secondQuest is not null && secondQuest.Id != firstQuest.Id,
+              secondQuest?.Id ?? "yok");
+
+        // Kayit yolundan gecir: ihrac -> geri yukle.
+        var savedQuests = npcs.CompletedQuestIds.ToList();
+
+        npcs.RestoreQuests([]);
+        Check("sifirlama gercekten siliyor", npcs.CompletedQuests == 0);
+
+        npcs.RestoreQuests(savedQuests);
+        Check("kayittan sonra ayni gorevde kaliniyor",
+            npcs.ActiveQuest?.Id == secondQuest!.Id, npcs.ActiveQuest?.Id ?? "yok");
+
+        // Tanimsiz kimlik yuklemeyi BOZMAMALI: veriden kaldirilmis ya da
+        // modla degistirilmis bir gorev, oyuncunun butun ilerlemesini
+        // gecersiz kilmamali.
+        npcs.RestoreQuests([.. savedQuests, "artik_olmayan_gorev"]);
+        Check("tanimsiz gorev kimligi yuklemeyi bozmuyor",
+            npcs.ActiveQuest?.Id == secondQuest.Id);
+
+        npcs.RestoreQuests([]);
+
+        // --- Ekili tarlalar ---
+        var cropId = world.Crops.Crops[0].Id;
+        var tile = new Point(7, -3);
+
+        var farming = new FarmingSystem(world.Crops, 3);
+
+        var restored = farming.Restore([(tile, cropId, 1.25, 0.75)]);
+        Check("tarla geri kuruldu", restored == 1 && farming.PlantedCount == 1);
+
+        var crop = farming.At(tile);
+        Check("tarla dogru karede", crop is not null);
+        Check("ekin tanimi dogru", crop!.Definition.Id == cropId, crop.Definition.Id);
+        Check("buyume korundu", Math.Abs(crop.GrowthDays - 0.75) < 1e-9);
+        Check("ekildigi gun korundu", Math.Abs(crop.PlantedAtDay - 1.25) < 1e-9);
+
+        // --- Yuklemeden sonra "gun sicramasi" olmamali ---
+        //
+        // Buyume gecen DUNYA GUNUNDEN hesaplaniyor. Restore icindeki gun
+        // sayaci sifirlanmazsa, uzun sure calismis bir oyuna kayit
+        // yuklendiginde ILK Update aradaki butun gunleri bir anda buyume
+        // olarak eklerdi.
+        //
+        // Once KURULUMUN gercekten buyume uretebildigi gosteriliyor:
+        // uretemiyorsa asil kontrol bos yere gecer (bu tuzaga bir kez
+        // dusuldu — taze bir FarmingSystem zaten sifirlanmis geliyordu ve
+        // kontrol hicbir seyi sinamiyordu).
+        var clock = new ClimateSystem(world.ClimateTable, 1);
+
+        var control = new FarmingSystem(world.Crops, 3);
+        control.Restore([(tile, cropId, 0, 0)]);
+        control.Update(clock);                       // gun sayaci dolar
+        AdvanceDays(clock, world.ClimateTable, 2);
+        control.Update(clock);                       // 2 gunluk buyume eklenmeli
+
+        var grew = control.At(tile)!.GrowthDays;
+        Check("kurulum gercekten buyume uretiyor", grew > 0.5, $"{grew:F3} gun");
+
+        // Asil kontrol: AYNI kosulda, ama arada Restore var.
+        var reloaded = new FarmingSystem(world.Crops, 3);
+        reloaded.Update(clock);                      // gun sayaci dolar
+        AdvanceDays(clock, world.ClimateTable, 2);
+        reloaded.Restore([(tile, cropId, 0, 0.75)]);
+        reloaded.Update(clock);
+
+        Check("yuklemeden sonraki ilk gun sicramasi YOK",
+            Math.Abs(reloaded.At(tile)!.GrowthDays - 0.75) < 1e-9,
+            $"{reloaded.At(tile)!.GrowthDays:F3} gun");
+
+        // Tanimsiz ekin atlanmali, gecerli olan yuklenmeli.
+        var mixed = new FarmingSystem(world.Crops, 3);
+        var count = mixed.Restore(
+        [
+            (new Point(1, 1), cropId, 0, 0.5),
+            (new Point(2, 2), "artik_olmayan_ekin", 0, 0.5)
+        ]);
+
+        Check("tanimsiz ekin atlaniyor", count == 1 && mixed.PlantedCount == 1);
+        Check("gecerli ekin yine de yuklendi", mixed.At(new Point(1, 1)) is not null);
+
+        // Elle duzenlenmis kayitta negatif buyume asama hesabini ters
+        // cevirirdi.
+        var clamped = new FarmingSystem(world.Crops, 3);
+        clamped.Restore([(tile, cropId, 0, -5.0)]);
+        Check("negatif buyume sifira kirpiliyor", clamped.At(tile)!.GrowthDays >= 0,
+              clamped.At(tile)!.GrowthDays.ToString("F2"));
+    }
+
+    /// <summary>
+    /// Dünya saatini verilen gün kadar ileri sarar.
+    ///
+    /// Tek büyük adım yerine küçük adımlar: hava ve mevsim geçişleri
+    /// oyunda da küçük adımlarla oluyor ve tek sıçrama onları atlardı.
+    /// </summary>
+    private static void AdvanceDays(ClimateSystem climate, ClimateTable table, int days)
+    {
+        var steps = days * 60;
+        var step = table.DayLengthSeconds / 60f;
+
+        for (var i = 0; i < steps; i++) climate.Update(step);
     }
 
     /// <summary>

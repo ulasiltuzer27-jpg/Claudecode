@@ -131,6 +131,7 @@
     "menu.newGameWarn": "(mevcut kayit silinir)",
     "menu.saveHint": "F5 kaydet",
     "net.creatureHostOnly": "Yaratiklar host tarafinda cozuluyor",
-    "net.dungeonOfflineOnly": "Zindan su an yalnizca tek kisilik oyunda"
+    "net.dungeonOfflineOnly": "Zindan su an yalnizca tek kisilik oyunda",
+    "save.migrated": "Eski surumlu kayit yuklendi"
   }
 }

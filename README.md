@@ -587,7 +587,13 @@ kazandırdığı tek şey "aynı tavşan aynı yerde" olurdu.
 
 Kaydedilenler: tohum, tile değişiklikleri, oyuncu konumu/canı, envanter,
 dünya saati ve havası, kuşanılan kozmetikler, başarım istatistikleri ve
-açılmış başarımlar, klan üyeliği ve yapı sahipliği.
+açılmış başarımlar, klan üyeliği ve yapı sahipliği, **tamamlanan görevler**
+ve **ekili tarlalar**.
+
+Ekinin görsel *aşaması* kaydedilmiyor: aşama biriken büyümeden türüyor ve
+ikisini birden yazmak, ayrışabilecekleri bir kapı açardı. Sürülmüş toprak da
+ayrıca kaydedilmiyor — o zaten bir tile ve override katmanından geliyor;
+tarlanın kendisi o toprağın *üstündeki* katman.
 
 **Atomik yazım.** Kayıt önce geçici dosyaya yazılır, sonra yerine *taşınır*.
 Doğrudan üstüne yazmak, yazımın ortasında oyun kapanırsa (çökme, elektrik)
@@ -597,9 +603,15 @@ işletim sistemi düzeyinde atomik olduğu için ya eski ya yeni kayıt kalır.
 Ayrıca her başarılı yazımdan önce mevcut kayıt `.bak` olarak saklanır: atomik
 yazım yarım dosyaya karşı korur, **mantık** hatasına karşı korumaz.
 
-**Sürüm uyuşmazlığı sessizce okunmaz.** Eski bir kaydı yeni alan düzeniyle
-okumak, alanların yanlış yerlere oturup envanteri bozması demektir; açıkça
-reddetmek daha iyi.
+**Sürüm bir ARALIK.** `MinimumReadableVersion`..`CurrentVersion` dışındaki bir
+kayıt açıkça reddediliyor: gelecekten gelen kayıtta bu sürümün bilmediği
+alanlar var, çok eski kayıtta ise alanların anlamı değişmiş olabilir. Ama
+*eklenen* bir alan bu riski taşımıyor — JSON alanları isimle eşleşiyor, eski
+kayıtta o isim yok ve alan boş kalıyor. Sırf yeni bir alan eklendi diye
+oyuncunun kaydını çöpe atmak, korumanın amacını aşan bir ceza olurdu; o yüzden
+eski ama okunabilir kayıt `LoadOutcome.Migrated` ile yükleniyor ve durum hem
+konsola hem ekrana yazılıyor. Bir alanın *anlamı* değişirse (örn. `growthDays`
+gün yerine saniye olursa) alt sınır da yükseltilmeli.
 
 **"Yeni oyun" kaydı silmez**, `.bak`'a taşır — yanlışlıkla basmak geri
 dönülemez olmamalı.
@@ -698,10 +710,6 @@ Doğrulaması iki katmanlı: `--self-test` içinde hem yol bulucunun kendisi ell
 takip etmeyen bir düşmanla birlikte de var olabilir.
 
 ### Bilinen boşluklar (Aşama 2)
-
-* **Görev ilerlemesi ve tarım kaydedilmiyor.** Kayıt sistemi var (aşağıya bak)
-  ama NPC görev durumu ile ekili tarlalar henüz kapsam dışında; ikisi de
-  kendi sistemlerinde dışa aktarım arayüzü istiyor.
 
 * **Veri dosyalarındaki isimler tek dilli.** Dil altyapısı (madde 23) hazır ama
   item, mevsim ve hava adları hâlâ tek dilde; her veri dosyasına dil başına
@@ -804,7 +812,8 @@ dotnet run -- --self-test        # çıkış kodu 0 = hepsi geçti
 Ekran görüntüsüyle **görülemeyen** kuralları koşturur: takas atomik mi, teklif
 değişince onaylar düşüyor mu, klan rütbeleri yetki sınırını koruyor mu, mod
 parmak izi içerik değişimine duyarlı mı, düşman duvarı gerçekten dolaşıyor mu,
-varlık snapshot'ı gidiş-dönüşte bozuluyor mu. 123 denetim.
+varlık snapshot'ı gidiş-dönüşte bozuluyor mu, kayıttan dönen oyuncu aynı
+görevde mi kalıyor. 146 denetim.
 
 Bu denetim iki gerçek hata yakaladı ve ikisi de bu yüzden düzeltildi:
 onaydan sonra teklifi değiştirip "kabul" bekleme açığı, ve başarısız bir

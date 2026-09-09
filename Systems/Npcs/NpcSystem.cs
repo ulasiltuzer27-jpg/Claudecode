@@ -181,6 +181,25 @@ public sealed class NpcSystem
 
     public int CompletedQuests => _completed.Count;
 
+    /// <summary>Tamamlanmış görev kimlikleri — kaydetmek için.</summary>
+    public IReadOnlyCollection<string> CompletedQuestIds => _completed;
+
+    /// <summary>
+    /// Kayıttan gelen görev ilerlemesini geri kurar.
+    ///
+    /// Tanımsız kimlikler bilinçli olarak yok sayılıyor: bir görev
+    /// <c>npcs.json</c>'dan kaldırıldığında ya da bir mod onu
+    /// değiştirdiğinde eski kayıttaki kimlik karşılıksız kalır. Bu yüzden
+    /// yüklemeyi reddetmek, oyuncunun bütün ilerlemesini bir veri
+    /// düzenlemesi uğruna çöpe atmak olurdu. Karşılıksız kimlik sadece
+    /// hiçbir göreve denk gelmez.
+    /// </summary>
+    public void RestoreQuests(IEnumerable<string> completed)
+    {
+        _completed.Clear();
+        foreach (var id in completed) _completed.Add(id);
+    }
+
     public NpcSystem(NpcTable table, ContentManager content)
     {
         _table = table;

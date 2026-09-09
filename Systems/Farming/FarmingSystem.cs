@@ -92,6 +92,20 @@ public sealed class CropTable
     public bool TryGetBySeed(string seedItem, out CropDefinition crop) =>
         _bySeed.TryGetValue(seedItem, out crop!);
 
+    /// <summary>
+    /// Kimliğe göre ekin tanımı — kayıttan geri yükleme için.
+    ///
+    /// Tohuma göre arama (<see cref="TryGetBySeed"/>) burada işe yaramaz:
+    /// kayıt ekinin KENDİ kimliğini tutuyor, tohumunu değil. Tohumu
+    /// yazsaydık bir veri düzenlemesinde iki ekinin tohumu takas edilince
+    /// kayıtlı tarlalar sessizce başka ekine dönüşürdü.
+    /// </summary>
+    public bool TryGetById(string cropId, out CropDefinition crop)
+    {
+        crop = Crops.FirstOrDefault(c => c.Id == cropId)!;
+        return crop is not null;
+    }
+
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNameCaseInsensitive = true
@@ -192,6 +206,49 @@ public sealed class FarmingSystem(CropTable table, int stageCount)
 
     /// <summary>Hedef tile'daki ekin (varsa) — çizim için.</summary>
     public CropInstance? At(Point tile) => _crops.GetValueOrDefault(tile);
+
+    /// <summary>
+    /// Kayıttan gelen tarlaları geri kurar.
+    ///
+    /// Sürülmüş toprak tile'ları zaten override katmanından geliyor
+    /// (kesilen ağaçla aynı yolla); burada geri kurulan yalnızca o
+    /// toprağın ÜSTÜNDEKİ ekin. İkisi ayrı katman olduğu için ayrı
+    /// kaydediliyorlar — bu, tarımın en baştaki tasarım kararının doğal
+    /// sonucu.
+    ///
+    /// Tanımsız ekin kimlikleri atlanıyor: bir ekin veriden kaldırıldığında
+    /// ya da bir mod onu değiştirdiğinde yüklemeyi reddetmek, oyuncunun
+    /// bütün kaydını çöpe atmak olurdu.
+    /// </summary>
+    /// <returns>Geri kurulan tarla sayısı.</returns>
+    public int Restore(IEnumerable<(Point Tile, string CropId, double PlantedAtDay,
+                                    double GrowthDays)> saved)
+    {
+        _crops.Clear();
+
+        var restored = 0;
+
+        foreach (var (tile, cropId, plantedAtDay, growthDays) in saved)
+        {
+            if (!table.TryGetById(cropId, out var definition)) continue;
+
+            _crops[tile] = new CropInstance(definition, plantedAtDay)
+            {
+                // Negatif buyume elle duzenlenmis bir kayittan gelebilir;
+                // asama hesabi negatifte ters calisir.
+                GrowthDays = Math.Max(0, growthDays)
+            };
+
+            restored++;
+        }
+
+        // Buyume gecen DUNYA GUNUNDEN hesaplaniyor ve _lastDay yuklemeden
+        // once kalmis olabilir; sifirlanmazsa yuklemeden sonraki ilk
+        // Update bir anda gunler kadar buyume eklerdi.
+        _lastDay = -1;
+
+        return restored;
+    }
 
     /// <summary>
     /// Tek tuşla bağlamsal tarım eylemi: boş zemini sürer, sürülmüş toprağa

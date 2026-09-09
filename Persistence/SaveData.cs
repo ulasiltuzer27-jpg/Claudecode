@@ -18,6 +18,29 @@ public sealed class SavedSlot
     [JsonPropertyName("count")] public int Count { get; init; }
 }
 
+/// <summary>
+/// Ekilmiş bir tarla.
+///
+/// Ekinin görsel aşaması kaydedilmiyor: aşama, biriken büyümeden
+/// TÜRETİLİYOR. İkisini birden yazmak, ikisinin ayrışabileceği bir kapı
+/// açardı (elle düzenlenmiş bir kayıt, olgun görünen ama hasat edilemeyen
+/// bir ekin verirdi).
+/// </summary>
+public sealed class SavedCrop
+{
+    [JsonPropertyName("x")] public int X { get; init; }
+    [JsonPropertyName("y")] public int Y { get; init; }
+
+    /// <summary>Ekin tanımının kimliği (<c>crops.json</c>).</summary>
+    [JsonPropertyName("crop")] public string Crop { get; init; } = "";
+
+    /// <summary>Ekildiği dünya günü.</summary>
+    [JsonPropertyName("plantedAtDay")] public double PlantedAtDay { get; init; }
+
+    /// <summary>Doğru mevsimde biriken büyüme (gün).</summary>
+    [JsonPropertyName("growthDays")] public double GrowthDays { get; init; }
+}
+
 /// <summary>Klan üyesi.</summary>
 public sealed class SavedClanMember
 {
@@ -56,11 +79,28 @@ public sealed class SaveData
     /// <summary>
     /// Kayıt biçimi sürümü.
     ///
-    /// Uyuşmayan sürüm SESSİZCE okunmaz. Eski bir kaydı yeni alan
-    /// düzeniyle okumak, alanların yanlış yerlere oturup oyuncunun
-    /// envanterini bozması demektir; açıkça reddetmek daha iyidir.
+    /// 1: ilk sürüm.
+    /// 2: görev ilerlemesi (<see cref="Quests"/>) ve ekili tarlalar
+    ///    (<see cref="Crops"/>) eklendi.
     /// </summary>
-    public const int CurrentVersion = 1;
+    public const int CurrentVersion = 2;
+
+    /// <summary>
+    /// Okunabilecek en eski sürüm.
+    ///
+    /// ── Neden bir aralık, tek bir sayı değil ────────────────────────────
+    /// Sürüm kontrolü, alanların yanlış yerlere oturmasına karşı vardı.
+    /// JSON alanları İSİMLE eşleştiği için EKLENEN bir alan bu riski
+    /// taşımıyor: eski kayıtta o isim yok, alan varsayılan (boş) kalıyor.
+    /// Sırf yeni bir alan eklendi diye oyuncunun kaydını çöpe atmak,
+    /// korumanın amacını aşan bir ceza olurdu.
+    ///
+    /// Bu gevşeklik yalnızca EKLEME için geçerli. Bir alanın anlamı ya da
+    /// birimi değişirse (örn. <c>growthDays</c> gün yerine saniye olursa)
+    /// bu sabit de yükseltilmeli — o zaman eski kayıt gerçekten yanlış
+    /// okunur.
+    /// </summary>
+    public const int MinimumReadableVersion = 1;
 
     [JsonPropertyName("version")] public int Version { get; init; } = CurrentVersion;
 
@@ -101,6 +141,18 @@ public sealed class SaveData
     public Dictionary<string, int> Stats { get; init; } = new(StringComparer.Ordinal);
 
     [JsonPropertyName("unlocked")] public List<string> Unlocked { get; init; } = [];
+
+    /// <summary>
+    /// Tamamlanmış görevlerin kimlikleri (sürüm 2).
+    ///
+    /// Yalnızca tamamlananlar yazılıyor; "aktif görev" kaydedilmiyor çünkü
+    /// o zaten tamamlanmamış İLK görev — türetilebilen bir şeyi kaydetmek
+    /// iki kaynağın ayrışması riskini getirirdi.
+    /// </summary>
+    [JsonPropertyName("quests")] public List<string> Quests { get; init; } = [];
+
+    /// <summary>Ekili tarlalar (sürüm 2).</summary>
+    [JsonPropertyName("crops")] public List<SavedCrop> Crops { get; init; } = [];
 
     [JsonPropertyName("clan")] public SavedClan? Clan { get; init; }
 }
