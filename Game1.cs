@@ -393,7 +393,8 @@ public class Game1 : Game
         // Content Pipeline'dan geliyor, gercek veriyle test edilsin) ve cikilir.
         if (_selfTest)
         {
-            Environment.ExitCode = SelfTest.Run(_itemDatabase) == 0 ? 0 : 1;
+            Environment.ExitCode = SelfTest.Run(_itemDatabase, _tileset, _playerSheet,
+                                                _enemies, _climate) == 0 ? 0 : 1;
             Exit();
         }
     }

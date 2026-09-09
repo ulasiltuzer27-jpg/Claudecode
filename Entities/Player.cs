@@ -97,6 +97,15 @@ public sealed class Player
         ColliderWidth,
         ColliderHeight);
 
+    /// <summary>
+    /// Çarpışma kutusunun ORTASI.
+    ///
+    /// <see cref="Position"/> ayakların altında (çizim sırası için) ve
+    /// gövdenin merkezi olarak kullanılırsa bir alt tile'a düşebilir.
+    /// Görüş ve yol bulma hesapları merkezi ister.
+    /// </summary>
+    public Vector2 Center => new(Position.X, Position.Y - ColliderHeight / 2f);
+
     public Player(SpriteSheet sheet, Vector2 startPosition)
     {
         _sheet = sheet;

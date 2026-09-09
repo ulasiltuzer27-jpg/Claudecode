@@ -37,9 +37,10 @@ public readonly record struct EnemyKill(string Name, bool IsBoss);
 /// önünde belirmeleri adaletsiz hissettirir. Uzaklaşınca silinirler ki
 /// oyuncu haritada gezerken arkasında bir ordu birikmesin.
 ///
-/// KAPSAM DIŞI: sürü davranışı, menzilli düşman, yol bulma (şu an düz
-/// çizgide yürüyorlar ve duvara takılabilirler), ağ senkronizasyonu.
-/// Düşmanlar YEREL — her istemci kendi düşmanlarını görür.
+/// KAPSAM DIŞI: sürü davranışı, menzilli düşman.
+///
+/// Düşmanlar duvarları DOLAŞIR (<see cref="TilePathfinder"/>) ve host
+/// otoriterdir: konumları ağ üzerinden istemcilere yayınlanır.
 /// </summary>
 public sealed class EnemySystem
 {
@@ -47,6 +48,15 @@ public sealed class EnemySystem
     private readonly Dictionary<string, SpriteSheet> _sheets = [];
     private readonly List<Enemy> _enemies = [];
     private readonly Tileset _tileset;
+
+    /// <summary>
+    /// Bütün düşmanların PAYLAŞTIĞI yol bulucu.
+    ///
+    /// Arama tabloları çağrılar arasında yeniden kullanılıyor; düşman
+    /// başına bir örnek, aynı tabloları düşman sayısı kadar çoğaltırdı.
+    /// Düşmanlar sırayla güncellendiği için paylaşım güvenli.
+    /// </summary>
+    private readonly TilePathfinder _pathfinder = new();
 
     private float _spawnTimer;
     private uint _randomState;
@@ -116,7 +126,7 @@ public sealed class EnemySystem
 
         foreach (var enemy in _enemies)
         {
-            var damage = enemy.Update(gameTime, map, player);
+            var damage = enemy.Update(gameTime, map, player, _pathfinder);
 
             if (damage > 0)
             {

@@ -1,10 +1,15 @@
 using Microsoft.Xna.Framework;
 using PixelSurvival.Clans;
 using PixelSurvival.Inventory;
+using PixelSurvival.Entities;
+using PixelSurvival.Systems.Animation;
+using PixelSurvival.Systems.Climate;
+using PixelSurvival.Systems.Hostiles;
 using PixelSurvival.Systems.Social;
 using PixelSurvival.Trade;
 using PixelSurvival.Persistence;
 using PixelSurvival.Workshop;
+using PixelSurvival.World;
 
 namespace PixelSurvival.Diagnostics;
 
@@ -33,7 +38,12 @@ public static class SelfTest
     private static int _failed;
 
     /// <summary>Tüm denetimleri koşturur; başarısız sayısını döndürür.</summary>
-    public static int Run(ItemDatabase items)
+    /// <param name="tileset">Duvarlı sınama haritası için katılık tablosu.</param>
+    /// <param name="playerSheet">Sınama oyuncusunun sprite'ı.</param>
+    /// <param name="enemies">Gerçek düşman sistemi — sınama düşmanı buradan doğar.</param>
+    /// <param name="climate">Düşman güncellemesinin istediği dünya saati.</param>
+    public static int Run(ItemDatabase items, Tileset tileset, SpriteSheet playerSheet,
+                          EnemySystem enemies, ClimateSystem climate)
     {
         _passed = _failed = 0;
 
@@ -46,6 +56,8 @@ public static class SelfTest
         SocialSignalRules();
         WorkshopRules();
         SaveGameRules();
+        PathfindingRules();
+        EnemyChaseRules(items, tileset, playerSheet, enemies, climate);
 
         Console.WriteLine($"\n{_passed} gecti, {_failed} kaldi.");
         return _failed;
@@ -313,6 +325,256 @@ public static class SelfTest
             Directory.SetCurrentDirectory(original);
             if (Directory.Exists(sandbox)) Directory.Delete(sandbox, recursive: true);
         }
+    }
+
+    // ==================== YOL BULMA ====================
+
+    /// <summary>
+    /// Düşman yol bulmasının kuralları.
+    ///
+    /// Ekranda "düşman geldi" görünür ama DUVARI DOLAŞTIĞI görünmez —
+    /// düz çizgide gelirken duvara sürtüp yanından geçen düşman da uzaktan
+    /// aynıdır. Bu yüzden yol elle çizilmiş labirentlerde denetleniyor.
+    ///
+    /// Labirentler <see cref="TileMap"/> değil saf bir katılık fonksiyonu
+    /// kullanıyor: yol bulmanın doğruluğu Content Pipeline'dan gelen
+    /// tileset'e bağlı değil.
+    /// </summary>
+    private static void PathfindingRules()
+    {
+        Section("8) Dusman yol bulma (A*)");
+
+        var pathfinder = new TilePathfinder();
+        var path = new List<Point>();
+
+        // --- Bos arazi: duz gitmeli ---
+        var open = (int x, int y) => false;
+
+        Check("bos arazide hedefe ulasilir",
+            pathfinder.FindPath(open, new Point(0, 0), new Point(5, 0), path)
+                == PathResult.Complete);
+
+        // 5 dik adim; capraz kisayol yok cunku ayni satirdayiz.
+        Check("bos arazide yol en kisa (5 adim)", path.Count == 5);
+        Check("yol baslangic karesini ICERMEZ", path[0] != new Point(0, 0));
+        Check("yolun sonu hedeftir", path[^1] == new Point(5, 0));
+
+        // Capraz: (0,0) -> (4,4) sekiz yonlu izgarada 4 capraz adim.
+        pathfinder.FindPath(open, new Point(0, 0), new Point(4, 4), path);
+        Check("capraz hareket kullanilir (4 adim)", path.Count == 4);
+
+        // --- Duvar: dolasmali ---
+        // x = 3 sutunu y = -2..2 arasi kapali, ustunden/altindan gecilir.
+        var wall = (int x, int y) => x == 3 && y >= -2 && y <= 2;
+
+        Check("duvarin arkasindaki hedefe yol bulunur",
+            pathfinder.FindPath(wall, new Point(0, 0), new Point(6, 0), path)
+                == PathResult.Complete);
+
+        Check("yol duvarin ICINDEN gecmez",
+            path.TrueForAll(p => !wall(p.X, p.Y)));
+
+        // Duz cizgi 6 adim olurdu; dolasma daha uzun OLMALI. Bu kontrol
+        // "yol bulundu ama duvari yok saydi" hatasini yakalar.
+        Check("dolasma duz cizgiden uzun", path.Count > 6);
+
+        Check("dolasan yolun sonu yine hedeftir", path[^1] == new Point(6, 0));
+
+        // --- Kapali oda: Partial donmeli, DONMAMALI ---
+        // Hedefin cevresi tamamen duvar.
+        var sealed_ = (int x, int y) =>
+            Math.Abs(x - 10) <= 2 && Math.Abs(y) <= 2 &&
+            (Math.Abs(x - 10) == 2 || Math.Abs(y) == 2);
+
+        var outcome = pathfinder.FindPath(sealed_, new Point(0, 0), new Point(10, 0), path);
+
+        Check("ulasilamaz hedefte Partial doner", outcome == PathResult.Partial);
+        Check("Partial yol da BOS DEGIL (dusman donmaz)", path.Count > 0);
+        Check("Partial yol duvarin icine girmez",
+            path.TrueForAll(p => !sealed_(p.X, p.Y)));
+
+        // --- Butce gercekten kesiyor mu ---
+        // Kucuk butce ile ayni ulasilamaz hedef: arama sonsuz dunyada
+        // butun chunk'lari taramamali.
+        pathfinder.FindPath(sealed_, new Point(0, 0), new Point(10, 0), path, nodeBudget: 32);
+        Check("dugum butcesi asilmaz", pathfinder.LastExpandedNodes <= 32);
+
+        // --- Kose kesme yasak ---
+        // (1,0) ve (0,1) dolu. (1,1) karesi hala ULASILABILIR (etrafindan
+        // dolasilarak) ama (0,0) -> (1,1) TEK CAPRAZ ADIMI yasak: carpisma
+        // kutusu iki duvarin kosesine sikisirdi.
+        var corner = (int x, int y) => (x == 1 && y == 0) || (x == 0 && y == 1);
+
+        pathfinder.FindPath(corner, new Point(0, 0), new Point(1, 1), path);
+
+        Check("kose kesen tek capraz adim SECILMEZ", path.Count > 1);
+        Check("kose labirentinde her adim gecerli",
+            AllStepsLegal(corner, new Point(0, 0), path));
+
+        // Tek dik komsu kapaliyken de capraz yasak; dolasma iki adim surer.
+        var halfCorner = (int x, int y) => x == 1 && y == 0;
+
+        pathfinder.FindPath(halfCorner, new Point(0, 0), new Point(1, 1), path);
+        Check("tek komsu kapaliyken capraz yerine dolasilir", path.Count == 2);
+
+        // Duvar labirentindeki yolun her adimi da ayni kurallara uymali:
+        // "hedefe vardi" yetmez, ARADAKI her adim yurunebilir olmali.
+        pathfinder.FindPath(wall, new Point(0, 0), new Point(6, 0), path);
+        Check("duvar labirentinde her adim gecerli",
+            AllStepsLegal(wall, new Point(0, 0), path));
+
+        // --- Ayni kare ---
+        Check("baslangic = hedef ise yol bostur",
+            pathfinder.FindPath(open, new Point(4, 4), new Point(4, 4), path)
+                == PathResult.Complete && path.Count == 0);
+    }
+
+    /// <summary>
+    /// Elle çizilmiş sınama haritası: uzun bir duvar ve iki yanı açık arazi.
+    ///
+    /// <c>x = WallColumn</c> sütunu <c>y = -6..6</c> arasında kapalı.
+    /// Düşman ile oyuncu duvarın iki yanında; aradaki tek yol duvarın
+    /// ucundan dolaşmak.
+    /// </summary>
+    private sealed class WallMap(int groundTile, int wallTile) : ITileGenerator
+    {
+        public const int WallColumn = 6;
+        public const int WallHalfHeight = 6;
+
+        public int Seed => 1;
+
+        /// <summary>Sınırsız: düşman duvarı istediği kadar dolaşabilsin.</summary>
+        public Rectangle? Bounds => null;
+
+        public int GetTileIndex(int tileX, int tileY) =>
+            IsSolid(tileX, tileY) ? wallTile : groundTile;
+
+        public bool IsSolid(int tileX, int tileY) =>
+            tileX == WallColumn && tileY >= -WallHalfHeight && tileY <= WallHalfHeight;
+    }
+
+    /// <summary>
+    /// Düşman gerçekten duvarı DOLAŞIYOR mu.
+    ///
+    /// <see cref="PathfindingRules"/> yol bulucunun kendisini sınıyor;
+    /// burada gerçek <see cref="Enemy"/>, gerçek <see cref="TileMap"/> ve
+    /// gerçek çarpışma kodu ile bir kovalama koşturuluyor. İkisi ayrı:
+    /// doğru bir yol bulucu, yolu takip etmeyen bir düşmanla birlikte de
+    /// var olabilir — eski hata (duvara yaslanıp titreme) tam olarak
+    /// buydu.
+    /// </summary>
+    private static void EnemyChaseRules(ItemDatabase items, Tileset tileset,
+                                        SpriteSheet playerSheet, EnemySystem enemies,
+                                        ClimateSystem climate)
+    {
+        Section("9) Dusman duvari dolasiyor mu (gercek kovalama)");
+
+        var map = new TileMap(
+            new WallMap(tileset.IndexOf("grass"), tileset.IndexOf("stone_wall")), tileset);
+
+        var tileSize = map.TileSize;
+
+        // Oyuncu duvarin SAG yaninda, dusman SOL yaninda, ayni satirda.
+        // Duz cizgi tam duvara denk geliyor.
+        var player = new Player(playerSheet, TileFoot(12, 0, tileSize));
+
+        enemies.Clear();
+        enemies.SpawnBoss(TileFoot(0, 0, tileSize));
+
+        Check("sinama dusmani dogdu", enemies.Enemies.Count == 1);
+
+        var enemy = enemies.Enemies[0];
+        var startDistance = Vector2.Distance(enemy.Position, player.Position);
+
+        Check("baslangicta duvarin arkasinda (gorus kapali)",
+            !TilePathfinder.HasLineOfSight(map, enemy.Center, player.Center, 7f));
+
+        var inventory = new WorldInventory(items);
+        var frame = TimeSpan.FromSeconds(1.0 / 60.0);
+
+        var usedPath = false;
+        var maxAbsY = 0f;
+        var enteredWall = false;
+        var reachedFrame = -1;
+
+        // 20 saniye: dolasma mesafesi ~26 tile, boss hizi 44 px/sn.
+        for (var i = 0; i < 1200; i++)
+        {
+            enemies.Update(new GameTime(frame * i, frame), map, player, climate, inventory,
+                           allowSpawning: false);
+
+            if (enemy.PathLength > 0) usedPath = true;
+
+            maxAbsY = MathF.Max(maxAbsY, MathF.Abs(enemy.Position.Y - player.Position.Y));
+
+            // Duvarin ICINDE hic bulunmamali.
+            if (map.IsSolidAtWorld(enemy.Center.X, enemy.Center.Y)) enteredWall = true;
+
+            if (reachedFrame < 0 &&
+                Vector2.Distance(enemy.Position, player.Position) <= enemy.Definition.AttackRange)
+            {
+                reachedFrame = i;
+                break;
+            }
+        }
+
+        Check("dusman YOL BULMA kullandi (duz cizgi degil)", usedPath);
+        Check("dusman duvarin icine hic girmedi", !enteredWall);
+
+        // Duz cizgide gelseydi y sapmasi ~0 kalirdi. Duvarin yarim
+        // yuksekligi 6 tile; en az 5 tile sapma bekleniyor.
+        Check("dusman duvari DOLASTI (y sapmasi > 5 tile)", maxAbsY > 5 * tileSize);
+
+        Check("dusman oyuncuya ULASTI", reachedFrame >= 0);
+
+        Check("baslangic mesafesi gercekten uzaklasmis degil",
+            startDistance > enemy.Definition.AttackRange);
+
+        Console.WriteLine($"         (ulasma: {reachedFrame} kare, " +
+                          $"en buyuk y sapmasi: {maxAbsY / tileSize:F1} tile)");
+
+        enemies.Clear();
+    }
+
+    /// <summary>Tile koordinatından ayak hizası dünya konumu.</summary>
+    private static Vector2 TileFoot(int tileX, int tileY, int tileSize) => new(
+        tileX * tileSize + tileSize / 2f,
+        (tileY + 1) * tileSize);
+
+    /// <summary>
+    /// Yolun her adımı gerçekten yürünebilir mi.
+    ///
+    /// "Hedefe vardı" tek başına yetmez: aradaki bir adım duvarın içinden
+    /// ya da iki duvarın köşesinden geçiyorsa düşman orada takılır ve
+    /// hata ekranda "düşman bazen donuyor" diye görünür.
+    /// </summary>
+    private static bool AllStepsLegal(Func<int, int, bool> isSolid, Point start,
+                                      IReadOnlyList<Point> path)
+    {
+        var previous = start;
+
+        foreach (var step in path)
+        {
+            var dx = step.X - previous.X;
+            var dy = step.Y - previous.Y;
+
+            // Komsu olmali.
+            if (Math.Abs(dx) > 1 || Math.Abs(dy) > 1 || (dx == 0 && dy == 0)) return false;
+
+            // Hedef kare bos olmali.
+            if (isSolid(step.X, step.Y)) return false;
+
+            // Capraz adimda iki dik komsu da bos olmali.
+            if (dx != 0 && dy != 0 &&
+                (isSolid(previous.X + dx, previous.Y) || isSolid(previous.X, previous.Y + dy)))
+            {
+                return false;
+            }
+
+            previous = step;
+        }
+
+        return true;
     }
 
     private static void Check(string what, bool condition)

@@ -104,16 +104,49 @@ public sealed class EnemyTable
 ///
 /// Hareket <see cref="TileCollider"/> üzerinden — oyuncuyla aynı çarpışma
 /// kurallarından geçer, duvarın içinden geçemez.
+///
+/// ── Kovalama: görüş varsa düz, yoksa yol bulma ──────────────────────────
+/// Açık arazide düşman oyuncuya doğrudan yürür. Arada engel varsa
+/// <see cref="TilePathfinder"/> devreye girer ve düşman duvarı DOLAŞIR.
+/// Önce görüş kontrolü yapılmasının sebebi maliyet: düşmanların çoğu
+/// çoğu zaman oyuncuyu görüyor ve o durumda A* çalıştırmak boşuna.
 /// </summary>
 public sealed class Enemy
 {
     private const float ColliderWidth = 14f;
     private const float ColliderHeight = 8f;
 
+    /// <summary>
+    /// Yol kaç saniyede bir yeniden hesaplanır.
+    ///
+    /// Her karede hesaplamak gereksiz: oyuncu 50 ms'de yarım tile ancak
+    /// gidiyor. Çok seyrek hesaplamak ise düşmanın eski yolu takip edip
+    /// oyuncunun arkasından geç kalmasına yol açar.
+    /// </summary>
+    private const float RepathIntervalSeconds = 0.5f;
+
+    /// <summary>Bu mesafeye girilince ara nokta geçilmiş sayılır.</summary>
+    private const float WaypointReachedDistance = 3f;
+
+    /// <summary>Sıkışma kontrolünün periyodu.</summary>
+    private const float StuckCheckSeconds = 0.4f;
+
     private readonly SpriteSheet _sheet;
     private readonly SpriteAnimator _animator;
     private float _attackCooldown;
     private float _hurtSeconds;
+
+    /// <summary>Takip edilen ara noktalar (tile koordinatı). Boşsa düz çizgi.</summary>
+    private readonly List<Point> _path = [];
+
+    private int _pathIndex;
+    private float _repathTimer;
+
+    // Sikisma tespiti: yol bulucu iyi bir yol verse bile carpisma
+    // kutusu bir kosede takilabilir. Ilerlemeyen dusman yeniden
+    // planlamaya zorlanir.
+    private float _stuckTimer;
+    private Vector2 _stuckAnchor;
 
     public HostileDefinition Definition { get; }
     public Vector2 Position { get; private set; }
@@ -129,6 +162,16 @@ public sealed class Enemy
         Position.X - ColliderWidth / 2f, Position.Y - ColliderHeight,
         ColliderWidth, ColliderHeight);
 
+    /// <summary>
+    /// Çarpışma kutusunun ORTASI. <see cref="Position"/> ayakların altında
+    /// (çizim için) ve tek başına kullanılırsa bir alt tile'a düşebilir;
+    /// yol bulma ve görüş kontrolü gövdenin merkezini ister.
+    /// </summary>
+    public Vector2 Center => new(Position.X, Position.Y - ColliderHeight / 2f);
+
+    /// <summary>Takip edilen yolun uzunluğu — teşhis ve test için.</summary>
+    public int PathLength => _path.Count;
+
     public Enemy(HostileDefinition definition, SpriteSheet sheet, Vector2 position, bool isBoss)
     {
         Definition = definition;
@@ -139,13 +182,26 @@ public sealed class Enemy
 
         _sheet.RequireStates("idle_down", "walk_down", "hurt", "death");
         _animator = new SpriteAnimator(sheet, "idle_down");
+
+        _stuckAnchor = position;
+
+        // Yeniden planlamalar dusmanlar arasinda YAYILIR: hepsi ayni
+        // karede planlarsa o kare digerlerinden kat kat uzun surer ve
+        // yarim saniyede bir gorunur bir takilma olusur. Baslangic
+        // sayaci konumdan tureyen sabit bir kesirle kaydiriliyor.
+        _repathTimer = MathF.Abs(position.X * 0.37f + position.Y * 0.11f)
+                       % RepathIntervalSeconds;
     }
 
     /// <summary>
     /// Bir karelik yapay zekâ. Host çağırır.
     /// </summary>
+    /// <param name="pathfinder">
+    /// Düşmanlar arasında PAYLAŞILAN yol bulucu. Her düşmanın kendi
+    /// örneğini tutması, arama tablolarını düşman sayısı kadar çoğaltırdı.
+    /// </param>
     /// <returns>Oyuncuya verilen hasar; vuruş yoksa 0.</returns>
-    public int Update(GameTime gameTime, TileMap map, Player target)
+    public int Update(GameTime gameTime, TileMap map, Player target, TilePathfinder pathfinder)
     {
         var delta = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
@@ -166,19 +222,22 @@ public sealed class Enemy
         // Ölü oyuncuyu kovalamaz — cesedin başında beklemek anlamsız.
         if (target.IsDead || distance > Definition.AggroRange)
         {
+            // Kovalama bitti: yol da unutulur. Yoksa oyuncu menzile geri
+            // girdiginde dusman once ESKI yolu yurumeye calisirdi.
+            _path.Clear();
+
             _animator.Play(_hurtSeconds > 0f ? "hurt" : $"idle_{Facing.ToString().ToLowerInvariant()}");
             _animator.Update(gameTime);
             return 0;
         }
 
-        Facing = Math.Abs(toTarget.X) >= Math.Abs(toTarget.Y)
-            ? toTarget.X < 0 ? Facing.Left : Facing.Right
-            : toTarget.Y < 0 ? Facing.Up : Facing.Down;
-
         var damage = 0;
+        var heading = toTarget;
 
         if (distance <= Definition.AttackRange)
         {
+            _path.Clear();
+
             if (_attackCooldown <= 0f)
             {
                 _attackCooldown = Definition.AttackCooldown;
@@ -189,16 +248,131 @@ public sealed class Enemy
         }
         else
         {
-            var direction = toTarget / distance;
+            var direction = ChooseDirection(map, target, pathfinder, delta);
+
+            // Yon, gidilen yerden turer: yol bir duvari dolasirken dusman
+            // oyuncuya degil, YURUDUGU yone bakmali.
+            heading = direction;
+
             Position += TileCollider.Move(map, Collider, direction * Definition.MoveSpeed * delta);
+            UpdateStuckDetection(delta);
 
             _animator.Play(_hurtSeconds > 0f
                 ? "hurt"
                 : $"walk_{Facing.ToString().ToLowerInvariant()}");
         }
 
+        Facing = Math.Abs(heading.X) >= Math.Abs(heading.Y)
+            ? heading.X < 0 ? Facing.Left : Facing.Right
+            : heading.Y < 0 ? Facing.Up : Facing.Down;
+
         _animator.Update(gameTime);
         return damage;
+    }
+
+    /// <summary>
+    /// Bu karede hangi yöne yürüneceği (birim vektör).
+    ///
+    /// Görüş açıksa doğrudan oyuncuya; değilse yolun sıradaki ara noktasına.
+    /// </summary>
+    private Vector2 ChooseDirection(TileMap map, Player target, TilePathfinder pathfinder,
+                                    float delta)
+    {
+        _repathTimer -= delta;
+
+        if (_repathTimer <= 0f)
+        {
+            _repathTimer = RepathIntervalSeconds;
+            Replan(map, target, pathfinder);
+        }
+
+        // Yol yoksa duz cizgi. Bu, gorusun acik oldugu (cok yaygin) durum
+        // ve yol bulmanin hic calismadigi ucuz yol.
+        if (_pathIndex >= _path.Count) return Normalize(target.Position - Position);
+
+        var tileSize = map.TileSize;
+        var waypoint = TileCenter(_path[_pathIndex], tileSize);
+
+        // Ara noktaya varildiysa sonrakine gec. While: yuksek hizda bir
+        // karede birden fazla ara nokta gecilebilir.
+        while (Vector2.Distance(Center, waypoint) <= WaypointReachedDistance)
+        {
+            if (++_pathIndex >= _path.Count)
+            {
+                _path.Clear();
+                return Normalize(target.Position - Position);
+            }
+
+            waypoint = TileCenter(_path[_pathIndex], tileSize);
+        }
+
+        return Normalize(waypoint - Center);
+    }
+
+    /// <summary>Yolu yeniden hesaplar (ya da görüş açıksa yolu bırakır).</summary>
+    private void Replan(TileMap map, Player target, TilePathfinder pathfinder)
+    {
+        var targetCenter = new Vector2(target.Position.X, target.Position.Y - ColliderHeight / 2f);
+
+        // Gorus varsa yol bulmaya hic girilmez. Yaricap carpisma kutusunun
+        // yarisi: govdesi sigmayan bir aralik "acik" sayilmamali.
+        if (TilePathfinder.HasLineOfSight(map, Center, targetCenter, ColliderWidth / 2f))
+        {
+            _path.Clear();
+            _pathIndex = 0;
+            return;
+        }
+
+        var tileSize = map.TileSize;
+        var start = ToTile(Center, tileSize);
+        var goal = ToTile(targetCenter, tileSize);
+
+        // Partial da KABUL EDILIR: hedefe ulasilamiyorsa bile en yakin
+        // ulasilabilir kareye yurumek, oldugu yerde duvara yaslanmaktan
+        // iyidir.
+        var result = pathfinder.FindPath(map, start, goal, _path);
+
+        _pathIndex = 0;
+        if (result == PathResult.None) _path.Clear();
+    }
+
+    /// <summary>
+    /// İlerleme olmadığında yeniden planlamayı öne çeker.
+    ///
+    /// Yol doğru olsa bile çarpışma kutusu dar bir geçitte takılabilir;
+    /// o durumda bir sonraki planlamayı yarım saniye beklemek, düşmanın
+    /// duvara yaslanıp titremesi demek olurdu.
+    /// </summary>
+    private void UpdateStuckDetection(float delta)
+    {
+        _stuckTimer += delta;
+        if (_stuckTimer < StuckCheckSeconds) return;
+
+        // 4 = 2 pixel^2: yarim saniyede 2 pixel'den az giden dusman
+        // ilerlemiyor demektir.
+        if (Vector2.DistanceSquared(Position, _stuckAnchor) < 4f)
+        {
+            _repathTimer = 0f;
+            _path.Clear();
+        }
+
+        _stuckAnchor = Position;
+        _stuckTimer = 0f;
+    }
+
+    private static Point ToTile(Vector2 world, int tileSize) => new(
+        (int)MathF.Floor(world.X / tileSize),
+        (int)MathF.Floor(world.Y / tileSize));
+
+    private static Vector2 TileCenter(Point tile, int tileSize) => new(
+        (tile.X + 0.5f) * tileSize,
+        (tile.Y + 0.5f) * tileSize);
+
+    /// <summary>Sıfır vektörde <c>NaN</c> üretmeyen normalizasyon.</summary>
+    private static Vector2 Normalize(Vector2 value)
+    {
+        var length = value.Length();
+        return length < 0.001f ? Vector2.Zero : value / length;
     }
 
     public void TakeDamage(int amount)

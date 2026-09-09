@@ -28,8 +28,8 @@ katmanı; katmanlı kozmetikler + nadirlik + sezonluk item, Steamworks
 (başarım/leaderboard/davet), klan + host otoriter takas, EN/TR dil desteği +
 erişilebilirlik, photo mode + emote + ping + yama notları, Workshop altyapısı.
 
-Henüz yok: **kaydetme/yükleme**, düşman yol bulma, varlık (yaratık/düşman/NPC)
-ağ senkronizasyonu. Bkz. "Bilinen boşluklar".
+Henüz yok: varlık (yaratık/düşman/NPC) ağ senkronizasyonu.
+Bkz. "Bilinen boşluklar".
 
 ## Kontroller
 
@@ -645,7 +645,29 @@ ve tutmayan bağlantı reddediliyor. Kablo biçimi değiştiği için
 * **Yaratıklar, düşmanlar, NPC'ler ve zindanlar ağda senkronize DEĞİL.** Her istemci
   kendi kopyasını görür. Protokole varlık senkronizasyonu mesajı gerekiyor —
   şu an yalnızca oyuncular, tile'lar ve dünya saati senkron.
-* **Düşman yol bulma yok.** Düz çizgide yürüyorlar, duvar arkasına geçince takılırlar.
+### Düşman yol bulma
+
+Düşmanlar madde 15'ten beri düz çizgide yürüyordu: oyuncu bir kayanın arkasına
+geçtiğinde düşman kayaya yaslanıp titriyordu. `Systems/Hostiles/TilePathfinder.cs`
+tile ızgarasında sekiz yönlü A* koşturuyor.
+
+Üç tasarım kararı:
+
+* **Önce görüş, sonra arama.** Açık arazide düşmanların çoğu oyuncuyu doğrudan
+  görüyor; o durumda A* hiç çalışmıyor (`HasLineOfSight`).
+* **Bütçeli arama.** Dünya sonsuz. Ulaşılamayan bir hedefte klasik A* açık küme
+  boşalana kadar arar ve burada o küme hiç boşalmaz — arama bütün chunk'ları
+  üretmeye başlardı. 512 düğüm sonrasında arama kesilir ve hedefe **en yakın
+  ulaşılabilir kareye** giden yol döner (`PathResult.Partial`): düşman donmak
+  yerine yaklaşabildiği kadar yaklaşır.
+* **Köşe kesme yasak.** Çapraz adım ancak iki dik komşusu da boşsa geçerli;
+  yoksa çarpışma kutusu iki duvarın köşesine sıkışırdı.
+
+Doğrulaması iki katmanlı: `--self-test` içinde hem yol bulucunun kendisi elle
+çizilmiş labirentlerde sınanıyor, hem de **gerçek** `Enemy` + `TileMap` +
+çarpışma koduyla bir kovalama koşturuluyor (düşman 6.7 tile dolaşarak
+391 karede oyuncuya varıyor). İkisi ayrı olmalı: doğru bir yol bulucu, yolu
+takip etmeyen bir düşmanla birlikte de var olabilir.
 * **Görev ilerlemesi ve tarım kaydedilmiyor.** Kayıt sistemi var (aşağıya bak)
   ama NPC görev durumu ile ekili tarlalar henüz kapsam dışında; ikisi de
   kendi sistemlerinde dışa aktarım arayüzü istiyor.
