@@ -48,7 +48,37 @@ public enum MessageType : byte
     /// listeden birinin uzunluğunu diğerinin ayrıştırmasını bozacak hale
     /// getirirdi.
     /// </summary>
-    EntitySnapshot = 15
+    EntitySnapshot = 15,
+
+    /// <summary>
+    /// İstemci → host: "şu anda baktığım kareye şu eylemi yapmak istiyorum".
+    ///
+    /// Hedef kare MESAJDA YOK: host onu kendi bildiği oyuncu konumundan
+    /// hesaplıyor. İstemci kare göndersEydi, menzil dışındaki bir kareyi
+    /// (haritanın öbür ucunu) işaret edebilirdi.
+    /// </summary>
+    WorldAction = 16,
+
+    /// <summary>Host → istemci: eylemin sonucu (kod olarak, metin olarak değil).</summary>
+    ActionResult = 17,
+
+    /// <summary>Host → istemci: oyuncunun çevresindeki ekili tarlalar.</summary>
+    CropSnapshot = 18
+}
+
+/// <summary>
+/// İstemcinin host'tan yapmasını istediği dünya eylemi.
+///
+/// Değerler protokol sabiti. Eylemin PARAMETRESİ ayrı bir metin alanında
+/// gidiyor (tarımda ekilecek tohum); parametresiz eylemlerde boş.
+/// </summary>
+public enum WorldActionKind : byte
+{
+    /// <summary>Bağlamsal tarım (sür / ek / hasat). Parametre: tohum kimliği.</summary>
+    Farm = 0,
+
+    /// <summary>Bağlamsal yaratık etkileşimi (besle / bin / in). Parametresiz.</summary>
+    Tame = 1
 }
 
 /// <summary>Snapshot içindeki tek bir oyuncunun durumu.</summary>
@@ -116,8 +146,12 @@ public static class NetworkProtocol
     /// 3: <see cref="MessageType.EntitySnapshot"/> eklendi. Düşmanlar ve
     /// yaratıklar artık host otoriter; istemci onları simüle etmiyor,
     /// yalnızca çiziyor.
+    ///
+    /// 4: <see cref="MessageType.WorldAction"/>, <c>ActionResult</c> ve
+    /// <c>CropSnapshot</c> eklendi. Tarım ve evcilleştirme artık istemcide
+    /// de çalışıyor — host'a istek olarak gidip orada çözülerek.
     /// </summary>
-    public const byte ProtocolVersion = 3;
+    public const byte ProtocolVersion = 4;
 
     // ---------------- yazma ----------------
 
@@ -262,6 +296,152 @@ public static class NetworkProtocol
                 data[offset + 14]));
 
             offset += EntityStateBytes;
+        }
+
+        return true;
+    }
+
+    // ---------------- dünya eylemi (istemci → host → istemci) ----------------
+
+    /// <summary>
+    /// İstemcinin eylem isteği.
+    ///
+    /// Hedef kare GÖNDERİLMİYOR — host onu kendi bildiği oyuncu konumundan
+    /// hesaplıyor. İstemci kare gönderseydi haritanın öbür ucundaki bir
+    /// tarlayı hasat edebilirdi; aynı sebeple hasat sonucu da host'un
+    /// aynasına yazılıyor.
+    /// </summary>
+    /// <param name="argument">
+    /// Eylemin parametresi; parametresiz eylemlerde boş (varsayılan).
+    /// </param>
+    public static byte[] WriteWorldAction(WorldActionKind action, string argument = "")
+    {
+        var raw = System.Text.Encoding.UTF8.GetBytes(argument);
+
+        if (raw.Length > 255)
+        {
+            throw new ArgumentException("eylem parametresi 255 bayttan uzun olamaz",
+                                        nameof(argument));
+        }
+
+        var buffer = new byte[3 + raw.Length];
+        buffer[0] = (byte)MessageType.WorldAction;
+        buffer[1] = (byte)action;
+        buffer[2] = (byte)raw.Length;
+        raw.CopyTo(buffer, 3);
+        return buffer;
+    }
+
+    public static bool TryReadWorldAction(ReadOnlySpan<byte> data, out WorldActionKind action,
+                                          out string argument)
+    {
+        action = default;
+        argument = "";
+
+        if (data.Length < 3) return false;
+
+        action = (WorldActionKind)data[1];
+
+        var length = data[2];
+        if (data.Length < 3 + length) return false;
+
+        argument = System.Text.Encoding.UTF8.GetString(data.Slice(3, length));
+        return true;
+    }
+
+    /// <summary>
+    /// Eylemin sonucu — METİN DEĞİL, KOD.
+    ///
+    /// Metin göndermek host'un dilini istemciye dayatırdı: madde 23'te dil
+    /// istemcinin kendi ayarı. Kod gönderilince her istemci kendi dil
+    /// tablosundan okuyor.
+    ///
+    /// <paramref name="result"/>'un anlamı eyleme göre değişir (tarımda
+    /// <c>FarmOutcome</c>, evcilleştirmede <c>TameOutcome</c>);
+    /// <paramref name="detail"/> ise sayısal ek (kaç besleme kaldı gibi).
+    /// </summary>
+    public static byte[] WriteActionResult(WorldActionKind action, byte result, byte detail) =>
+        [(byte)MessageType.ActionResult, (byte)action, result, detail];
+
+    public static bool TryReadActionResult(ReadOnlySpan<byte> data, out WorldActionKind action,
+                                           out byte result, out byte detail)
+    {
+        action = default;
+        result = detail = 0;
+
+        if (data.Length < 4) return false;
+
+        action = (WorldActionKind)data[1];
+        result = data[2];
+        detail = data[3];
+        return true;
+    }
+
+    /// <summary>Ekin başına kablo boyutu: 4 x + 4 y + 1 tanım + 4 büyüme.</summary>
+    public const int CropStateBytes = 13;
+
+    /// <summary>
+    /// Tek snapshot'ta gönderilebilecek en fazla tarla.
+    ///
+    /// Tarlalar oyuncunun ÇEVRESİNDEN seçiliyor (host her istemciye kendi
+    /// çevresini yolluyor), yani bu tavana ancak çok yoğun bir tarlada
+    /// ulaşılır. 64 tarla ≈ 838 bayt — tipik MTU'nun altında.
+    /// </summary>
+    public const int MaxCropsPerSnapshot = 64;
+
+    /// <summary>
+    /// Oyuncunun çevresindeki ekili tarlalar.
+    ///
+    /// Varlık snapshot'ıyla aynı mantık: TAM durum gidiyor, listede olmayan
+    /// tarla istemcide silinir. Büyüme de gönderiliyor çünkü çizilen aşama
+    /// ondan türüyor ve istemci mevsim/yağmur geçmişini bilmediği için
+    /// kendi başına hesaplayamaz.
+    /// </summary>
+    public static byte[] WriteCropSnapshot(IReadOnlyList<(int X, int Y, byte Crop, float Growth)>
+                                           crops)
+    {
+        var count = Math.Min(crops.Count, MaxCropsPerSnapshot);
+
+        var buffer = new byte[2 + count * CropStateBytes];
+        buffer[0] = (byte)MessageType.CropSnapshot;
+        buffer[1] = (byte)count;
+
+        var offset = 2;
+        for (var i = 0; i < count; i++)
+        {
+            var (x, y, crop, growth) = crops[i];
+
+            WriteInt32(buffer, offset, x);
+            WriteInt32(buffer, offset + 4, y);
+            buffer[offset + 8] = crop;
+            WriteSingle(buffer, offset + 9, growth);
+
+            offset += CropStateBytes;
+        }
+
+        return buffer;
+    }
+
+    public static bool TryReadCropSnapshot(ReadOnlySpan<byte> data,
+                                           out List<(int X, int Y, byte Crop, float Growth)> crops)
+    {
+        crops = [];
+
+        if (data.Length < 2) return false;
+
+        var count = data[1];
+        if (data.Length < 2 + count * CropStateBytes) return false;
+
+        var offset = 2;
+        for (var i = 0; i < count; i++)
+        {
+            crops.Add((
+                ReadInt32(data, offset),
+                ReadInt32(data, offset + 4),
+                data[offset + 8],
+                ReadSingle(data, offset + 9)));
+
+            offset += CropStateBytes;
         }
 
         return true;

@@ -3,6 +3,17 @@
 # Istemcide yerel yaratik listesi BOSALTILIYOR (host otoriter). Yani bu
 # karede gorunen her yaratik ve dusman AGDAN gelmis demektir; ekranda
 # hicbir sey yoksa senkronizasyon calismiyor.
+#
+# Ayrica tarim deneniyor: C tusu artik istemcide de calisiyor ama eylem
+# HOST'ta cozuluyor.
+#
+# C tuslari CIFTLER halinde basiliyor: ilki topragi surer, ARADA HIC
+# HAREKET ETMEDEN basilan ikincisi artik surulmus topraga denk gelir ve
+# tohum ister. Istemcinin tohumu YOK -> host NoSeed dondurmeli. Bu,
+# "istemci ne isterse onu alir" acigi olmadiginin kaniti.
+#
+# Uc ayri konumda deneniyor cunku zemin turu konuma gore degisiyor
+# (kaya ve kum surulemez, cimen ve toprak surulebilir).
 
 screen Playing
 
@@ -11,6 +22,39 @@ tap F10
 
 # Baglanti + karsilama + ilk snapshot'lar icin 7 saniye.
 wait 420
-shot client
+
+# --- 1. konum ---
+tap C
+wait 25
+tap C
+wait 40
+
+# Bu karede surulmus toprak oyuncunun HEMEN yaninda ve ekranda
+# "Tohum yok" yaziyor: eylem host'ta cozuldu, sonuc kod olarak geldi ve
+# istemci kendi dil tablosundan cevirdi.
+shot 01_surdu_tohum_yok
+wait 15
+
+# --- 2. konum ---
+down S
+wait 25
+up S
+wait 10
+tap C
+wait 25
+tap C
+wait 25
+
+# --- 3. konum ---
+down D
+wait 25
+up D
+wait 10
+tap C
+wait 25
+tap C
+wait 40
+
+shot 02_son_durum
 
 quit

@@ -2,4 +2,10 @@
 [worldgen] tohum=20260908 spawn=(0,0) chunk(0,0) sağlama=0x49C29A30
 [ag] Sunucu acildi (LiteNetLib (gelistirme)) — tohum 20260908
 [ag] Oyuncu 1 katildi (1 bagli)
-[capture] kare 939: capture/ag/host/host.png
+[tarim] oyuncu 1: Tilled
+[tarim] oyuncu 1: NoSeed
+[tarim] oyuncu 1: Tilled
+[tarim] oyuncu 1: NoSeed
+[tarim] oyuncu 1: NotTillable
+[tarim] oyuncu 1: NotTillable
+[capture] kare 1239: capture/ag/host/host.png

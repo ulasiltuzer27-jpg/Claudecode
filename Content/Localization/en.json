@@ -130,8 +130,20 @@
     "menu.newGame": "New game",
     "menu.newGameWarn": "(deletes current save)",
     "menu.saveHint": "F5 to save",
-    "net.creatureHostOnly": "Creatures are resolved on the host",
     "net.dungeonOfflineOnly": "Dungeons are single-player only for now",
-    "save.migrated": "Loaded a save from an older version"
+    "save.migrated": "Loaded a save from an older version",
+    "farm.tilled": "Tilled the soil",
+    "farm.planted": "Planted {0}",
+    "farm.harvested": "Harvested!",
+    "farm.notRipe": "Not ripe yet",
+    "farm.noSeed": "No seed",
+    "farm.inventoryFull": "Inventory full",
+    "farm.notTillable": "Can't till here",
+    "tame.dismounted": "Dismounted",
+    "tame.mounted": "Mounted",
+    "tame.tamed": "Creature tamed!",
+    "tame.fed": "Fed it — {0} more to go",
+    "tame.noFeed": "No feed",
+    "tame.noCreature": "No creature nearby"
   }
 }

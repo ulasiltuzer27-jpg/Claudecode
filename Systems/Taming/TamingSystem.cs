@@ -77,6 +77,34 @@ public sealed class CreatureTable
     };
 }
 
+/// <summary>
+/// Bağlamsal yaratık etkileşiminin sonucu.
+///
+/// Değerler ağ üzerinden bayt olarak gidiyor (madde 10'daki yetki
+/// notlarıyla birlikte tarım/evcilleştirme host'a taşındı), bu yüzden
+/// SIRA PROTOKOL SABİTİ: yeni sonuçlar SONA eklenmeli.
+/// </summary>
+public enum TameOutcome : byte
+{
+    /// <summary>Menzilde yaratık yok.</summary>
+    NoCreature = 0,
+
+    /// <summary>Yem yok.</summary>
+    NoFeed = 1,
+
+    /// <summary>Beslendi ama henüz evcilleşmedi.</summary>
+    Fed = 2,
+
+    /// <summary>Bu beslemeyle evcilleşti.</summary>
+    Tamed = 3,
+
+    /// <summary>Sırtına binildi.</summary>
+    Mounted = 4,
+
+    /// <summary>Sırtından inildi.</summary>
+    Dismounted = 5
+}
+
 /// <summary>Yaratığın davranış durumu.</summary>
 public enum CreatureState
 {
@@ -418,43 +446,49 @@ public sealed class TamingSystem(CreatureTable table, SpriteSheet creatureSheet,
 
     /// <summary>
     /// Bağlamsal etkileşim: evcil değilse besler, evcilse biner, binekteyse iner.
+    ///
+    /// ── Neden metin değil, kod dönüyor ─────────────────────────────────
+    /// Eskiden hazır Türkçe cümle dönüyordu. İki sorun: çağıran taraf
+    /// sonucu ancak METNE bakarak anlayabiliyordu (madde 23'te diller
+    /// gelince sessizce bozulacak bir bağ), ve ağ üzerinden istemciye
+    /// gönderilemiyordu — host'un dili istemciye dayatılırdı. Kod dönünce
+    /// her istemci kendi dil tablosundan okuyor.
     /// </summary>
-    /// <returns>Oyuncuya gösterilecek mesaj.</returns>
-    public string Interact(Player player, WorldInventory inventory)
+    /// <param name="detail">
+    /// Sonucu tamamlayan sayı: <see cref="TameOutcome.Fed"/> için kaç
+    /// besleme kaldığı, diğerlerinde 0.
+    /// </param>
+    public TameOutcome Interact(Player player, WorldInventory inventory, out int detail)
     {
-        if (Mount is { } mounted)
+        detail = 0;
+
+        if (Mount is not null)
         {
-            mounted.Dismount(player.Position);
+            Mount.Dismount(player.Position);
             Mount = null;
-            return $"{mounted.Definition.Name} sırtından indin";
+            return TameOutcome.Dismounted;
         }
 
         var creature = Nearest(player.Position);
-        if (creature is null)
-        {
-            return "Yakında yaratık yok";
-        }
+        if (creature is null) return TameOutcome.NoCreature;
 
         if (creature.IsTamed)
         {
             creature.TryMount();
             Mount = creature;
-            return $"{creature.Definition.Name} sırtına bindin";
+            return TameOutcome.Mounted;
         }
 
-        if (!inventory.TryRemove(creature.Definition.TameItem, 1))
-        {
-            return "Yem yok";
-        }
+        if (!inventory.TryRemove(creature.Definition.TameItem, 1)) return TameOutcome.NoFeed;
 
         if (creature.Feed())
         {
             TamedCount++;
-            return $"{creature.Definition.Name} evcillesti!";
+            return TameOutcome.Tamed;
         }
 
-        var left = creature.Definition.TameFeedings - creature.Feedings;
-        return $"Besledin — {left} kez daha";
+        detail = creature.Definition.TameFeedings - creature.Feedings;
+        return TameOutcome.Fed;
     }
 
     public void Draw(SpriteBatch spriteBatch)

@@ -36,7 +36,10 @@ import sys
 # gonderilmiyor; iki taraf ayni tohumdan uretiyor ve uretim modlanabilir
 # veriden turuyor.
 # 3: EntitySnapshot eklendi. Dusmanlar ve yaratiklar artik host otoriter.
-PROTOCOL_VERSION = 3
+# 4: WorldAction / ActionResult / CropSnapshot eklendi. Tarim ve
+#    evcillestirme istemcide de calisiyor -- host'a istek olarak gidip
+#    orada cozulerek.
+PROTOCOL_VERSION = 4
 TICKS_PER_SECOND = 20
 DEFAULT_PORT = 7777
 
@@ -48,6 +51,12 @@ ENTITY_SNAPSHOT = 15
 # + 1 yon + 1 can + 1 bayrak.
 ENTITY_STATE_BYTES = 15
 MAX_ENTITIES_PER_SNAPSHOT = 64
+
+WORLD_ACTION, ACTION_RESULT, CROP_SNAPSHOT = 16, 17, 18
+
+# Ekin basina kablo boyutu: 4 x + 4 y + 1 tanim + 4 buyume.
+CROP_STATE_BYTES = 13
+MAX_CROPS_PER_SNAPSHOT = 64
 
 
 # ---------------------------------------------------------------------------
@@ -93,6 +102,25 @@ def write_entity_snapshot(tick: int, entities: list[tuple]) -> bytes:
     out = struct.pack("<BIB", ENTITY_SNAPSHOT, tick, count)
     for eid, kind, type_index, x, y, facing, health, flags in entities[:count]:
         out += struct.pack("<HBBffBBB", eid, kind, type_index, x, y, facing, health, flags)
+    return out
+
+
+def write_world_action(action: int, argument: str = "") -> bytes:
+    raw = argument.encode("utf-8")
+    if len(raw) > 255:
+        raise ValueError("eylem parametresi 255 bayttan uzun olamaz")
+    return struct.pack("<BBB", WORLD_ACTION, action, len(raw)) + raw
+
+
+def write_action_result(action: int, result: int, detail: int) -> bytes:
+    return struct.pack("<BBBB", ACTION_RESULT, action, result, detail)
+
+
+def write_crop_snapshot(crops: list[tuple]) -> bytes:
+    count = min(len(crops), MAX_CROPS_PER_SNAPSHOT)
+    out = struct.pack("<BB", CROP_SNAPSHOT, count)
+    for x, y, crop, growth in crops[:count]:
+        out += struct.pack("<iiBf", x, y, crop, growth)
     return out
 
 
@@ -155,6 +183,30 @@ def read_entity_snapshot(data: bytes):
     return tick, out
 
 
+def read_world_action(data: bytes):
+    if len(data) < 3:
+        return None
+    length = data[2]
+    if len(data) < 3 + length:
+        return None
+    return data[1], data[3:3 + length].decode("utf-8")
+
+
+def read_action_result(data: bytes):
+    if len(data) < 4:
+        return None
+    return data[1], data[2], data[3]
+
+
+def read_crop_snapshot(data: bytes):
+    if len(data) < 2:
+        return None
+    count = data[1]
+    if len(data) < 2 + count * CROP_STATE_BYTES:
+        return None
+    return [struct.unpack_from("<iiBf", data, 2 + i * CROP_STATE_BYTES) for i in range(count)]
+
+
 def read_world_time(data: bytes):
     if len(data) < 10:
         return None
@@ -206,6 +258,12 @@ def main() -> int:
         ("EntitySnapshot (14 varlik)",
          write_entity_snapshot(1, [(i, 0, 0, 0.0, 0.0, 0, 100, 0)
                                    for i in range(14)]), 6 + 14 * 15),
+        ("WorldAction (parametresiz)", write_world_action(1), 3),
+        ("WorldAction (tohumlu)", write_world_action(0, "wheat_seed"), 3 + 10),
+        ("ActionResult", write_action_result(0, 2, 0), 4),
+        ("CropSnapshot (0 tarla)", write_crop_snapshot([]), 2),
+        ("CropSnapshot (3 tarla)",
+         write_crop_snapshot([(0, 0, 0, 0.0)] * 3), 2 + 3 * 13),
     ]
     for name, packet, expected in sizes:
         check(name, len(packet) == expected, f"{len(packet)} bayt (beklenen {expected})")
@@ -261,6 +319,34 @@ def main() -> int:
           6 + MAX_ENTITIES_PER_SNAPSHOT * ENTITY_STATE_BYTES < 1200,
           f"{6 + MAX_ENTITIES_PER_SNAPSHOT * ENTITY_STATE_BYTES} bayt")
 
+    # --- Dunya eylemi: istemci -> host -> istemci ---
+    got = read_world_action(write_world_action(0, "wheat_seed"))
+    check("WorldAction", got == (0, "wheat_seed"), str(got))
+
+    # Hedef kare MESAJDA YOK: host onu kendi bildigi oyuncu konumundan
+    # hesapliyor. Kare gonderilse istemci haritanin obur ucundaki bir
+    # tarlayi hasat edebilirdi.
+    check("WorldAction hedef kare TASIMIYOR", len(write_world_action(1)) == 3,
+          "3 bayt: tur + eylem + uzunluk")
+
+    got = read_action_result(write_action_result(1, 2, 3))
+    check("ActionResult", got == (1, 2, 3), str(got))
+
+    # Sonuc METIN degil KOD: host'un dili istemciye dayatilmamali.
+    check("ActionResult sabit 4 bayt (metin yok)",
+          len(write_action_result(0, 8, 255)) == 4)
+
+    crops = [(-40000, 31337, 1, 2.5), (0, 0, 0, 0.0)]
+    back = read_crop_snapshot(write_crop_snapshot(crops))
+    check("CropSnapshot", back == crops, str(back))
+
+    capped = read_crop_snapshot(write_crop_snapshot([(0, 0, 0, 0.0)] * 200))
+    check("tarla sayisi 64'te kirpiliyor", len(capped) == MAX_CROPS_PER_SNAPSHOT,
+          f"{len(capped)} tarla")
+    check("64 tarla tipik MTU altinda",
+          2 + MAX_CROPS_PER_SNAPSHOT * CROP_STATE_BYTES < 1200,
+          f"{2 + MAX_CROPS_PER_SNAPSHOT * CROP_STATE_BYTES} bayt")
+
     print("\n3) Hareket vektoru sikistirmasi (float -> sbyte)")
     # RASTGELE degerler kullaniliyor: i/100 gibi tam katlar zaten hatasiz
     # gidip geliyor ve testi yaniltici sekilde mukemmel gosteriyordu.
@@ -288,6 +374,11 @@ def main() -> int:
     check("kirpik InventoryDelta",
           read_inventory_delta(write_inventory_delta("wood", 1)[:8]) is None)
     check("kirpik WorldTime", read_world_time(write_world_time(1.0, "rain")[:11]) is None)
+    check("kirpik WorldAction",
+          read_world_action(write_world_action(0, "wheat_seed")[:6]) is None)
+    check("kirpik ActionResult", read_action_result(b"\x11\x00") is None)
+    check("kirpik CropSnapshot",
+          read_crop_snapshot(write_crop_snapshot([(1, 2, 0, 1.0)])[:9]) is None)
     check("kirpik EntitySnapshot",
           read_entity_snapshot(
               write_entity_snapshot(1, [(1, 0, 0, 1.0, 2.0, 0, 100, 0)])[:14]) is None)

@@ -300,6 +300,28 @@ public class Game1 : Game
         // topluyor, istemci sprite'i buradan cozuyor. NetworkSession iki
         // yonde de dusman/yaratik sistemlerini TANIMIYOR.
         _session.CollectEntities = CollectNetworkEntities;
+
+        // Tarim ve evcillestirme host'ta cozuluyor: istemci istek yolluyor,
+        // host kendi haritasi ve envanter aynasi uzerinde uyguluyor.
+        _session.WorldActionRequested += HostWorldActionFor;
+
+        _session.ActionResultReceived += (action, result, detail) => ShowToast(action switch
+        {
+            WorldActionKind.Farm => DescribeFarmOutcome((FarmOutcome)result, SelectedSeed),
+            WorldActionKind.Tame => DescribeTameOutcome((TameOutcome)result, detail),
+            _ => ""
+        });
+
+        // Istemcide tarlalar host'tan geliyor. Restore TAM durum uyguluyor:
+        // listede olmayan tarla siliniyor — snapshot oyuncunun cevresiyle
+        // sinirli oldugu icin uzaktaki tarlalar zaten gorunmuyor.
+        _session.CropsReceived += states => _farming.Restore(states.Select(s => (
+            new Point(s.X, s.Y),
+            s.Crop < _cropTable.Crops.Count ? _cropTable.Crops[s.Crop].Id : "",
+            0.0,
+            (double)s.Growth)));
+
+        _session.CollectCropsNear = CollectCropsNear;
         _session.EntitySheet = (kind, typeIndex) => kind switch
         {
             EntityKind.Enemy => _enemies.SheetFor(typeIndex),
@@ -590,24 +612,7 @@ public class Game1 : Game
         // Aşama 2 tuşları
         if (WasPressed(keyboard, Keys.X)) CycleSeed();
         if (WasPressed(keyboard, Keys.C)) DoFarmAction();
-        if (WasPressed(keyboard, Keys.G))
-        {
-            // Yaratiklar host otoriter oldugundan istemcide besleme/binme
-            // YEREL calisamaz: yerel liste bos ve degistirilse bile host'u
-            // baglamazdi. Istekle host'a tasinmasi ayri bir is.
-            if (_session.Mode == SessionMode.Client)
-            {
-                ShowToast(Loc.T("net.creatureHostOnly"));
-            }
-            else
-            {
-                ShowToast(_taming.Interact(_player, _inventory));
-
-                // Sayac uzerinden: Interact'in dondugu metne bakmak, madde 23'te
-                // metinler dile cevrilince sessizce bozulurdu.
-                _achievements.SetMax(new StatKey("creatures_tamed"), _taming.TamedCount);
-            }
-        }
+        if (WasPressed(keyboard, Keys.G)) DoTameAction();
         if (WasPressed(keyboard, Keys.T)) InteractWithNpc();
         if (WasPressed(keyboard, Keys.B)) ToggleDungeon();
 
@@ -1854,24 +1859,18 @@ public class Game1 : Game
     /// </summary>
     private void DoFarmAction()
     {
+        // Istemcide tarim HOST'ta cozuluyor: hedef kareyi host kendi
+        // bildigi oyuncu konumundan hesapliyor ve envanteri kendi
+        // aynasindan dogruluyor. Yerel olarak calistirilsaydi istemci
+        // kendi haritasini degistirip host'unkiyle ayrisirdi.
         if (_session.Mode == SessionMode.Client)
         {
-            ShowToast("Tarim henuz istemcide calismiyor");
+            _session.RequestWorldAction(WorldActionKind.Farm, SelectedSeed);
             return;
         }
 
         var outcome = _farming.Interact(_player, _map, _inventory, _climate, SelectedSeed);
-
-        ShowToast(outcome switch
-        {
-            FarmOutcome.Tilled => "Toprak surdun",
-            FarmOutcome.Planted => $"{_itemDatabase.Get(SelectedSeed).Name} ektin",
-            FarmOutcome.Harvested => "Hasat ettin!",
-            FarmOutcome.NotRipe => "Henuz olgunlasmadi",
-            FarmOutcome.NoSeed => "Tohum yok",
-            FarmOutcome.InventoryFull => "Envanter dolu",
-            _ => "Burasi surulemez"
-        });
+        ShowToast(DescribeFarmOutcome(outcome, SelectedSeed));
 
         if (outcome == FarmOutcome.Harvested)
         {
@@ -1882,6 +1881,189 @@ public class Game1 : Game
         {
             var tile = BuildingSystem.AimTile(_player, _map, 1);
             _session.NotifyTileChanged(tile.X, tile.Y, _map.GetTileIndex(tile.X, tile.Y));
+        }
+
+        // Ekilen/hasat edilen tarla istemcilerde HEMEN gorunmeli; sayaca
+        // birakilsaydi bir saniye gecikirdi.
+        if (outcome is FarmOutcome.Planted or FarmOutcome.Harvested) _session.BroadcastCrops();
+    }
+
+    /// <summary>
+    /// Bağlamsal yaratık etkileşimi (G).
+    ///
+    /// İstemcide host'a istek olarak gidiyor: yaratıklar host otoriter ve
+    /// istemcinin yerel listesi boş.
+    /// </summary>
+    private void DoTameAction()
+    {
+        if (_session.Mode == SessionMode.Client)
+        {
+            _session.RequestWorldAction(WorldActionKind.Tame);
+            return;
+        }
+
+        var outcome = _taming.Interact(_player, _inventory, out var detail);
+        ShowToast(DescribeTameOutcome(outcome, detail));
+
+        // Sayac uzerinden: Interact'in dondugu sonuca metin olarak bakmak
+        // madde 23'te diller gelince sessizce bozulurdu.
+        _achievements.SetMax(new StatKey("creatures_tamed"), _taming.TamedCount);
+    }
+
+    /// <summary>
+    /// HOST: bir istemcinin dünya eylemi isteğini çözer.
+    ///
+    /// Hedef kare istemciden GELMİYOR; host'un kendi bildiği oyuncu
+    /// konumundan hesaplanıyor. Gelseydi istemci haritanın öbür ucundaki
+    /// bir tarlayı hasat edebilirdi.
+    /// </summary>
+    private void HostWorldActionFor(byte playerId, WorldActionKind action, string argument)
+    {
+        var player = _session.HostPlayerOf(playerId);
+        var inventory = _session.InventoryOf(playerId);
+
+        if (player is null || inventory is null) return;
+
+        // Eylemden ONCEKI adetler: sonrasindaki farki cikarmak icin.
+        var before = CountAll(inventory);
+
+        switch (action)
+        {
+            case WorldActionKind.Farm:
+            {
+                // Tohum istemciden geliyor ama SAHIPLIK host'un aynasindan
+                // dogrulaniyor: Interact tohumu envanterden dusuremezse
+                // NoSeed doner.
+                var seed = _cropTable.Crops.Any(c => c.Seed == argument) ? argument : null;
+
+                var outcome = _farming.Interact(player, _map, inventory, _climate, seed);
+
+                _session.SendActionResult(playerId, action, (byte)outcome, 0);
+
+                // Teshis satiri: iki islemli dogrulama (verify_network.sh)
+                // istemcinin isteginin HOST'ta gercekten cozuldugunu bu
+                // satirdan okuyor.
+                Console.WriteLine($"[tarim] oyuncu {playerId}: {outcome}");
+
+                if (outcome == FarmOutcome.Tilled)
+                {
+                    var tile = BuildingSystem.AimTile(player, _map, _cropTable.ReachTiles);
+                    _session.NotifyTileChanged(tile.X, tile.Y, _map.GetTileIndex(tile.X, tile.Y));
+                }
+
+                if (outcome is FarmOutcome.Planted or FarmOutcome.Harvested)
+                {
+                    _session.BroadcastCrops();
+                }
+
+                break;
+            }
+
+            case WorldActionKind.Tame:
+            {
+                var outcome = _taming.Interact(player, inventory, out var detail);
+
+                _session.SendActionResult(playerId, action, (byte)outcome,
+                                          (byte)Math.Clamp(detail, 0, 255));
+
+                Console.WriteLine($"[evcil] oyuncu {playerId}: {outcome}");
+                break;
+            }
+        }
+
+        // Eylem envanteri degistirdiyse istemcinin kendi kopyasi da
+        // guncellenmeli. Host'un AYNASI zaten degisti (Interact dogrudan
+        // onun uzerinde calisti), bu yuzden yalnizca fark bildiriliyor —
+        // GrantTo kullanilsaydi ayna ikinci kez degisirdi.
+        foreach (var (itemId, delta) in Diff(before, CountAll(inventory)))
+        {
+            _session.NotifyInventoryDelta(playerId, itemId, delta);
+        }
+    }
+
+    /// <summary>
+    /// Tarım sonucunun oyuncuya gösterilecek hâli.
+    ///
+    /// Host ve istemci AYNI metni üretiyor: host sonucu kod olarak
+    /// gönderiyor, istemci kendi dil tablosundan okuyor. Metin gönderilse
+    /// host'un dili istemciye dayatılırdı.
+    /// </summary>
+    private string DescribeFarmOutcome(FarmOutcome outcome, string seedId) => outcome switch
+    {
+        FarmOutcome.Tilled => Loc.T("farm.tilled"),
+
+        // Ekilen tohumun adini istemci KENDI biliyor: istegi o gonderdi.
+        FarmOutcome.Planted => Loc.T("farm.planted",
+            _itemDatabase.Contains(seedId) ? _itemDatabase.Get(seedId).Name : seedId),
+
+        FarmOutcome.Harvested => Loc.T("farm.harvested"),
+        FarmOutcome.NotRipe => Loc.T("farm.notRipe"),
+        FarmOutcome.NoSeed => Loc.T("farm.noSeed"),
+        FarmOutcome.InventoryFull => Loc.T("farm.inventoryFull"),
+        _ => Loc.T("farm.notTillable")
+    };
+
+    /// <summary>Evcilleştirme sonucunun oyuncuya gösterilecek hâli.</summary>
+    private static string DescribeTameOutcome(TameOutcome outcome, int detail) => outcome switch
+    {
+        TameOutcome.Dismounted => Loc.T("tame.dismounted"),
+        TameOutcome.Mounted => Loc.T("tame.mounted"),
+        TameOutcome.Tamed => Loc.T("tame.tamed"),
+        TameOutcome.Fed => Loc.T("tame.fed", detail),
+        TameOutcome.NoFeed => Loc.T("tame.noFeed"),
+        _ => Loc.T("tame.noCreature")
+    };
+
+    /// <summary>
+    /// Verilen konumun çevresindeki tarlalar (ağ snapshot'ı için).
+    ///
+    /// Yarıçap görünür alandan biraz geniş: oyuncu kenardan içeri
+    /// yürüdüğünde tarlanın bir saniye gecikmeyle belirmesi yerine zaten
+    /// gönderilmiş olması isteniyor.
+    /// </summary>
+    private IReadOnlyList<(int X, int Y, byte Crop, float Growth)> CollectCropsNear(
+        Vector2 position)
+    {
+        const int RadiusTiles = 32;
+
+        var centerX = (int)MathF.Floor(position.X / _map.TileSize);
+        var centerY = (int)MathF.Floor(position.Y / _map.TileSize);
+
+        var result = new List<(int, int, byte, float)>();
+
+        foreach (var (tile, crop) in _farming.Crops)
+        {
+            if (Math.Abs(tile.X - centerX) > RadiusTiles ||
+                Math.Abs(tile.Y - centerY) > RadiusTiles)
+            {
+                continue;
+            }
+
+            var index = _cropTable.IndexOf(crop.Definition.Id);
+            if (index < 0) continue;
+
+            result.Add((tile.X, tile.Y, (byte)index, (float)crop.GrowthDays));
+
+            if (result.Count >= NetworkProtocol.MaxCropsPerSnapshot) break;
+        }
+
+        return result;
+    }
+
+    /// <summary>Envanterdeki her item'ın adedi — fark almak için.</summary>
+    private Dictionary<string, int> CountAll(WorldInventory inventory) =>
+        _itemDatabase.Items.ToDictionary(item => item.Id,
+                                         item => inventory.CountOf(item.Id),
+                                         StringComparer.Ordinal);
+
+    /// <summary>İki adet tablosu arasındaki sıfırdan farklı değişimler.</summary>
+    private static IEnumerable<(string ItemId, int Delta)> Diff(
+        Dictionary<string, int> before, Dictionary<string, int> after)
+    {
+        foreach (var (itemId, count) in after)
+        {
+            var delta = count - before.GetValueOrDefault(itemId);
+            if (delta != 0) yield return (itemId, delta);
         }
     }
 

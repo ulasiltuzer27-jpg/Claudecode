@@ -6,6 +6,7 @@ using PixelSurvival.Entities;
 using PixelSurvival.Systems.Animation;
 using PixelSurvival.Systems.Climate;
 using PixelSurvival.Systems.Farming;
+using PixelSurvival.Systems.Taming;
 using PixelSurvival.Systems.Npcs;
 using PixelSurvival.Systems.Hostiles;
 using PixelSurvival.Systems.Social;
@@ -640,7 +641,7 @@ public static class SelfTest
     /// </summary>
     private static void EntitySnapshotRules()
     {
-        Section("10) Varlik snapshot'i (protokol)");
+        Section("10) Protokol mesajlari (varlik, eylem, tarla)");
 
         var sent = new List<EntityState>
         {
@@ -686,6 +687,55 @@ public static class SelfTest
         // kapatmamali.
         Check("kirpik paket false doner",
             !NetworkProtocol.TryReadEntitySnapshot(packet.AsSpan(0, 14), out _, out _));
+
+        // --- Dunya eylemi (istemci -> host -> istemci) ---
+
+        Check("WorldAction gidis-donus",
+            NetworkProtocol.TryReadWorldAction(
+                NetworkProtocol.WriteWorldAction(WorldActionKind.Farm, "wheat_seed"),
+                out var readAction, out var readArg)
+            && readAction == WorldActionKind.Farm && readArg == "wheat_seed");
+
+        // Hedef kare mesajda YOK: host onu kendi bildigi oyuncu konumundan
+        // hesapliyor. Olsaydi istemci haritanin obur ucundaki bir tarlayi
+        // hasat edebilirdi. Parametresiz eylem 3 bayt: tur + eylem + uzunluk.
+        Check("WorldAction hedef kare tasimiyor",
+            NetworkProtocol.WriteWorldAction(WorldActionKind.Tame).Length == 3);
+
+        // Sonuc METIN degil KOD: metin gonderilse host'un dili istemciye
+        // dayatilirdi (madde 23'te dil istemcinin kendi ayari).
+        Check("ActionResult gidis-donus",
+            NetworkProtocol.TryReadActionResult(
+                NetworkProtocol.WriteActionResult(WorldActionKind.Tame,
+                                                  (byte)TameOutcome.Fed, 2),
+                out var resultAction, out var resultCode, out var resultDetail)
+            && resultAction == WorldActionKind.Tame
+            && (TameOutcome)resultCode == TameOutcome.Fed && resultDetail == 2);
+
+        Check("ActionResult sabit 4 bayt",
+            NetworkProtocol.WriteActionResult(WorldActionKind.Farm, 8, 255).Length == 4);
+
+        // --- Tarla snapshot'i ---
+        var cropsSent = new List<(int X, int Y, byte Crop, float Growth)>
+        {
+            (-40000, 31337, 1, 2.5f),
+            (0, 0, 0, 0f)
+        };
+
+        Check("CropSnapshot gidis-donus",
+            NetworkProtocol.TryReadCropSnapshot(
+                NetworkProtocol.WriteCropSnapshot(cropsSent), out var cropsBack)
+            && cropsBack.SequenceEqual(cropsSent));
+
+        var manyCrops = Enumerable.Range(0, 200)
+            .Select(i => (i, i, (byte)0, 0f))
+            .ToList();
+
+        NetworkProtocol.TryReadCropSnapshot(
+            NetworkProtocol.WriteCropSnapshot(manyCrops), out var cappedCrops);
+
+        Check("tarla sayisi tavanda kirpiliyor",
+            cappedCrops.Count == NetworkProtocol.MaxCropsPerSnapshot, $"{cappedCrops.Count}");
     }
 
     /// <summary>

@@ -100,11 +100,24 @@ check "istemciye varlik snapshot'i ulasti" \
 check "en az 3 varlik senkronlandi" \
       "$([ "$peak" -ge 3 ] && echo 1 || echo 0)" "$peak varlik"
 
+# --- Istemcinin tarim istegi HOST'ta cozuldu mu ---
+# Istemci C'ye basiyor; eylem host'a istek olarak gidiyor ve orada
+# cozuluyor. Host'un teshis satiri kanit.
+if grep -q '\[tarim\] oyuncu 1: Tilled' "$LOGS/host.txt"; then tilled=1; else tilled=0; fi
+check "istemcinin tarim istegi host'ta cozuldu" "$tilled" \
+      "$(grep -c '\[tarim\] oyuncu 1' "$LOGS/host.txt") istek"
+
+# Istemci "wheat_seed ekmek istiyorum" diyor ama host'un AYNASINDA tohum
+# yok. Host bunu reddetmezse istemci istedigi seyi bedava ekebilirdi.
+if grep -q '\[tarim\] oyuncu 1: NoSeed' "$LOGS/host.txt"; then refused=1; else refused=0; fi
+check "sahip olunmayan tohum host tarafindan REDDEDILDI" "$refused"
+
 # --- Kareler ---
-for side in host client; do
-  count=$(ls "$OUT/$side" 2>/dev/null | wc -l)
-  check "$side karesi yazildi" "$([ "$count" -ge 1 ] && echo 1 || echo 0)" "$count kare"
-done
+check "host karesi yazildi" \
+      "$([ "$(ls "$OUT/host" 2>/dev/null | wc -l)" -ge 1 ] && echo 1 || echo 0)"
+check "istemci kareleri yazildi" \
+      "$([ "$(ls "$OUT/client" 2>/dev/null | wc -l)" -ge 2 ] && echo 1 || echo 0)" \
+      "$(ls "$OUT/client" 2>/dev/null | wc -l) kare"
 
 rm -rf saves
 

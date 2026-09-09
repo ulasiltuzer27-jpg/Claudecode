@@ -130,8 +130,20 @@
     "menu.newGame": "Yeni oyun",
     "menu.newGameWarn": "(mevcut kayit silinir)",
     "menu.saveHint": "F5 kaydet",
-    "net.creatureHostOnly": "Yaratiklar host tarafinda cozuluyor",
     "net.dungeonOfflineOnly": "Zindan su an yalnizca tek kisilik oyunda",
-    "save.migrated": "Eski surumlu kayit yuklendi"
+    "save.migrated": "Eski surumlu kayit yuklendi",
+    "farm.tilled": "Toprak surdun",
+    "farm.planted": "{0} ektin",
+    "farm.harvested": "Hasat ettin!",
+    "farm.notRipe": "Henuz olgunlasmadi",
+    "farm.noSeed": "Tohum yok",
+    "farm.inventoryFull": "Envanter dolu",
+    "farm.notTillable": "Burasi surulemez",
+    "tame.dismounted": "Sirtindan indin",
+    "tame.mounted": "Sirtina bindin",
+    "tame.tamed": "Yaratik evcillesti!",
+    "tame.fed": "Besledin — {0} kez daha",
+    "tame.noFeed": "Yem yok",
+    "tame.noCreature": "Yakinda yaratik yok"
   }
 }

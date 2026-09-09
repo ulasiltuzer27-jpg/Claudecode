@@ -7,4 +7,6 @@
 [ag] Baglanildi — oyuncu 1, tohum 20260908
 [ag] uzak varlik: 8
 [ag] uzak varlik: 9
-[capture] kare 459: capture/ag/client/client.png
+[capture] kare 534: capture/ag/client/01_surdu_tohum_yok.png
+[ag] uzak varlik: 10
+[capture] kare 760: capture/ag/client/02_son_durum.png

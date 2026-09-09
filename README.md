@@ -427,10 +427,23 @@ istemcilerin toplayarak kazandığı item'lar, üretim (madde 22'de host'a taş�
 istemci envanterlerinin **aynası**, dünya saati ve hava, **düşmanlar ve
 yaratıklar**.
 
+**Tarım ve evcilleştirme de host otoriter.** `C` ve `G` istemcide de çalışıyor
+ama eylem yerel olarak *uygulanmıyor*: `WorldAction` mesajıyla host'a istek
+gidiyor, host kendi haritası ve envanter aynası üzerinde çözüyor, sonucu
+`ActionResult` ile geri yolluyor. Üç tasarım kararı:
+
+* **Hedef kare mesajda yok.** Host onu kendi bildiği oyuncu konumundan
+  hesaplıyor. İstemci kare gönderseydi haritanın öbür ucundaki bir tarlayı
+  hasat edebilirdi.
+* **Sonuç metin değil, kod.** Metin gönderilse host'un dili istemciye
+  dayatılırdı; madde 23'te dil istemcinin kendi ayarı. `FarmOutcome` ve
+  `TameOutcome` artık `byte` tabanlı ve sıraları kablo sözleşmesinin parçası.
+* **Tarlalar oyuncunun çevresinden seçilerek gönderiliyor.** Uzun oynanmış bir
+  dünyada yüzlerce tarla olabilir ve hepsi tek pakete sığmaz; her istemci
+  yalnızca göreceği kadarını alıyor (32 tile yarıçap, en fazla 64 tarla).
+
 **Henüz otoriter DEĞİL:**
 * İnşa yalnızca host'ta çalışıyor; istemci inşa edemiyor.
-* Tarım ve evcilleştirme istemcide kapalı — ikisi de dünyayı değiştiriyor ve
-  isteğin host'a taşınması gerekiyor.
 * Zindanlar ağ oturumunda tamamen kapalı (aşağıya bakın).
 
 ### Varlık senkronizasyonu (düşman ve yaratıklar)
@@ -683,7 +696,8 @@ tohumdan üretiyor ve üretim modlanabilir veriden türüyor. Farklı mod kümes
 sahip iki oyuncu aynı tohumdan **farklı dünya** üretir; ekranlar sessizce
 ayrışır. Bu yüzden aktif mod kümesinin parmak izi karşılama mesajıyla gidiyor
 ve tutmayan bağlantı reddediliyor. Kablo biçimi değiştiği için
-`ProtocolVersion` 1 → 2. Varlık senkronizasyonu eklenirken 2 → 3.
+`ProtocolVersion` 1 → 2. Varlık senkronizasyonu eklenirken 2 → 3, host
+otoriter tarım/evcilleştirme eklenirken 3 → 4.
 
 ### Düşman yol bulma
 
@@ -725,9 +739,6 @@ takip etmeyen bir düşmanla birlikte de var olabilir.
   geçti, `SteamRelease` CS0103 ile patladı). Ama derlenmek çalışmak değil:
   achievement'lar, leaderboard, davet, Workshop yükleme ve envanter
   çağrıları çalışan bir Steam istemcisine karşı hiç denenmedi.
-* **Tarım ve evcilleştirme istemcide çalışmıyor** — `C` ve `G` tuşları istemci
-  modunda uyarı veriyor. İkisi de dünyayı değiştiriyor, yani host'a istek
-  olarak taşınmaları gerekiyor.
 * **Zindanlar ağ oturumunda kapalı** — bilinçli bir kısıt, bkz. "Ağda ne
   otoriter, ne değil".
 * Dünya saati ve hava **host otoriter** ve senkronize (saniyede bir `WorldTime`
@@ -813,7 +824,7 @@ Ekran görüntüsüyle **görülemeyen** kuralları koşturur: takas atomik mi, 
 değişince onaylar düşüyor mu, klan rütbeleri yetki sınırını koruyor mu, mod
 parmak izi içerik değişimine duyarlı mı, düşman duvarı gerçekten dolaşıyor mu,
 varlık snapshot'ı gidiş-dönüşte bozuluyor mu, kayıttan dönen oyuncu aynı
-görevde mi kalıyor. 146 denetim.
+görevde mi kalıyor. 152 denetim.
 
 Bu denetim iki gerçek hata yakaladı ve ikisi de bu yüzden düzeltildi:
 onaydan sonra teklifi değiştirip "kabul" bekleme açığı, ve başarısız bir
@@ -853,8 +864,13 @@ gerçek UDP üzerinden konuşturuyor.
 Kanıt şuradan geliyor: istemcide yerel yaratık listesi boşaltılıyor, yani
 istemci ekranında görünen her yaratık host'tan gelmiş demektir. İstemci her
 değişimde `[ag] uzak varlık: N` yazıyor; N > 0 ise snapshot'lar akmış.
-Son koşumda **9 varlık** senkronlandı. Yayın kasten kapatılarak denetimin
+Son koşumda **10 varlık** senkronlandı. Yayın kasten kapatılarak denetimin
 gerçekten tetiklendiği doğrulandı (0 varlık, iki kontrol kaldı).
+
+Aynı koşum host otoriter tarımı da doğruluyor: istemci `C`'ye basıyor, host
+`[tarim] oyuncu 1: Tilled` yazıyor (toprak host'un haritasında sürüldü), sonra
+istemci tohumu olmadan ekmeye çalışıyor ve host `NoSeed` ile **reddediyor** —
+"istemci ne isterse onu alır" açığı olmadığının kanıtı.
 
 ### 4. Statik denetleyiciler
 

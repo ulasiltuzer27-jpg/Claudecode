@@ -13,7 +13,7 @@ tap F9
 
 # Istemcinin baglanmasi, varlik snapshot'larinin akmasi ve
 # yaratiklarin biraz dolasmasi icin 15 saniye.
-wait 900
+wait 1200
 shot host
 
 quit

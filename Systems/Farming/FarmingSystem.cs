@@ -106,6 +106,15 @@ public sealed class CropTable
         return crop is not null;
     }
 
+    /// <summary>
+    /// Ekinin listedeki indeksi — ağda kimlik yerine bu gidiyor.
+    ///
+    /// Sıra kablo sözleşmesinin parçası: <c>crops.json</c> içinde bir
+    /// satırın yeri değişirse eski ve yeni istemci farklı ekin çizer.
+    /// Yeni ekinler SONA eklenmeli.
+    /// </summary>
+    public int IndexOf(string cropId) => Crops.FindIndex(c => c.Id == cropId);
+
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNameCaseInsensitive = true
@@ -130,17 +139,23 @@ public sealed class CropInstance(CropDefinition definition, double plantedAtDay)
     public bool IsRipe(int stageCount) => Stage(stageCount) >= stageCount - 1;
 }
 
-public enum FarmOutcome
+/// <summary>
+/// Bağlamsal tarım eyleminin sonucu.
+///
+/// Değerler ağ üzerinden bayt olarak gidiyor (tarım host'ta çözülüyor),
+/// bu yüzden SIRA PROTOKOL SABİTİ: yeni sonuçlar SONA eklenmeli.
+/// </summary>
+public enum FarmOutcome : byte
 {
-    Tilled,
-    Planted,
-    Harvested,
-    NotTillable,
-    NoSeed,
-    AlreadyPlanted,
-    NotRipe,
-    NothingHere,
-    InventoryFull
+    Tilled = 0,
+    Planted = 1,
+    Harvested = 2,
+    NotTillable = 3,
+    NoSeed = 4,
+    AlreadyPlanted = 5,
+    NotRipe = 6,
+    NothingHere = 7,
+    InventoryFull = 8
 }
 
 /// <summary>

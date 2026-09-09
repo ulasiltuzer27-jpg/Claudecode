@@ -150,6 +150,35 @@ public sealed class NetworkSession : IDisposable
     /// <summary>İstemcide çizilecek uzak varlıklar.</summary>
     public IReadOnlyCollection<RemoteEntity> RemoteEntities => _remoteEntities.Values;
 
+    /// <summary>
+    /// HOST: bir istemci dünya eylemi istedi (tarım, evcilleştirme).
+    ///
+    /// Oturum eylemin NE OLDUĞUNU bilmiyor — tarım kurallarını, ekin
+    /// tablosunu ya da yaratıkları tanımıyor. Kararı oyun kabuğu veriyor,
+    /// oturum yalnızca isteği taşıyor ve sonucu geri yolluyor. Aynı ayrım
+    /// üretimde de var (<see cref="CraftRequested"/>).
+    /// </summary>
+    public event Action<byte, WorldActionKind, string>? WorldActionRequested;
+
+    /// <summary>İSTEMCİ: host eylemin sonucunu bildirdi.</summary>
+    public event Action<WorldActionKind, byte, byte>? ActionResultReceived;
+
+    /// <summary>İSTEMCİ: host çevredeki tarlaları bildirdi.</summary>
+    public event Action<List<(int X, int Y, byte Crop, float Growth)>>? CropsReceived;
+
+    /// <summary>
+    /// HOST: verilen konumun ÇEVRESİNDEKİ tarlaları toplar.
+    ///
+    /// Neden konuma göre: bütün tarlaları göndermek, uzun oynanmış bir
+    /// dünyada yüzlerce tarla demek ve tek pakete sığmaz. Her istemci
+    /// yalnızca göreceği kadarını alıyor.
+    /// </summary>
+    public Func<Vector2, IReadOnlyList<(int X, int Y, byte Crop, float Growth)>>? CollectCropsNear
+    {
+        get;
+        set;
+    }
+
     /// <summary>Host her zaman 0'dır; istemciler 1'den başlar.</summary>
     public byte LocalPlayerId { get; private set; }
 
@@ -320,6 +349,11 @@ public sealed class NetworkSession : IDisposable
                     _timeBroadcastAccumulator = 0f;
                     _transport.Broadcast(NetworkProtocol.WriteWorldTime(
                         climate.WorldSeconds, climate.Weather.Key));
+
+                    // Tarlalar saatle AYNI ritimde: ikisi de yavas degisen
+                    // durum ve buyume zaten dunya saatinden turuyor.
+                    // Degisim aninda ayrica gonderiliyor (BroadcastCrops).
+                    BroadcastCrops();
                 }
             }
             else
@@ -414,6 +448,37 @@ public sealed class NetworkSession : IDisposable
                 if (NetworkProtocol.TryReadSnapshot(data, out _, out var states))
                 {
                     ApplySnapshot(states, localPlayer);
+                }
+
+                break;
+
+            case MessageType.WorldAction when Mode == SessionMode.Host:
+                if (_peerToPlayer.TryGetValue(netEvent.PeerId, out var actor) &&
+                    NetworkProtocol.TryReadWorldAction(data, out var actionKind, out var argument))
+                {
+                    // Bilinmeyen eylem sessizce dusuruluyor: eski/yeni
+                    // istemci karisimi oyunu cokertmemeli.
+                    if (Enum.IsDefined(actionKind))
+                    {
+                        WorldActionRequested?.Invoke(actor, actionKind, argument);
+                    }
+                }
+
+                break;
+
+            case MessageType.ActionResult when Mode == SessionMode.Client:
+                if (NetworkProtocol.TryReadActionResult(data, out var resultKind, out var code,
+                                                        out var detail))
+                {
+                    ActionResultReceived?.Invoke(resultKind, code, detail);
+                }
+
+                break;
+
+            case MessageType.CropSnapshot when Mode == SessionMode.Client:
+                if (NetworkProtocol.TryReadCropSnapshot(data, out var cropStates))
+                {
+                    CropsReceived?.Invoke(cropStates);
                 }
 
                 break;
@@ -628,6 +693,30 @@ public sealed class NetworkSession : IDisposable
     public WorldInventory? InventoryOf(byte playerId) =>
         playerId == LocalPlayerId ? LocalInventory : _hostInventories.GetValueOrDefault(playerId);
 
+    /// <summary>
+    /// Host'un BAĞLI BİR İSTEMCİ için tuttuğu otoriter oyuncu nesnesi.
+    ///
+    /// Host'un kendi oyuncusu burada YOK — onu oyun kabuğu yönetiyor.
+    /// Bu ayrım bilinçli: bir eylemi "host'un kendi oyuncusu adına"
+    /// çözmek isteyen kod, yanlışlıkla istemci yolundan geçmemeli.
+    /// </summary>
+    public Player? HostPlayerOf(byte playerId) => _hostPlayers.GetValueOrDefault(playerId);
+
+    /// <summary>
+    /// Host: istemciye envanter farkını YALNIZCA bildirir, aynayı DEĞİŞTİRMEZ.
+    ///
+    /// <see cref="GrantTo"/>'dan farkı bu. Host tarafında çözülen bir eylem
+    /// (tarım, evcilleştirme) aynanın üzerinde doğrudan çalışıyor; ardından
+    /// <c>GrantTo</c> çağırmak aynı değişikliği ikinci kez uygulardı.
+    /// </summary>
+    public void NotifyInventoryDelta(byte playerId, string itemId, int amount)
+    {
+        if (Mode != SessionMode.Host || amount == 0) return;
+        if (!_playerToPeer.TryGetValue(playerId, out var peer)) return;
+
+        _transport?.Send(peer, NetworkProtocol.WriteInventoryDelta(itemId, amount));
+    }
+
     /// <summary>Host: takası başlatır.</summary>
     public TradeOutcome BeginTrade(byte a, byte b)
     {
@@ -676,6 +765,39 @@ public sealed class NetworkSession : IDisposable
     /// <summary>İstemci: üretim isteğini host'a yollar.</summary>
     public void RequestCraft(string recipeId) =>
         _transport?.Send(0, NetworkProtocol.WriteCraftRequest(recipeId));
+
+    /// <summary>İstemci: dünya eylemini host'tan ister (tarım, evcilleştirme).</summary>
+    public void RequestWorldAction(WorldActionKind action, string argument = "") =>
+        _transport?.Send(0, NetworkProtocol.WriteWorldAction(action, argument));
+
+    /// <summary>Host: bir eylemin sonucunu isteyen istemciye bildirir.</summary>
+    public void SendActionResult(byte playerId, WorldActionKind action, byte result, byte detail)
+    {
+        if (Mode != SessionMode.Host) return;
+        if (!_playerToPeer.TryGetValue(playerId, out var peer)) return;
+
+        _transport?.Send(peer, NetworkProtocol.WriteActionResult(action, result, detail));
+    }
+
+    /// <summary>
+    /// Host: her istemciye KENDİ çevresindeki tarlaları yollar.
+    ///
+    /// Hem sayaçla düzenli olarak (büyüme ilerledikçe çizilen aşama
+    /// değişiyor) hem de bir tarla değiştiği anda çağrılıyor: yalnızca
+    /// sayaca bırakılsaydı ektiğin tohum bir saniye sonra belirirdi.
+    /// </summary>
+    public void BroadcastCrops()
+    {
+        if (Mode != SessionMode.Host || CollectCropsNear is null || _transport is null) return;
+
+        foreach (var (id, player) in _hostPlayers)
+        {
+            if (!_playerToPeer.TryGetValue(id, out var peer)) continue;
+
+            _transport.Send(peer, NetworkProtocol.WriteCropSnapshot(
+                CollectCropsNear(player.Position)));
+        }
+    }
 
     /// <summary>
     /// Host: istemciye envanter deltası gönderir ve AYNAYI da günceller.
