@@ -32,13 +32,29 @@ public readonly struct PlayerInput
     /// <summary>İnşa tuşuna bu karede BASILDI mı — kenar tespitli (madde 9).</summary>
     public readonly bool Build;
 
+    /// <summary>
+    /// Nişan yönü (birim vektör) — fare nişan alıyorsa dolu, yoksa <c>null</c>.
+    ///
+    /// ── Neden hareketten AYRI bir alan ──────────────────────────────────
+    /// Karakterin baktığı yön şimdiye kadar hep gittiği yöndü. Fare ile
+    /// nişan alınca ikisi AYRIŞIYOR: oyuncu sağa koşup sola vurabilmeli.
+    /// Toplama, inşa ve saldırı hedeflerini bakılan yönden türettiği için
+    /// bu tek alan üçünü birden fareye bağlıyor — hiçbirinin kodu
+    /// değişmeden.
+    ///
+    /// <c>null</c> olması "nişan yok" demek, "sıfır yön" değil: fare
+    /// kullanılmadığında yön yine hareketten türemeli.
+    /// </summary>
+    public readonly Vector2? Aim;
+
     public PlayerInput(Vector2 move, bool gather = false, bool attack = false,
-                       bool build = false)
+                       bool build = false, Vector2? aim = null)
     {
         Move = move;
         Gather = gather;
         Attack = attack;
         Build = build;
+        Aim = aim;
     }
 
     /// <summary>Ölü bölgeden büyük bir hareket girdisi var mı.</summary>

@@ -9,4 +9,4 @@
 [ag] uzak varlik: 9
 [capture] kare 534: capture/ag/client/01_surdu_tohum_yok.png  oyuncu=(8.0,16.0) kose_duzeltme=0 son_itme=0.00
 [ag] uzak varlik: 10
-[capture] kare 760: capture/ag/client/02_son_durum.png  oyuncu=(47.0,55.0) kose_duzeltme=0 son_itme=0.00
+[capture] kare 760: capture/ag/client/02_son_durum.png  oyuncu=(47.0,52.9) kose_duzeltme=0 son_itme=0.00

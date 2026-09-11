@@ -31,6 +31,11 @@ for script in Tools/captures/*.txt; do
     rm -rf saves
   fi
 
+  # Kontrol ayarlari HER script icin temizleniyor: kontrol_ayarlari.txt
+  # bir tusu yeniden atiyor ve diske yaziyor. Kalan dosya, sonraki
+  # script'lerde "W yukari gider" varsayimini sessizce bozardi.
+  rm -rf config
+
   if ! eval "$RUN --capture-script '$script' --capture-out '$OUT/$name'" >/dev/null 2>&1; then
     echo "  KALDI  $name (calisma hatasi)"
     fail=1

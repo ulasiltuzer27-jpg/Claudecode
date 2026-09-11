@@ -27,6 +27,7 @@ public enum GameScreen
     Clan,
     Mods,
     Settings,
+    Controls,
     PatchNotes
 }
 
@@ -83,6 +84,7 @@ public sealed class MainMenu
         new("menu.leaderboard", GameScreen.Leaderboard),
         new("menu.mods", GameScreen.Mods),
         new("menu.settings", GameScreen.Settings),
+        new("menu.controls", GameScreen.Controls),
         new("menu.patchNotes", GameScreen.PatchNotes),
         new("menu.quit", GameScreen.MainMenu)
     ];

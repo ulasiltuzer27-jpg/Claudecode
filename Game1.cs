@@ -157,6 +157,24 @@ public class Game1 : Game
     // Ayri bool'larda o cevap kombinasyon sayisi kadar cogaliyordu ve
     // her yeni panel digerlerini tek tek kapatmak zorundaydi.
     private readonly MainMenu _menu = new();
+
+    /// <summary>
+    /// Tus atamalari ve fare hassasiyeti. Diskten okunuyor; dosya yoksa
+    /// varsayilan (eski sabit tuslarin birebir aynisi).
+    /// </summary>
+    private readonly ControlSettings _controls = ControlSettings.Load();
+
+    /// <summary>Fare ile nisan alma -- karakterin baktigi yonu belirler.</summary>
+    private readonly MouseAim _aim = new();
+
+    /// <summary>
+    /// Kontrol ayarlari ekraninin durumu.
+    ///
+    /// Alan bildiriminde kuruluyor (tembel degil): Update, Draw'dan ONCE
+    /// kosuyor ve tembel kurulumda ekrana girilen ilk karede tuslar
+    /// yutulurdu.
+    /// </summary>
+    private readonly ControlsScreen _controlsScreen = null!;
     private GameScreen _screen = GameScreen.MainMenu;
 
     /// <summary>Dunya kuruldu mu — menu bunu bilmeli.</summary>
@@ -248,6 +266,7 @@ public class Game1 : Game
     {
         _capture = capture;
         _selfTest = selfTest;
+        _controlsScreen = new ControlsScreen(_controls);
 
         _graphics = new GraphicsDeviceManager(this)
         {
@@ -693,6 +712,7 @@ public class Game1 : Game
 
                 _screen = screen;
                 if (screen == GameScreen.PatchNotes) _patchScroll = 0;
+                if (screen == GameScreen.Controls) _controlsScreen.Reset();
             }
         }
 
@@ -824,7 +844,14 @@ public class Game1 : Game
 
         _previousKeyboard = keyboard;
 
-        var input = InputReader.Read();
+        // Fare nisani girdiden ONCE guncellenmeli: InputReader nisan
+        // yonunu okuyup snapshot'a koyuyor ve Player o yonu kullaniyor.
+        // Sonra guncellenseydi nisan bir kare geriden gelirdi.
+        _aim.Update((float)gameTime.ElapsedGameTime.TotalSeconds,
+                    InputSource.ReadMouseDelta(ScreenWidth, ScreenHeight),
+                    _controls);
+
+        var input = InputReader.Read(_controls, _aim);
 
         // Madde 24: photo mode'da AYNI tuslar kamerayi suruyor. Oyuncuya
         // da verilirse karakter kadrajdan cikar; girdi bos gecirilerek
@@ -964,7 +991,7 @@ public class Game1 : Game
         // fotografini cekerken karakteri kadrajdan cikarirdi.
         if (_photoMode.IsActive)
         {
-            var pan = InputReader.Read().Move;
+            var pan = InputReader.Read(_controls).Move;
 
             var zoomDelta = (keyboard.IsKeyDown(Keys.OemPlus) || keyboard.IsKeyDown(Keys.Add) ? 1f : 0f)
                           - (keyboard.IsKeyDown(Keys.OemMinus) || keyboard.IsKeyDown(Keys.Subtract) ? 1f : 0f);
@@ -1379,6 +1406,16 @@ public class Game1 : Game
     {
         _ = gameTime;
 
+        // --- Kontrol ayarlari: tus yakalarken BUTUN klavyeyi yutar ---
+        //
+        // Genel "Esc geri doner" kuralindan ONCE geliyor. Yakalama
+        // modunda Esc iptal etmeli, menuye donmemeli: oyuncu bir tusu
+        // atamaktan vazgectiginde ekrandan da atilmasi sasirtici olurdu.
+        if (_screen == GameScreen.Controls)
+        {
+            if (HandleControlsKeys(keyboard, _controlsScreen, back)) return;
+        }
+
         // --- Alt ekranlar: Esc menuye doner ---
         if (_screen != GameScreen.MainMenu)
         {
@@ -1526,6 +1563,82 @@ public class Game1 : Game
     /// Üçü de "sırayla değiştir" mantığında. Ayar ekranı bir menü
     /// çatısı ister; bu maddenin kapsamı ayarların KENDİSİ, menü değil.
     /// </summary>
+    /// <summary>
+    /// Kontrol ayarları ekranının tuşları.
+    /// </summary>
+    /// <returns>
+    /// Girdi TÜKETİLDİYSE true — çağıran taraf o karede başka hiçbir şey
+    /// yapmamalı. Yakalama modunda bu şart: aksi halde oyuncunun atamak
+    /// istediği tuş aynı anda menüyü de sürerdi.
+    /// </returns>
+    private bool HandleControlsKeys(KeyboardState keyboard, ControlsScreen controls, bool back)
+    {
+        if (controls.IsCapturing)
+        {
+            // Bu karede YENI basilan ilk tus yakalanir. GetPressedKeys
+            // basili TUTULAN tuslari da veriyor; oyuncunun ekrana
+            // girerken bastigi Enter hala basiliysa kenar tespiti
+            // olmadan o aninda "Enter atandi" olurdu.
+            foreach (var key in keyboard.GetPressedKeys())
+            {
+                if (!WasPressed(keyboard, key)) continue;
+
+                if (controls.CaptureKey(key)) SaveControls();
+                break;
+            }
+
+            // Yakalama modunda hicbir sey disari sizmaz -- Esc dahil.
+            return true;
+        }
+
+        if (back)
+        {
+            // Ekrandan cikarken kaydet: oyuncunun ayari "Kaydet" diye bir
+            // satir aramadan kalici olmali.
+            SaveControls();
+            _screen = GameScreen.MainMenu;
+            return true;
+        }
+
+        if (WasPressed(keyboard, Keys.Up)) controls.MoveRow(-1);
+        if (WasPressed(keyboard, Keys.Down)) controls.MoveRow(1);
+        if (WasPressed(keyboard, Keys.Left)) controls.MoveColumn(-1);
+        if (WasPressed(keyboard, Keys.Right)) controls.MoveColumn(1);
+
+        if (WasPressed(keyboard, Keys.Enter) || WasPressed(keyboard, Keys.Space))
+        {
+            controls.Activate();
+            if (!controls.IsCapturing) SaveControls();
+        }
+
+        if (WasPressed(keyboard, Keys.Delete) || WasPressed(keyboard, Keys.Back))
+        {
+            controls.ClearSlot();
+            SaveControls();
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Kontrol ayarlarını diske yazar; hata oyunu durdurmaz.
+    ///
+    /// Ayar yazılamaması can sıkıcı ama oyunu bitiren bir şey değil.
+    /// Disk dolu ya da klasör salt okunur diye oyuncuyu oyundan atmak
+    /// orantısız olurdu.
+    /// </summary>
+    private void SaveControls()
+    {
+        try
+        {
+            _controls.Save();
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            Console.WriteLine($"[kontrol] ayarlar kaydedilemedi: {ex.Message}");
+        }
+    }
+
     private void HandleSettingsKeys(KeyboardState keyboard)
     {
         if (WasPressed(keyboard, Keys.D1))
@@ -2555,6 +2668,7 @@ public class Game1 : Game
             GameScreen.Clan => "menu.clan",
             GameScreen.Mods => "menu.mods",
             GameScreen.Settings => "menu.settings",
+            GameScreen.Controls => "menu.controls",
             GameScreen.PatchNotes => "menu.patchNotes",
             _ => "menu.title"
         };
@@ -2596,6 +2710,10 @@ public class Game1 : Game
 
             case GameScreen.Settings:
                 _hud.DrawSettings(_spriteBatch, _accessibility, ScreenWidth, ScreenHeight);
+                break;
+
+            case GameScreen.Controls:
+                _hud.DrawControls(_spriteBatch, _controlsScreen, ScreenWidth, ScreenHeight);
                 break;
 
             case GameScreen.PatchNotes:

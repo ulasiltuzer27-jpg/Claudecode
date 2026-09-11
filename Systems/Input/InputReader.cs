@@ -4,19 +4,20 @@ using Microsoft.Xna.Framework.Input;
 namespace PixelSurvival.Systems.Input;
 
 /// <summary>
-/// Klavye ve gamepad'i tek bir <see cref="PlayerInput"/> snapshot'ına indirger.
+/// Klavye, gamepad ve fareyi tek bir <see cref="PlayerInput"/> snapshot'ına
+/// indirger.
 ///
 /// Desteklenen kaynaklar (hepsi aynı anda aktif, biri diğerini kapatmaz):
-///   - WASD
-///   - Yön tuşları
-///   - Gamepad D-Pad
-///   - Gamepad sol analog stick
-///   - Toplama: Space, E veya gamepad A (basılı tut)
-///   - Saldırı: F, sol Ctrl veya gamepad X (basılı tut)
-///   - İnşa:    R veya gamepad B (tek basış — kenar tespiti çağıranda)
+///   - Klavye: tuşlar artık SABİT DEĞİL, <see cref="ControlSettings"/>'ten
+///     okunuyor. Oyuncu Kontrol Ayarları ekranından değiştirebiliyor.
+///   - Gamepad D-Pad ve sol analog stick
+///   - Gamepad A / X / B düğmeleri
+///   - Fare: nişan yönü (<see cref="MouseAim"/>)
 ///
-/// Tuş eşlemesi şu an sabit. Yeniden atanabilir bindings (madde 24 civarı)
-/// bu sınıfın içini değiştirerek eklenir — çağıran taraf etkilenmez.
+/// ── Gamepad neden yeniden atanabilir DEĞİL ──────────────────────────────
+/// İstenen şey klavye atamalarıydı. Gamepad'i de atanabilir yapmak ayar
+/// ekranını iki katına çıkarır ve "hangi düğme hangi kumandada ne" sorusu
+/// (Xbox A = Nintendo B) ayrı bir iş. Kapsam dışı bırakıldı, bilerek.
 /// </summary>
 public static class InputReader
 {
@@ -26,7 +27,14 @@ public static class InputReader
     /// </summary>
     private const float StickDeadZone = 0.2f;
 
-    public static PlayerInput Read()
+    /// <summary>
+    /// Girdi anlık görüntüsünü üretir.
+    /// </summary>
+    /// <param name="settings">Tuş atamaları.</param>
+    /// <param name="aim">
+    /// Fare nişanı. <c>null</c> ise nişan yok — yön hareketten türer.
+    /// </param>
+    public static PlayerInput Read(ControlSettings settings, MouseAim? aim = null)
     {
         // Dogrudan Keyboard.GetState() DEGIL: tek okuma noktasi InputSource,
         // boylece otomatik dogrulama surucusu sanal tus besleyebiliyor.
@@ -35,12 +43,12 @@ public static class InputReader
 
         var move = Vector2.Zero;
 
-        // --- Klavye: WASD + yön tuşları ---
+        // --- Klavye: oyuncunun atadigi tuslar ---
         // Ekran koordinatlarında Y aşağı doğru büyür, bu yüzden "yukarı" = -1.
-        if (keyboard.IsKeyDown(Keys.W) || keyboard.IsKeyDown(Keys.Up)) move.Y -= 1f;
-        if (keyboard.IsKeyDown(Keys.S) || keyboard.IsKeyDown(Keys.Down)) move.Y += 1f;
-        if (keyboard.IsKeyDown(Keys.A) || keyboard.IsKeyDown(Keys.Left)) move.X -= 1f;
-        if (keyboard.IsKeyDown(Keys.D) || keyboard.IsKeyDown(Keys.Right)) move.X += 1f;
+        if (settings.IsDown(keyboard, GameAction.MoveUp)) move.Y -= 1f;
+        if (settings.IsDown(keyboard, GameAction.MoveDown)) move.Y += 1f;
+        if (settings.IsDown(keyboard, GameAction.MoveLeft)) move.X -= 1f;
+        if (settings.IsDown(keyboard, GameAction.MoveRight)) move.X += 1f;
 
         // --- Gamepad D-Pad ---
         if (pad.DPad.Up == ButtonState.Pressed) move.Y -= 1f;
@@ -66,20 +74,18 @@ public static class InputReader
             move.Normalize();
         }
 
-        var gather = keyboard.IsKeyDown(Keys.Space) ||
-                     keyboard.IsKeyDown(Keys.E) ||
+        var gather = settings.IsDown(keyboard, GameAction.Gather) ||
                      pad.Buttons.A == ButtonState.Pressed;
 
-        var attack = keyboard.IsKeyDown(Keys.F) ||
-                     keyboard.IsKeyDown(Keys.LeftControl) ||
+        var attack = settings.IsDown(keyboard, GameAction.Attack) ||
                      pad.Buttons.X == ButtonState.Pressed;
 
-        var build = keyboard.IsKeyDown(Keys.R) ||
+        var build = settings.IsDown(keyboard, GameAction.Build) ||
                     pad.Buttons.B == ButtonState.Pressed;
 
         // Toplama ve saldırı aynı anda basılırsa toplama kazanır: yanlışlıkla
         // kaynağa vurup zaman kaybetmek, yanlışlıkla toplamaya çalışmaktan
         // daha can sıkıcı.
-        return new PlayerInput(move, gather, attack && !gather, build);
+        return new PlayerInput(move, gather, attack && !gather, build, aim?.Direction);
     }
 }

@@ -14,10 +14,12 @@ Proje derleniyor ve çalışıyor:
 ```
 dotnet build                    # 0 hata, 0 uyarı
 dotnet build -c SteamRelease    # 0 hata, 0 uyarı (Facepunch.Steamworks dahil)
-dotnet run -- --self-test       # 171 denetim, hepsi geçiyor
+dotnet run -- --self-test       # 245 denetim, hepsi geçiyor
 python3 Tools/verify_content.py    # 2000+ kontrol
-python3 Tools/verify_worldgen.py   # üretim algoritması
+python3 Tools/verify_worldgen.py   # üretim algoritması + C# çapraz doğrulama
 python3 Tools/verify_protocol.py   # kablo protokolü
+python3 Tools/verify_collision.py  # köşe düzeltmesi (gerçek oyun koşumu)
+python3 Tools/verify_controls.py   # tuş ataması (gerçek oyun koşumu)
 ```
 
 Sprite üretici, hareket, çarpışma, kamera, chunk tabanlı sonsuz dünya, kaynak
@@ -661,6 +663,59 @@ Paket `steam_api64.dll`'i eski `content/` düzeninde taşıdığı için csproj 
 açıkça çıktıya kopyalıyor (SDK yalnızca `contentFiles/`'ı otomatik kopyalar);
 kopyalanmasa Windows'ta bile `DllNotFoundException` alınırdı.
 
+### Kontroller yeniden atanabilir
+
+Ana menü → **Kontrol Ayarları**. Yukarı/aşağı satır, sol/sağ sütun (birincil /
+ikincil tuş), Enter atar, Delete siler, Esc geri döner.
+
+Tuşlar artık koda gömülü değil; `Systems/Input/ControlSettings.cs` tutuyor ve
+`config/controls.json`'a yazıyor. Varsayılanlar **eski sabit tuşların birebir
+aynısı** (WASD + ok tuşları, Space/E, F/LeftCtrl, R), yani mevcut kas hafızası
+bozulmuyor.
+
+Üç kural bilinçli:
+
+* **Çakışan atama tuşu eski eyleminden ÇALAR.** Sessizce izin verilseydi tek
+  tuş iki iş yapardı ve oyuncu bunu ancak kaynağa vururken fark ederdi.
+  Sessizce reddetmek de kötü olurdu: tuşa basılır, hiçbir şey olmaz, sebebi
+  bilinmez.
+* **Esc, Enter ve ok tuşları atanamaz.** Menü tuşunu bir oynanış eylemine
+  bağlayan oyuncu, ayar ekranından bir daha çıkamayabilirdi.
+* **Ayar dosyası dünya kaydından AYRI.** "Yeni oyun" başlatmak ya da kaydı
+  silmek kontrolleri sıfırlamamalı.
+
+Tuşsuz kalan bir eylem ekranda uyarı renginde görünüyor — oyuncu "sağa git"
+tuşunu silip çıkarsa oyun yarı felç olur ve sebebini hatırlamayabilir.
+
+Gamepad bilerek atanabilir DEĞİL: istenen şey klavye ataması ve "hangi düğme
+hangi kumandada ne" (Xbox A = Nintendo B) ayrı bir iş.
+
+#### Fare hassasiyeti ve nişan alma
+
+Oyunda hiç fare girdisi YOKTU (bütün kod tabanında tek bir `Mouse` geçişi
+vardı, o da bir yorum satırı). Hiçbir şeyi etkilemeyen bir hassasiyet çubuğu,
+ayarın olmamasından daha kötü olurdu: oyuncu çubuğu oynatır, oyun değişmez,
+ayara bir daha güvenmez. Bu yüzden hassasiyetin ÖLÇTÜĞÜ şey de eklendi.
+
+Fare artık karakterin baktığı yönü belirliyor; toplama, inşa ve saldırı hep o
+yöne gidiyor. Oyuncu sağa koşup sola vurabiliyor — top-down oyunlarda fare
+desteğinin bütün anlamı bu.
+
+Hassasiyet, farenin **kare başına hareketine** uygulanan çarpan (FPS
+oyunlarının yaptığı şey). Masaüstü imlecinin mutlak konumu kullanılsaydı
+"hassasiyet" diye bir şey olmazdı: onu işletim sistemi belirler ve oyunun
+ayarı yalan söylerdi.
+
+Nişan imleci karakterin çevresinde 24 pixel'lik bir yarıçapa sıkıştırılıyor
+(nişan bir YÖN; uzaklığın oynanışta karşılığı yok) ve fare 2.5 saniye hiç
+oynamazsa nişan bırakılıp yön yine hareketten türüyor — yoksa fareye bir kez
+dokunan oyuncu klavyeye dönemezdi.
+
+Doğrulama koşumlarında fare girdisi HER ZAMAN sıfır (`InputSource.IsAutomated`):
+yakalama script'leri yalnızca klavye besliyor ve belirsiz fare girdisi aynı
+script'i iki koşumda farklı sonuç verir hale getirirdi. Fare kuralları
+`--self-test`'te ayrıca sınanıyor.
+
 ### Madde 18: bölge kuralı hedefin konumuna bakar
 
 Güvenli bölgedeki bir oyuncuya sınırın hemen dışından vurulamaz — kontrol
@@ -883,6 +938,9 @@ mod'un etkisinin ekrandaki kanıtı.
   Ama derlenmek çalışmak değil: achievement'lar, leaderboard, davet,
   Workshop yükleme ve envanter çağrıları çalışan bir Steam istemcisine
   karşı hiç denenmedi.
+* **Dil, yazı ölçeği ve renk paleti diske YAZILMIYOR** — her açılışta
+  sıfırlanıyorlar. Kontrol ayarları (`config/controls.json`) kalıcı; aynı
+  dosyaya diğerlerini de taşımak ayrı bir iş.
 * **Steam derlemesi Windows x64'e özel** (Facepunch 2.3.3'ün taşıdığı tek
   platform). Varsayılan LiteNetLib derlemesi her platformda çalışıyor.
 * **İnşa yalnızca host'ta çalışıyor**; istemci inşa edemiyor. Tarım ve

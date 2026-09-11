@@ -10,7 +10,9 @@ using PixelSurvival.Trade;
 using PixelSurvival.Cosmetics;
 using PixelSurvival.Inventory;
 using PixelSurvival.Localization;
+using Microsoft.Xna.Framework.Input;
 using PixelSurvival.Systems.Crafting;
+using PixelSurvival.Systems.Input;
 using PixelSurvival.Systems.Social;
 using PixelSurvival.Workshop;
 
@@ -69,6 +71,7 @@ public sealed class HudRenderer
     private Color TextColor => Accessibility.Palette.Text;
     private Color DimTextColor => Accessibility.Palette.DimText;
     private Color CraftableColor => Accessibility.Palette.Positive;
+    private Color WarningColor => Accessibility.Palette.Warning;
 
     private readonly BitmapFont _font;
     private readonly Texture2D _pixel;
@@ -597,6 +600,202 @@ public sealed class HudRenderer
                 rows[i].Color, UiScale);
         }
     }
+
+    /// <summary>
+    /// Kontrol ayarları ekranı: tuş atamaları + fare.
+    ///
+    /// ── Neden sütunlar sabit genişlikte ─────────────────────────────────
+    /// Tuş adları çok farklı uzunlukta ("W" ile "LeftControl"). Sütunlar
+    /// metne göre akarsa satırlar birbirine göre kayar ve göz hangi tuşun
+    /// hangi eyleme ait olduğunu takip edemez. Sabit sütun, bitmap font
+    /// karakter genişliğinin katı olarak hesaplanıyor.
+    /// </summary>
+    public void DrawControls(SpriteBatch spriteBatch, ControlsScreen screen,
+                             int windowWidth, int windowHeight)
+    {
+        var lineHeight = _font.LineHeight * UiScale;
+        var padding = 6 * UiScale;
+        var settings = screen.Settings;
+
+        // ── Sutunlar PIXEL konumunda, bosluk doldurarak DEGIL ──────────
+        // Ilk surum sutunlari `PadRight` ile hizalamaya calisiyordu ve
+        // ekranda egri duruyordu: bu bitmap font SABIT GENISLIKLI DEGIL,
+        // her glyph'in kendi `Advance` degeri var (bkz. BitmapFont).
+        // Bosluk doldurmak yalnizca KARAKTER sayisini esitler, pixel
+        // genisligini degil. Sutunlar en genis metne gore olculup sabit
+        // pixel konumuna ciziliyor.
+        var labels = GameActions.All
+            .Select(a => Loc.T(GameActions.LabelKey(a)))
+            .Concat([Loc.T("controls.mouseAim"), Loc.T("controls.sensitivity"),
+                     Loc.T("controls.resetRow")])
+            .ToArray();
+
+        var arrow = _font.Measure("> ", UiScale);
+        var labelWidth = labels.Max(l => _font.Measure(l, UiScale));
+
+        // Secili yuva koseli parantezle isaretlendigi icin sutun onlari da
+        // almali; yoksa secim degistikce sutun genisligi oynar.
+        var slotWidth = GameActions.All
+            .SelectMany(a => settings.KeysFor(a))
+            .Select(k => _font.Measure($"[{SlotText(k)}]", UiScale))
+            .Append(_font.Measure(Loc.T("controls.secondaryHeader"), UiScale))
+            .Max();
+
+        var gap = _font.Measure("  ", UiScale);
+        var columnX = new[]
+        {
+            arrow,
+            arrow + labelWidth + gap,
+            arrow + labelWidth + gap + slotWidth + gap
+        };
+
+        var contentWidth = columnX[2] + slotWidth;
+
+        // --- Satirlari topla: (segmentler, renk) ---
+        var rows = new List<(string[] Cells, Color Color)>
+        {
+            ([Loc.T("controls.title")], TextColor)
+        };
+
+        for (var i = 0; i < GameActions.All.Length; i++)
+        {
+            var action = GameActions.All[i];
+            var keys = settings.KeysFor(action);
+            var selected = screen.SelectedRow == i;
+
+            var primary = SlotText(keys[0]);
+            var secondary = SlotText(keys[1]);
+
+            // Secili YUVA koseli parantezle isaretleniyor: hangi sutunun
+            // duzenlenecegi, renk ayrimina guvenmeden de okunur olmali
+            // (renk korlugu paleti bu ekrani da kapsiyor).
+            if (selected)
+            {
+                if (screen.SelectedSlot == 0) primary = $"[{primary}]";
+                else secondary = $"[{secondary}]";
+            }
+
+            // Tussuz kalan eylem UYARI renginde: oyuncu ekrandan cikmadan
+            // once gormeli.
+            var color = settings.IsUnbound(action) ? WarningColor
+                      : selected ? CraftableColor
+                      : TextColor;
+
+            rows.Add(([selected ? "> " : "", Loc.T(GameActions.LabelKey(action)),
+                       primary, secondary], color));
+        }
+
+        var extras = new (string Label, string Value)[]
+        {
+            (Loc.T("controls.mouseAim"),
+             Loc.T(settings.MouseAimEnabled ? "controls.on" : "controls.off")),
+            (Loc.T("controls.sensitivity"), $"{settings.MouseSensitivity:0.00}x"),
+            (Loc.T("controls.resetRow"), "")
+        };
+
+        for (var i = 0; i < extras.Length; i++)
+        {
+            var rowIndex = GameActions.All.Length + i;
+            var selected = screen.SelectedRow == rowIndex;
+
+            // Secili satirda deger ok icinde: sol/sag ile degisecegini
+            // gosteren tek ipucu bu.
+            var value = extras[i].Value.Length > 0 && selected
+                ? $"< {extras[i].Value} >"
+                : extras[i].Value;
+
+            rows.Add(([selected ? "> " : "", extras[i].Label, value, ""],
+                      selected ? CraftableColor : TextColor));
+        }
+
+        // --- Alt bilgi satirlari (tek sutun) ---
+        var footer = new List<(string Text, Color Color)>
+        {
+            ("", DimTextColor),
+
+            // Yakalama modunda ipucu DEGISIYOR: oyuncu tusa basmasi
+            // gerektigini bilmeli, yoksa ekranin kilitlendigini sanir.
+            (Loc.T(screen.IsCapturing ? "controls.press" : "controls.hint"),
+             screen.IsCapturing ? WarningColor : DimTextColor)
+        };
+
+        if (screen.Message is { } message)
+        {
+            var text = message == "controls.stolen" && screen.StolenFrom is { } from
+                ? Loc.T(message, Loc.T(GameActions.LabelKey(from)))
+                : Loc.T(message);
+
+            footer.Add((text, CraftableColor));
+        }
+
+        if (screen.HasUnbound) footer.Add((Loc.T("controls.unbound"), WarningColor));
+
+        // --- Panel ---
+        var footerWidth = footer.Max(f => _font.Measure(f.Text, UiScale));
+        var headerWidth = contentWidth;
+        var panelWidth = Math.Max(Math.Max(contentWidth, footerWidth), headerWidth)
+                         + padding * 2;
+
+        // +1 satir: sutun basligi.
+        var panelHeight = (rows.Count + footer.Count + 1) * lineHeight + padding * 2;
+
+        var origin = ClampToWindow((windowWidth - panelWidth) / 2,
+                                   (windowHeight - panelHeight) / 2,
+                                   panelWidth, panelHeight, windowWidth, windowHeight);
+
+        Fill(spriteBatch, new Rectangle(origin.X, origin.Y, panelWidth, panelHeight),
+             PanelColor * 0.95f);
+
+        var y = origin.Y + padding;
+
+        // Baslik
+        _font.Draw(spriteBatch, rows[0].Cells[0],
+                   new Vector2(origin.X + padding, y), rows[0].Color, UiScale);
+        y += lineHeight;
+
+        // Sutun basligi: sutunlarla AYNI x'lerde, tek bir dize degil.
+        var headers = new[] { Loc.T("controls.actionHeader"),
+                              Loc.T("controls.primaryHeader"),
+                              Loc.T("controls.secondaryHeader") };
+        for (var c = 0; c < headers.Length; c++)
+        {
+            _font.Draw(spriteBatch, headers[c],
+                new Vector2(origin.X + padding + columnX[c], y), DimTextColor, UiScale);
+        }
+        y += lineHeight;
+
+        for (var i = 1; i < rows.Count; i++)
+        {
+            var cells = rows[i].Cells;
+
+            // 0 = imlec oku (sutunun soluna), 1..3 = sutunlar.
+            _font.Draw(spriteBatch, cells[0],
+                       new Vector2(origin.X + padding, y), rows[i].Color, UiScale);
+
+            for (var c = 1; c < cells.Length; c++)
+            {
+                if (cells[c].Length == 0) continue;
+
+                _font.Draw(spriteBatch, cells[c],
+                    new Vector2(origin.X + padding + columnX[c - 1], y),
+                    rows[i].Color, UiScale);
+            }
+
+            y += lineHeight;
+        }
+
+        foreach (var (text, color) in footer)
+        {
+            _font.Draw(spriteBatch, text, new Vector2(origin.X + padding, y),
+                       color, UiScale);
+            y += lineHeight;
+        }
+    }
+
+    /// <summary>Boş yuva tire ile gösterilir; boşluk "kayıp" gibi okunurdu.</summary>
+    private static string SlotText(Keys key) =>
+        key == Keys.None ? Loc.T("controls.unboundSlot") : key.ToString();
+
 
     /// <summary>
     /// MADDE 23 — erişilebilirlik ve dil ayarları paneli.

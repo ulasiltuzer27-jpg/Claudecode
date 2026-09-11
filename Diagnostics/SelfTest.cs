@@ -7,7 +7,10 @@ using PixelSurvival.Networking;
 using PixelSurvival.Entities;
 using PixelSurvival.Systems.Animation;
 using PixelSurvival.Systems.Climate;
+using Microsoft.Xna.Framework.Input;
 using PixelSurvival.Systems.Collision;
+using PixelSurvival.Systems.Input;
+using PixelSurvival.UI;
 using PixelSurvival.Systems.Farming;
 using PixelSurvival.Systems.Taming;
 using PixelSurvival.Systems.Npcs;
@@ -87,6 +90,7 @@ public static class SelfTest
         CollisionRules(world.Tileset);
         ScatterRules(world.Tileset);
         TileAtlasRules(world.Tileset);
+        ControlRules();
 
         Console.WriteLine($"\n{_passed} gecti, {_failed} kaldi.");
         return _failed;
@@ -1296,6 +1300,284 @@ public static class SelfTest
 
         Check("tek onayda envanter DEGISMEZ",
             e.CountOf("wood") == 5 && f.CountOf("wood") == 0);
+    }
+
+    // ==================== KONTROLLER ====================
+
+    /// <summary>
+    /// Tuş atamaları, fare hassasiyeti ve Kontrol Ayarları ekranı.
+    ///
+    /// ── Neden ekran görüntüsü yetmiyor ──────────────────────────────────
+    /// Ekran görüntüsü "kontrol ayarları paneli açıldı" der. Oyunu bozan
+    /// hatalar ise panelin açılmasında değil, kuralların içinde:
+    ///
+    ///   • Aynı tuş iki eyleme birden bağlanırsa tek tuş iki iş yapar ve
+    ///     oyuncu bunu ancak kaynağa vururken fark eder.
+    ///   • Esc atanabilir olsaydı oyuncu ayar ekranından çıkamazdı.
+    ///   • Ataması diske yanlış yazılırsa oyun kapanınca sessizce kaybolur.
+    ///
+    /// Hiçbiri bir karede görünmez; koşturulmaları gerekir.
+    /// </summary>
+    private static void ControlRules()
+    {
+        Section("16) Kontroller (tus atama, fare, ayar ekrani)");
+
+        // --- Varsayilanlar ESKI davranisin birebir aynisi ---
+        // Bu sistem eklenmeden once tuslar koda gomuluydu. Varsayilanlar
+        // kaymissa mevcut oyuncularin kaslari yanlis tusa gider.
+        var settings = new ControlSettings();
+
+        Check("varsayilan: yukari = W + Up",
+            settings.KeysFor(GameAction.MoveUp) is [Keys.W, Keys.Up]);
+        Check("varsayilan: toplama = Space + E",
+            settings.KeysFor(GameAction.Gather) is [Keys.Space, Keys.E]);
+        Check("varsayilan: saldiri = F + LeftControl",
+            settings.KeysFor(GameAction.Attack) is [Keys.F, Keys.LeftControl]);
+        Check("varsayilan: insa = R (ikincil bos)",
+            settings.KeysFor(GameAction.Build) is [Keys.R, Keys.None]);
+
+        // --- Atama okumayi gercekten degistiriyor ---
+        var keyboard = new KeyboardState(Keys.J);
+        Check("atanmamis tus hareket URETMEZ",
+            !settings.IsDown(keyboard, GameAction.MoveUp));
+
+        settings.Assign(GameAction.MoveUp, 0, Keys.J);
+        Check("atanan tus hareket URETIR",
+            settings.IsDown(keyboard, GameAction.MoveUp));
+
+        Check("eski tus artik calismiyor",
+            !settings.IsDown(new KeyboardState(Keys.W), GameAction.MoveUp));
+
+        // --- CAKISMA: ayni tus iki eyleme baglanamaz ---
+        // Sessizce izin verilseydi tek tusa basmak hem yurur hem saldirirdi.
+        var clash = new ControlSettings();
+        var stolen = clash.Assign(GameAction.Attack, 0, Keys.W);
+
+        Check("cakisan atama tusu ESKI eylemden alir", stolen == GameAction.MoveUp);
+        Check("eski eylemin o yuvasi bosalir",
+            clash.KeysFor(GameAction.MoveUp)[0] == Keys.None);
+        Check("yeni eylem tusu aldi",
+            clash.KeysFor(GameAction.Attack)[0] == Keys.W);
+
+        // Eski eylemin DIGER yuvasi durmali: capraz zarar olmamali.
+        Check("eski eylemin ikincil tusu KORUNUR",
+            clash.KeysFor(GameAction.MoveUp)[1] == Keys.Up);
+
+        // Ayni tusu ayni yuvaya tekrar atamak kendini calmamali.
+        var same = new ControlSettings();
+        Check("ayni tus ayni yuvaya tekrar atanabilir",
+            same.Assign(GameAction.MoveUp, 0, Keys.W) is null &&
+            same.KeysFor(GameAction.MoveUp)[0] == Keys.W);
+
+        // --- Tussuz kalma GORUNUR olmali ---
+        var stripped = new ControlSettings();
+        stripped.Assign(GameAction.Build, 0, Keys.None);
+        Check("butun yuvalari bos eylem 'tussuz' sayilir",
+            stripped.IsUnbound(GameAction.Build));
+        Check("tusu olan eylem tussuz SAYILMAZ",
+            !stripped.IsUnbound(GameAction.MoveUp));
+
+        // --- Sifirlama ---
+        var reset = new ControlSettings();
+        reset.Assign(GameAction.MoveUp, 0, Keys.J);
+        reset.Assign(GameAction.Attack, 0, Keys.K);
+        reset.Reset(GameAction.MoveUp);
+
+        Check("tek eylem sifirlanir",
+            reset.KeysFor(GameAction.MoveUp) is [Keys.W, Keys.Up]);
+        Check("sifirlama DIGER eylemleri bozmaz",
+            reset.KeysFor(GameAction.Attack)[0] == Keys.K);
+
+        // Sifirlanan tus baska bir eylemde duruyorsa oradan alinmali,
+        // yoksa sifirlamanin kendisi cakisma yaratirdi.
+        var overlap = new ControlSettings();
+        overlap.Assign(GameAction.Attack, 0, Keys.W);          // W'yi MoveUp'tan calar
+        overlap.Reset(GameAction.MoveUp);                       // W geri gelir
+        Check("sifirlama cakisma YARATMAZ",
+            overlap.KeysFor(GameAction.MoveUp)[0] == Keys.W &&
+            overlap.KeysFor(GameAction.Attack)[0] == Keys.None);
+
+        // --- Fare hassasiyeti sinirlari ---
+        var mouse = new ControlSettings { MouseSensitivity = 99f };
+        Check("hassasiyet ust sinirda kirpilir",
+            Math.Abs(mouse.MouseSensitivity - ControlSettings.MaxSensitivity) < 0.001f);
+
+        mouse.MouseSensitivity = -5f;
+        Check("hassasiyet alt sinirda kirpilir",
+            Math.Abs(mouse.MouseSensitivity - ControlSettings.MinSensitivity) < 0.001f);
+
+        // Sifir hassasiyet nisani tamamen kilitlerdi.
+        Check("hassasiyet asla sifir olamaz", ControlSettings.MinSensitivity > 0f);
+
+        // --- Fare nisani ---
+        var aim = new MouseAim();
+        var mouseSettings = new ControlSettings();
+
+        Check("fare oynamadan nisan YOK", aim.Direction is null);
+
+        aim.Update(0.016f, new Vector2(40f, 0f), mouseSettings);
+        Check("fare oynayinca nisan olusur", aim.Direction is not null);
+        Check("nisan yonu fare yonunu izler",
+            aim.Direction!.Value.X > 0.9f);
+
+        // Yaricap: nisan bir YON, uzaklik degil. Sinirsiz olsaydi imlec
+        // ekrani terk ederdi.
+        aim.Update(0.016f, new Vector2(9999f, 0f), mouseSettings);
+        Check("nisan imleci yaricapa sikistirilir",
+            aim.Offset.Length() <= MouseAim.Radius + 0.001f,
+            $"{aim.Offset.Length():F1} <= {MouseAim.Radius}");
+
+        // Hassasiyet GERCEKTEN carpan mi: ayni fare hareketi, iki ayar.
+        var slow = new MouseAim();
+        var fast = new MouseAim();
+        slow.Update(0.016f, new Vector2(4f, 0f),
+                    new ControlSettings { MouseSensitivity = 0.25f });
+        fast.Update(0.016f, new Vector2(4f, 0f),
+                    new ControlSettings { MouseSensitivity = 4.0f });
+
+        Check("hassasiyet imlec hizini GERCEKTEN degistiriyor",
+            fast.Offset.X > slow.Offset.X * 4f,
+            $"{slow.Offset.X:F2} -> {fast.Offset.X:F2}");
+
+        // Kapaliyken hic nisan olmamali.
+        var off = new MouseAim();
+        off.Update(0.016f, new Vector2(50f, 0f),
+                   new ControlSettings { MouseAimEnabled = false });
+        Check("fare nisani kapaliyken yon URETMEZ", off.Direction is null);
+
+        // Fare durunca nisan BIRAKILMALI, yoksa oyuncu klavyeye donemez.
+        var idle = new MouseAim();
+        idle.Update(0.016f, new Vector2(20f, 0f), mouseSettings);
+        idle.Update(5f, Vector2.Zero, mouseSettings);
+        Check("fare durunca nisan birakilir", idle.Direction is null);
+
+        // --- Nisan YONU gercekten karakteri cevirir ---
+        // Bu, butun fare isinin tek gorunur sonucu: oyuncu saga kosarken
+        // sola nisan alabilmeli.
+        Check("nisan hareketten BAGIMSIZ yon verir",
+            new PlayerInput(new Vector2(1f, 0f), aim: new Vector2(-1f, 0f)).Aim is
+                { X: < 0f });
+
+        // --- Ayar ekrani kurallari ---
+        var screen = new ControlsScreen(new ControlSettings());
+
+        Check("ekran ilk satirdan baslar", screen.SelectedRow == 0 && screen.IsActionRow);
+
+        screen.MoveColumn(1);
+        Check("sag ok yuva degistirir", screen.SelectedSlot == 1);
+
+        screen.MoveColumn(1);
+        Check("yuva sayisini ASMAZ", screen.SelectedSlot == ControlSettings.SlotCount - 1);
+
+        screen.Activate();
+        Check("Enter yakalama modunu acar", screen.IsCapturing);
+
+        // Esc IPTAL eder, atanmaz: menuden cikis tusunu bir oynanis
+        // eylemine baglamak oyuncuyu ekranda kilitleyebilirdi.
+        screen.CaptureKey(Keys.Escape);
+        Check("Esc yakalamayi IPTAL eder", !screen.IsCapturing);
+        Check("Esc bir eyleme ATANMAZ",
+            screen.Settings.KeysFor(GameAction.MoveUp)[1] != Keys.Escape);
+
+        // Menu gezinme tuslari da atanamaz.
+        screen.Activate();
+        screen.CaptureKey(Keys.Enter);
+        Check("Enter atanamaz (menu tusu)", screen.IsCapturing);
+        Check("reddedilen tus mesaj birakir", screen.Message == "controls.reserved");
+
+        screen.CaptureKey(Keys.J);
+        Check("normal tus atanir",
+            !screen.IsCapturing && screen.Settings.KeysFor(GameAction.MoveUp)[1] == Keys.J);
+
+        // Satir gezinmesi yakalama modunda DONMAMALI.
+        screen.Activate();
+        var rowBefore = screen.SelectedRow;
+        screen.MoveRow(3);
+        Check("yakalama modunda satir degismez", screen.SelectedRow == rowBefore);
+        screen.CaptureKey(Keys.Escape);
+
+        // Ek satirlar: fare ve sifirlama.
+        var extraScreen = new ControlsScreen(new ControlSettings());
+        extraScreen.MoveRow(GameActions.All.Length);
+        Check("eylemlerden sonra fare satiri gelir",
+            !extraScreen.IsActionRow &&
+            extraScreen.SelectedExtra == ControlsScreen.ExtraRow.MouseAim);
+
+        extraScreen.MoveColumn(1);
+        Check("fare nisani satirda kapatilabilir",
+            !extraScreen.Settings.MouseAimEnabled);
+
+        extraScreen.MoveRow(1);
+        var before = extraScreen.Settings.MouseSensitivity;
+        extraScreen.MoveColumn(1);
+        Check("hassasiyet satirda artirilabilir",
+            extraScreen.Settings.MouseSensitivity > before);
+
+        extraScreen.MoveRow(1);
+        extraScreen.Settings.Assign(GameAction.MoveUp, 0, Keys.J);
+        extraScreen.Activate();
+        Check("'hepsini sifirla' satiri calisir",
+            extraScreen.Settings.KeysFor(GameAction.MoveUp) is [Keys.W, Keys.Up]);
+
+        // --- Diske yazma / okuma ---
+        // Ayar dosyasi kaybolursa oyuncu her acilista tuslarini yeniden
+        // atar; sessiz ve sinir bozucu bir hata.
+        var directory = ControlSettings.Directory;
+        var backup = File.Exists(ControlSettings.Path)
+            ? File.ReadAllText(ControlSettings.Path) : null;
+
+        try
+        {
+            var saved = new ControlSettings();
+            saved.Assign(GameAction.Gather, 0, Keys.Q);
+            saved.Assign(GameAction.Build, 1, Keys.Z);
+            saved.MouseSensitivity = 2.5f;
+            saved.MouseAimEnabled = false;
+            saved.Save();
+
+            var loaded = ControlSettings.Load();
+
+            Check("atama diskten geri geliyor",
+                loaded.KeysFor(GameAction.Gather)[0] == Keys.Q);
+            Check("ikincil yuva da geri geliyor",
+                loaded.KeysFor(GameAction.Build)[1] == Keys.Z);
+            Check("hassasiyet geri geliyor",
+                Math.Abs(loaded.MouseSensitivity - 2.5f) < 0.001f);
+            Check("fare nisani tercihi geri geliyor", !loaded.MouseAimEnabled);
+            Check("dokunulmamis eylem varsayilanda kalir",
+                loaded.KeysFor(GameAction.MoveLeft) is [Keys.A, Keys.Left]);
+
+            // BOZUK dosya oyunu acmaz hale getirmemeli.
+            File.WriteAllText(ControlSettings.Path, "{ bu gecerli json degil ");
+            var recovered = ControlSettings.Load();
+            Check("bozuk ayar dosyasi VARSAYILANA duser",
+                recovered.KeysFor(GameAction.MoveUp) is [Keys.W, Keys.Up]);
+
+            // Taninmayan tus adi: yalnizca o yuva bos kalir.
+            File.WriteAllText(ControlSettings.Path,
+                "{\"mouseSensitivity\":1.0,\"mouseAimEnabled\":true," +
+                "\"bindings\":{\"MoveUp\":[\"BoyleBirTusYok\",\"Up\"]}}");
+            var partial = ControlSettings.Load();
+            Check("taninmayan tus adi yalnizca O yuvayi bosaltir",
+                partial.KeysFor(GameAction.MoveUp) is [Keys.None, Keys.Up]);
+        }
+        finally
+        {
+            // Sinama diskte iz birakmamali.
+            if (backup is null)
+            {
+                if (File.Exists(ControlSettings.Path)) File.Delete(ControlSettings.Path);
+                if (Directory.Exists(directory) &&
+                    Directory.GetFileSystemEntries(directory).Length == 0)
+                {
+                    Directory.Delete(directory);
+                }
+            }
+            else
+            {
+                File.WriteAllText(ControlSettings.Path, backup);
+            }
+        }
     }
 
     // ==================== TILE ATLASI ====================

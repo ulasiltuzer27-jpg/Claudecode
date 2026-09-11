@@ -173,10 +173,21 @@ public sealed class Player
         var applied = TileCollider.Move(map, Collider, desired);
         Position += applied;
 
+        // Yön: NİŞAN varsa o kazanır, yoksa hareketten türer.
+        //
+        // Fare nişan alırken oyuncu sağa koşup sola vurabilmeli — bu,
+        // top-down oyunlarda fare desteğinin bütün anlamı. Nişan yokken
+        // (klavye/gamepad ile oynanırken) davranış eskisiyle birebir aynı
+        // kalıyor: yön gidilen yöndür.
+        //
         // Yön, GERÇEKLEŞEN harekete değil İSTENEN yöne göre belirlenir.
         // Duvara bakarak yürümeye çalışırken karakter duvara bakmalı; applied
         // sıfır olduğu için ona bakılsaydı yön rastgele geri dönerdi.
-        if (input.IsMoving)
+        if (input.Aim is { } aim)
+        {
+            Facing = ResolveFacing(aim, Facing);
+        }
+        else if (input.IsMoving)
         {
             Facing = ResolveFacing(move, Facing);
         }

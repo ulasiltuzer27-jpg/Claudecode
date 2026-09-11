@@ -1,0 +1,71 @@
+# Tus atama sisteminin UCTAN UCA dogrulanmasi.
+#
+# Self-test kurallari atama mantigini saf halde siniyor. Burada sinanan
+# sey baska ve tek onemli olan: oyuncunun ayar ekranindan yaptigi degisiklik
+# GERCEKTEN oynanisa yansiyor mu?
+#
+# Zincir uzun ve her halkasi ayri kirilabilir:
+#   ayar ekrani -> ControlSettings -> diske yazma -> InputReader ->
+#   PlayerInput -> Player.Update -> karakterin konumu
+#
+# Olcum: once varsayilan tusla (D) saga gidilir ve konum yazilir. Sonra
+# "saga git" eylemi J'ye atanir. Ayni script J'ye basar. Karakter yine
+# saga gitmelidir -- ve D'ye basildiginda ARTIK GITMEMELIDIR.
+#
+# Kontrol: Tools/verify_controls.py
+
+screen Playing
+wait 60
+shot 01_varsayilan_once
+
+# Varsayilan tus W ile yukari git.
+#
+# Neden saga degil yukari: ilk surumde saga gidiliyordu ve olcum
+# yaniltici cikti. Oyuncu x=99.5'te duruyordu ve tile 7'de bir KAKTUS
+# var (kati). Yeni tusla yalnizca 6.5 pixel ilerledi -- tus calisiyordu
+# ama olcum "calisti" demeye yetmiyordu. Yukari yon spawn civarinda
+# acik; olcum boylece tusun kendisini olcuyor, duvari degil.
+down W
+wait 60
+up W
+wait 5
+shot 02_W_ile_gitti
+
+# --- Kontrol ayarlarina gec ---
+screen Controls
+wait 20
+shot 03_ayar_ekrani
+
+# Imlec zaten ILK satirda: "Yukari git". Satir gezinmesine gerek yok --
+# script ne kadar az adima dayanirsa o kadar az kirilir.
+shot 04_yukari_git_secili
+
+# Enter: tus yakalama modu. Ekran "yeni tusa bas" demeli.
+tap Enter
+wait 10
+shot 05_tus_bekleniyor
+
+# J'ye bas: birincil yuvaya atanir (W'nin yerine).
+tap J
+wait 10
+shot 06_J_atandi
+
+# Oyuna don.
+screen Playing
+wait 20
+
+# YENI tusla yukari git.
+down J
+wait 60
+up J
+wait 5
+shot 07_J_ile_gitti
+
+# ESKI tusla dene: artik HICBIR SEY olmamali.
+down W
+wait 60
+up W
+wait 5
+shot 08_W_artik_calismiyor
+
+quit
