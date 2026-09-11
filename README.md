@@ -568,8 +568,9 @@ Ayrıca: ItemDef'lerde `damage`/`health`/`speed` gibi alan bulunması hata sayı
 ### Steam derlemesi ayrı bir yapılandırma
 
 ```bash
-dotnet build                    # LiteNetLib, Steamworks.NET YOK, Steam istemcisi gerekmez
+dotnet build                    # LiteNetLib, Steam YOK, Steam istemcisi gerekmez
 dotnet build -c SteamRelease    # Steamworks.NET + STEAM_BUILD + SteamNetworkingTransport
+dotnet build -c SteamFacepunch  # Facepunch.Steamworks + FACEPUNCH_STEAM
 ```
 
 Varsayılan derleme Steam'e hiç bağımlı değil. `SteamNetworkingTransport`
@@ -579,6 +580,44 @@ Valve relay ağı bedavaya geliyor, oyuncular birbirinin IP'sini görmüyor.
 
 Taşıma seçimi tek bir yerde (`TransportFactory`). `NetworkSession` artık hiçbir
 somut kütüphane adı geçirmiyor — gameplay hangi taşımanın aktif olduğundan habersiz.
+
+#### Neden iki ayrı Steam yapılandırması
+
+`Steamworks.NET` ve `Facepunch.Steamworks` **aynı derlemede bulunamaz**. İkisi de
+`Steamworks` ad alanını kullanıyor ve aynı tip adlarını tanımlıyor; ikisini
+birden referans vermek derlemeyi kırıyor:
+
+```
+error CS0433: The type 'SteamFriends' exists in both
+'Facepunch.Steamworks.Win64' and 'Steamworks.NET'
+```
+
+Proje `SteamFriends`, `SteamUtils`, `SteamInventory`, `SteamUGC` ve
+`SteamUserStats` tiplerini zaten kullandığı için çakışma teorik değil —
+`dotnet build -c SteamRelease` anında patlardı. Bu yüzden her sarmalayıcı kendi
+yapılandırmasında duruyor ve hiçbir derlemede yan yana gelmiyorlar.
+
+`SteamFacepunch` yapılandırması `Game1`'in ömür döngüsüne üç kanca takıyor:
+`Initialize`'da `SteamClient.Init` (try/catch ile — Steam yoksa oyun yine
+açılır), `Update`'in **en başında** `SteamClient.RunCallbacks()` ve
+`OnExiting`'de `SteamClient.Shutdown()`.
+
+`RunCallbacks`'in yeri önemli: `Update`'in aşağısında menü ekranları için erken
+`return`'ler var, çağrı oraların altına konsaydı oyuncu menüde dururken
+overlay daveti ve achievement onayı askıda kalırdı.
+
+`Init`'in ikinci parametresi (`asyncCallbacks`) bilerek `false`: `true` olsaydı
+Facepunch arka planda kendi pompasını çalıştırır ve `Update`'teki çağrıyla
+birlikte **iki ayrı pompa** oluşurdu — aynı dispatch kuyruğuna iki iplikten
+girmek teşhisi zor bir yarış durumu demek. İkisi birlikte açılmamalı;
+`Game1.SteamAsyncCallbacks` sabitinin yorumunda tersine çevirmenin yolu yazıyor.
+
+Paket **yalnızca Windows x64** taşıyor (assembly adı bile
+`Facepunch.Steamworks.Win64`). Linux/macOS'ta derleniyor ama `Init` native
+kütüphaneyi bulamayıp atıyor ve try/catch onu yakalıyor — beklenen davranış.
+Ayrıca paket `steam_api64.dll`'i eski `content/` düzeninde taşıdığı için
+csproj onu açıkça çıktıya kopyalıyor; kopyalanmasa Windows'ta bile
+`DllNotFoundException` alınırdı.
 
 ### Madde 18: bölge kuralı hedefin konumuna bakar
 

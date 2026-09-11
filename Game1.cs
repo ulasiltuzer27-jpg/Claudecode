@@ -1,4 +1,10 @@
 using System.Diagnostics;
+#if FACEPUNCH_STEAM
+// Facepunch.Steamworks da `Steamworks` ad alanini kullaniyor; bu using
+// SADECE SteamFacepunch yapilandirmasinda gecerli. Kosulsuz yazilsaydi
+// varsayilan derleme (paket yok) CS0246 ile kirilirdi.
+using Steamworks;
+#endif
 using PixelSurvival.Diagnostics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -233,11 +239,97 @@ public class Game1 : Game
         IsMouseVisible = true;
     }
 
+#if FACEPUNCH_STEAM
+    /// <summary>
+    /// Spacewar — Valve'in herkese açık test AppID'si.
+    ///
+    /// Gerçek AppID <c>Content/Steam/achievements.json</c> içinde duruyor
+    /// ve oraya ait; burada TEST kimliği kullanılıyor çünkü bu yapılandırma
+    /// (<c>SteamFacepunch</c>) Steam bağlantısını denemek için var, yayın
+    /// için değil. Yayına çıkarken bu sabit oradan okunmalı.
+    /// </summary>
+    private const uint SpacewarAppId = 480;
+
+    /// <summary>
+    /// Geri çağrıları Facepunch KENDİ ipliğinde mi pompalasın.
+    ///
+    /// ── Neden <c>false</c> ──────────────────────────────────────────────
+    /// İstenen entegrasyon hem <c>Init(480, true)</c> hem de
+    /// <c>Update</c> içinde <c>RunCallbacks()</c> içeriyordu. Bu ikisi
+    /// aynı anda AÇIK olduğunda iki ayrı pompa oluşuyor: Facepunch arka
+    /// planda ~16 ms'de bir <c>RunFrame</c> çağırırken oyun ipliği de her
+    /// karede çağırır. Aynı dispatch kuyruğuna iki iplikten girmek,
+    /// teşhisi zor bir yarış durumu (aynı geri çağrının iki kez işlenmesi)
+    /// demek.
+    ///
+    /// İkisinden biri seçilmeliydi; geri çağrıların OYUN İPLİĞİNDE
+    /// kalması tercih edildi: bir achievement geri çağrısı oyun durumuna
+    /// dokunduğunda kilit gerekmiyor.
+    ///
+    /// Tersini isterseniz: bunu <c>true</c> yapın ve <c>Update</c>
+    /// içindeki <c>RunCallbacks()</c> satırını silin. İkisi birlikte
+    /// açılmamalı.
+    /// </summary>
+    private const bool SteamAsyncCallbacks = false;
+
+    /// <summary>
+    /// Steam başlatıldı mı. <see cref="SteamClient.Init"/> başarısız olduysa
+    /// <c>RunCallbacks</c> ve <c>Shutdown</c> ÇAĞRILMAMALI — başlatılmamış
+    /// bir istemciyi pompalamak Facepunch tarafında da atar.
+    /// </summary>
+    private bool _steamReady;
+#endif
+
     protected override void Initialize()
     {
         _graphics.ApplyChanges();
+
+#if FACEPUNCH_STEAM
+        // Steam BURADA baslatiliyor, LoadContent'te degil: icerik
+        // yuklemesi uzun surebiliyor ve Steam overlay'inin oyun
+        // penceresine olabildigince erken baglanmasi isteniyor.
+        try
+        {
+            SteamClient.Init(SpacewarAppId, asyncCallbacks: SteamAsyncCallbacks);
+            _steamReady = true;
+
+            Console.WriteLine($"[steam] baslatildi — AppID {SteamClient.AppId}, " +
+                              $"kullanici: {SteamClient.Name}");
+        }
+        catch (Exception ex)
+        {
+            // Steam YOKSA oyun yine de acilmali. Bu, projenin bastan beri
+            // korudugu kural: Steam bir EKLENTI, sart degil. Paket
+            // yalnizca Windows x64 tasidigi icin Linux/macOS uzerinde
+            // buraya DllNotFoundException ile dusulmesi BEKLENEN davranis.
+            _steamReady = false;
+            Console.WriteLine($"[steam] baslatilamadi, Steam'siz devam ediliyor: {ex.Message}");
+        }
+#endif
+
         base.Initialize();
     }
+
+#if FACEPUNCH_STEAM
+    /// <summary>
+    /// Kapanışta Steam bağlantısını kapatır.
+    ///
+    /// <c>Shutdown</c> çağrılmazsa Steam istemcisi oyunu bir süre daha
+    /// "çalışıyor" görür; oyuncu kütüphanede oynanıyor görünür ve bir
+    /// sonraki başlatma "zaten çalışıyor" diye reddedilebilir.
+    /// </summary>
+    protected override void OnExiting(object sender, ExitingEventArgs args)
+    {
+        if (_steamReady)
+        {
+            SteamClient.Shutdown();
+            _steamReady = false;
+            Console.WriteLine("[steam] kapatildi");
+        }
+
+        base.OnExiting(sender, args);
+    }
+#endif
 
     protected override void LoadContent()
     {
@@ -529,6 +621,17 @@ public class Game1 : Game
 
     protected override void Update(GameTime gameTime)
     {
+#if FACEPUNCH_STEAM
+        // Steam geri cagrilari EN BASTA pompalaniyor.
+        //
+        // Yeri onemli: bu metodun asagisinda menu ekranlari icin erken
+        // `return`'ler var. Cagri oralarin altina konsaydi oyuncu menude
+        // ya da gardiropta dururken geri cagrilar birikirdi — overlay'den
+        // gelen davet, achievement onayi ve arkadas listesi guncellemesi
+        // menu kapanana kadar askida kalirdi.
+        if (_steamReady) SteamClient.RunCallbacks();
+#endif
+
         // Yakalama script'i once islenir: bastigi tuslar AYNI karede okunsun.
         if (_capture is not null)
         {
