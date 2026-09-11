@@ -207,16 +207,28 @@ public sealed class SteamInventory(SteamItemCatalog catalog)
     /// Steam'den sahiplik listesini tazeler.
     ///
     /// Sonuç Steam'den gelir; oyun bu listeyi ÜRETMEZ, yalnızca alır.
+    ///
+    /// ── Neden senkron imza, asenkron gövde ──────────────────────────────
+    /// Çağıran oyun döngüsü; orada <c>await</c> etmek kareyi dondururdu.
+    /// Metot arka planda bir görev başlatıp hemen dönüyor, liste geldiğinde
+    /// dolduruluyor. Steamworks.NET sürümünde burada yalnızca bir "çağrı
+    /// noktası işareti" vardı — sonuç hiç okunmuyordu ve
+    /// <see cref="Items"/> her zaman boş kalıyordu.
     /// </summary>
     public void Refresh()
     {
 #if STEAM_BUILD
-        // Steamworks.NET: SteamInventory.GetAllItems + sonucun
-        // GetResultItems ile okunması. Sonuç asenkron gelir; gerçek
-        // uygulamada SteamInventoryResultReady_t callback'i beklenir.
-        // Burada yalnızca çağrı noktası işaretleniyor.
-        IsAvailable = Steamworks.SteamAPI.IsSteamRunning();
-        _statusKey = IsAvailable ? "steam.inventoryRead" : "steam.notRunning";
+        IsAvailable = Steamworks.SteamClient.IsValid;
+
+        if (!IsAvailable)
+        {
+            _statusKey = "steam.notRunning";
+            _items.Clear();
+            return;
+        }
+
+        _statusKey = "steam.inventoryRead";
+        _ = RefreshAsync();
 #else
         IsAvailable = false;
         _statusKey = "steam.absent";
@@ -224,19 +236,84 @@ public sealed class SteamInventory(SteamItemCatalog catalog)
 #endif
     }
 
+#if STEAM_BUILD
+    private async Task RefreshAsync()
+    {
+        try
+        {
+            // Tanimlar once yuklenmeli: item'larin DefId'si ancak tanim
+            // tablosu geldikten sonra anlamli.
+            Steamworks.SteamInventory.LoadItemDefinitions();
+
+            using var result = await Steamworks.SteamInventory.GetAllItemsAsync();
+            if (result is null) return;
+
+            var items = result.Value.GetItems();
+            if (items is null) return;
+
+            // Liste TEK SEFERDE degistiriliyor: gorev devami is parcacigi
+            // havuzunda kosuyor ve oyun dongusu ayni listeden okuyor.
+            // Tek tek Add edilseydi okuyan taraf yari dolmus bir liste
+            // gorebilirdi.
+            var snapshot = items
+                .Select(i => new SteamItemInstance(i.Id.Value, new SteamItemDefId(i.DefId.Value),
+                                                   i.Quantity))
+                .ToList();
+
+            lock (_items)
+            {
+                _items.Clear();
+                _items.AddRange(snapshot);
+            }
+        }
+        catch (Exception ex)
+        {
+            _statusKey = "steam.notRunning";
+            Console.WriteLine($"[steam] envanter okunamadi: {ex.Message}");
+        }
+    }
+#endif
+
     /// <summary>
     /// Bir item'ı tüketir. Steam'in istemci tarafında İZİN VERDİĞİ işlem.
+    ///
+    /// Facepunch'ta tüketme item'ın KENDİSİNDE (<c>ConsumeAsync</c>), statik
+    /// bir API'de değil: elde olmayan bir instance id uydurup çağırmak
+    /// mümkün değil.
     /// </summary>
     public bool TryConsume(ulong instanceId, int quantity)
     {
 #if STEAM_BUILD
-        return Steamworks.SteamInventory.ConsumeItem(out _, new Steamworks.SteamItemInstanceID_t(instanceId), (uint)quantity);
+        if (!IsAvailable) return false;
+
+        var item = Steamworks.SteamInventory.Items?
+            .FirstOrDefault(i => i.Id.Value == instanceId);
+
+        if (item is not { } target) return false;
+
+        _ = ConsumeAsync(target, quantity);
+        return true;
 #else
         _ = instanceId;
         _ = quantity;
         return false;
 #endif
     }
+
+#if STEAM_BUILD
+    private async Task ConsumeAsync(Steamworks.InventoryItem item, int quantity)
+    {
+        try
+        {
+            using var result = await item.ConsumeAsync(quantity);
+            if (result is not null) Refresh();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[steam] item tuketilemedi: {ex.Message}");
+        }
+    }
+#endif
 
     /// <summary>
     /// Steam'in doğrulayabildiği bir takas tarifini uygular.
@@ -254,23 +331,58 @@ public sealed class SteamInventory(SteamItemCatalog catalog)
         }
 
 #if STEAM_BUILD
-        var ids = inputInstanceIds
-            .Select(id => new Steamworks.SteamItemInstanceID_t(id)).ToArray();
-        var counts = recipe.Inputs.Select(i => (uint)i.Count).ToArray();
+        if (!IsAvailable) return false;
 
-        return Steamworks.SteamInventory.ExchangeItems(
-            out _,
-            [new Steamworks.SteamItemDef_t(recipe.OutputDefId)], [1u], 1,
-            ids, counts, (uint)ids.Length);
+        var owned = Steamworks.SteamInventory.Items;
+        if (owned is null) return false;
+
+        // Girdiler oyuncunun GERCEKTEN sahip oldugu item'lardan seciliyor.
+        // Uydurulmus bir instance id burada eslesmez ve takas hic
+        // baslamaz.
+        var inputs = inputInstanceIds
+            .Select(id => owned.FirstOrDefault(i => i.Id.Value == id))
+            .Where(i => i.Id.Value != 0)
+            .ToArray();
+
+        if (inputs.Length != inputInstanceIds.Count) return false;
+
+        var output = Steamworks.SteamInventory.FindDefinition(
+            new Steamworks.Data.InventoryDefId { Value = recipe.OutputDefId });
+
+        if (output is null) return false;
+
+        _ = ExchangeAsync(inputs, output);
+        return true;
 #else
         _ = inputInstanceIds;
         return false;
 #endif
     }
 
+#if STEAM_BUILD
+    private async Task ExchangeAsync(Steamworks.InventoryItem[] inputs,
+                                     Steamworks.InventoryDef output)
+    {
+        try
+        {
+            using var result = await Steamworks.SteamInventory.CraftItemAsync(inputs, output);
+            if (result is not null) Refresh();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[steam] takas basarisiz: {ex.Message}");
+        }
+    }
+#endif
+
     /// <summary>
     /// Steam'in oynanış süresine bağlı düşürme mekanizmasını tetikler.
     /// Hız sınırı Steam tarafındadır; oyun bunu zorlayamaz.
+    ///
+    /// DİKKAT: Bu, item ÜRETMEK değildir. Facepunch'ta item üreten çağrı
+    /// <c>GenerateItemAsync</c>'tir ve publisher anahtarı ister; bu projede
+    /// HİÇBİR yerde çağrılmaz (bkz. sınıf başındaki kritik kural,
+    /// <c>Tools/verify_content.py</c> bunu denetliyor).
     /// </summary>
     public bool RequestPlaytimeDrop(SteamItemDefId defId)
     {
@@ -281,10 +393,29 @@ public sealed class SteamInventory(SteamItemCatalog catalog)
         }
 
 #if STEAM_BUILD
-        return Steamworks.SteamInventory.TriggerItemDrop(
-            out _, new Steamworks.SteamItemDef_t(defId.Value));
+        if (!IsAvailable) return false;
+
+        _ = TriggerDropAsync(defId);
+        return true;
 #else
         return false;
 #endif
     }
+
+#if STEAM_BUILD
+    private async Task TriggerDropAsync(SteamItemDefId defId)
+    {
+        try
+        {
+            using var result = await Steamworks.SteamInventory.TriggerItemDropAsync(
+                new Steamworks.Data.InventoryDefId { Value = defId.Value });
+
+            if (result is not null) Refresh();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[steam] item drop tetiklenemedi: {ex.Message}");
+        }
+    }
+#endif
 }

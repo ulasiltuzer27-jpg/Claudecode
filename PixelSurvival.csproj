@@ -43,55 +43,30 @@
     <TrimmerRootAssembly Include="Microsoft.Xna.Framework.Content.ContentTypeReader" Visible="false" />
   </ItemGroup>
 
-  <!-- Madde 19: Steam derlemesi AYRI bir yapilandirma.
-       Varsayilan (Debug/Release) derleme Steamworks.NET'e ve kurulu bir
-       Steam istemcisine ihtiyac duymaz; boylece gelistirme ortami
+  <!-- Steam derlemesi AYRI bir yapilandirma.
+       Varsayilan (Debug/Release) derleme Facepunch.Steamworks'e ve kurulu
+       bir Steam istemcisine ihtiyac duymaz; boylece gelistirme ortami
        Steam'e bagimli hale gelmiyor.
 
-           dotnet build                      -> LiteNetLib, Steam yok
-           dotnet build -c SteamRelease      -> Steamworks.NET + STEAM_BUILD
-  -->
+           dotnet build                   -> LiteNetLib, Steam yok
+           dotnet build -c SteamRelease   -> Facepunch.Steamworks + STEAM_BUILD
+
+       TEK Steam yapilandirmasi var. Bir donem iki tane vardi
+       (Steamworks.NET icin SteamRelease, Facepunch icin SteamFacepunch)
+       cunku iki sarmalayici ayni `Steamworks` ad alanini kullaniyor ve
+       ayni derlemede bulunamiyorlardi. Steamworks.NET tamamen
+       kaldirildiktan sonra o ayrima gerek kalmadi.
+
+       NOT: Facepunch.Steamworks 2.3.3 YALNIZCA Windows x64 tasiyor
+       (assembly adi bile `Facepunch.Steamworks.Win64`). Steam derlemesi
+       bu yuzden Windows'a ozel; varsayilan derleme her platformda
+       calismaya devam ediyor. -->
   <PropertyGroup Condition="'$(Configuration)' == 'SteamRelease'">
     <DefineConstants>$(DefineConstants);STEAM_BUILD</DefineConstants>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Optimize>true</Optimize>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(Configuration)' == 'SteamRelease'">
-    <PackageReference Include="Steamworks.NET" Version="20.*" />
-  </ItemGroup>
-
-  <!-- Facepunch.Steamworks: AYRI bir yapilandirma. Neden?
-
-       Iki sarmalayici AYNI derlemede olamaz. Ikisi de `Steamworks`
-       ad alanini kullaniyor ve ayni tip adlarini tanimliyor; ikisini
-       birden referans vermek derlemeyi CS0433 ile kiriyor:
-
-         error CS0433: The type 'SteamFriends' exists in both
-         'Facepunch.Steamworks.Win64' and 'Steamworks.NET'
-
-       Proje SteamFriends / SteamUtils / SteamInventory / SteamUGC /
-       SteamUserStats tiplerini zaten kullaniyor, yani cakisma teorik
-       degil: `dotnet build -c SteamRelease` aninda patlardi.
-
-       Varsayilan derlemeye de eklenmedi, cunku bu projenin bastan beri
-       korudugu kural o: `dotnet build` Steam'e ve kurulu bir istemciye
-       ihtiyac duymaz.
-
-           dotnet build                      -> LiteNetLib, Steam yok
-           dotnet build -c SteamRelease      -> Steamworks.NET
-           dotnet build -c SteamFacepunch    -> Facepunch.Steamworks
-
-       NOT: Facepunch.Steamworks 2.3.3 paketi YALNIZCA Windows x64
-       tasiyor (lib adi bile `Facepunch.Steamworks.Win64`). Linux/macOS
-       uzerinde derlenir ama `SteamClient.Init` cagrisi native kutuphane
-       bulunamadigi icin firlatir — bu yuzden cagri try/catch icinde. -->
-  <PropertyGroup Condition="'$(Configuration)' == 'SteamFacepunch'">
-    <DefineConstants>$(DefineConstants);FACEPUNCH_STEAM</DefineConstants>
-    <Optimize>true</Optimize>
-  </PropertyGroup>
-
-  <ItemGroup Condition="'$(Configuration)' == 'SteamFacepunch'">
     <PackageReference Include="Facepunch.Steamworks" Version="2.3.3" />
   </ItemGroup>
 
@@ -104,7 +79,7 @@
        Kosullu Exists(): paket surumu degisince yol da degisir; eksik
        dosya yuzunden derlemenin patlamasi yerine sessizce atlanmasi ve
        hatanin calisma zamaninda acik mesajla gorunmesi tercih edildi. -->
-  <ItemGroup Condition="'$(Configuration)' == 'SteamFacepunch'">
+  <ItemGroup Condition="'$(Configuration)' == 'SteamRelease'">
     <None Include="$(NuGetPackageRoot)facepunch.steamworks/2.3.3/content/steam_api64.dll"
           Condition="Exists('$(NuGetPackageRoot)facepunch.steamworks/2.3.3/content/steam_api64.dll')"
           Link="steam_api64.dll"

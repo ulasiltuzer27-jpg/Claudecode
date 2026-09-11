@@ -80,7 +80,7 @@ public sealed class LocalWorkshopBackend : IWorkshopBackend
 }
 
 /// <summary>
-/// Steam Workshop hedefi — Steamworks.NET'e (ISteamUGC) dokunan TEK dosya.
+/// Steam Workshop hedefi — Facepunch'in Ugc API'sine dokunan TEK dosya.
 ///
 /// ── Abonelik akışı ──────────────────────────────────────────────────────
 /// Steam abone olunan öğeleri kendisi indirir ve diske açar. Oyunun işi
@@ -90,18 +90,41 @@ public sealed class LocalWorkshopBackend : IWorkshopBackend
 /// uyarıları üretirdi.
 ///
 /// ── Yayınlama akışı ─────────────────────────────────────────────────────
-/// <c>CreateItem</c> → (callback) → <c>StartItemUpdate</c> →
-/// <c>SetItemTitle/SetItemContent</c> → <c>SubmitItemUpdate</c>.
-/// Hepsi asenkron; bu sınıf çağrı noktalarını kuruyor.
+/// <c>Ugc.Editor</c> bütün akışı tek zincirde veriyor:
+/// <c>NewCommunityFile.WithTitle(...).WithContent(...).SubmitAsync()</c>.
 /// </summary>
 public sealed class SteamWorkshopBackend : IWorkshopBackend
 {
 #if STEAM_BUILD
-    public bool IsAvailable => Steamworks.SteamAPI.IsSteamRunning();
+    /// <summary>
+    /// Abonelik listesinin beklenebileceği en uzun süre.
+    ///
+    /// Süre dolarsa oyun Workshop modları OLMADAN açılır — Steam'in
+    /// yanıt vermemesi yüzünden oyunun hiç açılmaması kabul edilemez.
+    /// </summary>
+    private static readonly TimeSpan SubscriptionTimeout = TimeSpan.FromSeconds(5);
+
+    public bool IsAvailable => Steamworks.SteamClient.IsValid;
 
     public string Status => Localization.Loc.T(
         IsAvailable ? "workshop.status.steam" : "steam.notRunning");
 
+    /// <summary>
+    /// Taranacak mod kökleri.
+    ///
+    /// ── Neden burada BEKLİYORUZ ─────────────────────────────────────────
+    /// Facepunch'ta abonelik listesi asenkron geliyor. Ama mod kümesi
+    /// içerik tabloları yüklenmeden ÖNCE bilinmek zorunda: modlar item,
+    /// tarif ve tile tablolarının üstüne biniyor (bkz. ModdedContent) ve
+    /// parmak izi de mod kümesinden türüyor. Liste sonradan gelseydi
+    /// Workshop modları o açılışta etkisiz kalır, üstelik parmak izi
+    /// değişip ağ bağlantılarını da reddettirirdi.
+    ///
+    /// Bu yüzden sonuç SINIRLI bir süre bekleniyor. Beklerken geri
+    /// çağrıları BİZ pompalıyoruz: <c>SteamClient.Init</c> asenkron
+    /// pompalama KAPALI kurulduğu için (bkz. Game1) bu noktada başka
+    /// kimse pompalamıyor ve düz bir <c>Wait()</c> kilitlenirdi.
+    /// </summary>
     public IEnumerable<(string Path, bool FromWorkshop)> ContentRoots()
     {
         // Yerel klasor Steam derlemesinde de taranir: mod yazari
@@ -110,33 +133,80 @@ public sealed class SteamWorkshopBackend : IWorkshopBackend
 
         if (!IsAvailable) yield break;
 
-        var count = Steamworks.SteamUGC.GetNumSubscribedItems();
-        if (count == 0) yield break;
-
-        var ids = new Steamworks.PublishedFileId_t[count];
-        Steamworks.SteamUGC.GetSubscribedItems(ids, count);
-
-        foreach (var id in ids)
-        {
-            var state = (Steamworks.EItemState)Steamworks.SteamUGC.GetItemState(id);
-
-            // Yalnizca KURULU ve guncel olanlar. Indirme surerken klasor
-            // yarim olabilir; taramak bozuk manifest uyarilari uretirdi.
-            if (!state.HasFlag(Steamworks.EItemState.k_EItemStateInstalled)) continue;
-            if (state.HasFlag(Steamworks.EItemState.k_EItemStateNeedsUpdate)) continue;
-
-            if (Steamworks.SteamUGC.GetItemInstallInfo(id, out _, out var folder, 1024, out _))
-            {
-                // Steam her ogeyi KENDI klasorune acar; ModRegistry ise
-                // "icinde mod klasorleri olan bir kok" bekliyor. Bu yuzden
-                // ust klasor degil, ogenin kendisi bir mod klasoru olarak
-                // veriliyor - kokun kendisi olarak degil.
-                var parent = Path.GetDirectoryName(folder);
-                if (!string.IsNullOrEmpty(parent)) yield return (parent, true);
-            }
-        }
+        foreach (var root in ResolveSubscribedRoots()) yield return (root, true);
     }
 
+    private static List<string> ResolveSubscribedRoots()
+    {
+        var roots = new List<string>();
+        var task = FetchSubscribedRootsAsync();
+
+        var deadline = DateTime.UtcNow + SubscriptionTimeout;
+
+        while (!task.IsCompleted && DateTime.UtcNow < deadline)
+        {
+            // Pompalamayi biz yapiyoruz: oyun dongusu henuz baslamadi.
+            Steamworks.SteamClient.RunCallbacks();
+            Thread.Sleep(16);
+        }
+
+        if (!task.IsCompleted)
+        {
+            Console.WriteLine("[workshop] abonelik listesi zaman asimina ugradi; " +
+                              "Workshop modlari bu acilista atlandi.");
+            return roots;
+        }
+
+        if (task.IsFaulted)
+        {
+            Console.WriteLine($"[workshop] abonelik listesi alinamadi: " +
+                              $"{task.Exception?.GetBaseException().Message}");
+            return roots;
+        }
+
+        return task.Result;
+    }
+
+    private static async Task<List<string>> FetchSubscribedRootsAsync()
+    {
+        var roots = new List<string>();
+
+        var query = Steamworks.Ugc.Query.Items
+            .WhereUserSubscribed(Steamworks.SteamClient.SteamId);
+
+        var page = await query.GetPageAsync(1);
+        if (page is not { } result) return roots;
+
+        foreach (var item in result.Entries)
+        {
+            // Yalnizca KURULU ve guncel olanlar. Indirme surerken klasor
+            // yarim olabilir; taramak bozuk manifest uyarilari uretirdi.
+            if (!item.IsInstalled || item.NeedsUpdate) continue;
+            if (string.IsNullOrEmpty(item.Directory)) continue;
+
+            // Steam her ogeyi KENDI klasorune aciyor; ModRegistry ise
+            // "icinde mod klasorleri olan bir kok" bekliyor. Bu yuzden
+            // ogenin kendisi degil UST klasoru veriliyor.
+            var parent = Path.GetDirectoryName(item.Directory);
+            if (!string.IsNullOrEmpty(parent)) roots.Add(parent);
+        }
+
+        return roots;
+    }
+
+    /// <summary>
+    /// Modu Workshop'a yayınlar ya da günceller.
+    ///
+    /// Facepunch'ın <c>Ugc.Editor</c>'ü bütün akışı tek bir zincirde
+    /// veriyor: Steamworks.NET'te <c>CreateItem</c> → callback →
+    /// <c>StartItemUpdate</c> → <c>SetItemTitle/Content</c> →
+    /// <c>SubmitItemUpdate</c> olarak elle örülen dört adım burada tek
+    /// <c>await</c>.
+    ///
+    /// Sonuç <see cref="WorkshopOutcome.Pending"/>: gönderim arka planda
+    /// sürüyor ve yeni öğenin kimliği <c>mod.json</c>'a yazılmak üzere
+    /// konsola raporlanıyor.
+    /// </summary>
     public WorkshopOutcome Publish(LoadedMod mod, out string message)
     {
         if (!IsAvailable)
@@ -145,31 +215,45 @@ public sealed class SteamWorkshopBackend : IWorkshopBackend
             return WorkshopOutcome.Unavailable;
         }
 
-        var appId = Steamworks.SteamUtils.GetAppID();
+        _ = PublishAsync(mod);
 
-        if (mod.Manifest.IsPublished)
-        {
-            var handle = Steamworks.SteamUGC.StartItemUpdate(
-                appId, new Steamworks.PublishedFileId_t(mod.Manifest.PublishedFileId));
+        message = Localization.Loc.T(
+            mod.Manifest.IsPublished ? "workshop.updateStarted" : "workshop.createStarted");
 
-            Steamworks.SteamUGC.SetItemTitle(handle, mod.Manifest.Name);
-            Steamworks.SteamUGC.SetItemDescription(handle, mod.Manifest.Description);
-            Steamworks.SteamUGC.SetItemContent(handle, Path.GetFullPath(mod.RootDirectory));
-
-            Steamworks.SteamUGC.SubmitItemUpdate(handle, $"v{mod.Manifest.Version}");
-
-            message = Localization.Loc.T("workshop.updateStarted");
-            return WorkshopOutcome.Pending;
-        }
-
-        // Yeni oge: CreateItem asenkron; donen kimlik callback ile gelir ve
-        // mod.json'a yazilmalidir. Bu yuzden burada yalnizca istek
-        // baslatiliyor.
-        Steamworks.SteamUGC.CreateItem(
-            appId, Steamworks.EWorkshopFileType.k_EWorkshopFileTypeCommunity);
-
-        message = Localization.Loc.T("workshop.createStarted");
         return WorkshopOutcome.Pending;
+    }
+
+    private static async Task PublishAsync(LoadedMod mod)
+    {
+        try
+        {
+            var editor = mod.Manifest.IsPublished
+                ? new Steamworks.Ugc.Editor(mod.Manifest.PublishedFileId)
+                : Steamworks.Ugc.Editor.NewCommunityFile;
+
+            var result = await editor
+                .WithTitle(mod.Manifest.Name)
+                .WithDescription(mod.Manifest.Description)
+                .WithContent(Path.GetFullPath(mod.RootDirectory))
+                .WithChangeLog($"v{mod.Manifest.Version}")
+                .SubmitAsync();
+
+            if (!result.Success)
+            {
+                Console.WriteLine($"[workshop] '{mod.Manifest.Id}' yayinlanamadi: {result.Result}");
+                return;
+            }
+
+            // Yeni ogenin kimligi mod.json'a yazilmali; oyun kendi
+            // manifestini DEGISTIRMIYOR (mod yazarinin dosyasi) —
+            // yalnizca raporluyor.
+            Console.WriteLine($"[workshop] '{mod.Manifest.Id}' yayinlandi. " +
+                              $"mod.json'a yazin: \"publishedFileId\": {result.FileId.Value}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[workshop] yayinlama hatasi: {ex.Message}");
+        }
     }
 #else
     // Steam'siz derleme: sinif var, Workshop yolu kapali.

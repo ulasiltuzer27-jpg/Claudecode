@@ -9,7 +9,8 @@ namespace PixelSurvival.Networking;
 ///      + "invite" sayfası).
 ///   2. Arkadaş Steam arayüzünden "Katıl" der; Steam oyunu
 ///      <c>+connect_lobby</c> / <c>connect</c> parametresiyle başlatır ya da
-///      çalışan oyuna <c>GameRichPresenceJoinRequested_t</c> callback'i düşer.
+///      çalışan oyuna <c>SteamFriends.OnGameRichPresenceJoinRequested</c>
+///      olayı düşer.
 ///
 /// İkisi de aynı "connect string"e dayanır. Bu yüzden rich presence'a
 /// <c>connect</c> anahtarı yazılır: değeri host'un SteamID'sidir ve
@@ -30,26 +31,45 @@ public sealed class SteamFriendsService
     public event Action<string>? JoinRequested;
 
 #if STEAM_BUILD
-    private Steamworks.Callback<Steamworks.GameRichPresenceJoinRequested_t>? _joinCallback;
+    public bool IsAvailable => Steamworks.SteamClient.IsValid;
 
-    public bool IsAvailable => Steamworks.SteamAPI.IsSteamRunning();
     public string Status =>
         Localization.Loc.T(IsAvailable ? "steam.friendsReady" : "steam.notRunning");
 
     /// <summary>Yerel oyuncunun Steam profil adı.</summary>
-    public string LocalPlayerName =>
-        IsAvailable ? Steamworks.SteamFriends.GetPersonaName() : "Sen";
+    public string LocalPlayerName => IsAvailable ? Steamworks.SteamClient.Name : "Sen";
+
+    /// <summary>Yerel oyuncunun SteamID'si — host olurken yayınlanan adres.</summary>
+    public ulong LocalSteamId => IsAvailable ? Steamworks.SteamClient.SteamId : 0UL;
 
     /// <summary>
-    /// Davet callback'ini bağlar. Oyun açılışında BİR KEZ çağrılmalı;
-    /// bağlanmazsa "Katıl" diyen arkadaş sessizce hiçbir şey yaşamaz.
+    /// Davet olayını bağlar. Oyun açılışında BİR KEZ çağrılmalı; bağlanmazsa
+    /// "Katıl" diyen arkadaş sessizce hiçbir şey yaşamaz.
+    ///
+    /// Steamworks.NET'te bunun için bir <c>Callback&lt;T&gt;</c> nesnesi
+    /// oluşturulup ALANDA TUTULMASI gerekiyordu — referans düşerse çöp
+    /// toplayıcı onu alır ve davet sessizce çalışmaz olurdu. Facepunch aynı
+    /// şeyi normal bir C# olayı olarak veriyor; saklanacak bir tutamak yok.
     /// </summary>
     public void Initialize()
     {
         if (!IsAvailable) return;
 
-        _joinCallback = Steamworks.Callback<Steamworks.GameRichPresenceJoinRequested_t>.Create(
-            request => JoinRequested?.Invoke(request.m_rgchConnect));
+        Steamworks.SteamFriends.OnGameRichPresenceJoinRequested += OnJoinRequested;
+    }
+
+    /// <summary>Olay aboneliğini bırakır — iki kez abone olunmasın.</summary>
+    public void Shutdown()
+    {
+        if (!IsAvailable) return;
+
+        Steamworks.SteamFriends.OnGameRichPresenceJoinRequested -= OnJoinRequested;
+    }
+
+    private void OnJoinRequested(Steamworks.Friend friend, string connectString)
+    {
+        _ = friend;
+        JoinRequested?.Invoke(connectString);
     }
 
     /// <summary>
@@ -71,8 +91,7 @@ public sealed class SteamFriendsService
     {
         if (!IsAvailable) return;
 
-        Steamworks.SteamFriends.SetRichPresence("connect", "");
-        Steamworks.SteamFriends.SetRichPresence("status", "Tek basina");
+        Steamworks.SteamFriends.ClearRichPresence();
     }
 
     /// <summary>Steam overlay'inin davet ekranını açar.</summary>
@@ -80,7 +99,10 @@ public sealed class SteamFriendsService
     {
         if (!IsAvailable) return false;
 
-        Steamworks.SteamFriends.ActivateGameOverlay("friends");
+        // Facepunch davet ekranini DOGRUDAN aciyor: Steamworks.NET'te
+        // "friends" sayfasi acilip oyuncunun davet sekmesini kendisi
+        // bulmasi gerekiyordu.
+        Steamworks.SteamFriends.OpenGameInviteOverlay(Steamworks.SteamClient.SteamId);
         return true;
     }
 #else
@@ -90,7 +112,10 @@ public sealed class SteamFriendsService
     public string Status => Localization.Loc.T("steam.notSteamBuild");
     public string LocalPlayerName => "Sen";
 
+    public ulong LocalSteamId => 0UL;
+
     public void Initialize() { }
+    public void Shutdown() { }
     public void PublishHosting(ulong hostSteamId) { _ = hostSteamId; }
     public void ClearHosting() { }
     public bool OpenInviteOverlay() => false;

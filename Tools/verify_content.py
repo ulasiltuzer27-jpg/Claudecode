@@ -498,7 +498,11 @@ def main() -> int:
 
         checks += 1
         for marker in ("publisherKey", "webApiKey", "PUBLISHER_KEY", "STEAM_WEB_API_KEY",
-                       "ISteamInventory/AddItem", "GenerateItems"):
+                       "ISteamInventory/AddItem",
+                       # "GenerateItems" Steamworks.NET'in adiydi; Facepunch'ta
+                       # ayni tehlikeli cagri GenerateItemAsync. Ortak on ek
+                       # araniyor ki sarmalayici degisince denetim korlesmesin.
+                       "GenerateItem"):
             if marker in code:
                 fail(f"{rel}: '{marker}' gecen bir ifade var. Item uretimi "
                      f"(GenerateItems) publisher key ister ve yalnizca guvenilir "

@@ -1,9 +1,14 @@
+#if STEAM_BUILD
+using Steamworks;
+using Steamworks.Data;
+#endif
+
 namespace PixelSurvival.Achievements;
 
 /// <summary>
-/// AŞAMA 2 / MADDE 21 — achievement/istatistiklerin Steamworks hedefi.
+/// AŞAMA 2 / MADDE 21 — achievement/istatistiklerin Steam hedefi.
 ///
-/// Steamworks.NET'e DOKUNAN TEK achievement dosyası budur.
+/// Facepunch.Steamworks'e DOKUNAN TEK achievement dosyası budur.
 /// <see cref="AchievementTracker"/> bu tipi hiç görmez; yalnızca
 /// <see cref="IStatsBackend"/> arayüzünü görür. Böylece tetikleme mantığı
 /// Steam istemcisi olmadan da çalıştırılıp doğrulanabiliyor.
@@ -17,7 +22,16 @@ public sealed class SteamStatsBackend : IStatsBackend
 #if STEAM_BUILD
     private bool _requested;
 
-    public bool IsAvailable => Steamworks.SteamAPI.IsSteamRunning();
+    /// <summary>
+    /// Steam hazır mı.
+    ///
+    /// <c>SteamClient.IsValid</c>, <c>SteamClient.Init</c>'in başarılı olup
+    /// olmadığını söylüyor. Eski Steamworks.NET karşılığı
+    /// <c>SteamAPI.IsSteamRunning()</c> idi ve o, istemcinin çalışıp
+    /// çalışmadığına bakıyordu — init edilmemiş bir oyunda da <c>true</c>
+    /// dönebiliyordu. <c>IsValid</c> daha doğru soru: "biz bağlandık mı".
+    /// </summary>
+    public bool IsAvailable => SteamClient.IsValid;
 
     public string Status => Localization.Loc.T(
         IsAvailable ? "ach.status.steam" : "steam.notRunning");
@@ -25,14 +39,13 @@ public sealed class SteamStatsBackend : IStatsBackend
     /// <summary>
     /// Kullanıcının mevcut istatistiklerini Steam'den ister.
     ///
-    /// Steamworks'te istatistik yazmadan ÖNCE <c>RequestCurrentStats</c>
-    /// çağrılmalı; yoksa <c>SetStat</c> sessizce başarısız olur ve bu,
-    /// canlıda fark edilmesi çok geç olan bir hatadır.
+    /// İstatistik yazmadan ÖNCE çağrılmalı; yoksa <c>SetStat</c> sessizce
+    /// başarısız olur ve bu, canlıda fark edilmesi çok geç olan bir hata.
     /// </summary>
     public void RequestCurrentStats()
     {
         if (_requested || !IsAvailable) return;
-        _requested = Steamworks.SteamUserStats.RequestCurrentStats();
+        _requested = SteamUserStats.RequestCurrentStats();
     }
 
     public void SetStat(string key, int value)
@@ -40,7 +53,7 @@ public sealed class SteamStatsBackend : IStatsBackend
         if (!IsAvailable) return;
 
         RequestCurrentStats();
-        Steamworks.SteamUserStats.SetStat(key, value);
+        SteamUserStats.SetStat(key, value);
     }
 
     public void Unlock(string achievementId)
@@ -49,8 +62,13 @@ public sealed class SteamStatsBackend : IStatsBackend
 
         RequestCurrentStats();
 
-        // Zaten aciksa tekrar acmak zararsiz; Steam de yok sayar.
-        Steamworks.SteamUserStats.SetAchievement(achievementId);
+        // Facepunch achievement'i bir DEGER TIPI olarak modelliyor:
+        // new Achievement(id).Trigger(). Steamworks.NET'teki
+        // SetAchievement(string) ile ayni isi yapiyor ama kimlik bir tipe
+        // sarildigi icin "hangi string neydi" sorusu ortadan kalkiyor.
+        //
+        // Zaten aciksa tekrar tetiklemek zararsiz; Steam yok sayar.
+        new Achievement(achievementId).Trigger();
     }
 
     public void Flush()
@@ -58,7 +76,7 @@ public sealed class SteamStatsBackend : IStatsBackend
         if (!IsAvailable) return;
 
         // StoreStats basarim bildirimi ekranini da tetikleyen cagridir.
-        Steamworks.SteamUserStats.StoreStats();
+        SteamUserStats.StoreStats();
     }
 #else
     // Steam'siz derleme: sinif var, gorevi yok. Bu sayede cagiran taraf

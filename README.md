@@ -13,9 +13,9 @@ Proje derleniyor ve çalışıyor:
 
 ```
 dotnet build                    # 0 hata, 0 uyarı
-dotnet build -c SteamRelease    # 0 hata, 0 uyarı (Steamworks.NET dahil)
-dotnet run -- --self-test       # 68 denetim, hepsi geçiyor
-python3 Tools/verify_content.py    # 1600+ kontrol
+dotnet build -c SteamRelease    # 0 hata, 0 uyarı (Facepunch.Steamworks dahil)
+dotnet run -- --self-test       # 171 denetim, hepsi geçiyor
+python3 Tools/verify_content.py    # 2000+ kontrol
 python3 Tools/verify_worldgen.py   # üretim algoritması
 python3 Tools/verify_protocol.py   # kablo protokolü
 ```
@@ -24,7 +24,7 @@ Sprite üretici, hareket, çarpışma, kamera, chunk tabanlı sonsuz dünya, kay
 toplama, envanter, crafting, inşa, ağ oturumu ve dövüş; mevsim/hava,
 tarım+balıkçılık, evcilleştirme/binek, düşman+boss rotasyonu, zindanlar, NPC
 ticaret/görev, güvenli bölge/PvP + baskın, Steam envanteri ve Steam taşıma
-katmanı; katmanlı kozmetikler + nadirlik + sezonluk item, Steamworks
+katmanı; katmanlı kozmetikler + nadirlik + sezonluk item, Facepunch.Steamworks
 (başarım/leaderboard/davet), klan + host otoriter takas, EN/TR dil desteği +
 erişilebilirlik, photo mode + emote + ping + yama notları, Workshop altyapısı;
 kaydetme/yükleme, düşman yol bulma, varlık (düşman/yaratık) ağ
@@ -569,8 +569,7 @@ Ayrıca: ItemDef'lerde `damage`/`health`/`speed` gibi alan bulunması hata sayı
 
 ```bash
 dotnet build                    # LiteNetLib, Steam YOK, Steam istemcisi gerekmez
-dotnet build -c SteamRelease    # Steamworks.NET + STEAM_BUILD + SteamNetworkingTransport
-dotnet build -c SteamFacepunch  # Facepunch.Steamworks + FACEPUNCH_STEAM
+dotnet build -c SteamRelease    # Facepunch.Steamworks + STEAM_BUILD
 ```
 
 Varsayılan derleme Steam'e hiç bağımlı değil. `SteamNetworkingTransport`
@@ -581,11 +580,12 @@ Valve relay ağı bedavaya geliyor, oyuncular birbirinin IP'sini görmüyor.
 Taşıma seçimi tek bir yerde (`TransportFactory`). `NetworkSession` artık hiçbir
 somut kütüphane adı geçirmiyor — gameplay hangi taşımanın aktif olduğundan habersiz.
 
-#### Neden iki ayrı Steam yapılandırması
+#### Tek sarmalayıcı: Facepunch.Steamworks
 
-`Steamworks.NET` ve `Facepunch.Steamworks` **aynı derlemede bulunamaz**. İkisi de
-`Steamworks` ad alanını kullanıyor ve aynı tip adlarını tanımlıyor; ikisini
-birden referans vermek derlemeyi kırıyor:
+Bir dönem **iki** Steam yapılandırması vardı (`SteamRelease` = Steamworks.NET,
+`SteamFacepunch` = Facepunch). Sebep teknikti: iki sarmalayıcı da `Steamworks`
+ad alanını kullanıyor ve aynı tip adlarını tanımlıyor, yani ikisini birden
+referans vermek derlemeyi kırıyordu:
 
 ```
 error CS0433: The type 'SteamFriends' exists in both
@@ -593,11 +593,37 @@ error CS0433: The type 'SteamFriends' exists in both
 ```
 
 Proje `SteamFriends`, `SteamUtils`, `SteamInventory`, `SteamUGC` ve
-`SteamUserStats` tiplerini zaten kullandığı için çakışma teorik değil —
-`dotnet build -c SteamRelease` anında patlardı. Bu yüzden her sarmalayıcı kendi
-yapılandırmasında duruyor ve hiçbir derlemede yan yana gelmiyorlar.
+`SteamUserStats` tiplerini zaten kullandığı için çakışma teorik değildi.
 
-`SteamFacepunch` yapılandırması `Game1`'in ömür döngüsüne üç kanca takıyor:
+Steamworks.NET **tamamen kaldırıldı**; beş sınıf (`SteamStatsBackend`,
+`SteamLeaderboardBackend`, `SteamNetworkingTransport`, `SteamFriendsService`,
+`SteamInventory`, `SteamWorkshopBackend`) Facepunch'a taşındı. Çakışacak ikinci
+paket kalmadığı için iki yapılandırmaya da gerek kalmadı: **tek** `SteamRelease`.
+
+Taşımanın somut kazançları:
+
+| | Steamworks.NET | Facepunch |
+|---|---|---|
+| Leaderboard | `SteamAPICall_t` + `CallResult<T>` zinciri | `await FindOrCreateLeaderboardAsync` → `await SubmitScoreAsync` |
+| Workshop yükleme | `CreateItem` → callback → `StartItemUpdate` → `SubmitItemUpdate` → callback | tek `Ugc.Editor...SubmitAsync()` |
+| Mesaj gönderme | `fixed` bloğu + `AllowUnsafeBlocks` | `connection.SendMessage(byte[], SendType)` |
+| Bağlantı olayları | poll grubu + elle mesaj serbest bırakma | `SocketManager`/`ConnectionManager` sanal metotları |
+
+`AllowUnsafeBlocks` csproj'dan tamamen çıktı.
+
+Taşıma sırasında **sessiz bir hata** ortaya çıktı: eski Steam taşıması istemci
+peer numaralarını 1'den veriyordu, ama `NetworkSession` istemciden host'a giden
+her mesajı `Send(0, ...)` ile yolluyor (takas, üretim, dünya eylemi) —
+`LiteNetLibTransport`'ta host 0 numaralı peer olduğu için. Yani Steam
+derlemesinde istemcinin host'a gönderdiği hiçbir mesaj karşı tarafa
+ulaşmıyordu ve `Send` bilinmeyen peer'da sessizce dönüyordu. `HostPeerId = 0`
+sabitiyle düzeltildi.
+
+İki sınıf ayrıca **hiç çalışmıyordu**: `SteamLeaderboardBackend.Top()` önbelleğini
+asla doldurmuyordu ve `SteamInventory.Refresh()` sonucu hiç okumuyordu. Facepunch'ın
+`await`'i ile ikisi de gerçekten veri döndürür hâle geldi.
+
+`SteamRelease` yapılandırması `Game1`'in ömür döngüsüne üç kanca takıyor:
 `Initialize`'da `SteamClient.Init` (try/catch ile — Steam yoksa oyun yine
 açılır), `Update`'in **en başında** `SteamClient.RunCallbacks()` ve
 `OnExiting`'de `SteamClient.Shutdown()`.
@@ -612,12 +638,28 @@ birlikte **iki ayrı pompa** oluşurdu — aynı dispatch kuyruğuna iki iplikte
 girmek teşhisi zor bir yarış durumu demek. İkisi birlikte açılmamalı;
 `Game1.SteamAsyncCallbacks` sabitinin yorumunda tersine çevirmenin yolu yazıyor.
 
-Paket **yalnızca Windows x64** taşıyor (assembly adı bile
-`Facepunch.Steamworks.Win64`). Linux/macOS'ta derleniyor ama `Init` native
-kütüphaneyi bulamayıp atıyor ve try/catch onu yakalıyor — beklenen davranış.
-Ayrıca paket `steam_api64.dll`'i eski `content/` düzeninde taşıdığı için
-csproj onu açıkça çıktıya kopyalıyor; kopyalanmasa Windows'ta bile
-`DllNotFoundException` alınırdı.
+`asyncCallbacks: false` seçiminin bir yan etkisi var: **açılış sırasında
+kimse pompalamıyor.** `WorkshopBackend.ResolveSubscribedRoots()` abone olunan
+mod klasörlerini oyun döngüsü başlamadan, içerik tabloları yüklenmeden önce
+bilmek zorunda (mod'lar item/tarif tablolarını bindiriyor ve parmak izine
+giriyor). Orada düz bir `Wait()` kilitlenirdi; o yüzden o metot sınırlı bir
+bekleme döngüsünde `SteamClient.RunCallbacks()`'i **kendisi** çağırıyor
+(5 sn zaman aşımı, sonra mod'suz devam).
+
+#### Bedeli: Steam derlemesi artık Windows'a özel
+
+Facepunch.Steamworks 2.3.3 **yalnızca Windows x64** taşıyor — assembly adı bile
+`Facepunch.Steamworks.Win64`. Kaldırılan Steamworks.NET ise win/linux/osx
+runtime'larının üçünü de taşıyordu, yani bu doğrudan taşımanın bedeli.
+
+Linux/macOS'ta `SteamRelease` **derleniyor** ama `Init` native kütüphaneyi
+bulamayıp atıyor ve try/catch onu yakalıyor — oyun Steam'siz açılmaya devam
+ediyor. **Varsayılan derleme etkilenmedi**: LiteNetLib taşıması her platformda
+çalışıyor, geliştirme ve test akışı eskisi gibi.
+
+Paket `steam_api64.dll`'i eski `content/` düzeninde taşıdığı için csproj onu
+açıkça çıktıya kopyalıyor (SDK yalnızca `contentFiles/`'ı otomatik kopyalar);
+kopyalanmasa Windows'ta bile `DllNotFoundException` alınırdı.
 
 ### Madde 18: bölge kuralı hedefin konumuna bakar
 
@@ -834,11 +876,15 @@ mod'un etkisinin ekrandaki kanıtı.
 ### Bilinen boşluklar (Aşama 2)
 
 * **Steam entegrasyonu gerçek bir Steam istemcisine karşı denenmedi.**
-  Steamworks.NET artık ÇÖZÜLÜYOR ve `STEAM_BUILD` gövdesi gerçekten
-  derleniyor (bloğa kasten hatalı bir satır konarak kanıtlandı: `Debug`
-  geçti, `SteamRelease` CS0103 ile patladı). Ama derlenmek çalışmak değil:
-  achievement'lar, leaderboard, davet, Workshop yükleme ve envanter
-  çağrıları çalışan bir Steam istemcisine karşı hiç denenmedi.
+  Facepunch.Steamworks ÇÖZÜLÜYOR ve `STEAM_BUILD` gövdesinin tamamı gerçekten
+  derleniyor: yedi dosyadaki **21 koşullu bloğun her birine** ayrı bir
+  `#error` konarak kanıtlandı — `Debug` 0 hatayla geçti, `SteamRelease`
+  21 `CS1029`'un hepsiyle patladı, yani hiçbir blok sessizce atlanmıyor.
+  Ama derlenmek çalışmak değil: achievement'lar, leaderboard, davet,
+  Workshop yükleme ve envanter çağrıları çalışan bir Steam istemcisine
+  karşı hiç denenmedi.
+* **Steam derlemesi Windows x64'e özel** (Facepunch 2.3.3'ün taşıdığı tek
+  platform). Varsayılan LiteNetLib derlemesi her platformda çalışıyor.
 * **İnşa yalnızca host'ta çalışıyor**; istemci inşa edemiyor. Tarım ve
   evcilleştirme host'a taşındı (`WorldAction`), inşa aynı yolu izleyecek.
 * **Zindanlar ağ oturumunda kapalı** — bilinçli bir kısıt, bkz. "Ağda ne
@@ -1065,7 +1111,7 @@ yer tutucu uyuşmazlığı, kodda çağrılıp tabloda olmayan anahtar) da denet
 ~~18. Güvenli bölge/PvP bölge ayrımı + raid~~ ✔
 ~~19. SteamInventory + SteamNetworkingTransport~~ ✔
 ~~20. Karakter kozmetik/rarity/layered sprite + sezonluk item~~ ✔
-~~21. Steamworks.NET tam entegrasyonu~~ ✔
+~~21. Steam tam entegrasyonu (başarım/leaderboard/davet)~~ ✔
 ~~22. Clan/guild + oyuncular arası trade~~ ✔
 ~~23. Localization + erişilebilirlik~~ ✔
 ~~24. Photo mode + emote + ping + patch notes~~ ✔
@@ -1079,7 +1125,10 @@ Derleme artık geçiyor (ilk derlemede üç gerçek hata çıktı: tool manifest
 joker sürüm, `Tileset`'te birleşme artığı olarak iki kez tanımlanmış alan,
 belirsiz `Math.Clamp` aşırı yüklemesi). Steam yapılandırması da derleniyor —
 `.sln`'de `SteamRelease` tanımlı değildi, yani madde 19'da yazılan bütün
-Steamworks kodu bir kez bile derlenmemişti.
+Steam kodu bir kez bile derlenmemişti. Aynı tuzak Facepunch geçişinde
+tekrarlandı: ilk taşıma `SteamFacepunch` (`FACEPUNCH_STEAM`) altında
+yazılmıştı, `STEAM_BUILD` değil — yani yine derlenmiyordu. O yüzden artık
+her koşullu blok `#error` ile tek tek sınanıyor.
 
 Otomatik doğrulama sistemlerin **kurallarını** sınıyor; eğlenceli olup
 olmadığını sınamıyor. Sıradaki iş o.

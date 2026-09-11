@@ -1,7 +1,7 @@
 using System.Diagnostics;
-#if FACEPUNCH_STEAM
+#if STEAM_BUILD
 // Facepunch.Steamworks da `Steamworks` ad alanini kullaniyor; bu using
-// SADECE SteamFacepunch yapilandirmasinda gecerli. Kosulsuz yazilsaydi
+// SADECE SteamRelease yapilandirmasinda gecerli. Kosulsuz yazilsaydi
 // varsayilan derleme (paket yok) CS0246 ile kirilirdi.
 using Steamworks;
 #endif
@@ -265,13 +265,13 @@ public class Game1 : Game
         Window.AllowUserResizing = true;
     }
 
-#if FACEPUNCH_STEAM
+#if STEAM_BUILD
     /// <summary>
     /// Spacewar — Valve'in herkese açık test AppID'si.
     ///
     /// Gerçek AppID <c>Content/Steam/achievements.json</c> içinde duruyor
     /// ve oraya ait; burada TEST kimliği kullanılıyor çünkü bu yapılandırma
-    /// (<c>SteamFacepunch</c>) Steam bağlantısını denemek için var, yayın
+    /// (<c>SteamRelease</c>) Steam bağlantısını denemek için var, yayın
     /// için değil. Yayına çıkarken bu sabit oradan okunmalı.
     /// </summary>
     private const uint SpacewarAppId = 480;
@@ -321,7 +321,7 @@ public class Game1 : Game
     {
         _graphics.ApplyChanges();
 
-#if FACEPUNCH_STEAM
+#if STEAM_BUILD
         // Steam BURADA baslatiliyor, LoadContent'te degil: icerik
         // yuklemesi uzun surebiliyor ve Steam overlay'inin oyun
         // penceresine olabildigince erken baglanmasi isteniyor.
@@ -347,7 +347,7 @@ public class Game1 : Game
         base.Initialize();
     }
 
-#if FACEPUNCH_STEAM
+#if STEAM_BUILD
     /// <summary>
     /// Kapanışta Steam bağlantısını kapatır.
     ///
@@ -359,6 +359,10 @@ public class Game1 : Game
     {
         if (_steamReady)
         {
+            // Olay aboneligi once birakiliyor: Shutdown sonrasi gelen bir
+            // geri cagri kapanmis bir istemciye dokunmasin.
+            _friends.Shutdown();
+
             SteamClient.Shutdown();
             _steamReady = false;
             Console.WriteLine("[steam] kapatildi");
@@ -663,7 +667,7 @@ public class Game1 : Game
 
     protected override void Update(GameTime gameTime)
     {
-#if FACEPUNCH_STEAM
+#if STEAM_BUILD
         // Steam geri cagrilari EN BASTA pompalaniyor.
         //
         // Yeri onemli: bu metodun asagisinda menu ekranlari icin erken
@@ -774,7 +778,17 @@ public class Game1 : Game
         if (WasPressed(keyboard, Keys.T)) InteractWithNpc();
         if (WasPressed(keyboard, Keys.B)) ToggleDungeon();
 
-        if (WasPressed(keyboard, Keys.F9)) _session.StartHost(_map.Seed);
+        if (WasPressed(keyboard, Keys.F9))
+        {
+            _session.StartHost(_map.Seed);
+
+            // Rich presence'a 'connect' yaziliyor: arkadas listesinde
+            // "Katil" dugmesi ancak bundan sonra beliriyor. Deger
+            // SteamNetworkingTransport'un bekledigi adresin AYNISI
+            // (host'un SteamID'si) — iki yerde ayri tanimlamak, davetin
+            // sessizce calismadigi klasik hata.
+            _friends.PublishHosting(_friends.LocalSteamId);
+        }
         if (WasPressed(keyboard, Keys.F10)) _session.Connect(TransportFactory.DefaultConnectTarget);
         if (WasPressed(keyboard, Keys.F11))
         {
@@ -784,6 +798,8 @@ public class Game1 : Game
             var wasClient = _session.Mode == SessionMode.Client;
 
             _session.Leave();
+            _friends.ClearHosting();
+
             if (wasClient) _taming.Populate(_worldGenerator, _map, _spawnPosition, _map.Seed);
 
             ShowToast("Oturum kapatildi");
