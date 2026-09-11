@@ -22,10 +22,19 @@
     { "biome": "mountain", "tile": "stone" }
   ],
 
-  "_scatter_comment": "Zemin secildikten SONRA uygulanir. Kati tile'lar engel olur.",
+  "_scatter_comment": "Zemin secildikten SONRA uygulanir. Kati tile'lar engel olur. Kurallar sirayla denenir, ILK eslesen kazanir.",
+
+  "_scatter_bagimsizlik_notu": "Her kural kendi hash tuzunu kullanir (bkz. ScatterRule.Salt), yani kurallar BAGIMSIZ olaylardir. Bir donem hepsi ayni hash'e bakiyordu ve ayni biome'daki ikinci kural birincinin alt kumesi oldugu icin HIC calismiyordu. Ilk eslesen kazandigi icin sirali kurallarda gercek oran yine de dusuyor: %9'luk cicek kurali, onunde %22'lik agac ve %10'luk cali varken kabaca 0.09*(1-0.22)*(1-0.10) ~ %6'ya iniyor.",
+
+  "_scatter_zemin_notu": "ONEMLI: her sacilim tile'inin dokusunda kendi ZEMINI pismis durumda -- cicek ve cali cim, sazlik toprak, kaktus kum uzerine cizilmis. Bu yuzden bir tile yalnizca zemini eslesen biome'a serpilebilir. Cicek 'beach'e konsaydi kumun ortasinda cim yamasi gibi gorunurdu.",
+
   "scatter": [
-    { "tile": "wood",  "onBiome": "plains",   "moistureAbove": 0.518, "chance": 0.22 },
-    { "tile": "stone", "onBiome": "highland", "chance": 0.10 }
+    { "tile": "wood",    "onBiome": "plains",   "moistureAbove": 0.518, "chance": 0.22 },
+    { "tile": "shrub",   "onBiome": "plains",   "moistureAbove": 0.470, "chance": 0.10 },
+    { "tile": "flowers", "onBiome": "plains",   "chance": 0.09 },
+    { "tile": "reeds",   "onBiome": "wetland",  "chance": 0.30 },
+    { "tile": "cactus",  "onBiome": "beach",    "chance": 0.05 },
+    { "tile": "stone",   "onBiome": "highland", "chance": 0.10 }
   ],
 
   "spawn": {

@@ -1,12 +1,12 @@
 [mod] 1/1 mod aktif  (27461038E16E23B7), 4 dil satiri, 2 icerik bindirmesi
-[worldgen] tohum=20260908 spawn=(0,0) chunk(0,0) sağlama=0x49C29A30
+[worldgen] tohum=20260908 spawn=(0,0) chunk(0,0) sağlama=0xBB4B0B86
 [ag] localhost:7777 adresine baglaniliyor...
 [ag] uzak varlik: 0
 [ag] Baglandi, host'un karsilamasi bekleniyor...
-[worldgen] tohum=20260908 spawn=(0,0) chunk(0,0) sağlama=0x49C29A30
+[worldgen] tohum=20260908 spawn=(0,0) chunk(0,0) sağlama=0xBB4B0B86
 [ag] Baglanildi — oyuncu 1, tohum 20260908
 [ag] uzak varlik: 8
 [ag] uzak varlik: 9
 [capture] kare 534: capture/ag/client/01_surdu_tohum_yok.png  oyuncu=(8.0,16.0) kose_duzeltme=0 son_itme=0.00
 [ag] uzak varlik: 10
-[capture] kare 760: capture/ag/client/02_son_durum.png  oyuncu=(10.0,55.0) kose_duzeltme=0 son_itme=0.00
+[capture] kare 760: capture/ag/client/02_son_durum.png  oyuncu=(47.0,55.0) kose_duzeltme=0 son_itme=0.00

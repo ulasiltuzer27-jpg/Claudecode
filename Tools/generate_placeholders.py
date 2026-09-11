@@ -153,6 +153,12 @@ for _name, _base in {
     "dungeonwall": (50, 46, 64),
     "portal_in":  (150, 108, 208),
     "portal_out": (104, 200, 138),
+    # --- Bitki ortusu ---
+    # Cim tonundan BILEREK ayrisiyorlar: bitki, uzerinde durdugu zeminle
+    # ayni tonda olursa 16x16'da zemin dokusuna karisip kayboluyor.
+    "bloom":      (216, 108, 140),   # cicek tac yapragi
+    "reed":       (132, 156, 74),    # sazlik: cimden sari-yesil tarafta
+    "cactus":     (74, 132, 92),     # kaktus: cimden mavi-yesil tarafta
     # Karakter parcalari
     "leather":    (74, 54, 42),
     "iron":       (152, 158, 170),
@@ -335,6 +341,22 @@ TILES: list[TileSpec] = [
     TileSpec("dungeon_wall", "dungeonwall", "bricks", solid=True),
     TileSpec("dungeon_entrance", "dungeon", "portal", accent="portal_in"),
     TileSpec("dungeon_exit", "dungeon", "portal", accent="portal_out"),
+    # --- Bitki ortusu ---
+    #
+    # SONA EKLENDILER, ARAYA DEGIL. Kaydedilen dunya degisiklikleri tile
+    # INDEKSI olarak diske yaziliyor (SaveData.SavedTile.Tile). Araya bir
+    # satir sokulsaydi mevcut kayitlardaki butun indeksler kayardi:
+    # kesilmis bir agacin yerinde duvar, konmus bir duvarin yerinde tarla
+    # belirirdi. Yeni tile hep listenin SONUNA.
+    #
+    # Uc tanesi KATI DEGIL. Sebep: bunlar engel degil, ortu. Her biri kati
+    # olsaydi ova bir labirente donerdi ve oyuncu surekli takilirdi --
+    # kose duzeltmesi eklenmis olsa bile. Tek kati olan kaktus, cunku o
+    # gercekten bir engel (ve col biomunu bos olmaktan cikariyor).
+    TileSpec("flowers", "grass", "flowers", accent="bloom"),
+    TileSpec("shrub", "leaf", "shrub", accent="trunk"),
+    TileSpec("reeds", "reed", "reeds", accent="dirt"),
+    TileSpec("cactus", "cactus", "cactus", solid=True, accent="bloom"),
 ]
 
 
@@ -514,6 +536,132 @@ def draw_tile(spec: TileSpec, variant: int) -> Image.Image:
         d.ellipse([2, 2, 6, 5], fill=tone(n, 3))
         for _ in range(5):
             d.point((rng.randrange(2, 14), rng.randrange(2, 12)), fill=tone(n, 0))
+
+    elif spec.kind == "flowers":
+        # Cim zemin + kucuk cicekler. Zemin cim dokusunun AYNISI olmali,
+        # yoksa cicekli tile cimenin icinde acik bir kare gibi okunur.
+        d.rectangle([0, 0, S - 1, S - 1], fill=tone("grass", 1))
+        for x, y in pixelart.cluster_noise(rng, S, 4, 2):
+            d.point((x, y), fill=tone("grass", 0))
+        for _ in range(9):
+            x, y = rng.randrange(S), rng.randrange(2, S)
+            d.point([(x, y), (x, y - 1)], fill=tone("grass", 2))
+
+        # Cicekler: 5 pixel'lik hac + ortada parlak goz. Daha buyugu
+        # 16x16'da "cicek" degil "leke" gibi duruyordu.
+        b = spec.accent
+        for _ in range(rng.randint(3, 5)):
+            cx, cy = rng.randrange(2, S - 2), rng.randrange(2, S - 2)
+            d.point([(cx - 1, cy), (cx + 1, cy), (cx, cy - 1), (cx, cy + 1)],
+                    fill=tone(b, 1))
+            d.point((cx, cy), fill=tone(b, 3))
+            # Sag alt yaprak golgesi: duz hac plastik duruyordu.
+            d.point((cx + 1, cy + 1), fill=tone(b, 0))
+
+        # Birkac sari cicek: tek renk cicek tarlasi yapay goruyordu.
+        for _ in range(rng.randint(1, 3)):
+            cx, cy = rng.randrange(1, S - 1), rng.randrange(1, S - 1)
+            d.point([(cx, cy - 1), (cx, cy + 1), (cx - 1, cy), (cx + 1, cy)],
+                    fill=tone("gold", 2))
+            d.point((cx, cy), fill=tone("gold", 3))
+
+        _edge_dither(d, rng, S, tone("grass", 0), 4)
+
+    elif spec.kind == "shrub":
+        # Cim zemin + govdesiz yuvarlak yaprak kumesi. Agactan farki:
+        # golvde YOK ve kume daha alcak. Tepeden bakista "bu bir agac
+        # degil, cali" ayrimini veren sey tam olarak govdenin yoklugu.
+        d.rectangle([0, 0, S - 1, S - 1], fill=tone("grass", 1))
+        for x, y in pixelart.cluster_noise(rng, S, 3, 2):
+            d.point((x, y), fill=tone("grass", 0))
+
+        # Uc ust uste binen kume: tek elips top gibi duruyordu, cali
+        # duzensiz olmali.
+        for cx, cy, r in ((5, 8, 4), (10, 9, 4), (8, 6, 4)):
+            jx, jy = rng.randint(-1, 1), rng.randint(-1, 1)
+            d.ellipse([cx - r + jx, cy - r + jy, cx + r + jx, cy + r + jy],
+                      fill=tone(n, 1))
+
+        # Isik sol ustten, golge sag altta (butun projedeki sozlesme).
+        d.ellipse([3, 4, 9, 9], fill=tone(n, 2))
+        d.ellipse([8, 8, 14, 13], fill=tone(n, 0))
+        d.ellipse([4, 5, 6, 7], fill=tone(n, 3))
+
+        # Yaprak golgeleri: siluet duz kalmasin.
+        #
+        # Once govde renginde (koyu kahve) konuyordu ve yesilin uzerinde
+        # DELIK gibi okunuyordu -- caliya goz acmis gibi. Yaprak rampasinin
+        # kendi golgesi ayni hacmi veriyor, yabanci renk sokmadan.
+        for _ in range(4):
+            x, y = rng.randrange(4, 12), rng.randrange(5, 12)
+            d.point((x, y), fill=tone(n, 0))
+
+        # Dipte tek bir odunsu sap: calinin topraga bagli oldugunu
+        # gosteren tek ipucu.
+        t = spec.accent
+        d.point([(8, 12), (8, 13)], fill=tone(t, 1))
+
+        # Dip golgesi: cali zeminin UZERINDE dursun, icine gomulmesin.
+        d.line([(5, 13), (11, 13)], fill=tone("grass", 0))
+
+    elif spec.kind == "reeds":
+        # Sulak zemin: sazlik toprakta biter, cimde degil.
+        g = spec.accent
+        d.rectangle([0, 0, S - 1, S - 1], fill=tone(g, 1))
+        for x, y in pixelart.cluster_noise(rng, S, 3, 2):
+            d.point((x, y), fill=tone(g, 0))
+
+        # Dikey saplar: tabandan yukari, hafif egimli. Egim ONEMLI —
+        # dimdik saplar cit gibi duruyordu.
+        for _ in range(rng.randint(6, 9)):
+            x = rng.randrange(1, S - 1)
+            height = rng.randint(7, 13)
+            drift = rng.choice((-1, 0, 0, 1))
+            for i in range(height):
+                px = x + (drift if i > height // 2 else 0)
+                py = S - 1 - i
+                if 0 <= px < S:
+                    # Ucu acik, dibi koyu: tek renk sap yassi goruyordu.
+                    d.point((px, py), fill=tone(n, 2 if i > height - 4 else 1))
+
+            # Tepe tohum basagi.
+            tipx = x + drift
+            if 0 <= tipx < S:
+                d.point((tipx, S - 1 - height), fill=tone(n, 3))
+
+        _edge_dither(d, rng, S, tone("water", 1), 3)
+
+    elif spec.kind == "cactus":
+        # Kum zemin: kaktus colde biter.
+        d.rectangle([0, 0, S - 1, S - 1], fill=tone("sand", 1))
+        for _ in range(4):
+            y, x = rng.randrange(S), rng.randrange(S)
+            d.point((x, y), fill=tone("sand", 2))
+
+        # Govde: dikey kapsul. Sol kenar isikli, sag kenar golgeli.
+        d.rectangle([6, 3, 9, 15], fill=tone(n, 1))
+        d.line([(6, 3), (6, 15)], fill=tone(n, 2))
+        d.line([(9, 3), (9, 15)], fill=tone(n, 0))
+        d.point([(7, 3), (8, 3)], fill=tone(n, 2))
+
+        # Kollar: biri solda biri sagda, farkli yukseklikte. Simetrik
+        # olsaydi oyuncak gibi duruyordu.
+        if rng.random() < 0.75:
+            d.rectangle([3, 8, 5, 9], fill=tone(n, 1))
+            d.rectangle([3, 5, 4, 9], fill=tone(n, 1))
+            d.line([(3, 5), (3, 9)], fill=tone(n, 2))
+        if rng.random() < 0.6:
+            d.rectangle([10, 10, 12, 11], fill=tone(n, 1))
+            d.rectangle([11, 7, 12, 11], fill=tone(n, 1))
+            d.line([(12, 7), (12, 11)], fill=tone(n, 0))
+
+        # Dikenler: tek pixel acik noktalar, dikey siralar halinde.
+        for y in range(4, 15, 3):
+            d.point((7, y), fill=tone(n, 3))
+
+        # Tepe cicegi: kaktusu "yesil dikdortgen" olmaktan cikariyor.
+        if rng.random() < 0.5:
+            d.point([(7, 2), (8, 2)], fill=tone(spec.accent, 2))
 
     elif spec.kind == "planks":
         seam = 5 + variant % 2

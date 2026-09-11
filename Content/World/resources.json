@@ -37,8 +37,34 @@
       "amount": 1,
       "harvestSeconds": 0.5,
       "becomesTile": "dirt"
+    },
+    {
+      "_comment": "Cali: ince dal. Agactan az odun verir ama cok daha hizli toplanir -- ilk aletini yapmak icin agac beklemek zorunda kalmayasin diye.",
+      "tile": "shrub",
+      "resource": "wood",
+      "amount": 1,
+      "harvestSeconds": 0.45,
+      "becomesTile": "grass"
+    },
+    {
+      "_comment": "Sazlik: sulak alanin odunu. Sazliklar yogun ciktigi icin (%30) miktar bilerek dusuk, yoksa bataklik bedava odun deposu olurdu.",
+      "tile": "reeds",
+      "resource": "wood",
+      "amount": 1,
+      "harvestSeconds": 0.4,
+      "becomesTile": "dirt"
+    },
+    {
+      "_comment": "Kaktus: colde tek odun kaynagi. Yavas cunku kum biyomunda baska hicbir sey yok -- kolay olsaydi col en verimli baslangic bolgesi olurdu.",
+      "tile": "cactus",
+      "resource": "wood",
+      "amount": 2,
+      "harvestSeconds": 1.6,
+      "becomesTile": "sand"
     }
   ],
+
+  "_cicek_notu": "'flowers' bilerek TOPLANABILIR DEGIL. Verecek bir sey yok: envanterde cicek diye bir item olsaydi hicbir tarifte kullanilmadigi icin olu agirlik olurdu. Cicekler dunyanin canli gorunmesi icin var, ekonomi icin degil. Toplanamayan tile mevcut bir durum, istisna degil: cim, toprak ve kum da toplanamiyor.",
   "_yeniden_dogma_notu": "Kaynaklar simdilik yeniden DOGMAZ. Dunya sonsuz oldugu icin tukenen bolgeden yurunup uzaklasilir. Yeniden dogma mekanigi kapsam disi birakildi - istenirse ayrica eklenir.",
   "_sokme_notu": "Madde 9'da insa edilen tile'lar da buradan sokulur. Sokulen yapi 'dirt'e doner - altindaki orijinal zemin saklanmadigi icin geri getirilemiyor. Kabul edilen sinirlama."
 }

@@ -2,7 +2,7 @@
   "asset": "Tiles/tileset_16",
   "tileSize": 16,
   "columns": 3,
-  "rows": 14,
+  "rows": 18,
   "variants": 3,
   "placeholder": true,
   "tiles": [
@@ -75,6 +75,26 @@
       "index": 13,
       "key": "dungeon_exit",
       "solid": false
+    },
+    {
+      "index": 14,
+      "key": "flowers",
+      "solid": false
+    },
+    {
+      "index": 15,
+      "key": "shrub",
+      "solid": false
+    },
+    {
+      "index": 16,
+      "key": "reeds",
+      "solid": false
+    },
+    {
+      "index": 17,
+      "key": "cactus",
+      "solid": true
     }
   ]
 }

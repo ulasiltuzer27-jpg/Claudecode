@@ -80,7 +80,11 @@ public sealed class WorldGenerator : ITileGenerator
 
             // Gürültü değil hash: komşu tile'larla korelasyon olmasın, ağaçlar
             // blok blok değil tek tek dağılsın.
-            if (Noise.HashToUnit(tileX, tileY, Seed) < scatter.Chance)
+            //
+            // Tohuma kuralın TUZU ekleniyor. Eklenmeseydi her kural aynı
+            // hash'i görür ve aynı biome'daki ikinci kural birincinin alt
+            // kümesi olurdu — yani hiç çıkmazdı. Bkz. ScatterRule.Salt.
+            if (Noise.HashToUnit(tileX, tileY, Seed + scatter.Salt) < scatter.Chance)
             {
                 tileKey = scatter.Tile;
                 break;

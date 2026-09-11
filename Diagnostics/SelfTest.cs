@@ -85,6 +85,8 @@ public static class SelfTest
         DataNameRules(world);
         ModOverlayRules();
         CollisionRules(world.Tileset);
+        ScatterRules(world.Tileset);
+        TileAtlasRules(world.Tileset);
 
         Console.WriteLine($"\n{_passed} gecti, {_failed} kaldi.");
         return _failed;
@@ -1294,6 +1296,225 @@ public static class SelfTest
 
         Check("tek onayda envanter DEGISMEZ",
             e.CountOf("wood") == 5 && f.CountOf("wood") == 0);
+    }
+
+    // ==================== TILE ATLASI ====================
+
+    /// <summary>
+    /// Tile atlasının kaynak dikdörtgenleri doku sınırları içinde mi.
+    ///
+    /// ── Neden bu sınama yazıldı ─────────────────────────────────────────
+    /// Dünyaya bitki örtüsü eklendikten sonra yeni tile'lar ekranda hiç
+    /// görünmedi. Üretilen dünya DOĞRUYDU — oyunun kendi tile haritası
+    /// dökümü, bağımsız Python modeliyle karakter karakter aynı çıktı.
+    /// Sorun çizimdeydi ve yeni tile'lara özel değildi.
+    ///
+    /// <see cref="Tileset.GetSourceRectangle"/> atlası DEVRİK okuyordu:
+    /// x'e tile indeksini, y'ye varyantı koyuyordu. Üretici ise tersini
+    /// yazıyor (x = varyant, y = tile) — iki dosyanın yorum satırları bile
+    /// birbiriyle çelişiyordu. Atlas 3 tile genişliğinde olduğu için
+    /// indeksi 3 ve üstü olan HER tile dokunun dışını örnekliyordu:
+    /// kum, su, ağaç, tahta zemin, taş duvar, kamp ateşi, sürülmüş toprak,
+    /// bütün zindan tile'ları ve yeni bitki örtüsü. PointClamp dışarıyı
+    /// kenara kırptığı için hata çökme olarak değil, "dünya neden hep
+    /// aynı üç renk" olarak görünüyordu.
+    ///
+    /// Sınama indeks 0-2'de GEÇERDİ; o yüzden her indeks tek tek deneniyor.
+    /// </summary>
+    private static void TileAtlasRules(Tileset tileset)
+    {
+        Section("15) Tile atlasi (kaynak dikdortgenleri)");
+
+        var texture = tileset.Texture;
+        var size = tileset.TileSize;
+
+        var outside = 0;
+        var firstBad = "";
+
+        for (var index = 0; index < tileset.Count; index++)
+        {
+            for (var variant = 0; variant < tileset.Variants; variant++)
+            {
+                var rect = tileset.GetSourceRectangle(index, variant);
+
+                if (rect.Left >= 0 && rect.Top >= 0 &&
+                    rect.Right <= texture.Width && rect.Bottom <= texture.Height)
+                {
+                    continue;
+                }
+
+                outside++;
+                if (firstBad.Length == 0)
+                {
+                    firstBad = $"ilk tasan: '{tileset[index].Key}' varyant {variant} -> " +
+                               $"{rect} (doku {texture.Width}x{texture.Height})";
+                }
+            }
+        }
+
+        Check("her kaynak dikdortgeni dokunun ICINDE", outside == 0,
+              outside == 0 ? $"{tileset.Count} tile x {tileset.Variants} varyant"
+                           : $"{outside} tasma, {firstBad}");
+
+        // Duzen sozlesmesi: SATIR = tile turu, SUTUN = varyant.
+        // Tools/generate_placeholders.py atlasi boyle yaziyor; okuma da
+        // boyle olmali. Ustteki sinir kontrolu kare bir atlasta (tile
+        // sayisi == varyant sayisi) devrikligi YAKALAYAMAZDI, bu yuzden
+        // duzen ayrica dogrudan sinaniyor.
+        var probe = tileset.GetSourceRectangle(3, 1);
+        Check("duzen: satir = tile, sutun = varyant",
+              probe.X == 1 * size && probe.Y == 3 * size,
+              $"indeks 3 varyant 1 -> ({probe.X},{probe.Y}), beklenen ({size},{3 * size})");
+
+        // Atlas gercekten varyant sayisi kadar GENIS, tile sayisi kadar
+        // YUKSEK olmali. Uretici ile okuyucu ayrisirsa burada patlar.
+        Check("atlas olculeri duzenle tutarli",
+              texture.Width == tileset.Variants * size &&
+              texture.Height == tileset.Count * size,
+              $"{texture.Width}x{texture.Height}, beklenen " +
+              $"{tileset.Variants * size}x{tileset.Count * size}");
+    }
+
+    // ==================== DUNYA SACILIMI ====================
+
+    /// <summary>
+    /// Saçılım kuralları — aynı biome'a birden fazla kural yazılabiliyor mu.
+    ///
+    /// ── Neden bu sınama var ─────────────────────────────────────────────
+    /// Dünyaya bitki örtüsü eklerken aynı biome'a ikinci bir saçılım kuralı
+    /// yazmak gerekti (ovada hem ağaç hem çalı). Eklemeden ÖNCE bu sınama
+    /// yazıldı ve kuralın işlemediğini gösterdi.
+    ///
+    /// Sebep: her kural aynı hash'e bakıyordu —
+    /// <c>HashToUnit(tileX, tileY, Seed)</c>. Değer kural başına
+    /// değişmediği için ikinci kural birincinin ALT KÜMESİ oluyordu:
+    /// %22'lik ağaç kuralı hash &lt; 0.22 olan her yeri kapıyor ve
+    /// <c>break</c> ediyor; %10'luk çalı kuralı ise yalnızca hash &lt; 0.10
+    /// iken eşleşebilirdi — ama orada zaten ağaç kazanmış oluyor. Yani
+    /// çalı HİÇBİR ZAMAN çıkmıyordu.
+    ///
+    /// Hata sessizdi: biomes.json'a kural yazılır, oyun açılır, hiçbir
+    /// uyarı çıkmaz ve dünyada o bitki hiç görünmez.
+    /// </summary>
+    private static void ScatterRules(Tileset tileset)
+    {
+        Section("14) Dunya sacilimi (ayni biome'da birden fazla kural)");
+
+        // Tek biome, tek zemin: olcumu gurultuden arindirmak icin butun
+        // dunya "plains" olsun. Boylece sayilan sey yalnizca sacilim.
+        var table = new BiomeTable
+        {
+            Rules = [new BiomeRule { Biome = "plains", Tile = "grass" }],
+            Scatter =
+            [
+                new ScatterRule { Tile = "wood", OnBiome = "plains", Chance = 0.22 },
+                new ScatterRule { Tile = "stone", OnBiome = "plains", Chance = 0.10 }
+            ]
+        };
+
+        var generator = new WorldGenerator(table, tileset, 4242);
+
+        var woodIndex = tileset.IndexOf("wood");
+        var stoneIndex = tileset.IndexOf("stone");
+
+        var wood = 0;
+        var stone = 0;
+        var total = 0;
+
+        for (var y = -60; y < 60; y++)
+        {
+            for (var x = -60; x < 60; x++)
+            {
+                var index = generator.GetTileIndex(x, y);
+                if (index == woodIndex) wood++;
+                else if (index == stoneIndex) stone++;
+                total++;
+            }
+        }
+
+        // Birinci kural zaten calisiyordu; kontrol amacli.
+        Check("birinci sacilim kurali calisiyor", wood > 0,
+              $"{wood}/{total} ({100.0 * wood / total:F1}%)");
+
+        // ASIL SINAMA. Duzeltmeden once burasi 0 doner.
+        Check("AYNI biome'daki ikinci kural da calisiyor", stone > 0,
+              $"{stone}/{total} ({100.0 * stone / total:F1}%)");
+
+        // Oranlar kabaca beklenen yerde mi: ikinci kural yalnizca birincinin
+        // eslesmedigi yerlerde deneniyor, yani 0.10 * (1 - 0.22) ~ %7.8.
+        var stoneRatio = 100.0 * stone / total;
+        Check("ikinci kuralin orani beklenen aralikta",
+              stoneRatio is > 5.0 and < 11.0, $"{stoneRatio:F1}% (beklenen ~7.8%)");
+
+        var woodRatio = 100.0 * wood / total;
+        Check("birinci kuralin orani beklenen aralikta",
+              woodRatio is > 19.0 and < 25.0, $"{woodRatio:F1}% (beklenen ~22%)");
+
+        // Kurallar BAGIMSIZ olmali: ayni tuzla uretilirlerse ikinci kural
+        // birincinin alt kumesi olur. Bagimsizligin olculebilir sonucu,
+        // iki kuralin kesisiminin carpimlarina yakin cikmasi.
+        //
+        // Burada dogrudan olculemez (ilk eslesen kazaniyor), ama sirasi
+        // ters cevrildiginde oranlarin YER DEGISTIRMESI ayni seyi
+        // kanitliyor: bagimli olsalardi ters sirada da ayni sonuc cikardi.
+        var swapped = new BiomeTable
+        {
+            Rules = [new BiomeRule { Biome = "plains", Tile = "grass" }],
+            Scatter =
+            [
+                new ScatterRule { Tile = "stone", OnBiome = "plains", Chance = 0.10 },
+                new ScatterRule { Tile = "wood", OnBiome = "plains", Chance = 0.22 }
+            ]
+        };
+
+        var swappedGenerator = new WorldGenerator(swapped, tileset, 4242);
+        var swappedStone = 0;
+
+        for (var y = -60; y < 60; y++)
+        {
+            for (var x = -60; x < 60; x++)
+            {
+                if (swappedGenerator.GetTileIndex(x, y) == stoneIndex) swappedStone++;
+            }
+        }
+
+        // Sirasi basa alininca tam %10'a cikmali (kimse onunu kesmiyor).
+        var swappedRatio = 100.0 * swappedStone / total;
+        Check("sira degisince oran da degisiyor (kurallar bagimsiz)",
+              swappedRatio > stoneRatio, $"{swappedRatio:F1}% > {stoneRatio:F1}%");
+
+        // --- Tuz KONUMDAN degil KURALDAN gelmeli ---
+        // Ayni kural farkli bir tabloda ayni yerlere dusmeli, yoksa
+        // biomes.json'da satir sirasi degistiginde butun dunya kayar ve
+        // kayitli dunyalar bozulur.
+        var reordered = new BiomeTable
+        {
+            Rules = [new BiomeRule { Biome = "plains", Tile = "grass" }],
+            Scatter =
+            [
+                new ScatterRule { Tile = "stone", OnBiome = "plains", Chance = 0.10 }
+            ]
+        };
+
+        var reorderedGenerator = new WorldGenerator(reordered, tileset, 4242);
+        var sameSpots = true;
+
+        for (var y = -30; y < 30 && sameSpots; y++)
+        {
+            for (var x = -30; x < 30; x++)
+            {
+                // swapped'da tas ILK kural, reordered'da TEK kural.
+                // Ikisinde de onunu kesen yok, yani ayni tile'lara dusmeli.
+                if ((swappedGenerator.GetTileIndex(x, y) == stoneIndex) !=
+                    (reorderedGenerator.GetTileIndex(x, y) == stoneIndex))
+                {
+                    sameSpots = false;
+                    break;
+                }
+            }
+        }
+
+        Check("kuralin tuzu SIRAYA degil kendine bagli", sameSpots);
     }
 
     // ==================== CARPISMA VE KOSE DUZELTMESI ====================

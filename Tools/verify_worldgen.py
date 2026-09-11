@@ -36,6 +36,7 @@ import argparse
 import json
 import math
 import os
+import re
 import sys
 from collections import Counter, deque
 
@@ -117,6 +118,23 @@ class Noise:
         return min(1.0, max(0.0, (total / total_amplitude + 1.0) * 0.5))
 
 
+def scatter_salt(rule: dict) -> int:
+    """
+    Bir sacilim kuralinin hash tuzu -- C# ScatterRule.ComputeSalt ile AYNI.
+
+    FNV-1a, "<biome>/<tile>" dizesi uzerinde, isaret biti atilmis.
+
+    Tuz kuralin SIRASINDAN degil KIMLIGINDEN turuyor: indeks kullanilsaydi
+    biomes.json'da iki satirin yerini degistirmek butun dunyayi kaydirir
+    ve ayni tohumla acilan kayitli dunyalarda agaclar baska yerlere
+    tasinirdi.
+    """
+    h = 2166136261
+    for ch in f"{rule.get('onBiome', '')}/{rule.get('tile', '')}":
+        h = ((h ^ ord(ch)) * 16777619) & 0xFFFFFFFF
+    return h & 0x7FFFFFFF
+
+
 def hash_to_unit(x: int, y: int, seed: int) -> float:
     h = (x * 374761393 + y * 668265263 + seed * 1274126177) & MASK32
     h = ((h ^ (h >> 13)) * 1274126177) & MASK32
@@ -171,7 +189,12 @@ class Generator:
                 continue
             if "moistureAbove" in sc and moisture < sc["moistureAbove"]:
                 continue
-            if hash_to_unit(tx, ty, self.seed) < sc["chance"]:
+            # Tohuma kuralin TUZU ekleniyor -- C# tarafindaki
+            # ScatterRule.Salt ile birebir ayni hesap. Eklenmezse ayni
+            # biome'daki ikinci kural birincinin alt kumesi olur ve hic
+            # calismaz; dahasi bu script'in saglamasi C#'inkinden ayrisir
+            # ve capraz dogrulama sessizce anlamini yitirir.
+            if hash_to_unit(tx, ty, self.seed + scatter_salt(sc)) < sc["chance"]:
                 key = sc["tile"]
                 break
 
@@ -254,6 +277,8 @@ def main() -> int:
     parser.add_argument("--seed", type=int, default=DEFAULT_SEED)
     parser.add_argument("--minimap", default=None, help="Minimap PNG yolu (istege bagli)")
     parser.add_argument("--size", type=int, default=192, help="Minimap kenar uzunlugu (tile)")
+    parser.add_argument("--no-game", action="store_true",
+                        help="C# capraz dogrulamasini atla (oyunu kosturma)")
     args = parser.parse_args()
 
     biomes, tiles = load_data(os.path.abspath(args.content))
@@ -315,18 +340,57 @@ def main() -> int:
     ratio = solid_n / total
     check("kati tile orani makul (%5-%60)", 0.05 < ratio < 0.60, f"%{100 * ratio:.1f}")
 
+    # --- 4b) HER sacilim kurali gercekten tile uretiyor mu -------------
+    #
+    # Bu kural, yasanmis bir hatanin genel hali. Sacilim karari bir donem
+    # her kural icin AYNI hash'e bakiyordu; ayni biome'daki ikinci kural
+    # birincinin alt kumesi oldugu icin HIC calismiyordu. Hata sessizdi:
+    # biomes.json'a satir yazilir, oyun acilir, hicbir uyari cikmaz ve o
+    # bitki dunyada hic gorunmez.
+    #
+    # Artik her kural sayiliyor. Sifir ureten bir kural ya olu veridir ya
+    # da yeniden ortaya cikmis ayni hata; ikisi de gorulmeli.
+    print("\n4b) Sacilim kurallari (her kural tile uretiyor mu)")
+    tile_counter = Counter()
+    for y in range(-128, 128):
+        for x in range(-128, 128):
+            tile_counter[gen.tile_key(x, y)[1]] += 1
+
+    for sc in gen.scatter:
+        produced = tile_counter.get(sc["tile"], 0)
+        check(f"'{sc['tile']}' ({sc['onBiome']}) uretiliyor", produced > 0,
+              f"%{100 * produced / total:.2f}  ({produced})")
+
     print("\n5) Spawn guvenligi")
     sx, sy, area = gen.find_spawn()
     check("spawn tile'i kati degil", not gen.is_solid(sx, sy), f"({sx}, {sy})")
     check("bagli acik alan yeterli", area >= gen.spawn_cfg.get("minimumOpenArea", 120),
           f"{area} tile")
 
-    print("\n6) C# ile karsilastirilacak saglama")
+    print("\n6) C# ile capraz dogrulama")
     checksum = gen.chunk_checksum(0, 0)
     print(f"       chunk(0,0) saglama = 0x{checksum:08X}")
-    print(f"       oyunu calistirin, konsolda ayni degeri gormelisiniz:")
-    print(f"       [worldgen] tohum={args.seed} spawn=({sx},{sy}) "
-          f"chunk(0,0) saglama=0x{checksum:08X}")
+
+    # ── Neden bu karsilastirma OTOMATIK ────────────────────────────────
+    # Uzun sure yalnizca "oyunu calistirin, ayni degeri gormelisiniz"
+    # yaziyordu. Bu, capraz dogrulamayi insanin gozune birakiyordu ve
+    # gercekten isine yarayacagi an tam da kimsenin bakmadigi andir:
+    # sacilim hash'ine tuz eklendiginde Python tarafi guncellenmeseydi
+    # iki uygulama sessizce ayrisacakti (olculdu: 0x32C29BFD'e karsi
+    # 0xBB4B0B86). Iki bagimsiz uygulamanin ayni sonucu vermesi bu
+    # script'in butun varlik sebebi; elle kontrole birakilamaz.
+    if args.no_game:
+        print("       (--no-game verildi, oyun kosturulmadi)")
+    else:
+        game = run_game_checksum(os.path.join(here, ".."))
+        if game is None:
+            # Derleme yoksa bu bir HATA degil: script tek basina da
+            # anlamli. Ama "gecti" demek de yanlis olurdu.
+            print("       ATLANDI: oyun kosturulamadi (derleme yok mu?). "
+                  "Once 'dotnet build' calistirin.")
+        else:
+            check("C# ayni saglamayi uretiyor", game == checksum,
+                  f"C#=0x{game:08X} Python=0x{checksum:08X}")
 
     if args.minimap:
         render_minimap(gen, args.minimap, args.size)
@@ -335,6 +399,45 @@ def main() -> int:
     print("\n" + ("TUM KONTROLLER GECTI" if failures == 0
                   else f"{failures} KONTROL KALDI"))
     return 1 if failures else 0
+
+
+def run_game_checksum(root: str) -> int | None:
+    """
+    Oyunu kisaca kosturup yazdirdigi chunk saglamasini okur.
+
+    Oyun acilista su satiri yaziyor:
+        [worldgen] tohum=... spawn=(x,y) chunk(0,0) sağlama=0xXXXXXXXX
+
+    Derleme yoksa ya da satir bulunamazsa None doner -- cagiran taraf
+    bunu "atlandi" diye raporluyor, "gecti" diye degil.
+    """
+    import shutil
+    import subprocess
+    import tempfile
+
+    run = ["dotnet", "run", "--no-build", "--project", root, "--"]
+
+    with tempfile.TemporaryDirectory() as tmp:
+        script = os.path.join(tmp, "cikis.txt")
+        # Dunya kuruldugu anda cik: saglama Game1 acilista yaziyor.
+        with open(script, "w", encoding="utf-8") as f:
+            f.write("screen Playing\nwait 2\nquit\n")
+
+        run += ["--capture-script", script, "--capture-out", os.path.join(tmp, "out")]
+
+        # Bassiz makinede X sunucusu gerekiyor.
+        if not os.environ.get("DISPLAY") and shutil.which("xvfb-run"):
+            run = ["xvfb-run", "-a", "--server-args=-screen 0 1280x720x24"] + run
+
+        try:
+            result = subprocess.run(run, capture_output=True, text=True, timeout=300)
+        except (OSError, subprocess.SubprocessError):
+            return None
+
+    # 'saglama' C# tarafinda Turkce 'sağlama' olarak yaziliyor; iki
+    # yazimi da kabul et ki bir gun duzeltilirse script kirilmasin.
+    match = re.search(r"\[worldgen\].*?sa[gğ]lama=0x([0-9A-Fa-f]{8})", result.stdout)
+    return int(match.group(1), 16) if match else None
 
 
 def render_minimap(gen: Generator, path: str, size: int) -> None:

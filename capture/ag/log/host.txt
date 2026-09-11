@@ -1,11 +1,11 @@
 [mod] 1/1 mod aktif  (27461038E16E23B7), 4 dil satiri, 2 icerik bindirmesi
-[worldgen] tohum=20260908 spawn=(0,0) chunk(0,0) sağlama=0x49C29A30
+[worldgen] tohum=20260908 spawn=(0,0) chunk(0,0) sağlama=0xBB4B0B86
 [ag] Sunucu acildi (LiteNetLib (gelistirme)) — tohum 20260908
 [ag] Oyuncu 1 katildi (1 bagli)
 [tarim] oyuncu 1: Tilled
 [tarim] oyuncu 1: NoSeed
 [tarim] oyuncu 1: Tilled
 [tarim] oyuncu 1: NoSeed
-[tarim] oyuncu 1: NotTillable
-[tarim] oyuncu 1: NotTillable
+[tarim] oyuncu 1: Tilled
+[tarim] oyuncu 1: NoSeed
 [capture] kare 1239: capture/ag/host/host.png  oyuncu=(8.0,16.0) kose_duzeltme=0 son_itme=0.00

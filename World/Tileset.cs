@@ -104,11 +104,31 @@ public sealed class Tileset
 
     /// <summary>
     /// Belirli bir varyantın kaynak dikdörtgeni.
-    /// Atlas düzeni: SÜTUN = tile türü, SATIR = varyant.
+    ///
+    /// Atlas düzeni: SATIR = tile türü, SÜTUN = varyant. Yani atlas
+    /// <c>Variants</c> tile genişliğinde, <c>Count</c> tile yüksekliğinde.
+    /// <c>Tools/generate_placeholders.py</c> atlası böyle yazıyor.
+    ///
+    /// ── Burada bir hata vardı ───────────────────────────────────────────
+    /// Bu metot uzun süre düzeni DEVRİK okudu: x'e tile indeksini, y'ye
+    /// varyantı koyuyordu (ve doküman satırı da öyle diyordu — üretici
+    /// dosyasıyla taban tabana zıt). Atlas yalnızca 3 tile genişliğinde
+    /// olduğu için indeksi 3 ve üstü olan HER tile dokunun dışını
+    /// örnekliyordu: kum, su, ağaç, tahta zemin, taş duvar, kamp ateşi,
+    /// sürülmüş toprak ve bütün zindan tile'ları.
+    ///
+    /// Hata sessizdi çünkü <see cref="SamplerState.PointClamp"/> doku
+    /// dışını kenara kırpıyor — çökme yok, yalnızca yanlış pixel. Dünya
+    /// yıllarca "neden hep aynı üç renk" gibi göründü; ağaçlar üretiliyor
+    /// ama ekrana hiç çizilmiyordu.
+    ///
+    /// Yakalanması: dünyaya bitki örtüsü eklendi, ekranda görünmedi,
+    /// oyunun kendi tile haritası dökümü bağımsız Python modeliyle
+    /// karakter karakter aynı çıktı — yani üretim doğruydu, çizim değil.
     /// </summary>
     public Rectangle GetSourceRectangle(int index, int variant) => new(
-        index * TileSize,
         Math.Abs(variant) % Variants * TileSize,
+        index * TileSize,
         TileSize,
         TileSize);
 

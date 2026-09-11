@@ -316,6 +316,15 @@ def main() -> int:
         keys = {t["key"] for t in tileset_meta}
         solid_by_key = {t["key"]: t["solid"] for t in tileset_meta}
 
+        # Oyuncunun INSA ettigi tile'lar. Asagidaki uyari yalnizca bunlar
+        # icin anlamli; dunyanin kendi bitirdigi ortu icin degil.
+        buildable_path = os.path.join(CONTENT, "World", "buildables.json")
+        buildable_tiles: set[str] = set()
+        if os.path.exists(buildable_path):
+            with open(buildable_path, encoding="utf-8") as f:
+                buildable_tiles = {b.get("tile")
+                                   for b in json.load(f).get("buildables", [])}
+
         checks += 1
         if resources.get("reachTiles", 1) < 1:
             fail("resources.json: reachTiles en az 1 olmali.")
@@ -345,12 +354,30 @@ def main() -> int:
             if entry.get("amount", 0) < 1:
                 fail(f"resources.json: '{tile}' icin amount en az 1 olmali.")
 
-            # Kati olmayan bir tile toplanabiliyorsa oyuncu ustunde dururken
-            # ayagindaki zemini toplayabilir - muhtemelen istenmeyen durum.
+            # Kati olmayan ama toplanabilen tile: kendi yapisini kazara
+            # yikma riski.
+            #
+            # ── Bu kural bir kez DARALTILDI ────────────────────────────
+            # Eskiden "kati degil + toplanabilir" olan HER tile icin uyari
+            # veriyor ve gerekcesi "oyuncu uzerinde dururken zemini
+            # toplayabilir" diyordu. Gerekce YANLISTI: GatheringSystem
+            # hicbir zaman ayagin altindaki tile'i hedeflemiyor,
+            # GetAimedTile her zaman BAKILAN yonde reachTiles kadar ileri
+            # gidiyor. Yani ustunde durmak toplamaya yetmiyor.
+            #
+            # Bitki ortusu (cali, sazlik) eklenince kural uc uyari birden
+            # uretti ve hepsi ISTENEN davranisti: caliya donup toplamak
+            # zaten oyunun amaci. Her kosumda gorulen ve hep gormezden
+            # gelinen uyarilar, gercek sorunlari gizler.
+            #
+            # Gercek risk dar: INSA EDILEBILIR bir tile kati degilse,
+            # oyuncu kendi dosedigi zemine donup toplama tusuna bastiginda
+            # yapisini yikar. Bitki ortusunde boyle bir kayip yok.
             checks += 1
-            if tile in solid_by_key and not solid_by_key[tile]:
-                warn(f"resources.json: '{tile}' kati degil ama toplanabilir. "
-                     f"Oyuncu uzerinde dururken zemini toplayabilir.")
+            if tile in solid_by_key and not solid_by_key[tile] and tile in buildable_tiles:
+                warn(f"resources.json: '{tile}' hem insa edilebilir hem kati degil "
+                     f"hem toplanabilir. Oyuncu kendi dosedigi zemine donup "
+                     f"toplama tusuna basarsa yapisini yikar.")
 
     # --- 10) items.json / recipes.json
     items_path = os.path.join(CONTENT, "Items", "items.json")

@@ -116,6 +116,50 @@ public sealed class ScatterRule
     [JsonPropertyName("onBiome")] public string OnBiome { get; init; } = "";
     [JsonPropertyName("moistureAbove")] public double? MoistureAbove { get; init; }
     [JsonPropertyName("chance")] public double Chance { get; init; }
+
+    /// <summary>
+    /// Bu kurala özel hash tuzu.
+    ///
+    /// ── Neden gerekli ───────────────────────────────────────────────────
+    /// Saçılım kararı <c>Noise.HashToUnit(x, y, seed)</c> ile veriliyordu
+    /// ve bu değer KURAL BAŞINA DEĞİŞMİYORDU. Sonuç: aynı biome'daki
+    /// ikinci kural, birincinin alt kümesi oluyordu.
+    ///
+    /// Somut hâli: %22'lik ağaç kuralı hash &lt; 0.22 olan her tile'ı
+    /// kapıp <c>break</c> ediyor. %10'luk çalı kuralı ancak hash &lt; 0.10
+    /// iken eşleşebilir — ama orada zaten ağaç kazanmış oluyor. Yani çalı
+    /// HİÇ ÇIKMIYORDU ve hata sessizdi: biomes.json'a kural yazılıyor,
+    /// hiçbir uyarı çıkmıyor, dünyada o bitki hiç görünmüyor.
+    ///
+    /// Tuz her kuralın hash akışını ayırıyor; kurallar artık BAĞIMSIZ
+    /// olaylar.
+    ///
+    /// ── Neden satır sırasından değil, kuralın KİMLİĞİNDEN türüyor ──────
+    /// Tuz olarak listedeki indeks kullanılabilirdi ama o zaman
+    /// biomes.json'da iki satırın yerini değiştirmek bütün dünyayı
+    /// kaydırırdı: aynı tohumla açılan kayıtlı dünyalarda ağaçlar bir
+    /// anda başka yerlere taşınırdı. Biome+tile çiftinden türetilince
+    /// sıra önemsiz kalıyor.
+    /// </summary>
+    public int Salt => _salt ??= ComputeSalt();
+
+    private int? _salt;
+
+    /// <summary>FNV-1a — kısa dizeler için ucuz ve iyi dağılan bir karma.</summary>
+    private int ComputeSalt()
+    {
+        var hash = 2166136261u;
+
+        foreach (var c in $"{OnBiome}/{Tile}")
+        {
+            hash = (hash ^ c) * 16777619u;
+        }
+
+        // İşaret bitini at: negatif tuz da çalışırdı ama Python
+        // karşılığıyla (Tools/verify_worldgen.py) birebir aynı sayıyı
+        // üretmek, işaretsiz kalınca çok daha az tuzaklı.
+        return (int)(hash & 0x7FFFFFFF);
+    }
 }
 
 public sealed class SpawnSettings
