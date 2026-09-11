@@ -49,4 +49,18 @@ for script in Tools/captures/*.txt; do
 done
 
 rm -rf saves
+
+# Pixel izgarasi: yukaridaki pixel_izgara.txt'nin urettigi kare uzerinde
+# "her blok tek renk" olcumu. Kare sayisi dogru olsa bile izgara bozuk
+# olabilir; bu ayri bir soru ve ayri olculuyor.
+if [ -f "$OUT/pixel_izgara/dunya_photo_mode.png" ]; then
+  if python3 Tools/verify_pixels.py "$OUT/pixel_izgara/dunya_photo_mode.png" \
+       | grep -q "PIXEL IZGARASI SAGLAM"; then
+    echo "  GECTI  pixel izgarasi (her blok tek renk)"
+  else
+    echo "  KALDI  pixel izgarasi"
+    fail=1
+  fi
+fi
+
 exit $fail

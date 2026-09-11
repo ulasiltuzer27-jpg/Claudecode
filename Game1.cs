@@ -52,9 +52,21 @@ namespace PixelSurvival;
 /// </summary>
 public class Game1 : Game
 {
+    /// <summary>Acilistaki pencere boyutu. Tuval buna TAM 2 katiyla oturuyor.</summary>
     private const int WindowWidth = 1280;
     private const int WindowHeight = 720;
-    private const float CameraZoom = 3f;
+
+    /// <summary>
+    /// Kamera yakinlastirmasi.
+    ///
+    /// Eskiden 3'tu: dunya dogrudan 1280x720'a 3x olcekle ciziliyordu.
+    /// Artik dunya 640x360'lik sanal tuvale (PixelCanvas) 1:1 ciziliyor ve
+    /// tuval ekrana tam sayi katiyla buyutuluyor. Buradaki olcegin 1
+    /// olmasi SART: 1 degilse bir dunya pixel'i tuvalde bir texel olmaktan
+    /// cikar ve tuvalin varlik sebebi (alt-pixel kaymasini yok etmek)
+    /// ortadan kalkar.
+    /// </summary>
+    private const float CameraZoom = 1f;
 
     /// <summary>
     /// Varsayılan dünya tohumu. Aynı tohum her makinede aynı dünyayı üretir.
@@ -64,6 +76,14 @@ public class Game1 : Game
 
     private readonly GraphicsDeviceManager _graphics;
     private SpriteBatch _spriteBatch = null!;
+
+    /// <summary>
+    /// Dunyanin cizildigi dusuk cozunurluklu sanal tuval.
+    ///
+    /// Arayuz buna DEGIL, ekranin kendi cozunurlugune ciziliyor —
+    /// gerekcesi PixelCanvas'in basinda.
+    /// </summary>
+    private PixelCanvas _canvas = null!;
 
     private SpriteSheet _playerSheet = null!;
     private Tileset _tileset = null!;
@@ -237,6 +257,12 @@ public class Game1 : Game
 
         Content.RootDirectory = "Content";
         IsMouseVisible = true;
+
+        // Pencere yeniden boyutlandirilabilir. Tuval her karede olcegini
+        // tazeledigi ve arayuz CANLI ekran boyutunu okudugu icin ek bir
+        // olay dinleyicisi gerekmiyor; tam ekrana gecis de ayni yoldan
+        // calisir.
+        Window.AllowUserResizing = true;
     }
 
 #if FACEPUNCH_STEAM
@@ -279,6 +305,17 @@ public class Game1 : Game
     /// </summary>
     private bool _steamReady;
 #endif
+
+    /// <summary>
+    /// Arayuzun cizildigi gercek ekran genisligi.
+    ///
+    /// Sabit yerine CANLI deger: pencere yeniden boyutlandirilabiliyor ve
+    /// sabit kullanilsaydi arayuz 1280x720 icin hesaplanip baska boyutta
+    /// bir tampona cizilirdi — paneller ekran disinda kalirdi.
+    /// </summary>
+    private int ScreenWidth => GraphicsDevice.PresentationParameters.BackBufferWidth;
+
+    private int ScreenHeight => GraphicsDevice.PresentationParameters.BackBufferHeight;
 
     protected override void Initialize()
     {
@@ -334,6 +371,7 @@ public class Game1 : Game
     protected override void LoadContent()
     {
         _spriteBatch = new SpriteBatch(GraphicsDevice);
+        _canvas = new PixelCanvas(GraphicsDevice);
 
         // Madde 25: modlar EN ONCE kesfediliyor.
         //
@@ -532,7 +570,11 @@ public class Game1 : Game
         _session.PingReceived += (playerId, kind, position) =>
             _social.TryPing(playerId, kind, position);
 
-        _camera = new Camera2D(WindowWidth, WindowHeight, CameraZoom);
+        // Kamera TUVAL boyutunu goruyor, pencereyi degil: gorunen dunya
+        // alani artik pencere boyutundan BAGIMSIZ. Pencereyi buyutmek
+        // daha genis bir alan gostermiyor, ayni alani daha buyuk
+        // gosteriyor — cok oyunculuda bu bir adalet meselesi de.
+        _camera = new Camera2D(PixelCanvas.BaseWidth, PixelCanvas.BaseHeight, CameraZoom);
 
         GenerateWorld(DefaultSeed);
 
@@ -2205,12 +2247,31 @@ public class Game1 : Game
         _toastSeconds = 2.5f;
     }
 
+    /// <summary>
+    /// Grafik kaynaklarini serbest birakir.
+    ///
+    /// RenderTarget2D bir GraphicsResource; cihaz kapanirken zaten
+    /// toplaniyor. Yine de acikca birakiliyor: kaynagin sahibi belli
+    /// olsun ve ileride tuval yeniden olusturulmaya baslarsa (cozunurluk
+    /// ayari) sizinti yeri onceden kapali olsun.
+    /// </summary>
+    protected override void UnloadContent()
+    {
+        _canvas?.Dispose();
+        base.UnloadContent();
+    }
+
     protected override void Draw(GameTime gameTime)
     {
-        GraphicsDevice.Clear(new Color(28, 30, 40));
+        // Pencere boyutu degismis olabilir; tuvalin olcegi her karede
+        // tazeleniyor (hesap birkac tam sayi islemi).
+        _canvas.Refresh();
+
+        GraphicsDevice.Clear(PixelCanvas.ClearColor);
 
         // Dunya henuz kurulmadiysa (oyuncu hic "Oyna" demediyse) cizilecek
-        // bir dunya yok: yalnizca menu.
+        // bir dunya yok: yalnizca menu. Menu ARAYUZ katmanidir, yani
+        // tuvalden gecmiyor — ekranin tam cozunurlugunde ciziliyor.
         if (!_worldReady)
         {
             _spriteBatch.Begin(samplerState: SamplerState.PointClamp);
@@ -2223,6 +2284,11 @@ public class Game1 : Game
         }
 
         var visible = _camera.GetVisibleWorldArea();
+
+        // ════════════════════════════════════════════════════════════════
+        // TUVAL: dunya 640x360'a 1:1 ciziliyor
+        // ════════════════════════════════════════════════════════════════
+        _canvas.Begin();
 
         // --- Dünya katmanı: kamera matrisi altında, dünya koordinatlarında ---
         _spriteBatch.Begin(
@@ -2302,19 +2368,32 @@ public class Game1 : Game
         _spriteBatch.End();
 
         // --- İklim bindirmesi: dünyayı karartır, arayüze DOKUNMAZ ---
-        // Bu yüzden dünya katmanından sonra, arayüzden önce çiziliyor.
+        //
+        // Tuvalin ICINDE kaliyor: karartma ve yagmur dunyaya ait. Arayuz
+        // katmanina tasinsalardi envanter ve menu de geceleri kararirdi.
+        // Dikdortgen TUVAL boyutunda, pencere boyutunda degil.
         _spriteBatch.Begin(samplerState: SamplerState.PointClamp);
 
         var overlay = _climate.OverlayColor;
         if (overlay.A > 0)
         {
-            _spriteBatch.Draw(_pixel, new Rectangle(0, 0, WindowWidth, WindowHeight), overlay);
+            _spriteBatch.Draw(_pixel,
+                new Rectangle(0, 0, PixelCanvas.BaseWidth, PixelCanvas.BaseHeight), overlay);
         }
 
         DrawWeatherParticles(gameTime);
         _spriteBatch.End();
 
-        // --- Arayüz katmanı: kamera matrisi YOK, ekran koordinatlarında ---
+        // ════════════════════════════════════════════════════════════════
+        // EKRAN: tuval tam sayi katiyla buyutulup basiliyor
+        // ════════════════════════════════════════════════════════════════
+        _canvas.End();
+        _canvas.Present(_spriteBatch);
+
+        // --- Arayüz katmanı: kamera matrisi YOK, EKRAN koordinatlarında ---
+        // Tuvalden GECMIYOR: yazinin ekranin tam cozunurlugunde cizilmesi
+        // onu daha keskin yapiyor ve panel yerlesimi 1280x720 icin
+        // ayarlanmis halde kaliyor.
         _spriteBatch.Begin(samplerState: SamplerState.PointClamp);
 
         if (_photoMode.IsActive)
@@ -2326,7 +2405,7 @@ public class Game1 : Game
             if (!_photoMode.ShotPending)
             {
                 _hud.DrawPhotoModeBar(_spriteBatch, _photoMode.LastSavedPath,
-                                      WindowWidth, WindowHeight);
+                                      ScreenWidth, ScreenHeight);
             }
         }
         else if (_showAssetView)
@@ -2335,7 +2414,7 @@ public class Game1 : Game
         }
         else
         {
-            _hud.DrawInventory(_spriteBatch, _inventory, WindowWidth, WindowHeight);
+            _hud.DrawInventory(_spriteBatch, _inventory, ScreenWidth, ScreenHeight);
 
             _hud.DrawStatus(_spriteBatch,
                 selectedBuild: _itemDatabase.Get(_building.Selected.Item).Name,
@@ -2345,17 +2424,17 @@ public class Game1 : Game
             // onun altindan baslasin diye alt kenarini geri veriyor.
             var climateBottom = _hud.DrawClimate(_spriteBatch,
                 Loc.T("hud.climate", _climate.Day, _climate.ClockText,
-                      _climate.Season.Name, _climate.Weather.Name), WindowWidth);
+                      _climate.Season.Name, _climate.Weather.Name), ScreenWidth);
 
             if (_showCrafting)
             {
-                _hud.DrawCrafting(_spriteBatch, _crafting, _inventory, WindowWidth,
+                _hud.DrawCrafting(_spriteBatch, _crafting, _inventory, ScreenWidth,
                                   climateBottom + 6);
             }
 
             _hud.DrawZone(_spriteBatch,
                 _zones.ZoneAt(_player.Position, _map.TileSize) == ZoneKind.Safe,
-                _steam.Status, WindowWidth, WindowHeight);
+                _steam.Status, ScreenWidth, ScreenHeight);
 
             // Menuden acilan ekranlar burada DEGIL: onlar oynanis HUD'inin
             // ustune degil, kendi tam ekran katmanlarina ciziliyor
@@ -2377,21 +2456,21 @@ public class Game1 : Game
 
                 _hud.DrawTrade(_spriteBatch, trade, _itemDatabase, _inventory, _tradeSlot,
                                _session.LocalPlayerId, localAccepted, partnerAccepted,
-                               stateLabel, WindowWidth, WindowHeight);
+                               stateLabel, ScreenWidth, ScreenHeight);
             }
 
             // Basarim acilma bildirimi oynanis sirasinda cikar; listesi
             // menude.
             if (_unlockBanner is { } banner)
             {
-                _hud.DrawUnlockBanner(_spriteBatch, banner, WindowWidth, WindowHeight);
+                _hud.DrawUnlockBanner(_spriteBatch, banner, ScreenWidth, ScreenHeight);
             }
 
             if (_fishing.IsActive)
             {
                 _hud.DrawFishingBar(_spriteBatch, _fishing.Marker,
                     _fishing.ZoneStart, _fishing.ZoneSize,
-                    _fishing.State == FishingState.Casting, WindowWidth, WindowHeight);
+                    _fishing.State == FishingState.Casting, ScreenWidth, ScreenHeight);
             }
 
             // Toast yalnizca OYNARKEN: menu acikken kisa omurlu bir bildirim
@@ -2399,7 +2478,7 @@ public class Game1 : Game
             // baglami kalmiyordu.
             if (_toastSeconds > 0f && _screen == GameScreen.Playing)
             {
-                _hud.DrawToast(_spriteBatch, _toast, WindowWidth);
+                _hud.DrawToast(_spriteBatch, _toast, ScreenWidth);
             }
         }
 
@@ -2436,7 +2515,7 @@ public class Game1 : Game
 
             _hud.DrawMainMenu(_spriteBatch, _menu,
                               $"v{_patchNotes.LatestVersion}   {_mods.Summary}",
-                              WindowWidth, WindowHeight);
+                              ScreenWidth, ScreenHeight);
             return;
         }
 
@@ -2458,43 +2537,43 @@ public class Game1 : Game
         // yalnizca "nereye donecegim" baglami, o yuzden daha koyu.
         var dim = _screen == GameScreen.Wardrobe ? 0.45f : 0.86f;
 
-        _hud.DrawScreenChrome(_spriteBatch, titleKey, WindowWidth, WindowHeight, dim);
+        _hud.DrawScreenChrome(_spriteBatch, titleKey, ScreenWidth, ScreenHeight, dim);
 
         switch (_screen)
         {
             case GameScreen.Achievements:
-                _hud.DrawAchievements(_spriteBatch, _achievements, WindowWidth, WindowHeight);
+                _hud.DrawAchievements(_spriteBatch, _achievements, ScreenWidth, ScreenHeight);
                 break;
 
             case GameScreen.Leaderboard:
                 _hud.DrawLeaderboard(_spriteBatch, _leaderboards,
                                      _achievementCatalog.Leaderboards, _achievements,
-                                     WindowWidth, WindowHeight);
+                                     ScreenWidth, ScreenHeight);
                 break;
 
             case GameScreen.Wardrobe:
                 // Season.KEY: sezonluk kozmetiklerin penceresi cosmetics.json'da
                 // sabit anahtarla yaziliyor, cevrilen adla degil.
                 _hud.DrawWardrobe(_spriteBatch, _cosmetics, _loadout, _ownership,
-                                  _climate.Season.Key, WindowWidth, WindowHeight);
+                                  _climate.Season.Key, ScreenWidth, ScreenHeight);
                 break;
 
             case GameScreen.Clan:
                 _hud.DrawClan(_spriteBatch, _clans, _session.LocalPlayerId,
-                              WindowWidth, WindowHeight);
+                              ScreenWidth, ScreenHeight);
                 break;
 
             case GameScreen.Mods:
-                _hud.DrawWorkshop(_spriteBatch, _mods, _workshop, WindowWidth, WindowHeight);
+                _hud.DrawWorkshop(_spriteBatch, _mods, _workshop, ScreenWidth, ScreenHeight);
                 break;
 
             case GameScreen.Settings:
-                _hud.DrawSettings(_spriteBatch, _accessibility, WindowWidth, WindowHeight);
+                _hud.DrawSettings(_spriteBatch, _accessibility, ScreenWidth, ScreenHeight);
                 break;
 
             case GameScreen.PatchNotes:
                 _hud.DrawPatchNotes(_spriteBatch, _patchNotes, _patchScroll,
-                                    WindowWidth, WindowHeight);
+                                    ScreenWidth, ScreenHeight);
                 break;
         }
     }
@@ -2664,7 +2743,10 @@ public class Game1 : Game
         var snow = _climate.Weather.Key == "snow";
         var seconds = (float)gameTime.TotalGameTime.TotalSeconds;
         var color = snow ? new Color(235, 240, 255) * 0.85f : new Color(150, 185, 230) * 0.6f;
-        var fallSpeed = snow ? 60f : 420f;
+        // Hizlar TUVAL uzayinda (640x360). Eskiden pencere uzayindaydi
+        // (1280x720) ve ayni sayilar burada iki kat hizli dusme demek
+        // olurdu — tuval yari yukseklikte.
+        var fallSpeed = snow ? 30f : 210f;
 
         for (var i = 0; i < count; i++)
         {
@@ -2672,14 +2754,15 @@ public class Game1 : Game
             var seedX = i * 2654435761u % 100003u / 100003f;
             var seedPhase = i * 40503u % 9973u / 9973f;
 
-            var x = seedX * WindowWidth;
+            var x = seedX * PixelCanvas.BaseWidth;
             if (snow)
             {
                 // Kar yatay salınır — dikey düşen kar yağmura benziyor.
                 x += MathF.Sin(seconds * 0.8f + seedPhase * 10f) * 14f;
             }
 
-            var y = (seedPhase * WindowHeight + seconds * fallSpeed) % WindowHeight;
+            var y = (seedPhase * PixelCanvas.BaseHeight + seconds * fallSpeed)
+                    % PixelCanvas.BaseHeight;
 
             _spriteBatch.Draw(_pixel,
                 snow ? new Rectangle((int)x, (int)y, 2, 2)
@@ -2691,7 +2774,7 @@ public class Game1 : Game
     /// <summary>F1 denetim görünümü: sheet'leri ham haliyle gösterir.</summary>
     private void DrawAssetInspector()
     {
-        _spriteBatch.Draw(_pixel, new Rectangle(0, 0, WindowWidth, WindowHeight),
+        _spriteBatch.Draw(_pixel, new Rectangle(0, 0, ScreenWidth, ScreenHeight),
             new Color(18, 20, 28) * 0.94f);
 
         _spriteBatch.Draw(

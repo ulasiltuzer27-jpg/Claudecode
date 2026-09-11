@@ -1,0 +1,17 @@
+# Pixel izgarasi dogrulamasi.
+#
+# Photo mode (P) arayuzu GIZLIYOR. Arayuz ekranin tam cozunurlugunde
+# ciziliyor, dunya ise 640x360 tuvalden 2x buyutulerek geliyor; ikisi
+# ayni karede oldugunda "her 2x2 blok tek renk" kurali arayuzde dogal
+# olarak tutmaz. Arayuzu gizleyip yalnizca dunyayi olcuyoruz.
+#
+# Tools/verify_pixels.py bu kareyi okuyor.
+
+screen Playing
+wait 90
+
+tap P
+wait 30
+shot dunya_photo_mode
+
+quit

@@ -850,6 +850,60 @@ mod'un etkisinin ekrandaki kanıtı.
 * Dünya saati ve hava **host otoriter** ve senkronize (saniyede bir `WorldTime`
   mesajı). Ekin büyümesi de otomatik olarak host'ta kalıyor.
 
+### Çözünürlük: düşük çözünürlüklü sanal tuval
+
+Dünya doğrudan ekrana değil, **640x360'lık bir `RenderTarget2D`'ye** çiziliyor
+(`Systems/PixelCanvas.cs`); tuval sonra ekrana **tam sayı** katıyla büyütülüyor.
+
+**Asıl sorun filtreleme değildi.** `SamplerState.PointClamp` bütün `Begin()`
+çağrılarında zaten vardı ve texel'leri keskin tutuyordu. Keskinliği bozan şey
+alt-pixel kaymasıydı: karakterler kesirli dünya konumlarında duruyor
+(hız × kare süresi tam sayı vermez) ve dünya doğrudan 1280x720'a 3x kamera
+ölçeğiyle çizildiğinde ekranda da kesirli konuma düşüyorlardı. Hareket eden her
+sprite'ın kenarı bir pixel titriyordu.
+
+Tuvalin içinde bir dünya pixel'i **bir texel**: kesirli konumlar ızgaraya
+oturuyor ve alt-pixel kayması yapısal olarak imkânsız hâle geliyor.
+
+Bunun ölçülebilir bir sonucu var — ekrandaki her `ölçek × ölçek` blok tek renk
+olmalı. `Tools/verify_pixels.py` tam olarak bunu sayıyor:
+
+| | tek renk olmayan 2x2 blok |
+|---|---|
+| Önce (tuvalsiz, kamera 3x) | **38378 / 201600  (%19.04)** |
+| Sonra (640x360 tuval, 2x) | **0 / 201600  (%0.00)** |
+
+**Neden 640x360.** Yaygın 16:9 çözünürlüklerin hepsine tam sayı katıyla
+oturuyor: 720p = 2x, 1080p = 3x, 1440p = 4x, 4K = 6x. Hiçbirinde letterbox yok.
+Kesirli ölçek (örn. 2.5x) bazı tuval pixel'lerini ekranda 2, bazılarını 3 pixel
+yapardı — keskinleştirmek için yapılan işin tam tersi.
+
+**Kadraj değişti.** Kamera ölçeği 3 → 1 oldu (tuvalin içinde 1:1 olması şart).
+Görünen alan 427x240 dünya pixel'inden 640x360'a çıktı: daha geniş bir alan,
+ekranda daha küçük sprite'lar (tile 48 → 32 ekran pixel'i). Eski kadrajı birebir
+isteyen `PixelCanvas.BaseWidth/BaseHeight` değerlerini 426x240 yapabilir — 720p'de
+tam 3x olur, ama 1080p'de kalın siyah şeritler çıkar. Ödünleşim sabitin
+yorumunda yazılı.
+
+**Arayüz tuvalden geçmiyor**, ekranın kendi çözünürlüğünde çiziliyor. 640x360'lık
+bir tuvalde 5x7 bitmap font'un okunabilir kalması için ölçeğin 1 olması gerekirdi,
+o da ekranda iki katı büyüklükte yazı ve taşan paneller demekti. Yazının tam
+çözünürlükte çizilmesi onu ayrıca daha keskin yapıyor. Aynı ayrımı Celeste de
+yapıyor (oynanış 320x180, arayüz tam çözünürlük).
+
+İklim karartması ve yağmur/kar **tuvalin içinde**: ikisi de dünyaya ait, arayüz
+katmanına taşınsalardı envanter ve menü de geceleri kararırdı.
+
+Pencere yeniden boyutlandırılabilir. Tuval ölçeğini her karede tazeliyor ve arayüz
+canlı arka tampon boyutunu okuyor, yani ek bir olay dinleyicisi olmadan tam ekran
+da aynı yoldan çalışıyor. Kamera artık **tuval boyutunu** görüyor, pencereyi değil:
+pencereyi büyütmek daha geniş bir alan göstermiyor — çok oyunculuda bu bir adalet
+meselesi de.
+
+Bilinen tek istisna: photo mode'un yakınlaştırması sürekli, elle zoom yapıldığında
+kamera ölçeği kesirli bir değere gidiyor ve o karede alt-pixel kayması geri
+geliyor. Varsayılan photo mode ölçeği 1 olduğu için normal kullanımda görünmüyor.
+
 ### Yazı neden SpriteFont değil?
 
 MonoGame'in `SpriteFont`'u Content Pipeline'da `FontDescriptionProcessor` kullanır ve
