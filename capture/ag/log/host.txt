@@ -8,4 +8,4 @@
 [tarim] oyuncu 1: NoSeed
 [tarim] oyuncu 1: NotTillable
 [tarim] oyuncu 1: NotTillable
-[capture] kare 1239: capture/ag/host/host.png
+[capture] kare 1239: capture/ag/host/host.png  oyuncu=(8.0,16.0) kose_duzeltme=0 son_itme=0.00

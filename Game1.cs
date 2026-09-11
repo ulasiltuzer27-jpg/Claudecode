@@ -2512,7 +2512,18 @@ public class Game1 : Game
 
         // Her sey cizildikten SONRA: yakalama script'i bu kareyi istediyse
         // back buffer PNG'ye yazilir.
-        _capture?.CaptureIfRequested(GraphicsDevice);
+        if (_capture is not null)
+        {
+            // Oyuncunun GERCEK konumu kareyle birlikte yaziliyor: carpisma
+            // duzeltmesi gibi kurallar ekran goruntusunden okunamaz,
+            // olculmesi gerekir.
+            _capture.Annotation =
+                $"oyuncu=({_player.Position.X:F1},{_player.Position.Y:F1}) " +
+                $"kose_duzeltme={TileCollider.CornerNudges} " +
+                $"son_itme={TileCollider.LastNudge:F2}";
+            _capture.CaptureIfRequested(GraphicsDevice);
+        }
+
         _photoMode.CaptureIfRequested(GraphicsDevice);
     }
 

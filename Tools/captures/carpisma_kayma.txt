@@ -1,0 +1,110 @@
+# Carpisma kose duzeltmesinin GERCEK OYUNDA olculmesi.
+#
+# Self-test kurali elle kurulan bir izgarada sinar (bkz. SelfTest
+# CollisionRules). Buradaki soru baska: duzeltme gercek prosedurel
+# dunyada, gercek oyun dongusunde HIC devreye giriyor mu?
+#
+# ── Once yanlis olcen iki surum yazildi ────────────────────────────────
+# Ilk surum oyuncuyu duz saga kosturuyordu ve duzeltme HIC tetiklenmedi.
+# Sebep ancak oyuncunun konumu kare kare olculunce gorundu; iki mekanizma
+# birlesiyor:
+#
+#   1. Carpisma kutusu 8 pixel, tile 16. Kutu ancak Y'nin 16'ya
+#      bolumunden kalan 0 ile 8 ARASINDAYKEN iki tile sirasina yayilir.
+#      Kose duzeltmesi yalnizca o hizalamada anlamli.
+#
+#   2. Carpisma cozumu duvara carpan kutuyu tam tile sinirina HIZALIYOR.
+#      Yani duvara degen oyuncu izgaraya geri oturuyor. Izgara disinda
+#      kalmanin tek yolu, hareketin duvarla degil tusu birakmakla
+#      bitmesi.
+#
+# Duz kosu bu yuzden hicbir zaman dogru hizalamayi uretmiyor. Cok yonlu
+# slalom uretiyor: her yon degisimi yeni bir hizalama birakiyor.
+#
+# ── Neden "daha uzaga gitti" diye olculmuyor ───────────────────────────
+# Olculdu ve FARK CIKMADI: duzeltmeli ve duzeltmesiz kosumlar ayni
+# noktada bitiyor. Sebebi yukaridaki 2. madde — duzeltme oyuncuyu o an
+# kurtariyor ama birkac kare sonra bir duvar onu yine izgaraya
+# oturtuyor. Kazanc ANLIK (takilmama hissi), net yer degistirme degil.
+#
+# O yuzden olculen sey dogrudan olayin kendisi: kac kez devreye girdi ve
+# itme sinir icinde mi kaldi.
+#
+# Kontrol: Tools/verify_collision.py
+
+screen Playing
+
+wait 90
+shot 01_baslangic
+
+# 16 ayakli slalom. Sureler bilerek asal-ish ve farkli: ayni sayiyi
+# tekrar etmek oyuncuyu hep ayni hizalamalara sokardi.
+down D
+wait 37
+up D
+wait 2
+down S
+wait 23
+up S
+wait 2
+down A
+wait 19
+up A
+wait 2
+down S
+wait 31
+up S
+wait 2
+down D
+wait 29
+up D
+wait 2
+down W
+wait 17
+up W
+wait 2
+down D
+wait 41
+up D
+wait 2
+down S
+wait 13
+up S
+wait 2
+shot 02_slalom_yarisi
+
+down A
+wait 27
+up A
+wait 2
+down W
+wait 23
+up W
+wait 2
+down D
+wait 33
+up D
+wait 2
+down S
+wait 19
+up S
+wait 2
+down D
+wait 47
+up D
+wait 2
+down W
+wait 11
+up W
+wait 2
+down S
+wait 43
+up S
+wait 2
+down D
+wait 21
+up D
+wait 2
+shot 03_slalom_sonu
+
+quit

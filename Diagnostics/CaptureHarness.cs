@@ -268,8 +268,22 @@ public sealed class CaptureHarness
         texture.SaveAsPng(stream, width, height);
 
         ShotCount++;
-        Console.WriteLine($"[capture] kare {_frame}: {path}");
+        Console.WriteLine($"[capture] kare {_frame}: {path}" +
+                          (Annotation.Length > 0 ? $"  {Annotation}" : ""));
     }
+
+    /// <summary>
+    /// Ekran görüntüsüyle birlikte stdout'a yazılacak tek satırlık durum.
+    ///
+    /// Neden var: bazı kurallar KAREYE BAKARAK doğrulanamıyor. Çarpışma
+    /// köşe düzeltmesi bunun en net örneği — ekran görüntüsü karakterin
+    /// durduğunu gösterir ama "kaç pixel ilerledi" sorusunu cevaplamaz.
+    /// Oysa düzeltmenin tek ölçülebilir sonucu tam olarak budur.
+    ///
+    /// Oyun mantığına dokunmuyor; yalnızca doğrulama koşumlarında
+    /// <see cref="Game1"/> tarafından dolduruluyor.
+    /// </summary>
+    public string Annotation { get; set; } = "";
 
     private readonly record struct Command(string Verb, string Argument);
 }

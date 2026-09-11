@@ -7,6 +7,7 @@ using PixelSurvival.Networking;
 using PixelSurvival.Entities;
 using PixelSurvival.Systems.Animation;
 using PixelSurvival.Systems.Climate;
+using PixelSurvival.Systems.Collision;
 using PixelSurvival.Systems.Farming;
 using PixelSurvival.Systems.Taming;
 using PixelSurvival.Systems.Npcs;
@@ -83,6 +84,7 @@ public static class SelfTest
         ProgressPersistenceRules(world);
         DataNameRules(world);
         ModOverlayRules();
+        CollisionRules(world.Tileset);
 
         Console.WriteLine($"\n{_passed} gecti, {_failed} kaldi.");
         return _failed;
@@ -1292,5 +1294,209 @@ public static class SelfTest
 
         Check("tek onayda envanter DEGISMEZ",
             e.CountOf("wood") == 5 && f.CountOf("wood") == 0);
+    }
+
+    // ==================== CARPISMA VE KOSE DUZELTMESI ====================
+
+    /// <summary>
+    /// Sinama icin elle kurulan tile ureticisi.
+    ///
+    /// Gercek <see cref="WorldGenerator"/> kullanilamaz: orada hangi tile'in
+    /// nerede oldugu gurultuden geliyor ve "su kosede tam 2 pixel tasma
+    /// olsun" gibi bir durumu kurmak imkansiz. Carpisma kurallari tam da
+    /// boyle pixel hassasiyetindeki durumlarda kiriliyor.
+    ///
+    /// <see cref="TileMap"/> hic chunk yuklu degilken katiligi DOGRUDAN
+    /// ureticiye soruyor, bu yuzden bu sinif yeterli.
+    /// </summary>
+    private sealed class GridStub(HashSet<Point> solid) : ITileGenerator
+    {
+        public int Seed => 1;
+        public Rectangle? Bounds => null;
+
+        // Indeks onemsiz; katilik dogrudan IsSolid'den okunuyor.
+        public int GetTileIndex(int tileX, int tileY) => 0;
+
+        public bool IsSolid(int tileX, int tileY) => solid.Contains(new Point(tileX, tileY));
+    }
+
+    /// <summary>
+    /// Çarpışma çözünürlüğü: duvara girmeme, duvar boyunca kayma ve
+    /// köşe düzeltmesi.
+    ///
+    /// ── Neden ekran görüntüsüyle doğrulanamaz ──────────────────────────
+    /// "Karakter köşeye takılıyor" şikâyeti bir kareye bakarak görülmez;
+    /// görülen şey karakterin durduğudur, SEBEBİ görünmez. Takılmanın
+    /// ölçülebilir tanımı şu: oyuncu sağa basıyor, sağdaki tile açık, ama
+    /// çarpışma kutusunun üst 2 pixel'i bir üst sıradaki katı tile'a
+    /// değiyor ve hareket TAMAMEN engelleniyor. Bu, ancak kutu ile tile
+    /// ızgarası arasındaki ilişki pixel düzeyinde kurulup ölçülerek
+    /// sınanabilir.
+    /// </summary>
+    private static void CollisionRules(Tileset tileset)
+    {
+        Section("13) Carpisma: kayma ve kose duzeltmesi");
+
+        // Oyuncunun GERCEK kutu olculeri (bkz. Player.ColliderWidth/Height).
+        const float boxWidth = 12f;
+        const float boxHeight = 8f;
+
+        var tileSize = tileset.TileSize;
+
+        static TileMap MapWith(Tileset tileset, params Point[] solid) =>
+            new(new GridStub([.. solid]), tileset);
+
+        // --- Acik alanda hareket kisitlanmaz ---
+        var open = MapWith(tileset);
+        var free = TileCollider.Move(open, new Aabb(40f, 40f, boxWidth, boxHeight),
+                                     new Vector2(5f, 3f));
+
+        Check("acik alanda hareket AYNEN uygulanir",
+            Math.Abs(free.X - 5f) < 0.001f && Math.Abs(free.Y - 3f) < 0.001f);
+
+        // --- Duz duvar durdurur, icine sokmaz ---
+        // Tile (5,2) kati -> dunya x 80..96, y 32..48.
+        var wall = MapWith(tileset, new Point(5, 2));
+
+        // Kutu tile (4,2)'nin icinde, sag kenari 78'de. 5 pixel sag = 83,
+        // yani duvarin 3 pixel icine girerdi.
+        var against = new Aabb(66f, 36f, boxWidth, boxHeight);
+        var stopped = TileCollider.Move(wall, against, new Vector2(5f, 0f));
+
+        Check("duvar hareketi KESER", stopped.X < 5f);
+        Check("duvarin icine girilmez",
+            !TileCollider.Overlaps(wall, against.Offset(stopped.X, stopped.Y)));
+        Check("duvara kadar gidilir (bosluk birakilmaz)",
+            against.Right + stopped.X > 80f - 1f);
+
+        // --- Duvar boyunca kayma ---
+        // Capraz basiliyor: X bloklu ama Y serbest olmali.
+        var sliding = TileCollider.Move(wall, against, new Vector2(5f, 3f));
+
+        Check("X bloklanirken Y serbest KALIR (kayma)",
+            Math.Abs(sliding.Y - 3f) < 0.001f);
+
+        // ── ASIL SINAMA: KOSE DUZELTMESI ──────────────────────────────
+        // Koridor: tile sirasi 0 kati, sira 1 acik. Oyuncu saga kosuyor.
+        // Kutu (yukseklik 8) y=14..22 arasinda, yani sira 0'a 2 pixel
+        // tasiyor. Sagda tile (5,0) kati, (5,1) acik.
+        //
+        // Duzeltme olmadan: hareket TAMAMEN durur, oyuncu elle 2 pixel
+        // asagi hizalamak zorunda kalir. Iste "koseye takilma" budur.
+        var corridor = MapWith(tileset, new Point(5, 0));
+        var clipping = new Aabb(66f, 14f, boxWidth, boxHeight);
+
+        var corrected = TileCollider.Move(corridor, clipping, new Vector2(5f, 0f));
+
+        Check("kose duzeltmesi: 2 pixel tasma hareketi DURDURMAZ",
+            Math.Abs(corrected.X - 5f) < 0.001f);
+
+        Check("kose duzeltmesi kutuyu bosluga iter",
+            corrected.Y > 0f);
+
+        Check("duzeltilmis konum duvarin icinde DEGIL",
+            !TileCollider.Overlaps(corridor, clipping.Offset(corrected.X, corrected.Y)));
+
+        // Duzeltme kucuk olmali: 4 pixel'den fazla itmek isinlanma gibi
+        // hissettirir ve oyuncunun nisanini bozar.
+        Check("duzeltme miktari kucuk kalir", corrected.Y <= 4.001f);
+
+        // --- Duzeltme GERCEK duvari delmez ---
+        // Kutu tamamen sira 0'da (y=4..12): bu artik "kose" degil, duz
+        // duvar. Itilecek bosluk yok, hareket durmali.
+        var solidly = new Aabb(66f, 4f, boxWidth, boxHeight);
+        var blocked = TileCollider.Move(corridor, solidly, new Vector2(5f, 0f));
+
+        Check("tam duvarda duzeltme YAPILMAZ", blocked.X < 5f);
+        Check("tam duvarda kutu duvarin icine itilmez",
+            !TileCollider.Overlaps(corridor, solidly.Offset(blocked.X, blocked.Y)));
+
+        // --- Dikey eksende de ayni duzeltme ---
+        // Tile (0,5) kati (dunya y 80..96), (1,5) acik. Kutu x=14..26,
+        // yani sutun 0'a 2 pixel tasiyor ve asagi kosuyor.
+        //
+        // Baslangic Y'si onemli: kutunun ALT kenari adimdan sonra 80'i
+        // GECMELI, yoksa sira 5'e hic degmez ve sinama bir seyi olcmeden
+        // gecer. y=68 -> alt kenar 76, +5 sonra 81: sira 5'e 1 pixel girer.
+        var vertical = MapWith(tileset, new Point(0, 5));
+        var clippingV = new Aabb(14f, 68f, boxWidth, boxHeight);
+        var correctedV = TileCollider.Move(vertical, clippingV, new Vector2(0f, 5f));
+
+        Check("kose duzeltmesi DIKEY eksende de calisir",
+            Math.Abs(correctedV.Y - 5f) < 0.001f && correctedV.X > 0f);
+
+        // --- Capraz basarken duzeltme devreye GIRMEZ ---
+        // Oyuncu zaten Y'de bir yon istiyor; onu ters yone itmek girdisini
+        // ezmek olurdu. Capraz durumda eksen ayrik kayma zaten yeterli.
+        var diagonal = TileCollider.Move(corridor, clipping, new Vector2(5f, -3f));
+
+        Check("capraz basarken duzeltme oyuncunun girdisini EZMEZ",
+            diagonal.Y < 0f);
+
+        // --- Duvarin icinde baslayan kutu KACABILIR ---
+        // Isinlanma, geri tepme ya da uzerine insa edilen bir yapi
+        // oyuncuyu duvarin icinde birakabilir. Orada donup kalmak,
+        // bir kac kare carpismasiz kalmaktan cok daha kotu.
+        var inside = new Aabb(82f, 34f, boxWidth, boxHeight);   // tile (5,2)'nin icinde
+        var escape = TileCollider.Move(wall, inside, new Vector2(-5f, 0f));
+
+        Check("duvarin icinde sikisan kutu KACABILIR",
+            Math.Abs(escape.X + 5f) < 0.001f);
+
+        // --- BUYUK ADIM: hizalama kutuyu duvarin icine sokmamali ---
+        // "Duvara kadar git" hesabi, engelin kutunun YENI kenarini iceren
+        // tile sutunu oldugunu varsayiyor. Kutu (12 px) iki sutuna birden
+        // yayilabildigi icin bu varsayim bir adim tile boyunu (16) asinca
+        // bozuluyor: engel SOLDAKI sutun oluyor, hizalama ise sag sutuna
+        // gore yapiliyor ve kutu dogrudan duvarin icine yerlesiyor.
+        //
+        // Normal hizda bir kare 1.5 pixel; bu durum ancak kare suresi
+        // sicradiginda (yukleme takilmasi) veya binek hiz carpaniyla
+        // olusur. Nadir olmasi, olunca oyuncuyu duvarin icine gommesini
+        // kabul edilebilir yapmiyor.
+        var wide = MapWith(tileset, new Point(5, 0));
+        var far = new Aabb(66f, 4f, boxWidth, boxHeight);
+        var leap = TileCollider.Move(wide, far, new Vector2(20f, 0f));
+
+        Check("tek karede tile boyunu asan adimda kutu duvara girmez",
+            !TileCollider.Overlaps(wide, far.Offset(leap.X, leap.Y)));
+
+        // --- Degismez kural: cozum ASLA duvarin icinde bitmez ---
+        // Tek tek kurulan durumlar kaciyor olabilir; bu tarama kaba kuvvet.
+        // Sase deseni: bir tile kati, bir tile bos.
+        var checker = new HashSet<Point>();
+        for (var ty = -2; ty <= 6; ty++)
+        {
+            for (var tx = -2; tx <= 6; tx++)
+            {
+                if (((tx + ty) & 1) == 0) checker.Add(new Point(tx, ty));
+            }
+        }
+
+        var maze = new TileMap(new GridStub(checker), tileset);
+        var violations = 0;
+        var random = new Random(20260911);
+
+        for (var i = 0; i < 4000; i++)
+        {
+            var start = new Aabb(
+                (float)(random.NextDouble() * 6 * tileSize),
+                (float)(random.NextDouble() * 6 * tileSize),
+                boxWidth, boxHeight);
+
+            // Duvarin icinde baslayanlar kacis kuralina tabi; olculmez.
+            if (TileCollider.Overlaps(maze, start)) continue;
+
+            var step = new Vector2(
+                (float)(random.NextDouble() * 8 - 4),
+                (float)(random.NextDouble() * 8 - 4));
+
+            var result = TileCollider.Move(maze, start, step);
+
+            if (TileCollider.Overlaps(maze, start.Offset(result.X, result.Y))) violations++;
+        }
+
+        Check("4000 rastgele adimda kutu duvara HIC girmez", violations == 0,
+              $"{violations} ihlal");
     }
 }
