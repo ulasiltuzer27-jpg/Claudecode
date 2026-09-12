@@ -28,6 +28,8 @@ local KEYS = {
 	[Enum.KeyCode.Four] = 4,
 	[Enum.KeyCode.Five] = 5,
 	[Enum.KeyCode.Six] = 6,
+	[Enum.KeyCode.Seven] = 7,
+	[Enum.KeyCode.Eight] = 8,
 }
 
 local function highlight()
@@ -52,7 +54,7 @@ end
 function ToolBar.create(parent: ScreenGui)
 	local frame = Theme.frame({
 		name = "AletCubugu",
-		size = UDim2.fromOffset(560, 66),
+		size = UDim2.fromOffset(730, 66),
 		position = UDim2.new(0.5, 0, 1, -16),
 		anchor = Vector2.new(0.5, 1),
 		parent = parent,

@@ -1,0 +1,38 @@
+{
+  "_comment": "(VERI) Kamera ve arayuz ayarlari. defaults yeni oyuncunun basladigi degerler; limits ayar panelindeki kaydiricilarin siniri. Oyuncunun secimi profiline (DataStore) yaziliyor.",
+  "_kamera_notu": "Sallanma (bobbing) matematigi: dikey bilesen adim frekansinin IKI KATINDA (her adimda bir inis-cikis), yatay bilesen adim frekansinda (agirlik saga-sola gecer). Bu oran dogru olmazsa yuruyus 'kayiyor' gibi hissettiriyor.",
+
+  "defaults": {
+    "firstPerson": false,
+    "bobbing": 1.0,
+    "fieldOfView": 70,
+    "showFps": true,
+    "sprintEnabled": true
+  },
+
+  "limits": {
+    "bobbing":     { "min": 0,  "max": 2.0, "step": 0.25 },
+    "fieldOfView": { "min": 55, "max": 100, "step": 5 }
+  },
+
+  "camera": {
+    "walkFrequency": 9.0,
+    "sprintFrequency": 13.0,
+    "verticalAmplitude": 0.32,
+    "horizontalAmplitude": 0.2,
+    "rollDegrees": 0.85,
+    "landingDip": 1.6,
+    "landingRecover": 6.0,
+    "smoothing": 12,
+    "sprintFovBoost": 12,
+    "fovSmoothing": 6,
+    "minSpeedForBob": 1.5,
+    "firstPersonHeadOffset": 0.6
+  },
+
+  "movement": {
+    "_comment": "Koşma. Shift basili tutuldugunda hiz ve FOV artiyor; stamina yok - klinikte kosturmak bir kaynak yonetimi meselesi degil, konfor meselesi.",
+    "walkSpeed": 16,
+    "sprintSpeed": 26
+  }
+}

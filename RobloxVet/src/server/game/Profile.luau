@@ -26,17 +26,55 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Data = ReplicatedStorage:WaitForChild("VetData")
 
 local economy = require(Data.economy)
+local settingsData = require(Data.settings)
 local toolData = require(Data.tools)
 
 local Profile = {}
 
-local SCHEMA_VERSION = 1
+local SCHEMA_VERSION = 2
 local STORE_NAME = "VetProfile_v1"
+-- STORE_NAME degismiyor: sema surumu 2'ye ciksa da ESKI KAYITLAR OKUNMAYA
+-- devam etsin. migrate() eksik alanlari varsayilanla dolduruyor; store'u
+-- degistirmek herkesin ilerlemesini silmek demek olurdu.
 local KEY_PREFIX = "player_"
 local LOCK_STALE_SECONDS = 1800
 local LOCK_REFRESH_SECONDS = 60
 local AUTOSAVE_SECONDS = 90
 local MAX_ATTEMPTS = 4
+
+export type Stats = {
+	patients: number,
+	correct: number,
+	wrong: number,
+	earned: number,
+	tips: number,
+	surgeries: number,
+	perfectSurgeries: number,
+	emergencies: number,
+	streak: number,
+	bestStreak: number,
+	tasks: number,
+	lost: number,
+}
+
+export type Settings = {
+	firstPerson: boolean,
+	bobbing: number,
+	fieldOfView: number,
+	showFps: boolean,
+	sprintEnabled: boolean,
+}
+
+export type DailyTask = { id: string, progress: number, done: boolean }
+
+export type Daily = {
+	day: number,
+	tasks: { DailyTask },
+	counters: { [string]: number },
+	-- O gun bakilan turler. Sayac olarak tutulamaz: "4 farkli tur"
+	-- gorevi icin AYNI turu iki kez saymamak gerekiyor.
+	species: { [string]: boolean },
+}
 
 export type Data = {
 	version: number,
@@ -46,7 +84,11 @@ export type Data = {
 	reputation: number,
 	tools: { [string]: boolean },
 	upgrades: { [string]: boolean },
-	stats: { patients: number, correct: number, wrong: number, earned: number },
+	stats: Stats,
+	species: { [string]: boolean },
+	achievements: { [string]: boolean },
+	daily: Daily,
+	settings: Settings,
 }
 
 export type Entry = {
@@ -72,6 +114,37 @@ local function starterTools(): { [string]: boolean }
 	return tools
 end
 
+local function defaultStats(): Stats
+	return {
+		patients = 0,
+		correct = 0,
+		wrong = 0,
+		earned = 0,
+		tips = 0,
+		surgeries = 0,
+		perfectSurgeries = 0,
+		emergencies = 0,
+		streak = 0,
+		bestStreak = 0,
+		tasks = 0,
+		lost = 0,
+	}
+end
+
+--- Ayar varsayilanlari VERIDEN geliyor (data/settings.json); kodda
+--- ikinci bir liste tutmak, veri dosyasi degisince sessizce tutarsiz
+--- kalirdi.
+local function defaultSettings(): Settings
+	local defaults = settingsData.defaults
+	return {
+		firstPerson = defaults.firstPerson,
+		bobbing = defaults.bobbing,
+		fieldOfView = defaults.fieldOfView,
+		showFps = defaults.showFps,
+		sprintEnabled = defaults.sprintEnabled,
+	}
+end
+
 local function defaultData(): Data
 	return {
 		version = SCHEMA_VERSION,
@@ -81,7 +154,11 @@ local function defaultData(): Data
 		reputation = economy.startingReputation,
 		tools = starterTools(),
 		upgrades = {},
-		stats = { patients = 0, correct = 0, wrong = 0, earned = 0 },
+		stats = defaultStats(),
+		species = {},
+		achievements = {},
+		daily = { day = 0, tasks = {}, counters = {}, species = {} },
+		settings = defaultSettings(),
 	}
 end
 
@@ -119,6 +196,80 @@ local function migrate(raw: any): Data
 			if type(value) == "number" and result.stats[key] ~= nil then
 				result.stats[key] = value
 			end
+		end
+	end
+	if type(raw.species) == "table" then
+		for id, treated in raw.species do
+			if treated == true then
+				result.species[id] = true
+			end
+		end
+	end
+	if type(raw.achievements) == "table" then
+		for id, unlocked in raw.achievements do
+			if unlocked == true then
+				result.achievements[id] = true
+			end
+		end
+	end
+	if type(raw.daily) == "table" then
+		result.daily = {
+			day = if type(raw.daily.day) == "number" then raw.daily.day else 0,
+			tasks = {},
+			counters = {},
+			species = {},
+		}
+		if type(raw.daily.species) == "table" then
+			for id, treated in raw.daily.species do
+				if treated == true then
+					result.daily.species[id] = true
+				end
+			end
+		end
+		if type(raw.daily.tasks) == "table" then
+			for _, task in raw.daily.tasks do
+				if type(task) == "table" and type(task.id) == "string" then
+					table.insert(result.daily.tasks, {
+						id = task.id,
+						progress = if type(task.progress) == "number" then task.progress else 0,
+						done = task.done == true,
+					})
+				end
+			end
+		end
+		if type(raw.daily.counters) == "table" then
+			for key, value in raw.daily.counters do
+				if type(key) == "string" and type(value) == "number" then
+					result.daily.counters[key] = value
+				end
+			end
+		end
+	end
+	-- Ayarlarda TIP denetimi onemli: bozuk bir kayit istemcide kamerayi
+	-- kitleyebilir. Yanlis tipli alan sessizce varsayilana donuyor.
+	if type(raw.settings) == "table" then
+		if type(raw.settings.firstPerson) == "boolean" then
+			result.settings.firstPerson = raw.settings.firstPerson
+		end
+		if type(raw.settings.showFps) == "boolean" then
+			result.settings.showFps = raw.settings.showFps
+		end
+		if type(raw.settings.sprintEnabled) == "boolean" then
+			result.settings.sprintEnabled = raw.settings.sprintEnabled
+		end
+		if type(raw.settings.bobbing) == "number" then
+			result.settings.bobbing = math.clamp(
+				raw.settings.bobbing,
+				settingsData.limits.bobbing.min,
+				settingsData.limits.bobbing.max
+			)
+		end
+		if type(raw.settings.fieldOfView) == "number" then
+			result.settings.fieldOfView = math.clamp(
+				raw.settings.fieldOfView,
+				settingsData.limits.fieldOfView.min,
+				settingsData.limits.fieldOfView.max
+			)
 		end
 	end
 
@@ -307,6 +458,11 @@ end
 --- Varsayilan profil (SelfTest ve simulasyon icin disa aciliyor).
 function Profile.defaultData(): Data
 	return defaultData()
+end
+
+--- Varsayilan ayarlar.
+function Profile.defaultSettings(): Settings
+	return defaultSettings()
 end
 
 return Profile

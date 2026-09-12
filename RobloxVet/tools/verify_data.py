@@ -107,7 +107,8 @@ def main() -> int:
         check(f"tur '{name}' bilinen iskelet ({animal['rig']})", animal["rig"] in known_rigs)
         check(f"tur '{name}' ucreti pozitif", animal["baseFee"] > 0)
         check(f"tur '{name}' acilis seviyesi egrinin icinde", 1 <= animal["unlockLevel"] <= level_max)
-        check(f"tur '{name}' bacak sayisi 2 ya da 4", animal["legs"]["count"] in (2, 4))
+        # Yilanin bacagi yok; kus iki, dortayaklilar dort.
+        check(f"tur '{name}' bacak sayisi 0, 2 ya da 4", animal["legs"]["count"] in (0, 2, 4))
         check(f"tur '{name}' govde olculeri pozitif", all(animal["body"][k] > 0 for k in ("length", "height", "width")))
         if animal["rig"] == "bird":
             check(f"tur '{name}' kus iskeleti kanat tanimliyor", "wings" in animal)
@@ -228,6 +229,98 @@ def main() -> int:
         treatments_file["surgery"]["perfectWindow"] < treatments_file["surgery"]["goodWindow"],
     )
 
+    # ── Basarimlar, gorevler, ayarlar ─────────────────────────────────
+    achievements_file = load("achievements.json")
+    achievements = achievements_file["achievements"]
+    tasks_file = load("tasks.json")
+    tasks = tasks_file["tasks"]
+    settings = load("settings.json")
+
+    # Sayac adlari kodda gercekten okunuyor mu? Basarim veri dosyasina yeni
+    # bir `kind` yazip Achievements.luau'ya okuyucusunu eklememek, basarimin
+    # sessizce HIC acilmamasi demek.
+    with open(os.path.join(ROOT, "src", "server", "game", "Achievements.luau"), "r", encoding="utf-8") as handle:
+        achievements_src = handle.read()
+    code_counters = set(re.findall(r"^\t(\w+) = function\(data\)", achievements_src, re.M))
+    declared_counters = set(achievements_file["counters"])
+    check(
+        "achievements.json counters ile Achievements.luau ayni kumeyi tanimliyor",
+        declared_counters == code_counters,
+    )
+
+    achievement_ids = {a["id"] for a in achievements}
+    check("her basarim kimligi benzersiz", len(achievement_ids) == len(achievements))
+    for achievement in achievements:
+        name = achievement["id"]
+        check(f"basarim '{name}' bilinen sayac kullaniyor: {achievement['kind']}", achievement["kind"] in declared_counters)
+        check(f"basarim '{name}' hedefi pozitif", achievement["target"] > 0)
+        check(f"basarim '{name}' odulu negatif degil", achievement["reward"]["money"] >= 0 and achievement["reward"]["xp"] >= 0)
+        check(f"basarim '{name}' en az bir odul veriyor", achievement["reward"]["money"] + achievement["reward"]["xp"] > 0)
+
+        # Hedefler oyunda ULASILABILIR olmali: tur sayisindan cok tur,
+        # egrideki en yuksek seviyeden yuksek seviye istenemez.
+        if achievement["kind"] == "species":
+            check(
+                f"basarim '{name}' hedefi ({achievement['target']}) tur sayisini ({len(animals)}) asmiyor",
+                achievement["target"] <= len(animals),
+            )
+        elif achievement["kind"] == "level":
+            check(
+                f"basarim '{name}' hedefi ({achievement['target']}) en yuksek seviyeyi ({level_max}) asmiyor",
+                achievement["target"] <= level_max,
+            )
+        elif achievement["kind"] == "reputation":
+            check(
+                f"basarim '{name}' hedefi itibar tavanini asmiyor",
+                achievement["target"] <= economy["reputation"]["max"],
+            )
+
+    task_ids = {t["id"] for t in tasks}
+    check("her gorev kimligi benzersiz", len(task_ids) == len(tasks))
+    check(
+        f"gorev havuzu gunluk secim sayisini ({economy['dailyTasks']['count']}) karsiliyor",
+        len(tasks) >= economy["dailyTasks"]["count"],
+    )
+    for task in tasks:
+        check(f"gorev '{task['id']}' bilinen sayac kullaniyor: {task['kind']}", task["kind"] in declared_counters)
+        check(f"gorev '{task['id']}' hedefi pozitif", task["target"] > 0)
+        check(f"gorev '{task['id']}' odul veriyor", task["reward"]["money"] + task["reward"]["xp"] > 0)
+        if task["kind"] == "species":
+            check(f"gorev '{task['id']}' hedefi tur sayisini asmiyor", task["target"] <= len(animals))
+
+    # Ayar varsayilanlari kendi sinirlarinin ICINDE mi? Disinda kalan bir
+    # varsayilan, oyuncunun panelde asla goremeyecegi bir deger demek.
+    for key, limit in settings["limits"].items():
+        check(f"ayar '{key}' sinirlari gecerli", limit["min"] < limit["max"])
+        check(f"ayar '{key}' adimi pozitif", limit["step"] > 0)
+        check(
+            f"ayar '{key}' varsayilani ({settings['defaults'][key]}) sinirlarin icinde",
+            limit["min"] <= settings["defaults"][key] <= limit["max"],
+        )
+        check(f"ayar '{key}' adimi araligi asmiyor", limit["step"] <= limit["max"] - limit["min"])
+
+    check("kosma hizi yurume hizindan buyuk", settings["movement"]["sprintSpeed"] > settings["movement"]["walkSpeed"])
+    check("sallanma frekansi kosarken artiyor", settings["camera"]["sprintFrequency"] > settings["camera"]["walkFrequency"])
+    check(
+        "sallanma genlikleri pozitif",
+        settings["camera"]["verticalAmplitude"] > 0 and settings["camera"]["horizontalAmplitude"] > 0,
+    )
+
+    # Acil vaka ve sahip ayarlari
+    check("acil vaka sansi 0-1 arasinda", 0 < economy["emergency"]["chance"] < 1)
+    check("acil vaka ucreti normalden yuksek", economy["emergency"]["feeMultiplier"] > 1)
+    check("acil vaka suresi makul", 30 <= economy["emergency"]["timeLimitSeconds"] <= 600)
+    check("acil vakayi kaybetmek cezali", economy["emergency"]["reputationLoss"] < 0)
+    check("acil vaka en erken seviyesi egrinin icinde", 1 <= economy["emergency"]["minLevel"] <= level_max)
+    check("sahip memnuniyeti 0-100 arasinda basliyor", 0 <= economy["owner"]["startSatisfaction"] <= 100)
+    check("bahsis esigi 100'un altinda", economy["owner"]["minTipSatisfaction"] < 100)
+    check("bahsis orani makul", 0 < economy["owner"]["tipShare"] <= 1)
+    check("sahip sabri zamanla tukeniyor", economy["owner"]["decayPerSecond"] > 0)
+
+    # Her hastaligin sahibi icin bir sikayet cumlesi var mi?
+    for condition in conditions:
+        check(f"hastalik '{condition['id']}' sahip ipucu tanimliyor", "hintKey" in condition)
+
     # 11. Ceviri anahtarlari
     def walk_keys(node, out: set[str]):
         if isinstance(node, dict):
@@ -313,7 +406,8 @@ def main() -> int:
     print(
         f"verify_data: {checks}/{checks} gecti  "
         f"({len(animals)} tur, {len(conditions)} hastalik, {len(symptoms)} semptom, "
-        f"{len(treatments)} tedavi, {len(upgrades)} yukseltme, {len(strings)} ceviri satiri)"
+        f"{len(treatments)} tedavi, {len(upgrades)} yukseltme, {len(achievements)} basarim, "
+        f"{len(tasks)} gorev, {len(strings)} ceviri satiri)"
     )
     return 0
 

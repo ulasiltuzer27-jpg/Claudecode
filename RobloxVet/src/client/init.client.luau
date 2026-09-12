@@ -6,9 +6,13 @@
 --
 -- Istemci OYUN KURALI CALISTIRMAZ
 -- -------------------------------
--- Burada hicbir para, seviye ya da teshis hesabi yok. Istemci
+-- Burada hicbir para, seviye, teshis ya da ilerleme hesabi yok. Istemci
 -- sunucudan gelen goruntuyu cizer ve niyet yollar. Bir panelin bir
 -- dugmeyi "kilitli" gostermesi kolaylik; gercek denetim sunucuda.
+--
+-- Tek istisna KAMERA: kamera tamamen istemcinin isi, cunku sunucunun
+-- oyuncunun ne gordugu hakkinda soyleyecegi bir sey yok. Ayarlar yine de
+-- sunucuda saklaniyor ki oyuncu baska bir cihazda da ayni deneyimi bulsun.
 
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
@@ -18,10 +22,14 @@ local Shared = ReplicatedStorage:WaitForChild("VetShared")
 local Loc = require(Shared.Loc)
 local Net = require(Shared.Net)
 
+local Camera = require(script.Camera)
 local Chart = require(script.Chart)
 local DiagnosisPanel = require(script.DiagnosisPanel)
+local Fps = require(script.Fps)
 local Hud = require(script.Hud)
 local Notify = require(script.Notify)
+local ProgressPanel = require(script.ProgressPanel)
+local SettingsPanel = require(script.SettingsPanel)
 local ShopPanel = require(script.ShopPanel)
 local SurgeryPanel = require(script.SurgeryPanel)
 local Theme = require(script.Theme)
@@ -45,14 +53,19 @@ TreatmentPanel.create(screen)
 ToolBar.create(screen)
 ShopPanel.create(screen)
 SurgeryPanel.create(screen)
+ProgressPanel.create(screen)
+Fps.create(screen)
+SettingsPanel.create(screen)
 Notify.create(screen)
+
+Camera.start()
 
 -- Kisayol serisi ekranin altinda: oyuncunun tuslari tahmin etmesi
 -- gerekmesin.
 local hints = Theme.label({
 	name = "Kisayollar",
 	text = Loc.get("hud.keys"),
-	size = UDim2.new(0, 520, 0, 18),
+	size = UDim2.new(0, 760, 0, 18),
 	position = UDim2.new(0.5, 0, 1, -88),
 	anchor = Vector2.new(0.5, 1),
 	textSize = 12,
@@ -76,12 +89,20 @@ end
 
 Net.get("StateUpdate").OnClientEvent:Connect(function(state: any)
 	lastState = state
+	-- Kayitli kamera ayarlari durumla birlikte geliyor.
+	if state ~= nil and state.settings ~= nil then
+		SettingsPanel.load(state.settings)
+	end
 	redraw()
 end)
 
 Net.get("ChartUpdate").OnClientEvent:Connect(function(chart: any)
 	lastChart = chart
 	redraw()
+end)
+
+Net.get("ProgressUpdate").OnClientEvent:Connect(function(progress: any)
+	ProgressPanel.update(progress)
 end)
 
 Net.get("Notify").OnClientEvent:Connect(function(kind: string, messageKey: string, args: { any })
@@ -117,11 +138,18 @@ UserInputService.InputBegan:Connect(function(input: InputObject, processed: bool
 	if processed then
 		return
 	end
-	if input.KeyCode == Enum.KeyCode.B then
+	local key = input.KeyCode
+	if key == Enum.KeyCode.B then
 		ShopPanel.toggle()
-	elseif input.KeyCode == Enum.KeyCode.E then
+	elseif key == Enum.KeyCode.G then
+		ProgressPanel.toggle()
+	elseif key == Enum.KeyCode.O then
+		SettingsPanel.toggle()
+	elseif key == Enum.KeyCode.V then
+		SettingsPanel.quickTogglePerspective()
+	elseif key == Enum.KeyCode.E then
 		Net.toServer("CallNext")
-	elseif input.KeyCode == Enum.KeyCode.T then
+	elseif key == Enum.KeyCode.T then
 		Net.toServer("Discharge")
 	end
 end)

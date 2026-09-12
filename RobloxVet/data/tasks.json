@@ -1,0 +1,16 @@
+{
+  "_comment": "(VERI) Gunluk gorev havuzu. Her gun buradan economy.json:dailyTasks.count kadari secilir.",
+  "_sayac_notu": "kind, achievements.json'daki sayaclarin GUNLUK olanlariyla ayni isimleri kullanir; Tasks.luau gun basinda sifirlanan ayri bir sayac tutuyor.",
+  "tasks": [
+    { "id": "treat5",     "nameKey": "task.treat5",     "kind": "patients",         "target": 5,    "order": 1, "reward": { "money": 600,  "xp": 80 } },
+    { "id": "treat12",    "nameKey": "task.treat12",    "kind": "patients",         "target": 12,   "order": 2, "reward": { "money": 1600, "xp": 180 } },
+    { "id": "correct8",   "nameKey": "task.correct8",   "kind": "correct",          "target": 8,    "order": 3, "reward": { "money": 1100, "xp": 130 } },
+    { "id": "streak5",    "nameKey": "task.streak5",    "kind": "streak",           "target": 5,    "order": 4, "reward": { "money": 1400, "xp": 150 } },
+    { "id": "surgery2",   "nameKey": "task.surgery2",   "kind": "surgeries",        "target": 2,    "order": 5, "reward": { "money": 1800, "xp": 200 } },
+    { "id": "perfect3",   "nameKey": "task.perfect3",   "kind": "perfectSurgeries", "target": 3,    "order": 6, "reward": { "money": 2400, "xp": 260 } },
+    { "id": "emergency2", "nameKey": "task.emergency2", "kind": "emergencies",      "target": 2,    "order": 7, "reward": { "money": 2200, "xp": 240 } },
+    { "id": "earn1500",   "nameKey": "task.earn1500",   "kind": "earned",           "target": 1500, "order": 8, "reward": { "money": 700,  "xp": 90 } },
+    { "id": "earn5000",   "nameKey": "task.earn5000",   "kind": "earned",           "target": 5000, "order": 9, "reward": { "money": 2000, "xp": 220 } },
+    { "id": "species4",   "nameKey": "task.species4",   "kind": "species",          "target": 4,    "order": 10, "reward": { "money": 1700, "xp": 190 } }
+  ]
+}

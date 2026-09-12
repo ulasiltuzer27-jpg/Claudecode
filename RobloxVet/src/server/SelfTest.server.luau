@@ -26,13 +26,16 @@ local Net = require(Shared.Net)
 local AnimalFactory = require(script.Parent.world.AnimalFactory)
 local Props = require(script.Parent.world.Props)
 
+local Achievements = require(script.Parent.game.Achievements)
 local Diagnosis = require(script.Parent.game.Diagnosis)
 local Economy = require(script.Parent.game.Economy)
 local Profile = require(script.Parent.game.Profile)
+local Tasks = require(script.Parent.game.Tasks)
 local Treatment = require(script.Parent.game.Treatment)
 local Upgrades = require(script.Parent.game.Upgrades)
 
 local clinicPlan = require(Data.clinic)
+local settingsData = require(Data.settings)
 
 local passed = 0
 local failures: { string } = {}
@@ -51,7 +54,10 @@ for _, animal in require(Data.animals).animals do
 	check(("tur '%s' bilinen bir iskelet istiyor"):format(animal.id), AnimalFactory.knownRig(animal.rig))
 	check(("tur '%s' adi cevrili"):format(animal.id), Loc.has(animal.nameKey))
 	check(("tur '%s' ucreti pozitif"):format(animal.id), animal.baseFee > 0)
-	check(("tur '%s' bacak sayisi makul"):format(animal.id), animal.legs.count == 2 or animal.legs.count == 4)
+	check(
+		("tur '%s' bacak sayisi makul"):format(animal.id),
+		animal.legs.count == 0 or animal.legs.count == 2 or animal.legs.count == 4
+	)
 end
 
 for _, symptom in Diagnosis.allSymptoms() do
@@ -66,6 +72,7 @@ for _, condition in Diagnosis.allConditions() do
 	check(("hastalik '%s' adi cevrili"):format(condition.id), Loc.has(condition.nameKey))
 	check(("hastalik '%s' en az bir semptoma sahip"):format(condition.id), #condition.symptoms > 0)
 	check(("hastalik '%s' en az bir tedaviye sahip"):format(condition.id), #condition.treatments > 0)
+	check(("hastalik '%s' sahip ipucu cevrili"):format(condition.id), Loc.has(condition.hintKey))
 
 	for _, symptomId in condition.symptoms do
 		check(
@@ -291,6 +298,106 @@ do
 	for name in Net.Schema do
 		check(("remote '%s' olusturulmus"):format(name), Net.get(name) ~= nil)
 	end
+end
+
+
+-- ── Basarimlar, gunluk gorevler, ayarlar ──────────────────────────────
+
+do
+	for _, achievement in Achievements.all() do
+		check(("basarim '%s' adi cevrili"):format(achievement.id), Loc.has(achievement.nameKey))
+		check(("basarim '%s' aciklamasi cevrili"):format(achievement.id), Loc.has(achievement.descKey))
+		check(
+			("basarim '%s' bilinen sayac kullaniyor"):format(achievement.id),
+			Achievements.knownCounter(achievement.kind)
+		)
+		check(("basarim '%s' hedefi pozitif"):format(achievement.id), achievement.target > 0)
+	end
+
+	for _, task in Tasks.all() do
+		check(("gorev '%s' adi cevrili"):format(task.id), Loc.has(task.nameKey))
+		check(
+			("gorev '%s' bilinen sayac kullaniyor"):format(task.id),
+			Achievements.knownCounter(task.kind)
+		)
+	end
+
+	-- Basarim akisi: sifir profilde hicbir sey acik olmamali, sayac
+	-- hedefe gelince acilmali ve odul VERILMELI.
+	local data = Profile.defaultData()
+	local none = Achievements.check(data)
+	check("yeni profilde hemen acilan basarim yok mu?", #none <= 1)
+
+	local before = data.money
+	data.stats.patients = 1
+	local unlocked = Achievements.check(data)
+	check("ilk hasta basarimi aciliyor", #unlocked > 0)
+	check("basarim odulu veriliyor", data.money > before)
+	local again = Achievements.check(data)
+	check("acilan basarim ikinci kez odul vermiyor", #again == 0)
+
+	check("tur sayaci bos profilde sifir", Achievements.value(Profile.defaultData(), "species") == 0)
+	local counted = Profile.defaultData()
+	counted.species.dog = true
+	counted.species.cat = true
+	check("tur sayaci farkli turleri sayiyor", Achievements.value(counted, "species") == 2)
+
+	-- Gunluk gorevler: ayni oyuncu ayni gun ayni gorevleri gormeli.
+	local first = Profile.defaultData()
+	Tasks.ensure(first, 12345)
+	local second = Profile.defaultData()
+	Tasks.ensure(second, 12345)
+	check("gunluk gorevler ayni oyuncu icin kararli", #first.daily.tasks == #second.daily.tasks)
+	local sameIds = #first.daily.tasks > 0
+	for index, entry in first.daily.tasks do
+		if second.daily.tasks[index] == nil or second.daily.tasks[index].id ~= entry.id then
+			sameIds = false
+			break
+		end
+	end
+	check("gunluk gorevlerin sirasi da ayni", sameIds)
+
+	local other = Profile.defaultData()
+	Tasks.ensure(other, 999)
+	check("gorev sayisi ayarlandigi kadar", #other.daily.tasks == Economy.table().dailyTasks.count)
+
+	-- Gorev tamamlama: sayac hedefe gelince odul verilmeli.
+	local runner = Profile.defaultData()
+	Tasks.ensure(runner, 4242)
+	local taskEntry = runner.daily.tasks[1]
+	local taskSpec = Tasks.get(taskEntry.id)
+	check("secilen gorev tabloda var", taskSpec ~= nil)
+	if taskSpec ~= nil then
+		local money = runner.money
+		Tasks.bump(runner, taskSpec.kind, taskSpec.target)
+		local completed = Tasks.check(runner)
+		check("hedefe ulasan gorev tamamlaniyor", #completed > 0)
+		check("gorev odulu veriliyor", runner.money > money)
+		check("tamamlanan gorev ikinci kez odul vermiyor", #Tasks.check(runner) == 0)
+	end
+
+	-- Ayni turu iki kez saymamali.
+	local speciesRunner = Profile.defaultData()
+	Tasks.ensure(speciesRunner, 77)
+	Tasks.markSpecies(speciesRunner, "dog")
+	Tasks.markSpecies(speciesRunner, "dog")
+	check("ayni tur iki kez sayilmiyor", speciesRunner.daily.counters.species == 1)
+	Tasks.markSpecies(speciesRunner, "cat")
+	check("farkli tur sayaci artiriyor", speciesRunner.daily.counters.species == 2)
+
+	-- Ayarlar
+	local settings = Profile.defaultSettings()
+	check(
+		"varsayilan sallanma sinirlarin icinde",
+		settings.bobbing >= settingsData.limits.bobbing.min
+			and settings.bobbing <= settingsData.limits.bobbing.max
+	)
+	check(
+		"varsayilan FOV sinirlarin icinde",
+		settings.fieldOfView >= settingsData.limits.fieldOfView.min
+			and settings.fieldOfView <= settingsData.limits.fieldOfView.max
+	)
+	check("kosma hizi yurume hizindan buyuk", settingsData.movement.sprintSpeed > settingsData.movement.walkSpeed)
 end
 
 -- ── Rapor ─────────────────────────────────────────────────────────────

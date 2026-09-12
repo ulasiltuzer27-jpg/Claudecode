@@ -26,10 +26,14 @@ local Net = require(Shared.Net)
 local AnimalAnimator = require(script.Parent.Parent.world.AnimalAnimator)
 local AnimalFactory = require(script.Parent.Parent.world.AnimalFactory)
 local Clinic = require(script.Parent.Parent.world.Clinic)
+local OwnerFactory = require(script.Parent.Parent.world.OwnerFactory)
+local Achievements = require(script.Parent.Achievements)
 local Diagnosis = require(script.Parent.Diagnosis)
 local Economy = require(script.Parent.Economy)
+local Leaderboard = require(script.Parent.Leaderboard)
 local Profile = require(script.Parent.Profile)
 local Surgery = require(script.Parent.Surgery)
+local Tasks = require(script.Parent.Tasks)
 local Treatment = require(script.Parent.Treatment)
 local Upgrades = require(script.Parent.Upgrades)
 
@@ -53,7 +57,11 @@ export type Patient = {
 	toolsUsed: { [string]: boolean },
 	diagnosed: boolean,
 	treatmentsDone: { [string]: boolean },
-	owner: Player?,
+	vet: Player?,
+	owner: OwnerFactory.Owner?,
+	emergency: boolean,
+	satisfaction: number,
+	deadline: number,
 	stationId: string?,
 	state: string,
 	arrivedAt: number,
@@ -236,6 +244,11 @@ local function chartSnapshot(patient: Patient?, viewer: Player): any
 	end
 
 	local condition = if patient.diagnosed then Diagnosis.condition(patient.conditionId) else nil
+	-- Sahibin sikayeti HER ZAMAN gidiyor: NPC zaten yuksek sesle
+	-- soyluyor ve bilerek teshisi ele vermeyen bir cumle. Hastaligin
+	-- KIMLIGI yine yalnizca dogru teshisten sonra gidiyor
+	-- (conditionNameKey), bu yuzden ayri okunuyor.
+	local always = Diagnosis.condition(patient.conditionId)
 
 	return {
 		present = true,
@@ -254,6 +267,12 @@ local function chartSnapshot(patient: Patient?, viewer: Player): any
 		stationId = patient.stationId,
 		complete = patient.diagnosed and Treatment.isComplete(patient.treatmentsDone, patient.conditionId),
 		dischargeHealth = economy.patient.dischargeHealth,
+		emergency = patient.emergency,
+		-- Kalan sure istemcide geri sayim olarak gosteriliyor. Acil
+		-- olmayan hastada sonsuz; istemci bunu gizliyor.
+		secondsLeft = if patient.emergency then math.max(0, patient.deadline - os.clock()) else -1,
+		satisfaction = math.floor(patient.satisfaction + 0.5),
+		hintKey = if always ~= nil then always.hintKey else nil,
 	}
 end
 
@@ -311,16 +330,76 @@ local function stateSnapshot(player: Player): any
 		queueWaiting = waitingCount(),
 		queueSlots = queueSlotCount(),
 		shop = Upgrades.shopSnapshot(data),
+		-- Ayarlar profilde saklaniyor; istemci acilista bunlari alip
+		-- kamerayi ona gore kuruyor.
+		settings = data.settings,
 	}
 end
 
 local function pushState(player: Player)
+	local entry = Profile.get(player)
+	if entry ~= nil then
+		-- Tab listesi HUD ile ayni anda tazelensin.
+		Leaderboard.update(player, entry.data)
+	end
 	Net.toPlayer("StateUpdate", player, stateSnapshot(player))
+end
+
+--- Odullerin XP'si seviye atlatabilir; seviye atlama tek yerde olsun
+--- diye ayri fonksiyon. Bedava aletleri de burada aciyor.
+local function applyLevel(player: Player, data: any, previousLevel: number)
+	data.level = Economy.levelForXp(data.xp)
+	if data.level <= previousLevel then
+		return
+	end
+	local granted = Upgrades.grantFreeTools(data)
+	notify(player, "good", "notify.levelUp", { data.level, Economy.titleKeyForLevel(data.level) })
+	for _, toolId in granted do
+		local tool = Upgrades.tool(toolId)
+		notify(player, "good", "notify.toolUnlocked", { if tool ~= nil then tool.nameKey else toolId })
+	end
+end
+
+local function pushProgress(player: Player)
+	local entry = Profile.get(player)
+	if entry == nil then
+		return
+	end
+	Tasks.ensure(entry.data, player.UserId)
+	Net.toPlayer("ProgressUpdate", player, {
+		stats = entry.data.stats,
+		achievements = Achievements.snapshot(entry.data),
+		tasks = Tasks.snapshot(entry.data),
+	})
+end
+
+--- Gorev ve basarim denetimini yapar, odulleri verir, bildirir.
+--- Sayaclari degistiren HER yol bunun uzerinden gecmeli; aksi halde
+--- odul sessizce verilmemis olur.
+local function settleProgress(player: Player, data: any)
+	Tasks.ensure(data, player.UserId)
+
+	local previousLevel = data.level
+	for _, completed in Tasks.check(data) do
+		notify(player, "good", "notify.taskDone", { completed.nameKey, completed.money, completed.xp })
+	end
+	for _, unlocked in Achievements.check(data) do
+		notify(player, "good", "notify.achievement", { unlocked.nameKey, unlocked.money, unlocked.xp })
+	end
+	applyLevel(player, data, previousLevel)
+
+	Profile.markDirty(player)
+	pushProgress(player)
+end
+
+function PatientFlow.pushProgress(player: Player)
+	pushProgress(player)
 end
 
 function PatientFlow.pushState(player: Player)
 	pushState(player)
 	pushChart(player)
+	pushProgress(player)
 end
 
 local function pushStateAll()
@@ -393,21 +472,35 @@ local function spawnPatient()
 		return
 	end
 
+	-- Acil vaka: ambulansla gelen agir hasta. minLevel'den once cikmiyor -
+	-- yeni oyuncunun ilk dakikalarinda kaldiramayacagi bir sey olmasin.
+	local emergency = highestLevel() >= economy.emergency.minLevel
+		and math.random() < economy.emergency.chance
+
 	local id = nextPatientId
 	nextPatientId += 1
+
+	local health = math.random(economy.patient.startHealthMin, economy.patient.startHealthMax)
+	if emergency then
+		health = math.max(8, health - economy.emergency.healthPenalty)
+	end
 
 	local patient: Patient = {
 		id = id,
 		animalId = animalId,
 		conditionId = conditionId,
 		rig = rig,
-		health = math.random(economy.patient.startHealthMin, economy.patient.startHealthMax),
+		health = health,
 		stress = math.random(economy.patient.startStressMin, economy.patient.startStressMax),
 		revealed = {},
 		toolsUsed = {},
 		diagnosed = false,
 		treatmentsDone = {},
+		vet = nil,
 		owner = nil,
+		emergency = emergency,
+		satisfaction = economy.owner.startSatisfaction,
+		deadline = if emergency then os.clock() + economy.emergency.timeLimitSeconds else math.huge,
 		stationId = nil,
 		state = "arriving",
 		arrivedAt = os.clock(),
@@ -420,9 +513,32 @@ local function spawnPatient()
 	AnimalAnimator.register(rig)
 	AnimalAnimator.setStress(rig, patient.stress)
 
+	-- Hayvanin sahibi: hastaligin `hintKey` ipucunu soyluyor ve
+	-- memnuniyeti bahsisi belirliyor.
+	local condition = Diagnosis.condition(conditionId)
+	local hintKey = if condition ~= nil then condition.hintKey else "hint.generic"
+	local owner = OwnerFactory.create(
+		CFrame.new(spawnAt.Position + Vector3.new(3.5, 0, -2)),
+		hintKey,
+		patientsFolder
+	)
+	patient.owner = owner
+	OwnerFactory.register(owner)
+	OwnerFactory.updateSatisfaction(owner, patient.satisfaction)
+
+	if emergency then
+		-- Acil vaka gorsel olarak bagirsin: kirmizi donen isik.
+		local beacon = Instance.new("PointLight")
+		beacon.Name = "AcilIsigi"
+		beacon.Color = Color3.fromRGB(240, 72, 64)
+		beacon.Brightness = 4
+		beacon.Range = 22
+		beacon.Parent = rig.root
+		OwnerFactory.say(owner, "hint.emergency")
+	end
+
 	-- Topallayan hastalik gozle belli olsun: oyuncu daha aleti eline
 	-- almadan "bacakta bir sey var" diyebilmeli.
-	local condition = Diagnosis.condition(conditionId)
 	if condition ~= nil then
 		for _, symptomId in condition.symptoms do
 			if symptomId == "limp" then
@@ -443,8 +559,28 @@ local function spawnPatient()
 		end
 	end)
 
+	-- Sahip hayvanin yaninda yuruyor; bekleme noktasinin biraz saginda
+	-- duruyor ki ikisi ust uste binmesin.
+	local ownerSpot = queuePoint.Position + Vector3.new(3, 0, 1.5)
+	OwnerFactory.walkPath(owner, {
+		clinic.entranceOutside + Vector3.new(3, 0, 0),
+		clinic.entranceInside + Vector3.new(3, 0, 0),
+		ownerSpot,
+	}, function()
+		local current = patients[id]
+		if current ~= nil and current.owner ~= nil then
+			OwnerFactory.faceTowards(current.owner, current.rig.root.Position)
+		end
+	end)
+
 	updateNameplate(patient)
-	notifyAll("info", "notify.patientArrived", { animalId })
+	local animal = AnimalFactory.spec(animalId)
+	local animalKey = if animal ~= nil then animal.nameKey else animalId
+	notifyAll(
+		if emergency then "bad" else "info",
+		if emergency then "notify.emergencyArrived" else "notify.patientArrived",
+		{ animalKey }
+	)
 	pushStateAll()
 end
 
@@ -455,15 +591,21 @@ local function releasePatient(patient: Patient)
 	if patient.stationId ~= nil then
 		occupiedStation[patient.stationId] = nil
 	end
-	local owner = patient.owner
-	if owner ~= nil and activeOf[owner] == patient.id then
-		activeOf[owner] = nil
-		Surgery.cancel(owner)
+	local vet = patient.vet
+	if vet ~= nil and activeOf[vet] == patient.id then
+		activeOf[vet] = nil
+		Surgery.cancel(vet)
 	end
 	patients[patient.id] = nil
 
 	AnimalAnimator.unregister(patient.rig)
 	patient.rig.model:Destroy()
+
+	if patient.owner ~= nil then
+		OwnerFactory.unregister(patient.owner)
+		patient.owner.model:Destroy()
+		patient.owner = nil
+	end
 end
 
 --- Hasta klinigi terk eder (taburcu ya da bekleyip kacti).
@@ -482,10 +624,10 @@ local function sendAway(patient: Patient, walkOut: boolean)
 		occupiedStation[patient.stationId] = nil
 		patient.stationId = nil
 	end
-	local owner = patient.owner
-	if owner ~= nil and activeOf[owner] == patient.id then
-		activeOf[owner] = nil
-		Surgery.cancel(owner)
+	local vet = patient.vet
+	if vet ~= nil and activeOf[vet] == patient.id then
+		activeOf[vet] = nil
+		Surgery.cancel(vet)
 	end
 
 	if not walkOut then
@@ -504,6 +646,14 @@ local function sendAway(patient: Patient, walkOut: boolean)
 			releasePatient(current)
 		end
 	end)
+
+	if patient.owner ~= nil then
+		OwnerFactory.walkPath(patient.owner, {
+			clinic.entranceInside + Vector3.new(3, 0, 0),
+			clinic.entranceOutside + Vector3.new(3, 0, 0),
+			clinic.entranceOutside + Vector3.new(3, 0, -30),
+		})
+	end
 end
 
 -- ── Oyuncu eylemleri ──────────────────────────────────────────────────
@@ -552,7 +702,7 @@ function PatientFlow.callNext(player: Player)
 	-- Kuyrukta en uzun bekleyen, sahipsiz hastayi al.
 	local chosen: Patient? = nil
 	for _, patient in patients do
-		if patient.owner == nil and (patient.state == "waiting" or patient.state == "arriving") then
+		if patient.vet == nil and (patient.state == "waiting" or patient.state == "arriving") then
 			if chosen == nil or patient.arrivedAt < chosen.arrivedAt then
 				chosen = patient
 			end
@@ -564,7 +714,7 @@ function PatientFlow.callNext(player: Player)
 		return
 	end
 
-	chosen.owner = player
+	chosen.vet = player
 	chosen.state = "station"
 	chosen.stationId = stationId
 	if chosen.queueSlot ~= nil then
@@ -663,17 +813,44 @@ function PatientFlow.submitDiagnosis(player: Player, conditionId: string)
 			data.reputation + economy.reputation.correctDiagnosis * effects.repGain
 		)
 		data.stats.correct += 1
+		data.stats.streak += 1
+		data.stats.bestStreak = math.max(data.stats.bestStreak, data.stats.streak)
+		Tasks.bump(data, "correct", 1)
+		Tasks.set(data, "streak", data.stats.streak)
+
+		patient.satisfaction = math.clamp(
+			patient.satisfaction + economy.owner.correctDiagnosisGain,
+			0,
+			100
+		)
 		local condition = Diagnosis.condition(conditionId)
+		if patient.owner ~= nil then
+			OwnerFactory.updateSatisfaction(patient.owner, patient.satisfaction)
+			OwnerFactory.say(patient.owner, "hint.relieved")
+		end
 		notify(player, "good", "notify.diagnosisCorrect", { condition.nameKey })
 	else
 		data.reputation = Economy.clampReputation(data.reputation + economy.reputation.wrongDiagnosis)
 		data.stats.wrong += 1
+		-- Seri tek yanlista sifirlaniyor: "kusursuz" basarimlarinin
+		-- anlami olsun.
+		data.stats.streak = 0
 		patient.stress = math.clamp(patient.stress + economy.wrongDiagnosisStress, 0, 100)
 		AnimalAnimator.setStress(patient.rig, patient.stress)
+
+		patient.satisfaction = math.clamp(
+			patient.satisfaction + economy.owner.wrongDiagnosisHit,
+			0,
+			100
+		)
+		if patient.owner ~= nil then
+			OwnerFactory.updateSatisfaction(patient.owner, patient.satisfaction)
+			OwnerFactory.say(patient.owner, "hint.worried")
+		end
 		notify(player, "bad", "notify.diagnosisWrong")
 	end
 
-	Profile.markDirty(player)
+	settleProgress(player, data)
 	pushState(player)
 	pushChart(player)
 end
@@ -769,6 +946,15 @@ function PatientFlow.applyTreatment(player: Player, treatmentId: string)
 					healthDelta = treatment.healthDelta * (0.6 + 0.4 * score),
 					stressDelta = treatment.stressDelta,
 				})
+				data.stats.surgeries += 1
+				Tasks.bump(data, "surgeries", 1)
+				-- "Kusursuz" ameliyat: 0.9 uzeri puan. Basarim ve gunluk
+				-- gorev buna bakiyor.
+				if score >= 0.9 then
+					data.stats.perfectSurgeries += 1
+					Tasks.bump(data, "perfectSurgeries", 1)
+				end
+				settleProgress(player, data)
 				notify(player, "good", "notify.surgerySuccess", { math.floor(score * 100 + 0.5) })
 			else
 				finishTreatment(player, current, treatmentId, {
@@ -801,7 +987,7 @@ function PatientFlow.applyTreatment(player: Player, treatmentId: string)
 	local patientId = patient.id
 	task.delay(seconds, function()
 		local current = patients[patientId]
-		if current == nil or current.owner ~= player then
+		if current == nil or current.vet ~= player then
 			return
 		end
 		finishTreatment(player, current, treatmentId, outcome)
@@ -855,32 +1041,67 @@ function PatientFlow.discharge(player: Player)
 		feeBonus = effects.feeBonus,
 	})
 
-	data.money += fee
-	data.xp += condition.xp
+	-- Seviye, XP eklenmeden ONCE okunmali: sonra okunursa atlama hic
+	-- fark edilmez.
+	local previousLevel = data.level
+	local xpGain = condition.xp
+	if patient.emergency then
+		fee = math.floor(fee * economy.emergency.feeMultiplier + 0.5)
+		xpGain = math.floor(xpGain * economy.emergency.xpMultiplier + 0.5)
+		data.stats.emergencies += 1
+		Tasks.bump(data, "emergencies", 1)
+		data.reputation = Economy.clampReputation(
+			data.reputation + economy.emergency.reputationGain * effects.repGain
+		)
+	end
+
+	-- Bahsis: sahibi yeterince memnunsa ucretin uzerine birakiyor.
+	-- Bekletmemenin ve dogru teshisin gorunur karsiligi bu.
+	local tip = 0
+	if patient.satisfaction >= economy.owner.minTipSatisfaction then
+		local share = (patient.satisfaction - economy.owner.minTipSatisfaction)
+			/ math.max(1, 100 - economy.owner.minTipSatisfaction)
+		tip = math.floor(fee * economy.owner.tipShare * share + 0.5)
+	end
+
+	data.money += fee + tip
+	data.xp += xpGain
 	data.stats.patients += 1
-	data.stats.earned += fee
+	data.stats.earned += fee + tip
+	data.stats.tips += tip
+	data.species[patient.animalId] = true
+
+	Tasks.bump(data, "patients", 1)
+	Tasks.bump(data, "earned", fee + tip)
+	Tasks.markSpecies(data, patient.animalId)
 
 	if patient.health >= economy.patient.healthyDischargeThreshold then
 		data.reputation = Economy.clampReputation(
 			data.reputation + economy.reputation.healthyDischarge * effects.repGain
 		)
+		patient.satisfaction = math.clamp(
+			patient.satisfaction + economy.owner.healthyDischargeGain,
+			0,
+			100
+		)
 	elseif patient.stress >= 70 then
 		data.reputation = Economy.clampReputation(data.reputation + economy.reputation.stressedDischarge)
 	end
 
-	local previousLevel = data.level
-	data.level = Economy.levelForXp(data.xp)
-	if data.level > previousLevel then
-		local granted = Upgrades.grantFreeTools(data)
-		notify(player, "good", "notify.levelUp", { data.level, Economy.titleKeyForLevel(data.level) })
-		for _, toolId in granted do
-			local tool = Upgrades.tool(toolId)
-			notify(player, "good", "notify.toolUnlocked", { if tool ~= nil then tool.nameKey else toolId })
-		end
+	if patient.owner ~= nil then
+		OwnerFactory.updateSatisfaction(patient.owner, patient.satisfaction)
+		OwnerFactory.say(patient.owner, if tip > 0 then "hint.thanks" else "hint.goodbye")
 	end
 
-	notify(player, "good", "notify.discharged", { fee, condition.xp })
-	Profile.markDirty(player)
+	applyLevel(player, data, previousLevel)
+
+	if tip > 0 then
+		notify(player, "good", "notify.dischargedTip", { fee, tip, xpGain })
+	else
+		notify(player, "good", "notify.discharged", { fee, xpGain })
+	end
+
+	settleProgress(player, data)
 
 	sendAway(patient, true)
 	pushState(player)
@@ -897,7 +1118,7 @@ function PatientFlow.playerLeft(player: Player)
 	if patient == nil then
 		return
 	end
-	patient.owner = nil
+	patient.vet = nil
 	-- Masada kalsin; siradaki oyuncu "Sirayi cagir" ile devralabilir.
 	patient.state = "waiting"
 end
@@ -925,8 +1146,42 @@ local function tickVitals(dt: number)
 		AnimalAnimator.setState(patient.rig, if patient.stress >= 70 then "distress" else "idle")
 		updateNameplate(patient)
 
+		-- Sahibin sabri: bekledikce tukeniyor. Hastasi masaya alinmis
+		-- olsa bile isin uzamasi memnuniyeti dusuruyor.
+		if patient.owner ~= nil and patient.state ~= "leaving" then
+			patient.satisfaction = math.clamp(
+				patient.satisfaction - economy.owner.decayPerSecond * dt,
+				0,
+				100
+			)
+			OwnerFactory.updateSatisfaction(patient.owner, patient.satisfaction)
+		end
+
+		-- Acil vakanin suresi: dolarsa hasta kaybediliyor. Bu, oyunun
+		-- kaybedilebilir TEK durumu; bu yuzden ceza da agir.
+		if patient.emergency and os.clock() > patient.deadline then
+			local animal = AnimalFactory.spec(patient.animalId)
+			local animalKey = if animal ~= nil then animal.nameKey else patient.animalId
+			notifyAll("bad", "notify.emergencyLost", { animalKey })
+			local vet = patient.vet
+			if vet ~= nil then
+				local entry = Profile.get(vet)
+				if entry ~= nil then
+					entry.data.reputation = Economy.clampReputation(
+						entry.data.reputation + economy.emergency.reputationLoss
+					)
+					entry.data.stats.lost += 1
+					entry.data.stats.streak = 0
+					Profile.markDirty(vet)
+				end
+			end
+			sendAway(patient, true)
+			pushStateAll()
+			continue
+		end
+
 		-- Bekleyip bekleyip kacan hasta: butun klinigin itibari duser.
-		if patient.owner == nil and patient.state == "waiting" then
+		if patient.vet == nil and patient.state == "waiting" then
 			if os.clock() - patient.arrivedAt > economy.arrival.patienceSeconds then
 				local animal = AnimalFactory.spec(patient.animalId)
 				notifyAll("bad", "notify.patientLeft", { if animal ~= nil then animal.nameKey else patient.animalId })

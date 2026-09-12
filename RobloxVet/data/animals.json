@@ -1,6 +1,7 @@
 {
   "_comment": "(VERI) Hasta turleri. Oranlar stud cinsinden, renkler [r,g,b]. AnimalFactory bu tabloyu okuyup rigi kuruyor - yeni bir tur eklemek icin kod degistirmek gerekmiyor.",
-  "_rig_notu": "rig alani AnimalFactory'nin bildigi bir iskelet adi olmali: quadruped, bird, shelled. verify_data.py bunu denetliyor.",
+  "_rig_notu": "rig alani AnimalFactory'nin bildigi bir iskelet adi olmali: quadruped, bird, shelled, serpentine. verify_data.py bunu denetliyor.",
+  "_suslemeler_notu": "spines (kirpi dikeni), crest (iguana sirt yelesi), mane (at yelesi), segments (yilan govde halkalari) istege bagli; yalnizca tanimlandiklari turde kuruluyorlar.",
   "animals": [
     {
       "id": "dog",
@@ -135,6 +136,98 @@
       "ears": { "type": "none", "length": 0, "width": 0 },
       "tail": { "type": "none", "length": 0, "thickness": 0 },
       "shell": { "height": 1.35, "overhang": 0.25 }
+    },
+    {
+      "id": "hedgehog",
+      "nameKey": "animal.hedgehog",
+      "rig": "quadruped",
+      "unlockLevel": 6,
+      "baseFee": 135,
+      "temperament": 1.7,
+      "walkSpeed": 5,
+      "palette": {
+        "body": [168, 140, 116],
+        "belly": [232, 218, 200],
+        "ear": [148, 120, 100],
+        "nose": [42, 38, 36],
+        "eye": [24, 22, 20],
+        "accent": [96, 80, 68]
+      },
+      "body": { "length": 1.9, "height": 1.25, "width": 1.4 },
+      "head": { "size": 0.95, "offsetY": 0.5, "offsetZ": 1.1, "snoutLength": 0.55, "snoutHeight": 0.34 },
+      "legs": { "count": 4, "length": 0.5, "thickness": 0.3, "spreadX": 0.42, "spreadZ": 0.6 },
+      "ears": { "type": "round", "length": 0.36, "width": 0.36 },
+      "tail": { "type": "none", "length": 0, "thickness": 0 },
+      "spines": { "count": 26, "length": 0.75, "thickness": 0.16 }
+    },
+    {
+      "id": "snake",
+      "nameKey": "animal.snake",
+      "rig": "serpentine",
+      "unlockLevel": 7,
+      "baseFee": 205,
+      "temperament": 1.1,
+      "walkSpeed": 6,
+      "palette": {
+        "body": [104, 152, 88],
+        "belly": [216, 208, 156],
+        "ear": [104, 152, 88],
+        "nose": [56, 82, 48],
+        "eye": [206, 172, 56],
+        "accent": [66, 104, 58]
+      },
+      "body": { "length": 7.2, "height": 0.85, "width": 0.85 },
+      "head": { "size": 1.0, "offsetY": 0.1, "offsetZ": 0.55, "snoutLength": 0.5, "snoutHeight": 0.36 },
+      "legs": { "count": 0, "length": 0, "thickness": 0, "spreadX": 0, "spreadZ": 0 },
+      "ears": { "type": "none", "length": 0, "width": 0 },
+      "tail": { "type": "none", "length": 0, "thickness": 0 },
+      "segments": { "count": 9, "taper": 0.55 }
+    },
+    {
+      "id": "iguana",
+      "nameKey": "animal.iguana",
+      "rig": "quadruped",
+      "unlockLevel": 8,
+      "baseFee": 250,
+      "temperament": 0.9,
+      "walkSpeed": 4,
+      "palette": {
+        "body": [126, 176, 112],
+        "belly": [206, 214, 162],
+        "ear": [126, 176, 112],
+        "nose": [78, 112, 68],
+        "eye": [216, 156, 48],
+        "accent": [92, 138, 84]
+      },
+      "body": { "length": 3.0, "height": 0.95, "width": 1.05 },
+      "head": { "size": 0.95, "offsetY": 0.3, "offsetZ": 1.85, "snoutLength": 0.7, "snoutHeight": 0.42 },
+      "legs": { "count": 4, "length": 0.75, "thickness": 0.32, "spreadX": 0.8, "spreadZ": 1.0 },
+      "ears": { "type": "none", "length": 0, "width": 0 },
+      "tail": { "type": "wag", "length": 3.4, "thickness": 0.4 },
+      "crest": { "count": 10, "height": 0.45, "thickness": 0.12 }
+    },
+    {
+      "id": "horse",
+      "nameKey": "animal.horse",
+      "rig": "quadruped",
+      "unlockLevel": 9,
+      "baseFee": 420,
+      "temperament": 1.25,
+      "walkSpeed": 11,
+      "palette": {
+        "body": [128, 86, 56],
+        "belly": [166, 122, 86],
+        "ear": [108, 72, 48],
+        "nose": [46, 36, 30],
+        "eye": [26, 22, 20],
+        "accent": [58, 44, 36]
+      },
+      "body": { "length": 6.4, "height": 3.1, "width": 2.3 },
+      "head": { "size": 1.8, "offsetY": 2.3, "offsetZ": 3.3, "snoutLength": 1.9, "snoutHeight": 1.15 },
+      "legs": { "count": 4, "length": 3.3, "thickness": 0.72, "spreadX": 0.85, "spreadZ": 2.3 },
+      "ears": { "type": "pointy", "length": 0.85, "width": 0.4 },
+      "tail": { "type": "wag", "length": 3.0, "thickness": 0.5 },
+      "mane": { "count": 8, "height": 0.7, "thickness": 0.22 }
     }
   ]
 }

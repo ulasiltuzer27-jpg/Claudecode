@@ -437,6 +437,7 @@ Net.Schema = {
 	ToolResult = { direction = &quot;toClient&quot;, args = { &quot;string&quot;, &quot;table&quot; } },
 	SurgeryBegin = { direction = &quot;toClient&quot;, args = { &quot;table&quot; } },
 	SurgeryEnd = { direction = &quot;toClient&quot;, args = { &quot;boolean&quot;, &quot;number&quot; } },
+	ProgressUpdate = { direction = &quot;toClient&quot;, args = { &quot;table&quot; } },
 
 	-- ── Istemci -&gt; Sunucu ──────────────────────────────────────────────
 	CallNext = { direction = &quot;toServer&quot;, args = {} },
@@ -448,6 +449,8 @@ Net.Schema = {
 	Discharge = { direction = &quot;toServer&quot;, args = {} },
 	BuyTool = { direction = &quot;toServer&quot;, args = { &quot;string&quot; } },
 	BuyUpgrade = { direction = &quot;toServer&quot;, args = { &quot;string&quot; } },
+	SaveSettings = { direction = &quot;toServer&quot;, args = { &quot;table&quot; } },
+	RequestProgress = { direction = &quot;toServer&quot;, args = {} },
 }
 
 -- Istemcinin saniyede kac kez gonderebilecegi. Dogrulama sunucuda
@@ -462,6 +465,11 @@ Net.RateLimit = {
 	Discharge = 4,
 	BuyTool = 4,
 	BuyUpgrade = 4,
+	-- Ayar kaydetme seyrek olmali: her kaydirici hareketinde DataStore'a
+	-- yazmak hem gereksiz hem de kota yakar. Istemci de kendi tarafinda
+	-- bekletiyor (SettingsPanel).
+	SaveSettings = 3,
+	RequestProgress = 3,
 }
 
 local folderName = &quot;VetRemotes&quot;
@@ -620,6 +628,249 @@ return Validate
 				<string name="Name">VetData</string>
 			</Properties>
 			<Item class="ModuleScript" referent="RBX10">
+				<Properties>
+					<string name="Name">achievements</string>
+					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
+-- Kaynak: data/achievements.json
+-- Uretici: tools/jsontolua.py  (python3 build.py)
+-- (VERI) Basarimlar. kind, Achievements.luau'nun okudugu sayac adi; target o sayacin ulasmasi gereken deger.
+return {
+	[&quot;counters&quot;] = {
+		&quot;patients&quot;,
+		&quot;correct&quot;,
+		&quot;earned&quot;,
+		&quot;level&quot;,
+		&quot;surgeries&quot;,
+		&quot;perfectSurgeries&quot;,
+		&quot;emergencies&quot;,
+		&quot;species&quot;,
+		&quot;reputation&quot;,
+		&quot;tasks&quot;,
+		&quot;streak&quot;,
+	},
+	[&quot;achievements&quot;] = {
+		{
+			[&quot;id&quot;] = &quot;firstPatient&quot;,
+			[&quot;nameKey&quot;] = &quot;ach.firstPatient&quot;,
+			[&quot;descKey&quot;] = &quot;ach.firstPatient.desc&quot;,
+			[&quot;kind&quot;] = &quot;patients&quot;,
+			[&quot;target&quot;] = 1,
+			[&quot;order&quot;] = 1,
+			[&quot;reward&quot;] = {
+				[&quot;money&quot;] = 100,
+				[&quot;xp&quot;] = 20,
+			},
+		},
+		{
+			[&quot;id&quot;] = &quot;tenPatients&quot;,
+			[&quot;nameKey&quot;] = &quot;ach.tenPatients&quot;,
+			[&quot;descKey&quot;] = &quot;ach.tenPatients.desc&quot;,
+			[&quot;kind&quot;] = &quot;patients&quot;,
+			[&quot;target&quot;] = 10,
+			[&quot;order&quot;] = 2,
+			[&quot;reward&quot;] = {
+				[&quot;money&quot;] = 400,
+				[&quot;xp&quot;] = 60,
+			},
+		},
+		{
+			[&quot;id&quot;] = &quot;hundred&quot;,
+			[&quot;nameKey&quot;] = &quot;ach.hundred&quot;,
+			[&quot;descKey&quot;] = &quot;ach.hundred.desc&quot;,
+			[&quot;kind&quot;] = &quot;patients&quot;,
+			[&quot;target&quot;] = 100,
+			[&quot;order&quot;] = 3,
+			[&quot;reward&quot;] = {
+				[&quot;money&quot;] = 3000,
+				[&quot;xp&quot;] = 300,
+			},
+		},
+		{
+			[&quot;id&quot;] = &quot;fiveHundred&quot;,
+			[&quot;nameKey&quot;] = &quot;ach.fiveHundred&quot;,
+			[&quot;descKey&quot;] = &quot;ach.fiveHundred.desc&quot;,
+			[&quot;kind&quot;] = &quot;patients&quot;,
+			[&quot;target&quot;] = 500,
+			[&quot;order&quot;] = 4,
+			[&quot;reward&quot;] = {
+				[&quot;money&quot;] = 15000,
+				[&quot;xp&quot;] = 1200,
+			},
+		},
+		{
+			[&quot;id&quot;] = &quot;sharpEye&quot;,
+			[&quot;nameKey&quot;] = &quot;ach.sharpEye&quot;,
+			[&quot;descKey&quot;] = &quot;ach.sharpEye.desc&quot;,
+			[&quot;kind&quot;] = &quot;correct&quot;,
+			[&quot;target&quot;] = 50,
+			[&quot;order&quot;] = 5,
+			[&quot;reward&quot;] = {
+				[&quot;money&quot;] = 1500,
+				[&quot;xp&quot;] = 160,
+			},
+		},
+		{
+			[&quot;id&quot;] = &quot;diagnostician&quot;,
+			[&quot;nameKey&quot;] = &quot;ach.diagnostician&quot;,
+			[&quot;descKey&quot;] = &quot;ach.diagnostician.desc&quot;,
+			[&quot;kind&quot;] = &quot;correct&quot;,
+			[&quot;target&quot;] = 250,
+			[&quot;order&quot;] = 6,
+			[&quot;reward&quot;] = {
+				[&quot;money&quot;] = 9000,
+				[&quot;xp&quot;] = 700,
+			},
+		},
+		{
+			[&quot;id&quot;] = &quot;flawless&quot;,
+			[&quot;nameKey&quot;] = &quot;ach.flawless&quot;,
+			[&quot;descKey&quot;] = &quot;ach.flawless.desc&quot;,
+			[&quot;kind&quot;] = &quot;streak&quot;,
+			[&quot;target&quot;] = 10,
+			[&quot;order&quot;] = 7,
+			[&quot;reward&quot;] = {
+				[&quot;money&quot;] = 2500,
+				[&quot;xp&quot;] = 220,
+			},
+		},
+		{
+			[&quot;id&quot;] = &quot;unerring&quot;,
+			[&quot;nameKey&quot;] = &quot;ach.unerring&quot;,
+			[&quot;descKey&quot;] = &quot;ach.unerring.desc&quot;,
+			[&quot;kind&quot;] = &quot;streak&quot;,
+			[&quot;target&quot;] = 25,
+			[&quot;order&quot;] = 8,
+			[&quot;reward&quot;] = {
+				[&quot;money&quot;] = 8000,
+				[&quot;xp&quot;] = 600,
+			},
+		},
+		{
+			[&quot;id&quot;] = &quot;firstThousand&quot;,
+			[&quot;nameKey&quot;] = &quot;ach.firstThousand&quot;,
+			[&quot;descKey&quot;] = &quot;ach.firstThousand.desc&quot;,
+			[&quot;kind&quot;] = &quot;earned&quot;,
+			[&quot;target&quot;] = 1000,
+			[&quot;order&quot;] = 9,
+			[&quot;reward&quot;] = {
+				[&quot;money&quot;] = 250,
+				[&quot;xp&quot;] = 40,
+			},
+		},
+		{
+			[&quot;id&quot;] = &quot;tenThousand&quot;,
+			[&quot;nameKey&quot;] = &quot;ach.tenThousand&quot;,
+			[&quot;descKey&quot;] = &quot;ach.tenThousand.desc&quot;,
+			[&quot;kind&quot;] = &quot;earned&quot;,
+			[&quot;target&quot;] = 10000,
+			[&quot;order&quot;] = 10,
+			[&quot;reward&quot;] = {
+				[&quot;money&quot;] = 2000,
+				[&quot;xp&quot;] = 200,
+			},
+		},
+		{
+			[&quot;id&quot;] = &quot;hundredK&quot;,
+			[&quot;nameKey&quot;] = &quot;ach.hundredK&quot;,
+			[&quot;descKey&quot;] = &quot;ach.hundredK.desc&quot;,
+			[&quot;kind&quot;] = &quot;earned&quot;,
+			[&quot;target&quot;] = 100000,
+			[&quot;order&quot;] = 11,
+			[&quot;reward&quot;] = {
+				[&quot;money&quot;] = 20000,
+				[&quot;xp&quot;] = 1500,
+			},
+		},
+		{
+			[&quot;id&quot;] = &quot;surgeon&quot;,
+			[&quot;nameKey&quot;] = &quot;ach.surgeon&quot;,
+			[&quot;descKey&quot;] = &quot;ach.surgeon.desc&quot;,
+			[&quot;kind&quot;] = &quot;surgeries&quot;,
+			[&quot;target&quot;] = 10,
+			[&quot;order&quot;] = 12,
+			[&quot;reward&quot;] = {
+				[&quot;money&quot;] = 2500,
+				[&quot;xp&quot;] = 250,
+			},
+		},
+		{
+			[&quot;id&quot;] = &quot;steadyHands&quot;,
+			[&quot;nameKey&quot;] = &quot;ach.steadyHands&quot;,
+			[&quot;descKey&quot;] = &quot;ach.steadyHands.desc&quot;,
+			[&quot;kind&quot;] = &quot;perfectSurgeries&quot;,
+			[&quot;target&quot;] = 5,
+			[&quot;order&quot;] = 13,
+			[&quot;reward&quot;] = {
+				[&quot;money&quot;] = 4000,
+				[&quot;xp&quot;] = 350,
+			},
+		},
+		{
+			[&quot;id&quot;] = &quot;lifeSaver&quot;,
+			[&quot;nameKey&quot;] = &quot;ach.lifeSaver&quot;,
+			[&quot;descKey&quot;] = &quot;ach.lifeSaver.desc&quot;,
+			[&quot;kind&quot;] = &quot;emergencies&quot;,
+			[&quot;target&quot;] = 10,
+			[&quot;order&quot;] = 14,
+			[&quot;reward&quot;] = {
+				[&quot;money&quot;] = 5000,
+				[&quot;xp&quot;] = 420,
+			},
+		},
+		{
+			[&quot;id&quot;] = &quot;zoologist&quot;,
+			[&quot;nameKey&quot;] = &quot;ach.zoologist&quot;,
+			[&quot;descKey&quot;] = &quot;ach.zoologist.desc&quot;,
+			[&quot;kind&quot;] = &quot;species&quot;,
+			[&quot;target&quot;] = 10,
+			[&quot;order&quot;] = 15,
+			[&quot;reward&quot;] = {
+				[&quot;money&quot;] = 12000,
+				[&quot;xp&quot;] = 900,
+			},
+		},
+		{
+			[&quot;id&quot;] = &quot;trusted&quot;,
+			[&quot;nameKey&quot;] = &quot;ach.trusted&quot;,
+			[&quot;descKey&quot;] = &quot;ach.trusted.desc&quot;,
+			[&quot;kind&quot;] = &quot;reputation&quot;,
+			[&quot;target&quot;] = 100,
+			[&quot;order&quot;] = 16,
+			[&quot;reward&quot;] = {
+				[&quot;money&quot;] = 6000,
+				[&quot;xp&quot;] = 500,
+			},
+		},
+		{
+			[&quot;id&quot;] = &quot;taskmaster&quot;,
+			[&quot;nameKey&quot;] = &quot;ach.taskmaster&quot;,
+			[&quot;descKey&quot;] = &quot;ach.taskmaster.desc&quot;,
+			[&quot;kind&quot;] = &quot;tasks&quot;,
+			[&quot;target&quot;] = 15,
+			[&quot;order&quot;] = 17,
+			[&quot;reward&quot;] = {
+				[&quot;money&quot;] = 7000,
+				[&quot;xp&quot;] = 550,
+			},
+		},
+		{
+			[&quot;id&quot;] = &quot;chiefVet&quot;,
+			[&quot;nameKey&quot;] = &quot;ach.chiefVet&quot;,
+			[&quot;descKey&quot;] = &quot;ach.chiefVet.desc&quot;,
+			[&quot;kind&quot;] = &quot;level&quot;,
+			[&quot;target&quot;] = 15,
+			[&quot;order&quot;] = 18,
+			[&quot;reward&quot;] = {
+				[&quot;money&quot;] = 25000,
+				[&quot;xp&quot;] = 0,
+			},
+		},
+	},
+}
+</ProtectedString>
+				</Properties>
+			</Item>
+			<Item class="ModuleScript" referent="RBX11">
 				<Properties>
 					<string name="Name">animals</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -1057,12 +1308,311 @@ return {
 				[&quot;overhang&quot;] = 0.25,
 			},
 		},
+		{
+			[&quot;id&quot;] = &quot;hedgehog&quot;,
+			[&quot;nameKey&quot;] = &quot;animal.hedgehog&quot;,
+			[&quot;rig&quot;] = &quot;quadruped&quot;,
+			[&quot;unlockLevel&quot;] = 6,
+			[&quot;baseFee&quot;] = 135,
+			[&quot;temperament&quot;] = 1.7,
+			[&quot;walkSpeed&quot;] = 5,
+			[&quot;palette&quot;] = {
+				[&quot;body&quot;] = {
+					168,
+					140,
+					116,
+				},
+				[&quot;belly&quot;] = {
+					232,
+					218,
+					200,
+				},
+				[&quot;ear&quot;] = {
+					148,
+					120,
+					100,
+				},
+				[&quot;nose&quot;] = {
+					42,
+					38,
+					36,
+				},
+				[&quot;eye&quot;] = {
+					24,
+					22,
+					20,
+				},
+				[&quot;accent&quot;] = {
+					96,
+					80,
+					68,
+				},
+			},
+			[&quot;body&quot;] = {
+				[&quot;length&quot;] = 1.9,
+				[&quot;height&quot;] = 1.25,
+				[&quot;width&quot;] = 1.4,
+			},
+			[&quot;head&quot;] = {
+				[&quot;size&quot;] = 0.95,
+				[&quot;offsetY&quot;] = 0.5,
+				[&quot;offsetZ&quot;] = 1.1,
+				[&quot;snoutLength&quot;] = 0.55,
+				[&quot;snoutHeight&quot;] = 0.34,
+			},
+			[&quot;legs&quot;] = {
+				[&quot;count&quot;] = 4,
+				[&quot;length&quot;] = 0.5,
+				[&quot;thickness&quot;] = 0.3,
+				[&quot;spreadX&quot;] = 0.42,
+				[&quot;spreadZ&quot;] = 0.6,
+			},
+			[&quot;ears&quot;] = {
+				[&quot;type&quot;] = &quot;round&quot;,
+				[&quot;length&quot;] = 0.36,
+				[&quot;width&quot;] = 0.36,
+			},
+			[&quot;tail&quot;] = {
+				[&quot;type&quot;] = &quot;none&quot;,
+				[&quot;length&quot;] = 0,
+				[&quot;thickness&quot;] = 0,
+			},
+			[&quot;spines&quot;] = {
+				[&quot;count&quot;] = 26,
+				[&quot;length&quot;] = 0.75,
+				[&quot;thickness&quot;] = 0.16,
+			},
+		},
+		{
+			[&quot;id&quot;] = &quot;snake&quot;,
+			[&quot;nameKey&quot;] = &quot;animal.snake&quot;,
+			[&quot;rig&quot;] = &quot;serpentine&quot;,
+			[&quot;unlockLevel&quot;] = 7,
+			[&quot;baseFee&quot;] = 205,
+			[&quot;temperament&quot;] = 1.1,
+			[&quot;walkSpeed&quot;] = 6,
+			[&quot;palette&quot;] = {
+				[&quot;body&quot;] = {
+					104,
+					152,
+					88,
+				},
+				[&quot;belly&quot;] = {
+					216,
+					208,
+					156,
+				},
+				[&quot;ear&quot;] = {
+					104,
+					152,
+					88,
+				},
+				[&quot;nose&quot;] = {
+					56,
+					82,
+					48,
+				},
+				[&quot;eye&quot;] = {
+					206,
+					172,
+					56,
+				},
+				[&quot;accent&quot;] = {
+					66,
+					104,
+					58,
+				},
+			},
+			[&quot;body&quot;] = {
+				[&quot;length&quot;] = 7.2,
+				[&quot;height&quot;] = 0.85,
+				[&quot;width&quot;] = 0.85,
+			},
+			[&quot;head&quot;] = {
+				[&quot;size&quot;] = 1,
+				[&quot;offsetY&quot;] = 0.1,
+				[&quot;offsetZ&quot;] = 0.55,
+				[&quot;snoutLength&quot;] = 0.5,
+				[&quot;snoutHeight&quot;] = 0.36,
+			},
+			[&quot;legs&quot;] = {
+				[&quot;count&quot;] = 0,
+				[&quot;length&quot;] = 0,
+				[&quot;thickness&quot;] = 0,
+				[&quot;spreadX&quot;] = 0,
+				[&quot;spreadZ&quot;] = 0,
+			},
+			[&quot;ears&quot;] = {
+				[&quot;type&quot;] = &quot;none&quot;,
+				[&quot;length&quot;] = 0,
+				[&quot;width&quot;] = 0,
+			},
+			[&quot;tail&quot;] = {
+				[&quot;type&quot;] = &quot;none&quot;,
+				[&quot;length&quot;] = 0,
+				[&quot;thickness&quot;] = 0,
+			},
+			[&quot;segments&quot;] = {
+				[&quot;count&quot;] = 9,
+				[&quot;taper&quot;] = 0.55,
+			},
+		},
+		{
+			[&quot;id&quot;] = &quot;iguana&quot;,
+			[&quot;nameKey&quot;] = &quot;animal.iguana&quot;,
+			[&quot;rig&quot;] = &quot;quadruped&quot;,
+			[&quot;unlockLevel&quot;] = 8,
+			[&quot;baseFee&quot;] = 250,
+			[&quot;temperament&quot;] = 0.9,
+			[&quot;walkSpeed&quot;] = 4,
+			[&quot;palette&quot;] = {
+				[&quot;body&quot;] = {
+					126,
+					176,
+					112,
+				},
+				[&quot;belly&quot;] = {
+					206,
+					214,
+					162,
+				},
+				[&quot;ear&quot;] = {
+					126,
+					176,
+					112,
+				},
+				[&quot;nose&quot;] = {
+					78,
+					112,
+					68,
+				},
+				[&quot;eye&quot;] = {
+					216,
+					156,
+					48,
+				},
+				[&quot;accent&quot;] = {
+					92,
+					138,
+					84,
+				},
+			},
+			[&quot;body&quot;] = {
+				[&quot;length&quot;] = 3,
+				[&quot;height&quot;] = 0.95,
+				[&quot;width&quot;] = 1.05,
+			},
+			[&quot;head&quot;] = {
+				[&quot;size&quot;] = 0.95,
+				[&quot;offsetY&quot;] = 0.3,
+				[&quot;offsetZ&quot;] = 1.85,
+				[&quot;snoutLength&quot;] = 0.7,
+				[&quot;snoutHeight&quot;] = 0.42,
+			},
+			[&quot;legs&quot;] = {
+				[&quot;count&quot;] = 4,
+				[&quot;length&quot;] = 0.75,
+				[&quot;thickness&quot;] = 0.32,
+				[&quot;spreadX&quot;] = 0.8,
+				[&quot;spreadZ&quot;] = 1,
+			},
+			[&quot;ears&quot;] = {
+				[&quot;type&quot;] = &quot;none&quot;,
+				[&quot;length&quot;] = 0,
+				[&quot;width&quot;] = 0,
+			},
+			[&quot;tail&quot;] = {
+				[&quot;type&quot;] = &quot;wag&quot;,
+				[&quot;length&quot;] = 3.4,
+				[&quot;thickness&quot;] = 0.4,
+			},
+			[&quot;crest&quot;] = {
+				[&quot;count&quot;] = 10,
+				[&quot;height&quot;] = 0.45,
+				[&quot;thickness&quot;] = 0.12,
+			},
+		},
+		{
+			[&quot;id&quot;] = &quot;horse&quot;,
+			[&quot;nameKey&quot;] = &quot;animal.horse&quot;,
+			[&quot;rig&quot;] = &quot;quadruped&quot;,
+			[&quot;unlockLevel&quot;] = 9,
+			[&quot;baseFee&quot;] = 420,
+			[&quot;temperament&quot;] = 1.25,
+			[&quot;walkSpeed&quot;] = 11,
+			[&quot;palette&quot;] = {
+				[&quot;body&quot;] = {
+					128,
+					86,
+					56,
+				},
+				[&quot;belly&quot;] = {
+					166,
+					122,
+					86,
+				},
+				[&quot;ear&quot;] = {
+					108,
+					72,
+					48,
+				},
+				[&quot;nose&quot;] = {
+					46,
+					36,
+					30,
+				},
+				[&quot;eye&quot;] = {
+					26,
+					22,
+					20,
+				},
+				[&quot;accent&quot;] = {
+					58,
+					44,
+					36,
+				},
+			},
+			[&quot;body&quot;] = {
+				[&quot;length&quot;] = 6.4,
+				[&quot;height&quot;] = 3.1,
+				[&quot;width&quot;] = 2.3,
+			},
+			[&quot;head&quot;] = {
+				[&quot;size&quot;] = 1.8,
+				[&quot;offsetY&quot;] = 2.3,
+				[&quot;offsetZ&quot;] = 3.3,
+				[&quot;snoutLength&quot;] = 1.9,
+				[&quot;snoutHeight&quot;] = 1.15,
+			},
+			[&quot;legs&quot;] = {
+				[&quot;count&quot;] = 4,
+				[&quot;length&quot;] = 3.3,
+				[&quot;thickness&quot;] = 0.72,
+				[&quot;spreadX&quot;] = 0.85,
+				[&quot;spreadZ&quot;] = 2.3,
+			},
+			[&quot;ears&quot;] = {
+				[&quot;type&quot;] = &quot;pointy&quot;,
+				[&quot;length&quot;] = 0.85,
+				[&quot;width&quot;] = 0.4,
+			},
+			[&quot;tail&quot;] = {
+				[&quot;type&quot;] = &quot;wag&quot;,
+				[&quot;length&quot;] = 3,
+				[&quot;thickness&quot;] = 0.5,
+			},
+			[&quot;mane&quot;] = {
+				[&quot;count&quot;] = 8,
+				[&quot;height&quot;] = 0.7,
+				[&quot;thickness&quot;] = 0.22,
+			},
+		},
 	},
 }
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX11">
+			<Item class="ModuleScript" referent="RBX12">
 				<Properties>
 					<string name="Name">assetIds</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -1105,7 +1655,7 @@ return {
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX12">
+			<Item class="ModuleScript" referent="RBX13">
 				<Properties>
 					<string name="Name">clinic</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -2220,7 +2770,7 @@ return {
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX13">
+			<Item class="ModuleScript" referent="RBX14">
 				<Properties>
 					<string name="Name">conditions</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -2232,6 +2782,7 @@ return {
 		{
 			[&quot;id&quot;] = &quot;kennelCough&quot;,
 			[&quot;nameKey&quot;] = &quot;condition.kennelCough&quot;,
+			[&quot;hintKey&quot;] = &quot;hint.kennelCough&quot;,
 			[&quot;species&quot;] = {
 				&quot;dog&quot;,
 			},
@@ -2252,10 +2803,12 @@ return {
 		{
 			[&quot;id&quot;] = &quot;earMites&quot;,
 			[&quot;nameKey&quot;] = &quot;condition.earMites&quot;,
+			[&quot;hintKey&quot;] = &quot;hint.earMites&quot;,
 			[&quot;species&quot;] = {
 				&quot;dog&quot;,
 				&quot;cat&quot;,
 				&quot;rabbit&quot;,
+				&quot;hedgehog&quot;,
 			},
 			[&quot;symptoms&quot;] = {
 				&quot;earMites&quot;,
@@ -2274,11 +2827,13 @@ return {
 		{
 			[&quot;id&quot;] = &quot;fleas&quot;,
 			[&quot;nameKey&quot;] = &quot;condition.fleas&quot;,
+			[&quot;hintKey&quot;] = &quot;hint.fleas&quot;,
 			[&quot;species&quot;] = {
 				&quot;dog&quot;,
 				&quot;cat&quot;,
 				&quot;rabbit&quot;,
 				&quot;hamster&quot;,
+				&quot;hedgehog&quot;,
 			},
 			[&quot;symptoms&quot;] = {
 				&quot;rash&quot;,
@@ -2297,6 +2852,7 @@ return {
 		{
 			[&quot;id&quot;] = &quot;dehydration&quot;,
 			[&quot;nameKey&quot;] = &quot;condition.dehydration&quot;,
+			[&quot;hintKey&quot;] = &quot;hint.dehydration&quot;,
 			[&quot;species&quot;] = {
 				&quot;dog&quot;,
 				&quot;cat&quot;,
@@ -2304,6 +2860,10 @@ return {
 				&quot;hamster&quot;,
 				&quot;parrot&quot;,
 				&quot;turtle&quot;,
+				&quot;hedgehog&quot;,
+				&quot;snake&quot;,
+				&quot;iguana&quot;,
+				&quot;horse&quot;,
 			},
 			[&quot;symptoms&quot;] = {
 				&quot;lethargy&quot;,
@@ -2322,10 +2882,13 @@ return {
 		{
 			[&quot;id&quot;] = &quot;sprainedLeg&quot;,
 			[&quot;nameKey&quot;] = &quot;condition.sprainedLeg&quot;,
+			[&quot;hintKey&quot;] = &quot;hint.sprainedLeg&quot;,
 			[&quot;species&quot;] = {
 				&quot;dog&quot;,
 				&quot;cat&quot;,
 				&quot;rabbit&quot;,
+				&quot;iguana&quot;,
+				&quot;horse&quot;,
 			},
 			[&quot;symptoms&quot;] = {
 				&quot;limp&quot;,
@@ -2344,12 +2907,14 @@ return {
 		{
 			[&quot;id&quot;] = &quot;eyeInfection&quot;,
 			[&quot;nameKey&quot;] = &quot;condition.eyeInfection&quot;,
+			[&quot;hintKey&quot;] = &quot;hint.eyeInfection&quot;,
 			[&quot;species&quot;] = {
 				&quot;dog&quot;,
 				&quot;cat&quot;,
 				&quot;rabbit&quot;,
 				&quot;hamster&quot;,
 				&quot;parrot&quot;,
+				&quot;iguana&quot;,
 			},
 			[&quot;symptoms&quot;] = {
 				&quot;discharge&quot;,
@@ -2368,11 +2933,14 @@ return {
 		{
 			[&quot;id&quot;] = &quot;intestinalParasite&quot;,
 			[&quot;nameKey&quot;] = &quot;condition.intestinalParasite&quot;,
+			[&quot;hintKey&quot;] = &quot;hint.intestinalParasite&quot;,
 			[&quot;species&quot;] = {
 				&quot;dog&quot;,
 				&quot;cat&quot;,
 				&quot;rabbit&quot;,
 				&quot;hamster&quot;,
+				&quot;hedgehog&quot;,
+				&quot;horse&quot;,
 			},
 			[&quot;symptoms&quot;] = {
 				&quot;weightLoss&quot;,
@@ -2391,6 +2959,7 @@ return {
 		{
 			[&quot;id&quot;] = &quot;featherPlucking&quot;,
 			[&quot;nameKey&quot;] = &quot;condition.featherPlucking&quot;,
+			[&quot;hintKey&quot;] = &quot;hint.featherPlucking&quot;,
 			[&quot;species&quot;] = {
 				&quot;parrot&quot;,
 			},
@@ -2411,6 +2980,7 @@ return {
 		{
 			[&quot;id&quot;] = &quot;shellRot&quot;,
 			[&quot;nameKey&quot;] = &quot;condition.shellRot&quot;,
+			[&quot;hintKey&quot;] = &quot;hint.shellRot&quot;,
 			[&quot;species&quot;] = {
 				&quot;turtle&quot;,
 			},
@@ -2433,6 +3003,7 @@ return {
 		{
 			[&quot;id&quot;] = &quot;bacterialInfection&quot;,
 			[&quot;nameKey&quot;] = &quot;condition.bacterialInfection&quot;,
+			[&quot;hintKey&quot;] = &quot;hint.bacterialInfection&quot;,
 			[&quot;species&quot;] = {
 				&quot;dog&quot;,
 				&quot;cat&quot;,
@@ -2440,6 +3011,10 @@ return {
 				&quot;hamster&quot;,
 				&quot;parrot&quot;,
 				&quot;turtle&quot;,
+				&quot;hedgehog&quot;,
+				&quot;snake&quot;,
+				&quot;iguana&quot;,
+				&quot;horse&quot;,
 			},
 			[&quot;symptoms&quot;] = {
 				&quot;fever&quot;,
@@ -2458,6 +3033,7 @@ return {
 		{
 			[&quot;id&quot;] = &quot;brokenBone&quot;,
 			[&quot;nameKey&quot;] = &quot;condition.brokenBone&quot;,
+			[&quot;hintKey&quot;] = &quot;hint.brokenBone&quot;,
 			[&quot;species&quot;] = {
 				&quot;dog&quot;,
 				&quot;cat&quot;,
@@ -2465,6 +3041,10 @@ return {
 				&quot;hamster&quot;,
 				&quot;parrot&quot;,
 				&quot;turtle&quot;,
+				&quot;hedgehog&quot;,
+				&quot;snake&quot;,
+				&quot;iguana&quot;,
+				&quot;horse&quot;,
 			},
 			[&quot;symptoms&quot;] = {
 				&quot;limp&quot;,
@@ -2485,6 +3065,7 @@ return {
 		{
 			[&quot;id&quot;] = &quot;anemia&quot;,
 			[&quot;nameKey&quot;] = &quot;condition.anemia&quot;,
+			[&quot;hintKey&quot;] = &quot;hint.anemia&quot;,
 			[&quot;species&quot;] = {
 				&quot;dog&quot;,
 				&quot;cat&quot;,
@@ -2492,6 +3073,10 @@ return {
 				&quot;hamster&quot;,
 				&quot;parrot&quot;,
 				&quot;turtle&quot;,
+				&quot;hedgehog&quot;,
+				&quot;snake&quot;,
+				&quot;iguana&quot;,
+				&quot;horse&quot;,
 			},
 			[&quot;symptoms&quot;] = {
 				&quot;lethargy&quot;,
@@ -2510,10 +3095,12 @@ return {
 		{
 			[&quot;id&quot;] = &quot;earInfection&quot;,
 			[&quot;nameKey&quot;] = &quot;condition.earInfection&quot;,
+			[&quot;hintKey&quot;] = &quot;hint.earInfection&quot;,
 			[&quot;species&quot;] = {
 				&quot;dog&quot;,
 				&quot;cat&quot;,
 				&quot;rabbit&quot;,
+				&quot;hedgehog&quot;,
 			},
 			[&quot;symptoms&quot;] = {
 				&quot;earInfection&quot;,
@@ -2532,6 +3119,7 @@ return {
 		{
 			[&quot;id&quot;] = &quot;soreThroat&quot;,
 			[&quot;nameKey&quot;] = &quot;condition.soreThroat&quot;,
+			[&quot;hintKey&quot;] = &quot;hint.soreThroat&quot;,
 			[&quot;species&quot;] = {
 				&quot;dog&quot;,
 				&quot;cat&quot;,
@@ -2554,11 +3142,15 @@ return {
 		{
 			[&quot;id&quot;] = &quot;hypothermia&quot;,
 			[&quot;nameKey&quot;] = &quot;condition.hypothermia&quot;,
+			[&quot;hintKey&quot;] = &quot;hint.hypothermia&quot;,
 			[&quot;species&quot;] = {
 				&quot;rabbit&quot;,
 				&quot;hamster&quot;,
 				&quot;parrot&quot;,
 				&quot;turtle&quot;,
+				&quot;hedgehog&quot;,
+				&quot;snake&quot;,
+				&quot;iguana&quot;,
 			},
 			[&quot;symptoms&quot;] = {
 				&quot;hypothermia&quot;,
@@ -2578,9 +3170,11 @@ return {
 		{
 			[&quot;id&quot;] = &quot;swallowedObject&quot;,
 			[&quot;nameKey&quot;] = &quot;condition.swallowedObject&quot;,
+			[&quot;hintKey&quot;] = &quot;hint.swallowedObject&quot;,
 			[&quot;species&quot;] = {
 				&quot;dog&quot;,
 				&quot;cat&quot;,
+				&quot;snake&quot;,
 			},
 			[&quot;symptoms&quot;] = {
 				&quot;gutSilence&quot;,
@@ -2600,6 +3194,7 @@ return {
 		{
 			[&quot;id&quot;] = &quot;pneumonia&quot;,
 			[&quot;nameKey&quot;] = &quot;condition.pneumonia&quot;,
+			[&quot;hintKey&quot;] = &quot;hint.pneumonia&quot;,
 			[&quot;species&quot;] = {
 				&quot;dog&quot;,
 				&quot;cat&quot;,
@@ -2607,6 +3202,10 @@ return {
 				&quot;hamster&quot;,
 				&quot;parrot&quot;,
 				&quot;turtle&quot;,
+				&quot;hedgehog&quot;,
+				&quot;snake&quot;,
+				&quot;iguana&quot;,
+				&quot;horse&quot;,
 			},
 			[&quot;symptoms&quot;] = {
 				&quot;wheezing&quot;,
@@ -2627,10 +3226,12 @@ return {
 		{
 			[&quot;id&quot;] = &quot;kidneyTrouble&quot;,
 			[&quot;nameKey&quot;] = &quot;condition.kidneyTrouble&quot;,
+			[&quot;hintKey&quot;] = &quot;hint.kidneyTrouble&quot;,
 			[&quot;species&quot;] = {
 				&quot;dog&quot;,
 				&quot;cat&quot;,
 				&quot;turtle&quot;,
+				&quot;iguana&quot;,
 			},
 			[&quot;symptoms&quot;] = {
 				&quot;weightLoss&quot;,
@@ -2650,6 +3251,7 @@ return {
 		{
 			[&quot;id&quot;] = &quot;arthritis&quot;,
 			[&quot;nameKey&quot;] = &quot;condition.arthritis&quot;,
+			[&quot;hintKey&quot;] = &quot;hint.arthritis&quot;,
 			[&quot;species&quot;] = {
 				&quot;dog&quot;,
 				&quot;cat&quot;,
@@ -2672,6 +3274,7 @@ return {
 		{
 			[&quot;id&quot;] = &quot;heartMurmur&quot;,
 			[&quot;nameKey&quot;] = &quot;condition.heartMurmur&quot;,
+			[&quot;hintKey&quot;] = &quot;hint.heartMurmur&quot;,
 			[&quot;species&quot;] = {
 				&quot;dog&quot;,
 				&quot;cat&quot;,
@@ -2691,12 +3294,275 @@ return {
 			[&quot;wrongPenalty&quot;] = 78,
 			[&quot;severity&quot;] = 3,
 		},
+		{
+			[&quot;id&quot;] = &quot;urinaryInfection&quot;,
+			[&quot;nameKey&quot;] = &quot;condition.urinaryInfection&quot;,
+			[&quot;hintKey&quot;] = &quot;hint.urinaryInfection&quot;,
+			[&quot;species&quot;] = {
+				&quot;dog&quot;,
+				&quot;cat&quot;,
+				&quot;rabbit&quot;,
+				&quot;horse&quot;,
+			},
+			[&quot;symptoms&quot;] = {
+				&quot;urineInfection&quot;,
+				&quot;fever&quot;,
+			},
+			[&quot;treatments&quot;] = {
+				&quot;injection&quot;,
+				&quot;pill&quot;,
+				&quot;water&quot;,
+			},
+			[&quot;feeMultiplier&quot;] = 1.7,
+			[&quot;xp&quot;] = 54,
+			[&quot;unlockLevel&quot;] = 6,
+			[&quot;wrongPenalty&quot;] = 50,
+			[&quot;severity&quot;] = 2,
+		},
+		{
+			[&quot;id&quot;] = &quot;spineLoss&quot;,
+			[&quot;nameKey&quot;] = &quot;condition.spineLoss&quot;,
+			[&quot;hintKey&quot;] = &quot;hint.spineLoss&quot;,
+			[&quot;species&quot;] = {
+				&quot;hedgehog&quot;,
+			},
+			[&quot;symptoms&quot;] = {
+				&quot;spineLoss&quot;,
+				&quot;dullCoat&quot;,
+			},
+			[&quot;treatments&quot;] = {
+				&quot;drops&quot;,
+				&quot;feed&quot;,
+				&quot;wash&quot;,
+			},
+			[&quot;feeMultiplier&quot;] = 1.5,
+			[&quot;xp&quot;] = 46,
+			[&quot;unlockLevel&quot;] = 6,
+			[&quot;wrongPenalty&quot;] = 44,
+			[&quot;severity&quot;] = 2,
+		},
+		{
+			[&quot;id&quot;] = &quot;diabetes&quot;,
+			[&quot;nameKey&quot;] = &quot;condition.diabetes&quot;,
+			[&quot;hintKey&quot;] = &quot;hint.diabetes&quot;,
+			[&quot;species&quot;] = {
+				&quot;dog&quot;,
+				&quot;cat&quot;,
+				&quot;hamster&quot;,
+				&quot;horse&quot;,
+			},
+			[&quot;symptoms&quot;] = {
+				&quot;highGlucose&quot;,
+				&quot;weightLoss&quot;,
+			},
+			[&quot;treatments&quot;] = {
+				&quot;injection&quot;,
+				&quot;feed&quot;,
+				&quot;pill&quot;,
+			},
+			[&quot;feeMultiplier&quot;] = 2.1,
+			[&quot;xp&quot;] = 78,
+			[&quot;unlockLevel&quot;] = 6,
+			[&quot;wrongPenalty&quot;] = 72,
+			[&quot;severity&quot;] = 3,
+		},
+		{
+			[&quot;id&quot;] = &quot;shedProblem&quot;,
+			[&quot;nameKey&quot;] = &quot;condition.shedProblem&quot;,
+			[&quot;hintKey&quot;] = &quot;hint.shedProblem&quot;,
+			[&quot;species&quot;] = {
+				&quot;snake&quot;,
+			},
+			[&quot;symptoms&quot;] = {
+				&quot;stuckShed&quot;,
+				&quot;lethargy&quot;,
+			},
+			[&quot;treatments&quot;] = {
+				&quot;wash&quot;,
+				&quot;water&quot;,
+				&quot;feed&quot;,
+			},
+			[&quot;feeMultiplier&quot;] = 1.5,
+			[&quot;xp&quot;] = 46,
+			[&quot;unlockLevel&quot;] = 7,
+			[&quot;wrongPenalty&quot;] = 44,
+			[&quot;severity&quot;] = 2,
+		},
+		{
+			[&quot;id&quot;] = &quot;bladderStones&quot;,
+			[&quot;nameKey&quot;] = &quot;condition.bladderStones&quot;,
+			[&quot;hintKey&quot;] = &quot;hint.bladderStones&quot;,
+			[&quot;species&quot;] = {
+				&quot;dog&quot;,
+				&quot;cat&quot;,
+				&quot;rabbit&quot;,
+			},
+			[&quot;symptoms&quot;] = {
+				&quot;bladderStone&quot;,
+				&quot;bloodInUrine&quot;,
+			},
+			[&quot;treatments&quot;] = {
+				&quot;surgery&quot;,
+				&quot;pill&quot;,
+				&quot;water&quot;,
+			},
+			[&quot;feeMultiplier&quot;] = 2.6,
+			[&quot;xp&quot;] = 95,
+			[&quot;unlockLevel&quot;] = 7,
+			[&quot;wrongPenalty&quot;] = 85,
+			[&quot;severity&quot;] = 3,
+		},
+		{
+			[&quot;id&quot;] = &quot;pregnancyCheck&quot;,
+			[&quot;nameKey&quot;] = &quot;condition.pregnancyCheck&quot;,
+			[&quot;hintKey&quot;] = &quot;hint.pregnancyCheck&quot;,
+			[&quot;species&quot;] = {
+				&quot;dog&quot;,
+				&quot;cat&quot;,
+				&quot;rabbit&quot;,
+				&quot;snake&quot;,
+				&quot;horse&quot;,
+			},
+			[&quot;symptoms&quot;] = {
+				&quot;pregnancy&quot;,
+			},
+			[&quot;treatments&quot;] = {
+				&quot;feed&quot;,
+				&quot;water&quot;,
+			},
+			[&quot;feeMultiplier&quot;] = 1.4,
+			[&quot;xp&quot;] = 40,
+			[&quot;unlockLevel&quot;] = 7,
+			[&quot;wrongPenalty&quot;] = 30,
+			[&quot;severity&quot;] = 1,
+		},
+		{
+			[&quot;id&quot;] = &quot;organEnlargement&quot;,
+			[&quot;nameKey&quot;] = &quot;condition.organEnlargement&quot;,
+			[&quot;hintKey&quot;] = &quot;hint.organEnlargement&quot;,
+			[&quot;species&quot;] = {
+				&quot;dog&quot;,
+				&quot;cat&quot;,
+				&quot;rabbit&quot;,
+				&quot;hamster&quot;,
+				&quot;parrot&quot;,
+				&quot;turtle&quot;,
+				&quot;hedgehog&quot;,
+				&quot;snake&quot;,
+				&quot;iguana&quot;,
+				&quot;horse&quot;,
+			},
+			[&quot;symptoms&quot;] = {
+				&quot;organSwelling&quot;,
+				&quot;lethargy&quot;,
+			},
+			[&quot;treatments&quot;] = {
+				&quot;pill&quot;,
+				&quot;injection&quot;,
+				&quot;water&quot;,
+			},
+			[&quot;feeMultiplier&quot;] = 2.4,
+			[&quot;xp&quot;] = 88,
+			[&quot;unlockLevel&quot;] = 7,
+			[&quot;wrongPenalty&quot;] = 80,
+			[&quot;severity&quot;] = 3,
+		},
+		{
+			[&quot;id&quot;] = &quot;arrhythmia&quot;,
+			[&quot;nameKey&quot;] = &quot;condition.arrhythmia&quot;,
+			[&quot;hintKey&quot;] = &quot;hint.arrhythmia&quot;,
+			[&quot;species&quot;] = {
+				&quot;dog&quot;,
+				&quot;cat&quot;,
+				&quot;horse&quot;,
+			},
+			[&quot;symptoms&quot;] = {
+				&quot;irregularRhythm&quot;,
+				&quot;lethargy&quot;,
+			},
+			[&quot;treatments&quot;] = {
+				&quot;pill&quot;,
+				&quot;injection&quot;,
+			},
+			[&quot;feeMultiplier&quot;] = 2.5,
+			[&quot;xp&quot;] = 94,
+			[&quot;unlockLevel&quot;] = 8,
+			[&quot;wrongPenalty&quot;] = 86,
+			[&quot;severity&quot;] = 3,
+		},
+		{
+			[&quot;id&quot;] = &quot;metabolicBone&quot;,
+			[&quot;nameKey&quot;] = &quot;condition.metabolicBone&quot;,
+			[&quot;hintKey&quot;] = &quot;hint.metabolicBone&quot;,
+			[&quot;species&quot;] = {
+				&quot;iguana&quot;,
+				&quot;turtle&quot;,
+			},
+			[&quot;symptoms&quot;] = {
+				&quot;fracture&quot;,
+				&quot;dullCoat&quot;,
+			},
+			[&quot;treatments&quot;] = {
+				&quot;injection&quot;,
+				&quot;feed&quot;,
+				&quot;pill&quot;,
+			},
+			[&quot;feeMultiplier&quot;] = 2.3,
+			[&quot;xp&quot;] = 84,
+			[&quot;unlockLevel&quot;] = 8,
+			[&quot;wrongPenalty&quot;] = 78,
+			[&quot;severity&quot;] = 3,
+		},
+		{
+			[&quot;id&quot;] = &quot;colic&quot;,
+			[&quot;nameKey&quot;] = &quot;condition.colic&quot;,
+			[&quot;hintKey&quot;] = &quot;hint.colic&quot;,
+			[&quot;species&quot;] = {
+				&quot;horse&quot;,
+			},
+			[&quot;symptoms&quot;] = {
+				&quot;gutSilence&quot;,
+				&quot;lethargy&quot;,
+			},
+			[&quot;treatments&quot;] = {
+				&quot;water&quot;,
+				&quot;pill&quot;,
+				&quot;injection&quot;,
+			},
+			[&quot;feeMultiplier&quot;] = 2.4,
+			[&quot;xp&quot;] = 90,
+			[&quot;unlockLevel&quot;] = 9,
+			[&quot;wrongPenalty&quot;] = 80,
+			[&quot;severity&quot;] = 3,
+		},
+		{
+			[&quot;id&quot;] = &quot;laminitis&quot;,
+			[&quot;nameKey&quot;] = &quot;condition.laminitis&quot;,
+			[&quot;hintKey&quot;] = &quot;hint.laminitis&quot;,
+			[&quot;species&quot;] = {
+				&quot;horse&quot;,
+			},
+			[&quot;symptoms&quot;] = {
+				&quot;limp&quot;,
+				&quot;jointWear&quot;,
+			},
+			[&quot;treatments&quot;] = {
+				&quot;bandage&quot;,
+				&quot;pill&quot;,
+				&quot;injection&quot;,
+			},
+			[&quot;feeMultiplier&quot;] = 2.5,
+			[&quot;xp&quot;] = 92,
+			[&quot;unlockLevel&quot;] = 9,
+			[&quot;wrongPenalty&quot;] = 84,
+			[&quot;severity&quot;] = 3,
+		},
 	},
 }
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX14">
+			<Item class="ModuleScript" referent="RBX15">
 				<Properties>
 					<string name="Name">economy</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -2741,6 +3607,29 @@ return {
 		[&quot;healthyDischargeThreshold&quot;] = 90,
 	},
 	[&quot;toolStress&quot;] = 4,
+	[&quot;emergency&quot;] = {
+		[&quot;chance&quot;] = 0.16,
+		[&quot;minLevel&quot;] = 3,
+		[&quot;feeMultiplier&quot;] = 1.8,
+		[&quot;xpMultiplier&quot;] = 1.5,
+		[&quot;healthPenalty&quot;] = 22,
+		[&quot;timeLimitSeconds&quot;] = 165,
+		[&quot;reputationLoss&quot;] = -12,
+		[&quot;reputationGain&quot;] = 6,
+	},
+	[&quot;owner&quot;] = {
+		[&quot;startSatisfaction&quot;] = 75,
+		[&quot;decayPerSecond&quot;] = 0.13,
+		[&quot;wrongDiagnosisHit&quot;] = -18,
+		[&quot;correctDiagnosisGain&quot;] = 10,
+		[&quot;healthyDischargeGain&quot;] = 12,
+		[&quot;tipShare&quot;] = 0.3,
+		[&quot;minTipSatisfaction&quot;] = 60,
+	},
+	[&quot;dailyTasks&quot;] = {
+		[&quot;count&quot;] = 3,
+		[&quot;resetHours&quot;] = 24,
+	},
 	[&quot;wrongDiagnosisStress&quot;] = 18,
 	[&quot;wrongTreatmentStress&quot;] = 12,
 	[&quot;wrongTreatmentHealth&quot;] = -6,
@@ -2795,16 +3684,41 @@ return {
 			[&quot;xp&quot;] = 6900,
 			[&quot;titleKey&quot;] = &quot;title.10&quot;,
 		},
+		{
+			[&quot;level&quot;] = 11,
+			[&quot;xp&quot;] = 9000,
+			[&quot;titleKey&quot;] = &quot;title.11&quot;,
+		},
+		{
+			[&quot;level&quot;] = 12,
+			[&quot;xp&quot;] = 11600,
+			[&quot;titleKey&quot;] = &quot;title.12&quot;,
+		},
+		{
+			[&quot;level&quot;] = 13,
+			[&quot;xp&quot;] = 14800,
+			[&quot;titleKey&quot;] = &quot;title.13&quot;,
+		},
+		{
+			[&quot;level&quot;] = 14,
+			[&quot;xp&quot;] = 18700,
+			[&quot;titleKey&quot;] = &quot;title.14&quot;,
+		},
+		{
+			[&quot;level&quot;] = 15,
+			[&quot;xp&quot;] = 23500,
+			[&quot;titleKey&quot;] = &quot;title.15&quot;,
+		},
 	},
 }
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="Folder" referent="RBX15">
+			<Item class="Folder" referent="RBX16">
 				<Properties>
 					<string name="Name">locale</string>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX16">
+				<Item class="ModuleScript" referent="RBX17">
 					<Properties>
 						<string name="Name">tr</string>
 						<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -2823,7 +3737,7 @@ return {
 		[&quot;hud.reputation&quot;] = &quot;İtibar {1}/100&quot;,
 		[&quot;hud.queue&quot;] = &quot;Bekleyen hasta: {1}/{2}&quot;,
 		[&quot;hud.hints&quot;] = &quot;E ile hastayı masaya al&quot;,
-		[&quot;hud.keys&quot;] = &quot;E hastayı al   ·   1-6 alet kullan   ·   T taburcu et   ·   B mağaza   ·   ameliyatta Boşluk&quot;,
+		[&quot;hud.keys&quot;] = &quot;E hastayı al · 1-8 alet · T taburcu · B mağaza · G ilerleme · O ayarlar · V kamera · Shift koş&quot;,
 		[&quot;hud.transient&quot;] = &quot;⚠ Kayıt kapalı — ilerleme saklanmıyor&quot;,
 		[&quot;room.reception&quot;] = &quot;RESEPSİYON&quot;,
 		[&quot;room.pharmacy&quot;] = &quot;ECZANE&quot;,
@@ -2993,13 +3907,225 @@ return {
 		[&quot;notify.discharged&quot;] = &quot;Hasta taburcu edildi. +{1} TL, +{2} XP&quot;,
 		[&quot;notify.levelUp&quot;] = &quot;Seviye {1}! Artık {2}sin.&quot;,
 		[&quot;notify.toolUnlocked&quot;] = &quot;Yeni alet açıldı: {1}&quot;,
+		[&quot;notify.emergencyArrived&quot;] = &quot;ACİL VAKA! {1} ambulansla geldi.&quot;,
+		[&quot;notify.emergencyLost&quot;] = &quot;{1} kurtarılamadı. İtibarın ağır darbe aldı.&quot;,
+		[&quot;notify.dischargedTip&quot;] = &quot;Hasta taburcu edildi. +{1} TL, bahşiş +{2} TL, +{3} XP&quot;,
+		[&quot;notify.taskDone&quot;] = &quot;Günlük görev tamam: {1}  (+{2} TL, +{3} XP)&quot;,
+		[&quot;notify.achievement&quot;] = &quot;Başarım açıldı: {1}  (+{2} TL, +{3} XP)&quot;,
+		[&quot;animal.hedgehog&quot;] = &quot;Kirpi&quot;,
+		[&quot;animal.snake&quot;] = &quot;Yılan&quot;,
+		[&quot;animal.iguana&quot;] = &quot;İguana&quot;,
+		[&quot;animal.horse&quot;] = &quot;At&quot;,
+		[&quot;tool.urinalysis&quot;] = &quot;İdrar Testi&quot;,
+		[&quot;tool.ultrasound&quot;] = &quot;Ultrason&quot;,
+		[&quot;symptom.irregularRhythm&quot;] = &quot;Düzensiz kalp ritmi&quot;,
+		[&quot;symptom.spineLoss&quot;] = &quot;Diken dökülmesi&quot;,
+		[&quot;symptom.stuckShed&quot;] = &quot;Deri sıyrılmamış&quot;,
+		[&quot;symptom.dullCoat&quot;] = &quot;Donuk, cansız tüy&quot;,
+		[&quot;symptom.bloodInUrine&quot;] = &quot;İdrarda kan&quot;,
+		[&quot;symptom.highGlucose&quot;] = &quot;İdrarda yüksek şeker&quot;,
+		[&quot;symptom.urineInfection&quot;] = &quot;İdrar yolu enfeksiyonu&quot;,
+		[&quot;symptom.pregnancy&quot;] = &quot;Gebelik&quot;,
+		[&quot;symptom.organSwelling&quot;] = &quot;Organ büyümesi&quot;,
+		[&quot;symptom.bladderStone&quot;] = &quot;Mesane taşı&quot;,
+		[&quot;condition.urinaryInfection&quot;] = &quot;İdrar Yolu Enfeksiyonu&quot;,
+		[&quot;condition.spineLoss&quot;] = &quot;Diken Dökülmesi&quot;,
+		[&quot;condition.diabetes&quot;] = &quot;Şeker Hastalığı&quot;,
+		[&quot;condition.shedProblem&quot;] = &quot;Deri Değiştirme Sorunu&quot;,
+		[&quot;condition.bladderStones&quot;] = &quot;Mesane Taşı&quot;,
+		[&quot;condition.pregnancyCheck&quot;] = &quot;Gebelik Kontrolü&quot;,
+		[&quot;condition.organEnlargement&quot;] = &quot;Organ Büyümesi&quot;,
+		[&quot;condition.arrhythmia&quot;] = &quot;Ritim Bozukluğu&quot;,
+		[&quot;condition.metabolicBone&quot;] = &quot;Metabolik Kemik Hastalığı&quot;,
+		[&quot;condition.colic&quot;] = &quot;Kolik&quot;,
+		[&quot;condition.laminitis&quot;] = &quot;Nal İltihabı&quot;,
+		[&quot;hint.generic&quot;] = &quot;Bir tuhaflık var ama tam anlatamıyorum, siz bakın.&quot;,
+		[&quot;hint.emergency&quot;] = &quot;ACİL! Lütfen hemen bakın, çok kötü durumda!&quot;,
+		[&quot;hint.relieved&quot;] = &quot;Çok şükür, ne olduğunu anladınız.&quot;,
+		[&quot;hint.worried&quot;] = &quot;Emin misiniz? Bana pek öyle gelmedi...&quot;,
+		[&quot;hint.thanks&quot;] = &quot;Sağ olun doktor, üstü kalsın.&quot;,
+		[&quot;hint.goodbye&quot;] = &quot;Teşekkürler, iyi günler.&quot;,
+		[&quot;hint.kennelCough&quot;] = &quot;İki gündür boğuk boğuk öksürüyor, geceleri daha da kötü.&quot;,
+		[&quot;hint.earMites&quot;] = &quot;Durmadan kulağını kaşıyor, başını sallayıp duruyor.&quot;,
+		[&quot;hint.fleas&quot;] = &quot;Sürekli kaşınıyor, tüylerinin arasında bir şeyler kıpırdıyor.&quot;,
+		[&quot;hint.dehydration&quot;] = &quot;Sıcaklardan beri hiç su içmedi, halsiz yatıyor.&quot;,
+		[&quot;hint.sprainedLeg&quot;] = &quot;Bahçede atlarken bir ses geldi, o zamandan beri ayağını basmıyor.&quot;,
+		[&quot;hint.eyeInfection&quot;] = &quot;Gözünün kenarı hep çapaklı, sabahları yapışık kalıyor.&quot;,
+		[&quot;hint.intestinalParasite&quot;] = &quot;Ne kadar yedirsem de zayıflıyor, bir türlü kilo almıyor.&quot;,
+		[&quot;hint.featherPlucking&quot;] = &quot;Kendi tüylerini yoluyor, göğsü neredeyse çıplak kaldı.&quot;,
+		[&quot;hint.shellRot&quot;] = &quot;Kabuğunun altında yumuşamış bir yer var ve kötü kokuyor.&quot;,
+		[&quot;hint.bacterialInfection&quot;] = &quot;Ateşi var gibi, burnu sıcacık ve hiç oynamıyor.&quot;,
+		[&quot;hint.brokenBone&quot;] = &quot;Merdivenden düştü, ayağını hiç yere koyamıyor.&quot;,
+		[&quot;hint.anemia&quot;] = &quot;Diş etleri bembeyaz olmuş, üç adımda yoruluyor.&quot;,
+		[&quot;hint.earInfection&quot;] = &quot;Kulağından kötü bir koku geliyor, elimi değdirtmiyor.&quot;,
+		[&quot;hint.soreThroat&quot;] = &quot;Yutkunurken zorlanıyor, mamasını ağzında tutup bırakıyor.&quot;,
+		[&quot;hint.hypothermia&quot;] = &quot;Bir köşede kıvrılmış titriyor, hiç kıpırdamıyor.&quot;,
+		[&quot;hint.swallowedObject&quot;] = &quot;Korkarım oyuncağının bir parçasını yuttu, o zamandan beri kusuyor.&quot;,
+		[&quot;hint.pneumonia&quot;] = &quot;Nefes alırken hırıltı çıkıyor, göğsü hızlı hızlı inip kalkıyor.&quot;,
+		[&quot;hint.kidneyTrouble&quot;] = &quot;Çok su içiyor ama kilo tutmuyor, sürekli tuvalete gidiyor.&quot;,
+		[&quot;hint.arthritis&quot;] = &quot;Sabahları kalkamıyor, biraz yürüyünce açılıyor.&quot;,
+		[&quot;hint.heartMurmur&quot;] = &quot;Biraz koşunca duruyor, göğsünde bir tıkırtı var sanki.&quot;,
+		[&quot;hint.urinaryInfection&quot;] = &quot;Tuvalete gidip geliyor ama bir şey çıkmıyor, ateşi de var.&quot;,
+		[&quot;hint.spineLoss&quot;] = &quot;Dikenleri dökülüyor, altındaki deri kızarmış.&quot;,
+		[&quot;hint.diabetes&quot;] = &quot;Bu kadar çok yiyip bu kadar zayıflamasını anlamıyorum.&quot;,
+		[&quot;hint.shedProblem&quot;] = &quot;Deri değiştirecekti ama yarısı üstünde kaldı, bir türlü sıyrılmıyor.&quot;,
+		[&quot;hint.bladderStones&quot;] = &quot;İşerken acı çekiyor, idrarında kan gördüm.&quot;,
+		[&quot;hint.pregnancyCheck&quot;] = &quot;Bir tuhaflık var, acaba yavrulayacak mı diye baktırmak istedim.&quot;,
+		[&quot;hint.organEnlargement&quot;] = &quot;Karnı şişmiş gibi duruyor ve elimi değdirtmiyor.&quot;,
+		[&quot;hint.arrhythmia&quot;] = &quot;Kalbi bazen çok hızlı, bazen duruyormuş gibi atıyor.&quot;,
+		[&quot;hint.metabolicBone&quot;] = &quot;Kemikleri yumuşamış gibi, en ufak şeyde incinip duruyor.&quot;,
+		[&quot;hint.colic&quot;] = &quot;Sabahtan beri yere yatıp yuvarlanıyor, hep karnına bakıyor.&quot;,
+		[&quot;hint.laminitis&quot;] = &quot;Ön ayaklarına basamıyor, sürekli geriye yaslanıyor.&quot;,
+		[&quot;title.11&quot;] = &quot;Doçent&quot;,
+		[&quot;title.12&quot;] = &quot;Klinik Şefi&quot;,
+		[&quot;title.13&quot;] = &quot;Bilim Kurulu&quot;,
+		[&quot;title.14&quot;] = &quot;Ülke Çapında Tanınan&quot;,
+		[&quot;title.15&quot;] = &quot;Efsane Veteriner&quot;,
+		[&quot;ach.firstPatient&quot;] = &quot;İlk Hasta&quot;,
+		[&quot;ach.firstPatient.desc&quot;] = &quot;İlk hastanı taburcu et.&quot;,
+		[&quot;ach.tenPatients&quot;] = &quot;İşler Açılıyor&quot;,
+		[&quot;ach.tenPatients.desc&quot;] = &quot;10 hasta taburcu et.&quot;,
+		[&quot;ach.hundred&quot;] = &quot;Dolu Bir Gün&quot;,
+		[&quot;ach.hundred.desc&quot;] = &quot;100 hasta taburcu et.&quot;,
+		[&quot;ach.fiveHundred&quot;] = &quot;Mahallenin Veterineri&quot;,
+		[&quot;ach.fiveHundred.desc&quot;] = &quot;500 hasta taburcu et.&quot;,
+		[&quot;ach.sharpEye&quot;] = &quot;Keskin Göz&quot;,
+		[&quot;ach.sharpEye.desc&quot;] = &quot;50 doğru teşhis koy.&quot;,
+		[&quot;ach.diagnostician&quot;] = &quot;Teşhis Ustası&quot;,
+		[&quot;ach.diagnostician.desc&quot;] = &quot;250 doğru teşhis koy.&quot;,
+		[&quot;ach.flawless&quot;] = &quot;Kusursuz Seri&quot;,
+		[&quot;ach.flawless.desc&quot;] = &quot;Üst üste 10 doğru teşhis koy.&quot;,
+		[&quot;ach.unerring&quot;] = &quot;Şaşmaz&quot;,
+		[&quot;ach.unerring.desc&quot;] = &quot;Üst üste 25 doğru teşhis koy.&quot;,
+		[&quot;ach.firstThousand&quot;] = &quot;İlk Bin&quot;,
+		[&quot;ach.firstThousand.desc&quot;] = &quot;Toplam 1.000 TL kazan.&quot;,
+		[&quot;ach.tenThousand&quot;] = &quot;Kasa Doluyor&quot;,
+		[&quot;ach.tenThousand.desc&quot;] = &quot;Toplam 10.000 TL kazan.&quot;,
+		[&quot;ach.hundredK&quot;] = &quot;Klinik İmparatoru&quot;,
+		[&quot;ach.hundredK.desc&quot;] = &quot;Toplam 100.000 TL kazan.&quot;,
+		[&quot;ach.surgeon&quot;] = &quot;Cerrah&quot;,
+		[&quot;ach.surgeon.desc&quot;] = &quot;10 ameliyatı başarıyla bitir.&quot;,
+		[&quot;ach.steadyHands&quot;] = &quot;Sağlam El&quot;,
+		[&quot;ach.steadyHands.desc&quot;] = &quot;5 ameliyatı kusursuz puanla bitir.&quot;,
+		[&quot;ach.lifeSaver&quot;] = &quot;Hayat Kurtaran&quot;,
+		[&quot;ach.lifeSaver.desc&quot;] = &quot;10 acil vakayı kurtar.&quot;,
+		[&quot;ach.zoologist&quot;] = &quot;Her Türden&quot;,
+		[&quot;ach.zoologist.desc&quot;] = &quot;10 farklı türe bak.&quot;,
+		[&quot;ach.trusted&quot;] = &quot;Güvenilir&quot;,
+		[&quot;ach.trusted.desc&quot;] = &quot;İtibarı 100'e çıkar.&quot;,
+		[&quot;ach.taskmaster&quot;] = &quot;Günü Kurtaran&quot;,
+		[&quot;ach.taskmaster.desc&quot;] = &quot;15 günlük görev tamamla.&quot;,
+		[&quot;ach.chiefVet&quot;] = &quot;Başhekim&quot;,
+		[&quot;ach.chiefVet.desc&quot;] = &quot;15. seviyeye ulaş.&quot;,
+		[&quot;task.treat5&quot;] = &quot;Bugün 5 hasta taburcu et&quot;,
+		[&quot;task.treat12&quot;] = &quot;Bugün 12 hasta taburcu et&quot;,
+		[&quot;task.correct8&quot;] = &quot;Bugün 8 doğru teşhis koy&quot;,
+		[&quot;task.streak5&quot;] = &quot;Üst üste 5 doğru teşhis koy&quot;,
+		[&quot;task.surgery2&quot;] = &quot;Bugün 2 ameliyat yap&quot;,
+		[&quot;task.perfect3&quot;] = &quot;Bugün 3 kusursuz ameliyat yap&quot;,
+		[&quot;task.emergency2&quot;] = &quot;Bugün 2 acil vaka kurtar&quot;,
+		[&quot;task.earn1500&quot;] = &quot;Bugün 1.500 TL kazan&quot;,
+		[&quot;task.earn5000&quot;] = &quot;Bugün 5.000 TL kazan&quot;,
+		[&quot;task.species4&quot;] = &quot;Bugün 4 farklı türe bak&quot;,
+		[&quot;chart.satisfaction&quot;] = &quot;Sahibinin memnuniyeti {1}/100&quot;,
+		[&quot;chart.emergency&quot;] = &quot;ACİL VAKA — {1}:{2} kaldı&quot;,
+		[&quot;fps.rate&quot;] = &quot;{1} FPS&quot;,
+		[&quot;fps.detail&quot;] = &quot;en düşük {1} · gecikme {2} ms&quot;,
+		[&quot;set.title&quot;] = &quot;AYARLAR&quot;,
+		[&quot;set.close&quot;] = &quot;Kapat (O)&quot;,
+		[&quot;set.on&quot;] = &quot;AÇIK&quot;,
+		[&quot;set.off&quot;] = &quot;KAPALI&quot;,
+		[&quot;set.firstPerson&quot;] = &quot;Birinci şahıs kamera&quot;,
+		[&quot;set.firstPerson.desc&quot;] = &quot;Gözden bakış. V tuşuyla da anında değiştirebilirsin.&quot;,
+		[&quot;set.bobbing&quot;] = &quot;Kamera sallanması&quot;,
+		[&quot;set.bobbing.desc&quot;] = &quot;Yürürken kameranın adım ritmiyle inip kalkması. 0 = kapalı.&quot;,
+		[&quot;set.fov&quot;] = &quot;Görüş açısı (FOV)&quot;,
+		[&quot;set.fov.desc&quot;] = &quot;Daha geniş açı daha çok görüş, daha çok hız hissi verir.&quot;,
+		[&quot;set.sprint&quot;] = &quot;Koşma (Shift)&quot;,
+		[&quot;set.sprint.desc&quot;] = &quot;Shift basılı tutunca hızlanma ve görüş açısının açılması.&quot;,
+		[&quot;set.fps&quot;] = &quot;Kare sayacı&quot;,
+		[&quot;set.fps.desc&quot;] = &quot;Sağ üstte FPS, en düşük kare ve gecikme göstergesi.&quot;,
+		[&quot;progress.title&quot;] = &quot;İLERLEME&quot;,
+		[&quot;progress.close&quot;] = &quot;Kapat (G)&quot;,
+		[&quot;progress.tabTasks&quot;] = &quot;Günlük Görevler&quot;,
+		[&quot;progress.tabAch&quot;] = &quot;Başarımlar&quot;,
+		[&quot;progress.tabStats&quot;] = &quot;İstatistikler&quot;,
+		[&quot;progress.tasksSub&quot;] = &quot;{1}/{2} tamamlandı — yenilenmesine {3} kaldı&quot;,
+		[&quot;progress.achSub&quot;] = &quot;{1}/{2} başarım açıldı&quot;,
+		[&quot;progress.statsSub&quot;] = &quot;Teşhis isabetin: %{1}&quot;,
+		[&quot;progress.reward&quot;] = &quot;+{1} TL · +{2} XP&quot;,
+		[&quot;stat.patients&quot;] = &quot;Taburcu edilen hasta&quot;,
+		[&quot;stat.correct&quot;] = &quot;Doğru teşhis&quot;,
+		[&quot;stat.wrong&quot;] = &quot;Yanlış teşhis&quot;,
+		[&quot;stat.accuracy&quot;] = &quot;İsabet oranı&quot;,
+		[&quot;stat.streak&quot;] = &quot;Şu anki seri&quot;,
+		[&quot;stat.bestStreak&quot;] = &quot;En uzun seri&quot;,
+		[&quot;stat.earned&quot;] = &quot;Toplam kazanç (TL)&quot;,
+		[&quot;stat.tips&quot;] = &quot;Toplam bahşiş (TL)&quot;,
+		[&quot;stat.surgeries&quot;] = &quot;Ameliyat&quot;,
+		[&quot;stat.perfectSurgeries&quot;] = &quot;Kusursuz ameliyat&quot;,
+		[&quot;stat.emergencies&quot;] = &quot;Kurtarılan acil vaka&quot;,
+		[&quot;stat.lost&quot;] = &quot;Kaybedilen hasta&quot;,
+		[&quot;stat.tasks&quot;] = &quot;Tamamlanan görev&quot;,
+		[&quot;board.money&quot;] = &quot;Para&quot;,
+		[&quot;board.level&quot;] = &quot;Seviye&quot;,
+		[&quot;board.patients&quot;] = &quot;Hasta&quot;,
 	},
 }
 </ProtectedString>
 					</Properties>
 				</Item>
 			</Item>
-			<Item class="ModuleScript" referent="RBX17">
+			<Item class="ModuleScript" referent="RBX18">
+				<Properties>
+					<string name="Name">settings</string>
+					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
+-- Kaynak: data/settings.json
+-- Uretici: tools/jsontolua.py  (python3 build.py)
+-- (VERI) Kamera ve arayuz ayarlari. defaults yeni oyuncunun basladigi degerler; limits ayar panelindeki kaydiricilarin siniri. Oyuncunun secimi profiline (DataStore) yaziliyor.
+return {
+	[&quot;defaults&quot;] = {
+		[&quot;firstPerson&quot;] = false,
+		[&quot;bobbing&quot;] = 1,
+		[&quot;fieldOfView&quot;] = 70,
+		[&quot;showFps&quot;] = true,
+		[&quot;sprintEnabled&quot;] = true,
+	},
+	[&quot;limits&quot;] = {
+		[&quot;bobbing&quot;] = {
+			[&quot;min&quot;] = 0,
+			[&quot;max&quot;] = 2,
+			[&quot;step&quot;] = 0.25,
+		},
+		[&quot;fieldOfView&quot;] = {
+			[&quot;min&quot;] = 55,
+			[&quot;max&quot;] = 100,
+			[&quot;step&quot;] = 5,
+		},
+	},
+	[&quot;camera&quot;] = {
+		[&quot;walkFrequency&quot;] = 9,
+		[&quot;sprintFrequency&quot;] = 13,
+		[&quot;verticalAmplitude&quot;] = 0.32,
+		[&quot;horizontalAmplitude&quot;] = 0.2,
+		[&quot;rollDegrees&quot;] = 0.85,
+		[&quot;landingDip&quot;] = 1.6,
+		[&quot;landingRecover&quot;] = 6,
+		[&quot;smoothing&quot;] = 12,
+		[&quot;sprintFovBoost&quot;] = 12,
+		[&quot;fovSmoothing&quot;] = 6,
+		[&quot;minSpeedForBob&quot;] = 1.5,
+		[&quot;firstPersonHeadOffset&quot;] = 0.6,
+	},
+	[&quot;movement&quot;] = {
+		[&quot;walkSpeed&quot;] = 16,
+		[&quot;sprintSpeed&quot;] = 26,
+	},
+}
+</ProtectedString>
+				</Properties>
+			</Item>
+			<Item class="ModuleScript" referent="RBX19">
 				<Properties>
 					<string name="Name">symptoms</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -3146,12 +4272,196 @@ return {
 			[&quot;revealedBy&quot;] = &quot;bloodtest&quot;,
 			[&quot;severity&quot;] = 2,
 		},
+		{
+			[&quot;id&quot;] = &quot;irregularRhythm&quot;,
+			[&quot;nameKey&quot;] = &quot;symptom.irregularRhythm&quot;,
+			[&quot;revealedBy&quot;] = &quot;stethoscope&quot;,
+			[&quot;severity&quot;] = 3,
+		},
+		{
+			[&quot;id&quot;] = &quot;spineLoss&quot;,
+			[&quot;nameKey&quot;] = &quot;symptom.spineLoss&quot;,
+			[&quot;revealedBy&quot;] = &quot;visual&quot;,
+			[&quot;severity&quot;] = 2,
+		},
+		{
+			[&quot;id&quot;] = &quot;stuckShed&quot;,
+			[&quot;nameKey&quot;] = &quot;symptom.stuckShed&quot;,
+			[&quot;revealedBy&quot;] = &quot;visual&quot;,
+			[&quot;severity&quot;] = 2,
+		},
+		{
+			[&quot;id&quot;] = &quot;dullCoat&quot;,
+			[&quot;nameKey&quot;] = &quot;symptom.dullCoat&quot;,
+			[&quot;revealedBy&quot;] = &quot;visual&quot;,
+			[&quot;severity&quot;] = 1,
+		},
+		{
+			[&quot;id&quot;] = &quot;bloodInUrine&quot;,
+			[&quot;nameKey&quot;] = &quot;symptom.bloodInUrine&quot;,
+			[&quot;revealedBy&quot;] = &quot;urinalysis&quot;,
+			[&quot;severity&quot;] = 3,
+		},
+		{
+			[&quot;id&quot;] = &quot;highGlucose&quot;,
+			[&quot;nameKey&quot;] = &quot;symptom.highGlucose&quot;,
+			[&quot;revealedBy&quot;] = &quot;urinalysis&quot;,
+			[&quot;severity&quot;] = 2,
+		},
+		{
+			[&quot;id&quot;] = &quot;urineInfection&quot;,
+			[&quot;nameKey&quot;] = &quot;symptom.urineInfection&quot;,
+			[&quot;revealedBy&quot;] = &quot;urinalysis&quot;,
+			[&quot;severity&quot;] = 2,
+		},
+		{
+			[&quot;id&quot;] = &quot;pregnancy&quot;,
+			[&quot;nameKey&quot;] = &quot;symptom.pregnancy&quot;,
+			[&quot;revealedBy&quot;] = &quot;ultrasound&quot;,
+			[&quot;severity&quot;] = 1,
+		},
+		{
+			[&quot;id&quot;] = &quot;organSwelling&quot;,
+			[&quot;nameKey&quot;] = &quot;symptom.organSwelling&quot;,
+			[&quot;revealedBy&quot;] = &quot;ultrasound&quot;,
+			[&quot;severity&quot;] = 3,
+		},
+		{
+			[&quot;id&quot;] = &quot;bladderStone&quot;,
+			[&quot;nameKey&quot;] = &quot;symptom.bladderStone&quot;,
+			[&quot;revealedBy&quot;] = &quot;ultrasound&quot;,
+			[&quot;severity&quot;] = 3,
+		},
 	},
 }
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX18">
+			<Item class="ModuleScript" referent="RBX20">
+				<Properties>
+					<string name="Name">tasks</string>
+					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
+-- Kaynak: data/tasks.json
+-- Uretici: tools/jsontolua.py  (python3 build.py)
+-- (VERI) Gunluk gorev havuzu. Her gun buradan economy.json:dailyTasks.count kadari secilir.
+return {
+	[&quot;tasks&quot;] = {
+		{
+			[&quot;id&quot;] = &quot;treat5&quot;,
+			[&quot;nameKey&quot;] = &quot;task.treat5&quot;,
+			[&quot;kind&quot;] = &quot;patients&quot;,
+			[&quot;target&quot;] = 5,
+			[&quot;order&quot;] = 1,
+			[&quot;reward&quot;] = {
+				[&quot;money&quot;] = 600,
+				[&quot;xp&quot;] = 80,
+			},
+		},
+		{
+			[&quot;id&quot;] = &quot;treat12&quot;,
+			[&quot;nameKey&quot;] = &quot;task.treat12&quot;,
+			[&quot;kind&quot;] = &quot;patients&quot;,
+			[&quot;target&quot;] = 12,
+			[&quot;order&quot;] = 2,
+			[&quot;reward&quot;] = {
+				[&quot;money&quot;] = 1600,
+				[&quot;xp&quot;] = 180,
+			},
+		},
+		{
+			[&quot;id&quot;] = &quot;correct8&quot;,
+			[&quot;nameKey&quot;] = &quot;task.correct8&quot;,
+			[&quot;kind&quot;] = &quot;correct&quot;,
+			[&quot;target&quot;] = 8,
+			[&quot;order&quot;] = 3,
+			[&quot;reward&quot;] = {
+				[&quot;money&quot;] = 1100,
+				[&quot;xp&quot;] = 130,
+			},
+		},
+		{
+			[&quot;id&quot;] = &quot;streak5&quot;,
+			[&quot;nameKey&quot;] = &quot;task.streak5&quot;,
+			[&quot;kind&quot;] = &quot;streak&quot;,
+			[&quot;target&quot;] = 5,
+			[&quot;order&quot;] = 4,
+			[&quot;reward&quot;] = {
+				[&quot;money&quot;] = 1400,
+				[&quot;xp&quot;] = 150,
+			},
+		},
+		{
+			[&quot;id&quot;] = &quot;surgery2&quot;,
+			[&quot;nameKey&quot;] = &quot;task.surgery2&quot;,
+			[&quot;kind&quot;] = &quot;surgeries&quot;,
+			[&quot;target&quot;] = 2,
+			[&quot;order&quot;] = 5,
+			[&quot;reward&quot;] = {
+				[&quot;money&quot;] = 1800,
+				[&quot;xp&quot;] = 200,
+			},
+		},
+		{
+			[&quot;id&quot;] = &quot;perfect3&quot;,
+			[&quot;nameKey&quot;] = &quot;task.perfect3&quot;,
+			[&quot;kind&quot;] = &quot;perfectSurgeries&quot;,
+			[&quot;target&quot;] = 3,
+			[&quot;order&quot;] = 6,
+			[&quot;reward&quot;] = {
+				[&quot;money&quot;] = 2400,
+				[&quot;xp&quot;] = 260,
+			},
+		},
+		{
+			[&quot;id&quot;] = &quot;emergency2&quot;,
+			[&quot;nameKey&quot;] = &quot;task.emergency2&quot;,
+			[&quot;kind&quot;] = &quot;emergencies&quot;,
+			[&quot;target&quot;] = 2,
+			[&quot;order&quot;] = 7,
+			[&quot;reward&quot;] = {
+				[&quot;money&quot;] = 2200,
+				[&quot;xp&quot;] = 240,
+			},
+		},
+		{
+			[&quot;id&quot;] = &quot;earn1500&quot;,
+			[&quot;nameKey&quot;] = &quot;task.earn1500&quot;,
+			[&quot;kind&quot;] = &quot;earned&quot;,
+			[&quot;target&quot;] = 1500,
+			[&quot;order&quot;] = 8,
+			[&quot;reward&quot;] = {
+				[&quot;money&quot;] = 700,
+				[&quot;xp&quot;] = 90,
+			},
+		},
+		{
+			[&quot;id&quot;] = &quot;earn5000&quot;,
+			[&quot;nameKey&quot;] = &quot;task.earn5000&quot;,
+			[&quot;kind&quot;] = &quot;earned&quot;,
+			[&quot;target&quot;] = 5000,
+			[&quot;order&quot;] = 9,
+			[&quot;reward&quot;] = {
+				[&quot;money&quot;] = 2000,
+				[&quot;xp&quot;] = 220,
+			},
+		},
+		{
+			[&quot;id&quot;] = &quot;species4&quot;,
+			[&quot;nameKey&quot;] = &quot;task.species4&quot;,
+			[&quot;kind&quot;] = &quot;species&quot;,
+			[&quot;target&quot;] = 4,
+			[&quot;order&quot;] = 10,
+			[&quot;reward&quot;] = {
+				[&quot;money&quot;] = 1700,
+				[&quot;xp&quot;] = 190,
+			},
+		},
+	},
+}
+</ProtectedString>
+				</Properties>
+			</Item>
+			<Item class="ModuleScript" referent="RBX21">
 				<Properties>
 					<string name="Name">tools</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -3244,12 +4554,40 @@ return {
 			},
 			[&quot;handHeld&quot;] = true,
 		},
+		{
+			[&quot;id&quot;] = &quot;urinalysis&quot;,
+			[&quot;nameKey&quot;] = &quot;tool.urinalysis&quot;,
+			[&quot;order&quot;] = 7,
+			[&quot;price&quot;] = 2600,
+			[&quot;unlockLevel&quot;] = 6,
+			[&quot;useSeconds&quot;] = 2.6,
+			[&quot;color&quot;] = {
+				214,
+				196,
+				96,
+			},
+			[&quot;handHeld&quot;] = true,
+		},
+		{
+			[&quot;id&quot;] = &quot;ultrasound&quot;,
+			[&quot;nameKey&quot;] = &quot;tool.ultrasound&quot;,
+			[&quot;order&quot;] = 8,
+			[&quot;price&quot;] = 4800,
+			[&quot;unlockLevel&quot;] = 7,
+			[&quot;useSeconds&quot;] = 3.4,
+			[&quot;color&quot;] = {
+				96,
+				140,
+				190,
+			},
+			[&quot;handHeld&quot;] = true,
+		},
 	},
 }
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX19">
+			<Item class="ModuleScript" referent="RBX22">
 				<Properties>
 					<string name="Name">treatments</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -3368,7 +4706,7 @@ return {
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX20">
+			<Item class="ModuleScript" referent="RBX23">
 				<Properties>
 					<string name="Name">upgrades</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -3493,11 +4831,11 @@ return {
 			</Item>
 		</Item>
 	</Item>
-	<Item class="ServerScriptService" referent="RBX21">
+	<Item class="ServerScriptService" referent="RBX24">
 		<Properties>
 			<string name="Name">ServerScriptService</string>
 		</Properties>
-		<Item class="Script" referent="RBX22">
+		<Item class="Script" referent="RBX25">
 			<Properties>
 				<string name="Name">VetServer</string>
 				<ProtectedString name="Source">--!strict
@@ -3525,11 +4863,18 @@ local Validate = require(Shared.Validate)
 
 local AnimalAnimator = require(script.world.AnimalAnimator)
 local Clinic = require(script.world.Clinic)
+local OwnerFactory = require(script.world.OwnerFactory)
 local SkyLighting = require(script.world.Lighting)
 
+local Leaderboard = require(script.game.Leaderboard)
 local PatientFlow = require(script.game.PatientFlow)
 local Profile = require(script.game.Profile)
 local Surgery = require(script.game.Surgery)
+local Tasks = require(script.game.Tasks)
+local Upgrades = require(script.game.Upgrades)
+
+local Data = ReplicatedStorage:WaitForChild(&quot;VetData&quot;)
+local settingsData = require(Data.settings)
 
 -- ── Remote baglama ────────────────────────────────────────────────────
 
@@ -3588,6 +4933,7 @@ local setupOk, setupError = pcall(function()
 	SkyLighting.apply()
 	built = Clinic.build(workspace)
 	AnimalAnimator.start()
+	OwnerFactory.start()
 	PatientFlow.start(built :: Clinic.Built)
 end)
 
@@ -3623,7 +4969,11 @@ end
 -- ── Oyuncu yasam dongusu ──────────────────────────────────────────────
 
 local function onPlayerAdded(player: Player)
-	Profile.load(player)
+	local entry = Profile.load(player)
+	Leaderboard.attach(player)
+	-- Gunluk gorevler oyuncu girer girmez hazir olsun: gun degistiyse
+	-- burada yenileniyor.
+	Tasks.ensure(entry.data, player.UserId)
 	-- Istemci modullerinin kurulmasini beklemeye gerek yok: istemci
 	-- hazir olunca kendi durumunu istiyor (CallNext degil, ilk
 	-- StateUpdate asagida yollaniyor ve istemci StateUpdate'i
@@ -3675,7 +5025,7 @@ bind(&quot;BuyTool&quot;, function(player: Player, toolId: string)
 	if entry == nil then
 		return
 	end
-	local result = require(script.game.Upgrades).buyTool(entry.data, toolId)
+	local result = Upgrades.buyTool(entry.data, toolId)
 	Net.toPlayer(&quot;Notify&quot;, player, if result.ok then &quot;good&quot; else &quot;warn&quot;, result.reasonKey, result.args)
 	if result.ok then
 		Profile.markDirty(player)
@@ -3687,12 +5037,50 @@ bind(&quot;BuyUpgrade&quot;, function(player: Player, upgradeId: string)
 	if entry == nil then
 		return
 	end
-	local result = require(script.game.Upgrades).buyUpgrade(entry.data, upgradeId)
+	local result = Upgrades.buyUpgrade(entry.data, upgradeId)
 	Net.toPlayer(&quot;Notify&quot;, player, if result.ok then &quot;good&quot; else &quot;warn&quot;, result.reasonKey, result.args)
 	if result.ok then
 		Profile.markDirty(player)
 	end
 	PatientFlow.pushState(player)
+end)
+
+--- Ayarlar SUNUCUDA siniriyor: istemciden gelen degere guvenilmiyor.
+--- Bozuk bir deger (NaN, negatif FOV) kamerayi kilitleyebilirdi.
+local function sanitizeSettings(raw: any, current: any): any
+	local limits = settingsData.limits
+	local result = table.clone(current)
+
+	if type(raw.firstPerson) == &quot;boolean&quot; then
+		result.firstPerson = raw.firstPerson
+	end
+	if type(raw.showFps) == &quot;boolean&quot; then
+		result.showFps = raw.showFps
+	end
+	if type(raw.sprintEnabled) == &quot;boolean&quot; then
+		result.sprintEnabled = raw.sprintEnabled
+	end
+	if type(raw.bobbing) == &quot;number&quot; and raw.bobbing == raw.bobbing then
+		result.bobbing = math.clamp(raw.bobbing, limits.bobbing.min, limits.bobbing.max)
+	end
+	if type(raw.fieldOfView) == &quot;number&quot; and raw.fieldOfView == raw.fieldOfView then
+		result.fieldOfView = math.clamp(raw.fieldOfView, limits.fieldOfView.min, limits.fieldOfView.max)
+	end
+	return result
+end
+
+bind(&quot;SaveSettings&quot;, function(player: Player, raw: any)
+	local entry = Profile.get(player)
+	if entry == nil then
+		return
+	end
+	entry.data.settings = sanitizeSettings(raw, entry.data.settings)
+	Profile.markDirty(player)
+	PatientFlow.pushState(player)
+end)
+
+bind(&quot;RequestProgress&quot;, function(player: Player)
+	PatientFlow.pushProgress(player)
 end)
 
 -- Her sey bagli: artik oyuncular dogabilir.
@@ -3706,7 +5094,7 @@ end
 print(&quot;[Veteriner] sunucu hazir — klinik kuruldu, remote'lar bagli.&quot;)
 </ProtectedString>
 			</Properties>
-			<Item class="Script" referent="RBX23">
+			<Item class="Script" referent="RBX26">
 				<Properties>
 					<string name="Name">SelfTest</string>
 					<ProtectedString name="Source">--!strict
@@ -3737,13 +5125,16 @@ local Net = require(Shared.Net)
 local AnimalFactory = require(script.Parent.world.AnimalFactory)
 local Props = require(script.Parent.world.Props)
 
+local Achievements = require(script.Parent.game.Achievements)
 local Diagnosis = require(script.Parent.game.Diagnosis)
 local Economy = require(script.Parent.game.Economy)
 local Profile = require(script.Parent.game.Profile)
+local Tasks = require(script.Parent.game.Tasks)
 local Treatment = require(script.Parent.game.Treatment)
 local Upgrades = require(script.Parent.game.Upgrades)
 
 local clinicPlan = require(Data.clinic)
+local settingsData = require(Data.settings)
 
 local passed = 0
 local failures: { string } = {}
@@ -3762,7 +5153,10 @@ for _, animal in require(Data.animals).animals do
 	check((&quot;tur '%s' bilinen bir iskelet istiyor&quot;):format(animal.id), AnimalFactory.knownRig(animal.rig))
 	check((&quot;tur '%s' adi cevrili&quot;):format(animal.id), Loc.has(animal.nameKey))
 	check((&quot;tur '%s' ucreti pozitif&quot;):format(animal.id), animal.baseFee &gt; 0)
-	check((&quot;tur '%s' bacak sayisi makul&quot;):format(animal.id), animal.legs.count == 2 or animal.legs.count == 4)
+	check(
+		(&quot;tur '%s' bacak sayisi makul&quot;):format(animal.id),
+		animal.legs.count == 0 or animal.legs.count == 2 or animal.legs.count == 4
+	)
 end
 
 for _, symptom in Diagnosis.allSymptoms() do
@@ -3777,6 +5171,7 @@ for _, condition in Diagnosis.allConditions() do
 	check((&quot;hastalik '%s' adi cevrili&quot;):format(condition.id), Loc.has(condition.nameKey))
 	check((&quot;hastalik '%s' en az bir semptoma sahip&quot;):format(condition.id), #condition.symptoms &gt; 0)
 	check((&quot;hastalik '%s' en az bir tedaviye sahip&quot;):format(condition.id), #condition.treatments &gt; 0)
+	check((&quot;hastalik '%s' sahip ipucu cevrili&quot;):format(condition.id), Loc.has(condition.hintKey))
 
 	for _, symptomId in condition.symptoms do
 		check(
@@ -4004,6 +5399,106 @@ do
 	end
 end
 
+
+-- ── Basarimlar, gunluk gorevler, ayarlar ──────────────────────────────
+
+do
+	for _, achievement in Achievements.all() do
+		check((&quot;basarim '%s' adi cevrili&quot;):format(achievement.id), Loc.has(achievement.nameKey))
+		check((&quot;basarim '%s' aciklamasi cevrili&quot;):format(achievement.id), Loc.has(achievement.descKey))
+		check(
+			(&quot;basarim '%s' bilinen sayac kullaniyor&quot;):format(achievement.id),
+			Achievements.knownCounter(achievement.kind)
+		)
+		check((&quot;basarim '%s' hedefi pozitif&quot;):format(achievement.id), achievement.target &gt; 0)
+	end
+
+	for _, task in Tasks.all() do
+		check((&quot;gorev '%s' adi cevrili&quot;):format(task.id), Loc.has(task.nameKey))
+		check(
+			(&quot;gorev '%s' bilinen sayac kullaniyor&quot;):format(task.id),
+			Achievements.knownCounter(task.kind)
+		)
+	end
+
+	-- Basarim akisi: sifir profilde hicbir sey acik olmamali, sayac
+	-- hedefe gelince acilmali ve odul VERILMELI.
+	local data = Profile.defaultData()
+	local none = Achievements.check(data)
+	check(&quot;yeni profilde hemen acilan basarim yok mu?&quot;, #none &lt;= 1)
+
+	local before = data.money
+	data.stats.patients = 1
+	local unlocked = Achievements.check(data)
+	check(&quot;ilk hasta basarimi aciliyor&quot;, #unlocked &gt; 0)
+	check(&quot;basarim odulu veriliyor&quot;, data.money &gt; before)
+	local again = Achievements.check(data)
+	check(&quot;acilan basarim ikinci kez odul vermiyor&quot;, #again == 0)
+
+	check(&quot;tur sayaci bos profilde sifir&quot;, Achievements.value(Profile.defaultData(), &quot;species&quot;) == 0)
+	local counted = Profile.defaultData()
+	counted.species.dog = true
+	counted.species.cat = true
+	check(&quot;tur sayaci farkli turleri sayiyor&quot;, Achievements.value(counted, &quot;species&quot;) == 2)
+
+	-- Gunluk gorevler: ayni oyuncu ayni gun ayni gorevleri gormeli.
+	local first = Profile.defaultData()
+	Tasks.ensure(first, 12345)
+	local second = Profile.defaultData()
+	Tasks.ensure(second, 12345)
+	check(&quot;gunluk gorevler ayni oyuncu icin kararli&quot;, #first.daily.tasks == #second.daily.tasks)
+	local sameIds = #first.daily.tasks &gt; 0
+	for index, entry in first.daily.tasks do
+		if second.daily.tasks[index] == nil or second.daily.tasks[index].id ~= entry.id then
+			sameIds = false
+			break
+		end
+	end
+	check(&quot;gunluk gorevlerin sirasi da ayni&quot;, sameIds)
+
+	local other = Profile.defaultData()
+	Tasks.ensure(other, 999)
+	check(&quot;gorev sayisi ayarlandigi kadar&quot;, #other.daily.tasks == Economy.table().dailyTasks.count)
+
+	-- Gorev tamamlama: sayac hedefe gelince odul verilmeli.
+	local runner = Profile.defaultData()
+	Tasks.ensure(runner, 4242)
+	local taskEntry = runner.daily.tasks[1]
+	local taskSpec = Tasks.get(taskEntry.id)
+	check(&quot;secilen gorev tabloda var&quot;, taskSpec ~= nil)
+	if taskSpec ~= nil then
+		local money = runner.money
+		Tasks.bump(runner, taskSpec.kind, taskSpec.target)
+		local completed = Tasks.check(runner)
+		check(&quot;hedefe ulasan gorev tamamlaniyor&quot;, #completed &gt; 0)
+		check(&quot;gorev odulu veriliyor&quot;, runner.money &gt; money)
+		check(&quot;tamamlanan gorev ikinci kez odul vermiyor&quot;, #Tasks.check(runner) == 0)
+	end
+
+	-- Ayni turu iki kez saymamali.
+	local speciesRunner = Profile.defaultData()
+	Tasks.ensure(speciesRunner, 77)
+	Tasks.markSpecies(speciesRunner, &quot;dog&quot;)
+	Tasks.markSpecies(speciesRunner, &quot;dog&quot;)
+	check(&quot;ayni tur iki kez sayilmiyor&quot;, speciesRunner.daily.counters.species == 1)
+	Tasks.markSpecies(speciesRunner, &quot;cat&quot;)
+	check(&quot;farkli tur sayaci artiriyor&quot;, speciesRunner.daily.counters.species == 2)
+
+	-- Ayarlar
+	local settings = Profile.defaultSettings()
+	check(
+		&quot;varsayilan sallanma sinirlarin icinde&quot;,
+		settings.bobbing &gt;= settingsData.limits.bobbing.min
+			and settings.bobbing &lt;= settingsData.limits.bobbing.max
+	)
+	check(
+		&quot;varsayilan FOV sinirlarin icinde&quot;,
+		settings.fieldOfView &gt;= settingsData.limits.fieldOfView.min
+			and settings.fieldOfView &lt;= settingsData.limits.fieldOfView.max
+	)
+	check(&quot;kosma hizi yurume hizindan buyuk&quot;, settingsData.movement.sprintSpeed &gt; settingsData.movement.walkSpeed)
+end
+
 -- ── Rapor ─────────────────────────────────────────────────────────────
 
 local total = passed + #failures
@@ -4021,11 +5516,171 @@ end
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="Folder" referent="RBX24">
+			<Item class="Folder" referent="RBX27">
 				<Properties>
 					<string name="Name">game</string>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX25">
+				<Item class="ModuleScript" referent="RBX28">
+					<Properties>
+						<string name="Name">Achievements</string>
+						<ProtectedString name="Source">--!strict
+-- Achievements.luau
+-- =================
+-- Basarimlar. SUNUCU OTORITER: sayaclar profilden okunuyor, oduller
+-- sunucuda veriliyor.
+--
+-- Sayaclar tek yerden okunuyor
+-- ----------------------------
+-- Her basarimin bir `kind` alani var ve o ad, asagidaki COUNTERS
+-- tablosundaki bir okuyucuya karsilik geliyor. Basarim veri dosyasina
+-- yeni bir `kind` yazip buraya okuyucusunu eklemeyi unutmak, basarimin
+-- sessizce hic acilmamasi demekti — verify_data.py iki tarafi
+-- karsilastiriyor, bu yuzden unutulamiyor.
+
+local ReplicatedStorage = game:GetService(&quot;ReplicatedStorage&quot;)
+local Data = ReplicatedStorage:WaitForChild(&quot;VetData&quot;)
+
+local Profile = require(script.Parent.Profile)
+
+local achievementData = require(Data.achievements)
+
+local Achievements = {}
+
+-- kind -&gt; profilden o sayaci okuyan fonksiyon.
+local COUNTERS: { [string]: (Profile.Data) -&gt; number } = {
+	patients = function(data)
+		return data.stats.patients
+	end,
+	correct = function(data)
+		return data.stats.correct
+	end,
+	earned = function(data)
+		return data.stats.earned
+	end,
+	level = function(data)
+		return data.level
+	end,
+	surgeries = function(data)
+		return data.stats.surgeries
+	end,
+	perfectSurgeries = function(data)
+		return data.stats.perfectSurgeries
+	end,
+	emergencies = function(data)
+		return data.stats.emergencies
+	end,
+	reputation = function(data)
+		return data.reputation
+	end,
+	tasks = function(data)
+		return data.stats.tasks
+	end,
+	streak = function(data)
+		return data.stats.bestStreak
+	end,
+	species = function(data)
+		local total = 0
+		for _, treated in data.species do
+			if treated == true then
+				total += 1
+			end
+		end
+		return total
+	end,
+}
+
+local byId: { [string]: any } = {}
+for _, achievement in achievementData.achievements do
+	byId[achievement.id] = achievement
+end
+
+--- Bu sayac adi taniniyor mu? verify_data.py ve SelfTest icin.
+function Achievements.knownCounter(kind: string): boolean
+	return COUNTERS[kind] ~= nil
+end
+
+function Achievements.all(): { any }
+	return achievementData.achievements
+end
+
+function Achievements.get(id: string): any?
+	return byId[id]
+end
+
+--- Bir sayacin su anki degeri.
+function Achievements.value(data: Profile.Data, kind: string): number
+	local reader = COUNTERS[kind]
+	if reader == nil then
+		return 0
+	end
+	return reader(data)
+end
+
+export type Unlocked = { id: string, nameKey: string, money: number, xp: number }
+
+--- Acilmamis basarimlari denetler, acilanlarin odulunu VERIR ve listesini
+--- doner. Odulu burada vermek onemli: cagiran taraf unutursa basarim
+--- acilip odulsuz kalirdi.
+function Achievements.check(data: Profile.Data): { Unlocked }
+	local unlocked: { Unlocked } = {}
+
+	for _, achievement in achievementData.achievements do
+		if data.achievements[achievement.id] == true then
+			continue
+		end
+		if Achievements.value(data, achievement.kind) &lt; achievement.target then
+			continue
+		end
+
+		data.achievements[achievement.id] = true
+		data.money += achievement.reward.money
+		data.xp += achievement.reward.xp
+		table.insert(unlocked, {
+			id = achievement.id,
+			nameKey = achievement.nameKey,
+			money = achievement.reward.money,
+			xp = achievement.reward.xp,
+		})
+	end
+
+	return unlocked
+end
+
+--- Istemciye yollanan goruntu: her basarimin ilerlemesi ve durumu.
+function Achievements.snapshot(data: Profile.Data): any
+	local list = {}
+	local unlockedCount = 0
+
+	for _, achievement in achievementData.achievements do
+		local owned = data.achievements[achievement.id] == true
+		if owned then
+			unlockedCount += 1
+		end
+		local value = math.min(Achievements.value(data, achievement.kind), achievement.target)
+		table.insert(list, {
+			id = achievement.id,
+			nameKey = achievement.nameKey,
+			descKey = achievement.descKey,
+			order = achievement.order,
+			target = achievement.target,
+			value = value,
+			unlocked = owned,
+			money = achievement.reward.money,
+			xp = achievement.reward.xp,
+		})
+	end
+
+	table.sort(list, function(a, b)
+		return a.order &lt; b.order
+	end)
+	return { list = list, unlocked = unlockedCount, total = #achievementData.achievements }
+end
+
+return Achievements
+</ProtectedString>
+					</Properties>
+				</Item>
+				<Item class="ModuleScript" referent="RBX29">
 					<Properties>
 						<string name="Name">Diagnosis</string>
 						<ProtectedString name="Source">--!strict
@@ -4160,7 +5815,7 @@ return Diagnosis
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX26">
+				<Item class="ModuleScript" referent="RBX30">
 					<Properties>
 						<string name="Name">Economy</string>
 						<ProtectedString name="Source">--!strict
@@ -4277,7 +5932,83 @@ return Economy
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX27">
+				<Item class="ModuleScript" referent="RBX31">
+					<Properties>
+						<string name="Name">Leaderboard</string>
+						<ProtectedString name="Source">--!strict
+-- Leaderboard.luau
+-- ================
+-- Roblox'un yerlesik oyuncu listesi (Tab tusu) icin `leaderstats`.
+--
+-- Neden ayri modul?
+-- -----------------
+-- leaderstats, Roblox'un ISIM ve YAPI olarak dayattigi bir sozlesme:
+-- Player altinda &quot;leaderstats&quot; adinda bir Folder, icinde IntValue'lar.
+-- Bu sozlesmeyi PatientFlow'un icine dagitmak, oyun mantiginin arayuz
+-- detayina bulasmasi olurdu. Tek dokunma noktasi burasi.
+
+local ReplicatedStorage = game:GetService(&quot;ReplicatedStorage&quot;)
+local Shared = ReplicatedStorage:WaitForChild(&quot;VetShared&quot;)
+
+local Loc = require(Shared.Loc)
+
+local Leaderboard = {}
+
+--- Oyuncuya leaderstats klasorunu takar. Zaten varsa dokunmaz.
+function Leaderboard.attach(player: Player)
+	if player:FindFirstChild(&quot;leaderstats&quot;) ~= nil then
+		return
+	end
+
+	local folder = Instance.new(&quot;Folder&quot;)
+	folder.Name = &quot;leaderstats&quot;
+
+	local money = Instance.new(&quot;IntValue&quot;)
+	money.Name = Loc.get(&quot;board.money&quot;)
+	money.Value = 0
+	money.Parent = folder
+
+	local level = Instance.new(&quot;IntValue&quot;)
+	level.Name = Loc.get(&quot;board.level&quot;)
+	level.Value = 1
+	level.Parent = folder
+
+	local patients = Instance.new(&quot;IntValue&quot;)
+	patients.Name = Loc.get(&quot;board.patients&quot;)
+	patients.Value = 0
+	patients.Parent = folder
+
+	folder.Parent = player
+end
+
+--- Degerleri gunceller. Oyuncu ayrilmissa sessizce cikar.
+function Leaderboard.update(player: Player, data: any)
+	local folder = player:FindFirstChild(&quot;leaderstats&quot;)
+	if folder == nil then
+		return
+	end
+
+	local money = folder:FindFirstChild(Loc.get(&quot;board.money&quot;))
+	if money ~= nil and money:IsA(&quot;IntValue&quot;) then
+		money.Value = math.floor(data.money)
+	end
+
+	local level = folder:FindFirstChild(Loc.get(&quot;board.level&quot;))
+	if level ~= nil and level:IsA(&quot;IntValue&quot;) then
+		level.Value = data.level
+	end
+
+	local patients = folder:FindFirstChild(Loc.get(&quot;board.patients&quot;))
+	if patients ~= nil and patients:IsA(&quot;IntValue&quot;) then
+		patients.Value = data.stats.patients
+	end
+end
+
+return Leaderboard
+</ProtectedString>
+					</Properties>
+				</Item>
+				<Item class="ModuleScript" referent="RBX32">
 					<Properties>
 						<string name="Name">PatientFlow</string>
 						<ProtectedString name="Source">--!strict
@@ -4308,10 +6039,14 @@ local Net = require(Shared.Net)
 local AnimalAnimator = require(script.Parent.Parent.world.AnimalAnimator)
 local AnimalFactory = require(script.Parent.Parent.world.AnimalFactory)
 local Clinic = require(script.Parent.Parent.world.Clinic)
+local OwnerFactory = require(script.Parent.Parent.world.OwnerFactory)
+local Achievements = require(script.Parent.Achievements)
 local Diagnosis = require(script.Parent.Diagnosis)
 local Economy = require(script.Parent.Economy)
+local Leaderboard = require(script.Parent.Leaderboard)
 local Profile = require(script.Parent.Profile)
 local Surgery = require(script.Parent.Surgery)
+local Tasks = require(script.Parent.Tasks)
 local Treatment = require(script.Parent.Treatment)
 local Upgrades = require(script.Parent.Upgrades)
 
@@ -4335,7 +6070,11 @@ export type Patient = {
 	toolsUsed: { [string]: boolean },
 	diagnosed: boolean,
 	treatmentsDone: { [string]: boolean },
-	owner: Player?,
+	vet: Player?,
+	owner: OwnerFactory.Owner?,
+	emergency: boolean,
+	satisfaction: number,
+	deadline: number,
 	stationId: string?,
 	state: string,
 	arrivedAt: number,
@@ -4518,6 +6257,11 @@ local function chartSnapshot(patient: Patient?, viewer: Player): any
 	end
 
 	local condition = if patient.diagnosed then Diagnosis.condition(patient.conditionId) else nil
+	-- Sahibin sikayeti HER ZAMAN gidiyor: NPC zaten yuksek sesle
+	-- soyluyor ve bilerek teshisi ele vermeyen bir cumle. Hastaligin
+	-- KIMLIGI yine yalnizca dogru teshisten sonra gidiyor
+	-- (conditionNameKey), bu yuzden ayri okunuyor.
+	local always = Diagnosis.condition(patient.conditionId)
 
 	return {
 		present = true,
@@ -4536,6 +6280,12 @@ local function chartSnapshot(patient: Patient?, viewer: Player): any
 		stationId = patient.stationId,
 		complete = patient.diagnosed and Treatment.isComplete(patient.treatmentsDone, patient.conditionId),
 		dischargeHealth = economy.patient.dischargeHealth,
+		emergency = patient.emergency,
+		-- Kalan sure istemcide geri sayim olarak gosteriliyor. Acil
+		-- olmayan hastada sonsuz; istemci bunu gizliyor.
+		secondsLeft = if patient.emergency then math.max(0, patient.deadline - os.clock()) else -1,
+		satisfaction = math.floor(patient.satisfaction + 0.5),
+		hintKey = if always ~= nil then always.hintKey else nil,
 	}
 end
 
@@ -4593,16 +6343,76 @@ local function stateSnapshot(player: Player): any
 		queueWaiting = waitingCount(),
 		queueSlots = queueSlotCount(),
 		shop = Upgrades.shopSnapshot(data),
+		-- Ayarlar profilde saklaniyor; istemci acilista bunlari alip
+		-- kamerayi ona gore kuruyor.
+		settings = data.settings,
 	}
 end
 
 local function pushState(player: Player)
+	local entry = Profile.get(player)
+	if entry ~= nil then
+		-- Tab listesi HUD ile ayni anda tazelensin.
+		Leaderboard.update(player, entry.data)
+	end
 	Net.toPlayer(&quot;StateUpdate&quot;, player, stateSnapshot(player))
+end
+
+--- Odullerin XP'si seviye atlatabilir; seviye atlama tek yerde olsun
+--- diye ayri fonksiyon. Bedava aletleri de burada aciyor.
+local function applyLevel(player: Player, data: any, previousLevel: number)
+	data.level = Economy.levelForXp(data.xp)
+	if data.level &lt;= previousLevel then
+		return
+	end
+	local granted = Upgrades.grantFreeTools(data)
+	notify(player, &quot;good&quot;, &quot;notify.levelUp&quot;, { data.level, Economy.titleKeyForLevel(data.level) })
+	for _, toolId in granted do
+		local tool = Upgrades.tool(toolId)
+		notify(player, &quot;good&quot;, &quot;notify.toolUnlocked&quot;, { if tool ~= nil then tool.nameKey else toolId })
+	end
+end
+
+local function pushProgress(player: Player)
+	local entry = Profile.get(player)
+	if entry == nil then
+		return
+	end
+	Tasks.ensure(entry.data, player.UserId)
+	Net.toPlayer(&quot;ProgressUpdate&quot;, player, {
+		stats = entry.data.stats,
+		achievements = Achievements.snapshot(entry.data),
+		tasks = Tasks.snapshot(entry.data),
+	})
+end
+
+--- Gorev ve basarim denetimini yapar, odulleri verir, bildirir.
+--- Sayaclari degistiren HER yol bunun uzerinden gecmeli; aksi halde
+--- odul sessizce verilmemis olur.
+local function settleProgress(player: Player, data: any)
+	Tasks.ensure(data, player.UserId)
+
+	local previousLevel = data.level
+	for _, completed in Tasks.check(data) do
+		notify(player, &quot;good&quot;, &quot;notify.taskDone&quot;, { completed.nameKey, completed.money, completed.xp })
+	end
+	for _, unlocked in Achievements.check(data) do
+		notify(player, &quot;good&quot;, &quot;notify.achievement&quot;, { unlocked.nameKey, unlocked.money, unlocked.xp })
+	end
+	applyLevel(player, data, previousLevel)
+
+	Profile.markDirty(player)
+	pushProgress(player)
+end
+
+function PatientFlow.pushProgress(player: Player)
+	pushProgress(player)
 end
 
 function PatientFlow.pushState(player: Player)
 	pushState(player)
 	pushChart(player)
+	pushProgress(player)
 end
 
 local function pushStateAll()
@@ -4675,21 +6485,35 @@ local function spawnPatient()
 		return
 	end
 
+	-- Acil vaka: ambulansla gelen agir hasta. minLevel'den once cikmiyor -
+	-- yeni oyuncunun ilk dakikalarinda kaldiramayacagi bir sey olmasin.
+	local emergency = highestLevel() &gt;= economy.emergency.minLevel
+		and math.random() &lt; economy.emergency.chance
+
 	local id = nextPatientId
 	nextPatientId += 1
+
+	local health = math.random(economy.patient.startHealthMin, economy.patient.startHealthMax)
+	if emergency then
+		health = math.max(8, health - economy.emergency.healthPenalty)
+	end
 
 	local patient: Patient = {
 		id = id,
 		animalId = animalId,
 		conditionId = conditionId,
 		rig = rig,
-		health = math.random(economy.patient.startHealthMin, economy.patient.startHealthMax),
+		health = health,
 		stress = math.random(economy.patient.startStressMin, economy.patient.startStressMax),
 		revealed = {},
 		toolsUsed = {},
 		diagnosed = false,
 		treatmentsDone = {},
+		vet = nil,
 		owner = nil,
+		emergency = emergency,
+		satisfaction = economy.owner.startSatisfaction,
+		deadline = if emergency then os.clock() + economy.emergency.timeLimitSeconds else math.huge,
 		stationId = nil,
 		state = &quot;arriving&quot;,
 		arrivedAt = os.clock(),
@@ -4702,9 +6526,32 @@ local function spawnPatient()
 	AnimalAnimator.register(rig)
 	AnimalAnimator.setStress(rig, patient.stress)
 
+	-- Hayvanin sahibi: hastaligin `hintKey` ipucunu soyluyor ve
+	-- memnuniyeti bahsisi belirliyor.
+	local condition = Diagnosis.condition(conditionId)
+	local hintKey = if condition ~= nil then condition.hintKey else &quot;hint.generic&quot;
+	local owner = OwnerFactory.create(
+		CFrame.new(spawnAt.Position + Vector3.new(3.5, 0, -2)),
+		hintKey,
+		patientsFolder
+	)
+	patient.owner = owner
+	OwnerFactory.register(owner)
+	OwnerFactory.updateSatisfaction(owner, patient.satisfaction)
+
+	if emergency then
+		-- Acil vaka gorsel olarak bagirsin: kirmizi donen isik.
+		local beacon = Instance.new(&quot;PointLight&quot;)
+		beacon.Name = &quot;AcilIsigi&quot;
+		beacon.Color = Color3.fromRGB(240, 72, 64)
+		beacon.Brightness = 4
+		beacon.Range = 22
+		beacon.Parent = rig.root
+		OwnerFactory.say(owner, &quot;hint.emergency&quot;)
+	end
+
 	-- Topallayan hastalik gozle belli olsun: oyuncu daha aleti eline
 	-- almadan &quot;bacakta bir sey var&quot; diyebilmeli.
-	local condition = Diagnosis.condition(conditionId)
 	if condition ~= nil then
 		for _, symptomId in condition.symptoms do
 			if symptomId == &quot;limp&quot; then
@@ -4725,8 +6572,28 @@ local function spawnPatient()
 		end
 	end)
 
+	-- Sahip hayvanin yaninda yuruyor; bekleme noktasinin biraz saginda
+	-- duruyor ki ikisi ust uste binmesin.
+	local ownerSpot = queuePoint.Position + Vector3.new(3, 0, 1.5)
+	OwnerFactory.walkPath(owner, {
+		clinic.entranceOutside + Vector3.new(3, 0, 0),
+		clinic.entranceInside + Vector3.new(3, 0, 0),
+		ownerSpot,
+	}, function()
+		local current = patients[id]
+		if current ~= nil and current.owner ~= nil then
+			OwnerFactory.faceTowards(current.owner, current.rig.root.Position)
+		end
+	end)
+
 	updateNameplate(patient)
-	notifyAll(&quot;info&quot;, &quot;notify.patientArrived&quot;, { animalId })
+	local animal = AnimalFactory.spec(animalId)
+	local animalKey = if animal ~= nil then animal.nameKey else animalId
+	notifyAll(
+		if emergency then &quot;bad&quot; else &quot;info&quot;,
+		if emergency then &quot;notify.emergencyArrived&quot; else &quot;notify.patientArrived&quot;,
+		{ animalKey }
+	)
 	pushStateAll()
 end
 
@@ -4737,15 +6604,21 @@ local function releasePatient(patient: Patient)
 	if patient.stationId ~= nil then
 		occupiedStation[patient.stationId] = nil
 	end
-	local owner = patient.owner
-	if owner ~= nil and activeOf[owner] == patient.id then
-		activeOf[owner] = nil
-		Surgery.cancel(owner)
+	local vet = patient.vet
+	if vet ~= nil and activeOf[vet] == patient.id then
+		activeOf[vet] = nil
+		Surgery.cancel(vet)
 	end
 	patients[patient.id] = nil
 
 	AnimalAnimator.unregister(patient.rig)
 	patient.rig.model:Destroy()
+
+	if patient.owner ~= nil then
+		OwnerFactory.unregister(patient.owner)
+		patient.owner.model:Destroy()
+		patient.owner = nil
+	end
 end
 
 --- Hasta klinigi terk eder (taburcu ya da bekleyip kacti).
@@ -4764,10 +6637,10 @@ local function sendAway(patient: Patient, walkOut: boolean)
 		occupiedStation[patient.stationId] = nil
 		patient.stationId = nil
 	end
-	local owner = patient.owner
-	if owner ~= nil and activeOf[owner] == patient.id then
-		activeOf[owner] = nil
-		Surgery.cancel(owner)
+	local vet = patient.vet
+	if vet ~= nil and activeOf[vet] == patient.id then
+		activeOf[vet] = nil
+		Surgery.cancel(vet)
 	end
 
 	if not walkOut then
@@ -4786,6 +6659,14 @@ local function sendAway(patient: Patient, walkOut: boolean)
 			releasePatient(current)
 		end
 	end)
+
+	if patient.owner ~= nil then
+		OwnerFactory.walkPath(patient.owner, {
+			clinic.entranceInside + Vector3.new(3, 0, 0),
+			clinic.entranceOutside + Vector3.new(3, 0, 0),
+			clinic.entranceOutside + Vector3.new(3, 0, -30),
+		})
+	end
 end
 
 -- ── Oyuncu eylemleri ──────────────────────────────────────────────────
@@ -4834,7 +6715,7 @@ function PatientFlow.callNext(player: Player)
 	-- Kuyrukta en uzun bekleyen, sahipsiz hastayi al.
 	local chosen: Patient? = nil
 	for _, patient in patients do
-		if patient.owner == nil and (patient.state == &quot;waiting&quot; or patient.state == &quot;arriving&quot;) then
+		if patient.vet == nil and (patient.state == &quot;waiting&quot; or patient.state == &quot;arriving&quot;) then
 			if chosen == nil or patient.arrivedAt &lt; chosen.arrivedAt then
 				chosen = patient
 			end
@@ -4846,7 +6727,7 @@ function PatientFlow.callNext(player: Player)
 		return
 	end
 
-	chosen.owner = player
+	chosen.vet = player
 	chosen.state = &quot;station&quot;
 	chosen.stationId = stationId
 	if chosen.queueSlot ~= nil then
@@ -4945,17 +6826,44 @@ function PatientFlow.submitDiagnosis(player: Player, conditionId: string)
 			data.reputation + economy.reputation.correctDiagnosis * effects.repGain
 		)
 		data.stats.correct += 1
+		data.stats.streak += 1
+		data.stats.bestStreak = math.max(data.stats.bestStreak, data.stats.streak)
+		Tasks.bump(data, &quot;correct&quot;, 1)
+		Tasks.set(data, &quot;streak&quot;, data.stats.streak)
+
+		patient.satisfaction = math.clamp(
+			patient.satisfaction + economy.owner.correctDiagnosisGain,
+			0,
+			100
+		)
 		local condition = Diagnosis.condition(conditionId)
+		if patient.owner ~= nil then
+			OwnerFactory.updateSatisfaction(patient.owner, patient.satisfaction)
+			OwnerFactory.say(patient.owner, &quot;hint.relieved&quot;)
+		end
 		notify(player, &quot;good&quot;, &quot;notify.diagnosisCorrect&quot;, { condition.nameKey })
 	else
 		data.reputation = Economy.clampReputation(data.reputation + economy.reputation.wrongDiagnosis)
 		data.stats.wrong += 1
+		-- Seri tek yanlista sifirlaniyor: &quot;kusursuz&quot; basarimlarinin
+		-- anlami olsun.
+		data.stats.streak = 0
 		patient.stress = math.clamp(patient.stress + economy.wrongDiagnosisStress, 0, 100)
 		AnimalAnimator.setStress(patient.rig, patient.stress)
+
+		patient.satisfaction = math.clamp(
+			patient.satisfaction + economy.owner.wrongDiagnosisHit,
+			0,
+			100
+		)
+		if patient.owner ~= nil then
+			OwnerFactory.updateSatisfaction(patient.owner, patient.satisfaction)
+			OwnerFactory.say(patient.owner, &quot;hint.worried&quot;)
+		end
 		notify(player, &quot;bad&quot;, &quot;notify.diagnosisWrong&quot;)
 	end
 
-	Profile.markDirty(player)
+	settleProgress(player, data)
 	pushState(player)
 	pushChart(player)
 end
@@ -5051,6 +6959,15 @@ function PatientFlow.applyTreatment(player: Player, treatmentId: string)
 					healthDelta = treatment.healthDelta * (0.6 + 0.4 * score),
 					stressDelta = treatment.stressDelta,
 				})
+				data.stats.surgeries += 1
+				Tasks.bump(data, &quot;surgeries&quot;, 1)
+				-- &quot;Kusursuz&quot; ameliyat: 0.9 uzeri puan. Basarim ve gunluk
+				-- gorev buna bakiyor.
+				if score &gt;= 0.9 then
+					data.stats.perfectSurgeries += 1
+					Tasks.bump(data, &quot;perfectSurgeries&quot;, 1)
+				end
+				settleProgress(player, data)
 				notify(player, &quot;good&quot;, &quot;notify.surgerySuccess&quot;, { math.floor(score * 100 + 0.5) })
 			else
 				finishTreatment(player, current, treatmentId, {
@@ -5083,7 +7000,7 @@ function PatientFlow.applyTreatment(player: Player, treatmentId: string)
 	local patientId = patient.id
 	task.delay(seconds, function()
 		local current = patients[patientId]
-		if current == nil or current.owner ~= player then
+		if current == nil or current.vet ~= player then
 			return
 		end
 		finishTreatment(player, current, treatmentId, outcome)
@@ -5137,32 +7054,67 @@ function PatientFlow.discharge(player: Player)
 		feeBonus = effects.feeBonus,
 	})
 
-	data.money += fee
-	data.xp += condition.xp
+	-- Seviye, XP eklenmeden ONCE okunmali: sonra okunursa atlama hic
+	-- fark edilmez.
+	local previousLevel = data.level
+	local xpGain = condition.xp
+	if patient.emergency then
+		fee = math.floor(fee * economy.emergency.feeMultiplier + 0.5)
+		xpGain = math.floor(xpGain * economy.emergency.xpMultiplier + 0.5)
+		data.stats.emergencies += 1
+		Tasks.bump(data, &quot;emergencies&quot;, 1)
+		data.reputation = Economy.clampReputation(
+			data.reputation + economy.emergency.reputationGain * effects.repGain
+		)
+	end
+
+	-- Bahsis: sahibi yeterince memnunsa ucretin uzerine birakiyor.
+	-- Bekletmemenin ve dogru teshisin gorunur karsiligi bu.
+	local tip = 0
+	if patient.satisfaction &gt;= economy.owner.minTipSatisfaction then
+		local share = (patient.satisfaction - economy.owner.minTipSatisfaction)
+			/ math.max(1, 100 - economy.owner.minTipSatisfaction)
+		tip = math.floor(fee * economy.owner.tipShare * share + 0.5)
+	end
+
+	data.money += fee + tip
+	data.xp += xpGain
 	data.stats.patients += 1
-	data.stats.earned += fee
+	data.stats.earned += fee + tip
+	data.stats.tips += tip
+	data.species[patient.animalId] = true
+
+	Tasks.bump(data, &quot;patients&quot;, 1)
+	Tasks.bump(data, &quot;earned&quot;, fee + tip)
+	Tasks.markSpecies(data, patient.animalId)
 
 	if patient.health &gt;= economy.patient.healthyDischargeThreshold then
 		data.reputation = Economy.clampReputation(
 			data.reputation + economy.reputation.healthyDischarge * effects.repGain
 		)
+		patient.satisfaction = math.clamp(
+			patient.satisfaction + economy.owner.healthyDischargeGain,
+			0,
+			100
+		)
 	elseif patient.stress &gt;= 70 then
 		data.reputation = Economy.clampReputation(data.reputation + economy.reputation.stressedDischarge)
 	end
 
-	local previousLevel = data.level
-	data.level = Economy.levelForXp(data.xp)
-	if data.level &gt; previousLevel then
-		local granted = Upgrades.grantFreeTools(data)
-		notify(player, &quot;good&quot;, &quot;notify.levelUp&quot;, { data.level, Economy.titleKeyForLevel(data.level) })
-		for _, toolId in granted do
-			local tool = Upgrades.tool(toolId)
-			notify(player, &quot;good&quot;, &quot;notify.toolUnlocked&quot;, { if tool ~= nil then tool.nameKey else toolId })
-		end
+	if patient.owner ~= nil then
+		OwnerFactory.updateSatisfaction(patient.owner, patient.satisfaction)
+		OwnerFactory.say(patient.owner, if tip &gt; 0 then &quot;hint.thanks&quot; else &quot;hint.goodbye&quot;)
 	end
 
-	notify(player, &quot;good&quot;, &quot;notify.discharged&quot;, { fee, condition.xp })
-	Profile.markDirty(player)
+	applyLevel(player, data, previousLevel)
+
+	if tip &gt; 0 then
+		notify(player, &quot;good&quot;, &quot;notify.dischargedTip&quot;, { fee, tip, xpGain })
+	else
+		notify(player, &quot;good&quot;, &quot;notify.discharged&quot;, { fee, xpGain })
+	end
+
+	settleProgress(player, data)
 
 	sendAway(patient, true)
 	pushState(player)
@@ -5179,7 +7131,7 @@ function PatientFlow.playerLeft(player: Player)
 	if patient == nil then
 		return
 	end
-	patient.owner = nil
+	patient.vet = nil
 	-- Masada kalsin; siradaki oyuncu &quot;Sirayi cagir&quot; ile devralabilir.
 	patient.state = &quot;waiting&quot;
 end
@@ -5207,8 +7159,42 @@ local function tickVitals(dt: number)
 		AnimalAnimator.setState(patient.rig, if patient.stress &gt;= 70 then &quot;distress&quot; else &quot;idle&quot;)
 		updateNameplate(patient)
 
+		-- Sahibin sabri: bekledikce tukeniyor. Hastasi masaya alinmis
+		-- olsa bile isin uzamasi memnuniyeti dusuruyor.
+		if patient.owner ~= nil and patient.state ~= &quot;leaving&quot; then
+			patient.satisfaction = math.clamp(
+				patient.satisfaction - economy.owner.decayPerSecond * dt,
+				0,
+				100
+			)
+			OwnerFactory.updateSatisfaction(patient.owner, patient.satisfaction)
+		end
+
+		-- Acil vakanin suresi: dolarsa hasta kaybediliyor. Bu, oyunun
+		-- kaybedilebilir TEK durumu; bu yuzden ceza da agir.
+		if patient.emergency and os.clock() &gt; patient.deadline then
+			local animal = AnimalFactory.spec(patient.animalId)
+			local animalKey = if animal ~= nil then animal.nameKey else patient.animalId
+			notifyAll(&quot;bad&quot;, &quot;notify.emergencyLost&quot;, { animalKey })
+			local vet = patient.vet
+			if vet ~= nil then
+				local entry = Profile.get(vet)
+				if entry ~= nil then
+					entry.data.reputation = Economy.clampReputation(
+						entry.data.reputation + economy.emergency.reputationLoss
+					)
+					entry.data.stats.lost += 1
+					entry.data.stats.streak = 0
+					Profile.markDirty(vet)
+				end
+			end
+			sendAway(patient, true)
+			pushStateAll()
+			continue
+		end
+
 		-- Bekleyip bekleyip kacan hasta: butun klinigin itibari duser.
-		if patient.owner == nil and patient.state == &quot;waiting&quot; then
+		if patient.vet == nil and patient.state == &quot;waiting&quot; then
 			if os.clock() - patient.arrivedAt &gt; economy.arrival.patienceSeconds then
 				local animal = AnimalFactory.spec(patient.animalId)
 				notifyAll(&quot;bad&quot;, &quot;notify.patientLeft&quot;, { if animal ~= nil then animal.nameKey else patient.animalId })
@@ -5286,7 +7272,7 @@ return PatientFlow
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX28">
+				<Item class="ModuleScript" referent="RBX33">
 					<Properties>
 						<string name="Name">Profile</string>
 						<ProtectedString name="Source">--!strict
@@ -5317,17 +7303,55 @@ local ReplicatedStorage = game:GetService(&quot;ReplicatedStorage&quot;)
 local Data = ReplicatedStorage:WaitForChild(&quot;VetData&quot;)
 
 local economy = require(Data.economy)
+local settingsData = require(Data.settings)
 local toolData = require(Data.tools)
 
 local Profile = {}
 
-local SCHEMA_VERSION = 1
+local SCHEMA_VERSION = 2
 local STORE_NAME = &quot;VetProfile_v1&quot;
+-- STORE_NAME degismiyor: sema surumu 2'ye ciksa da ESKI KAYITLAR OKUNMAYA
+-- devam etsin. migrate() eksik alanlari varsayilanla dolduruyor; store'u
+-- degistirmek herkesin ilerlemesini silmek demek olurdu.
 local KEY_PREFIX = &quot;player_&quot;
 local LOCK_STALE_SECONDS = 1800
 local LOCK_REFRESH_SECONDS = 60
 local AUTOSAVE_SECONDS = 90
 local MAX_ATTEMPTS = 4
+
+export type Stats = {
+	patients: number,
+	correct: number,
+	wrong: number,
+	earned: number,
+	tips: number,
+	surgeries: number,
+	perfectSurgeries: number,
+	emergencies: number,
+	streak: number,
+	bestStreak: number,
+	tasks: number,
+	lost: number,
+}
+
+export type Settings = {
+	firstPerson: boolean,
+	bobbing: number,
+	fieldOfView: number,
+	showFps: boolean,
+	sprintEnabled: boolean,
+}
+
+export type DailyTask = { id: string, progress: number, done: boolean }
+
+export type Daily = {
+	day: number,
+	tasks: { DailyTask },
+	counters: { [string]: number },
+	-- O gun bakilan turler. Sayac olarak tutulamaz: &quot;4 farkli tur&quot;
+	-- gorevi icin AYNI turu iki kez saymamak gerekiyor.
+	species: { [string]: boolean },
+}
 
 export type Data = {
 	version: number,
@@ -5337,7 +7361,11 @@ export type Data = {
 	reputation: number,
 	tools: { [string]: boolean },
 	upgrades: { [string]: boolean },
-	stats: { patients: number, correct: number, wrong: number, earned: number },
+	stats: Stats,
+	species: { [string]: boolean },
+	achievements: { [string]: boolean },
+	daily: Daily,
+	settings: Settings,
 }
 
 export type Entry = {
@@ -5363,6 +7391,37 @@ local function starterTools(): { [string]: boolean }
 	return tools
 end
 
+local function defaultStats(): Stats
+	return {
+		patients = 0,
+		correct = 0,
+		wrong = 0,
+		earned = 0,
+		tips = 0,
+		surgeries = 0,
+		perfectSurgeries = 0,
+		emergencies = 0,
+		streak = 0,
+		bestStreak = 0,
+		tasks = 0,
+		lost = 0,
+	}
+end
+
+--- Ayar varsayilanlari VERIDEN geliyor (data/settings.json); kodda
+--- ikinci bir liste tutmak, veri dosyasi degisince sessizce tutarsiz
+--- kalirdi.
+local function defaultSettings(): Settings
+	local defaults = settingsData.defaults
+	return {
+		firstPerson = defaults.firstPerson,
+		bobbing = defaults.bobbing,
+		fieldOfView = defaults.fieldOfView,
+		showFps = defaults.showFps,
+		sprintEnabled = defaults.sprintEnabled,
+	}
+end
+
 local function defaultData(): Data
 	return {
 		version = SCHEMA_VERSION,
@@ -5372,7 +7431,11 @@ local function defaultData(): Data
 		reputation = economy.startingReputation,
 		tools = starterTools(),
 		upgrades = {},
-		stats = { patients = 0, correct = 0, wrong = 0, earned = 0 },
+		stats = defaultStats(),
+		species = {},
+		achievements = {},
+		daily = { day = 0, tasks = {}, counters = {}, species = {} },
+		settings = defaultSettings(),
 	}
 end
 
@@ -5410,6 +7473,80 @@ local function migrate(raw: any): Data
 			if type(value) == &quot;number&quot; and result.stats[key] ~= nil then
 				result.stats[key] = value
 			end
+		end
+	end
+	if type(raw.species) == &quot;table&quot; then
+		for id, treated in raw.species do
+			if treated == true then
+				result.species[id] = true
+			end
+		end
+	end
+	if type(raw.achievements) == &quot;table&quot; then
+		for id, unlocked in raw.achievements do
+			if unlocked == true then
+				result.achievements[id] = true
+			end
+		end
+	end
+	if type(raw.daily) == &quot;table&quot; then
+		result.daily = {
+			day = if type(raw.daily.day) == &quot;number&quot; then raw.daily.day else 0,
+			tasks = {},
+			counters = {},
+			species = {},
+		}
+		if type(raw.daily.species) == &quot;table&quot; then
+			for id, treated in raw.daily.species do
+				if treated == true then
+					result.daily.species[id] = true
+				end
+			end
+		end
+		if type(raw.daily.tasks) == &quot;table&quot; then
+			for _, task in raw.daily.tasks do
+				if type(task) == &quot;table&quot; and type(task.id) == &quot;string&quot; then
+					table.insert(result.daily.tasks, {
+						id = task.id,
+						progress = if type(task.progress) == &quot;number&quot; then task.progress else 0,
+						done = task.done == true,
+					})
+				end
+			end
+		end
+		if type(raw.daily.counters) == &quot;table&quot; then
+			for key, value in raw.daily.counters do
+				if type(key) == &quot;string&quot; and type(value) == &quot;number&quot; then
+					result.daily.counters[key] = value
+				end
+			end
+		end
+	end
+	-- Ayarlarda TIP denetimi onemli: bozuk bir kayit istemcide kamerayi
+	-- kitleyebilir. Yanlis tipli alan sessizce varsayilana donuyor.
+	if type(raw.settings) == &quot;table&quot; then
+		if type(raw.settings.firstPerson) == &quot;boolean&quot; then
+			result.settings.firstPerson = raw.settings.firstPerson
+		end
+		if type(raw.settings.showFps) == &quot;boolean&quot; then
+			result.settings.showFps = raw.settings.showFps
+		end
+		if type(raw.settings.sprintEnabled) == &quot;boolean&quot; then
+			result.settings.sprintEnabled = raw.settings.sprintEnabled
+		end
+		if type(raw.settings.bobbing) == &quot;number&quot; then
+			result.settings.bobbing = math.clamp(
+				raw.settings.bobbing,
+				settingsData.limits.bobbing.min,
+				settingsData.limits.bobbing.max
+			)
+		end
+		if type(raw.settings.fieldOfView) == &quot;number&quot; then
+			result.settings.fieldOfView = math.clamp(
+				raw.settings.fieldOfView,
+				settingsData.limits.fieldOfView.min,
+				settingsData.limits.fieldOfView.max
+			)
 		end
 	end
 
@@ -5600,11 +7737,16 @@ function Profile.defaultData(): Data
 	return defaultData()
 end
 
+--- Varsayilan ayarlar.
+function Profile.defaultSettings(): Settings
+	return defaultSettings()
+end
+
 return Profile
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX29">
+				<Item class="ModuleScript" referent="RBX34">
 					<Properties>
 						<string name="Name">Surgery</string>
 						<ProtectedString name="Source">--!strict
@@ -5761,7 +7903,187 @@ return Surgery
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX30">
+				<Item class="ModuleScript" referent="RBX35">
+					<Properties>
+						<string name="Name">Tasks</string>
+						<ProtectedString name="Source">--!strict
+-- Tasks.luau
+-- ==========
+-- Gunluk gorevler. SUNUCU OTORITER.
+--
+-- Gorevler nasil seciliyor?
+-- -------------------------
+-- Gunun numarasi ile oyuncunun UserId'sinden turetilen SABIT bir
+-- tohumla. Yani: aynı gun aynı oyuncu hangi sunucuya girerse girsin
+-- AYNI gorevleri goruyor. Rastgele secip profile yazmak da olurdu, ama
+-- o zaman iki sunucu arasinda yaris olusur ve oyuncu gorev degistirmek
+-- icin sunucu degistirebilirdi.
+--
+-- Sayaclar gun basinda sifirlaniyor ve profile yaziliyor; sunucu
+-- degisse de ilerleme kaybolmuyor.
+
+local ReplicatedStorage = game:GetService(&quot;ReplicatedStorage&quot;)
+local Data = ReplicatedStorage:WaitForChild(&quot;VetData&quot;)
+
+local Profile = require(script.Parent.Profile)
+
+local economy = require(Data.economy)
+local taskData = require(Data.tasks)
+
+local Tasks = {}
+
+local byId: { [string]: any } = {}
+for _, task in taskData.tasks do
+	byId[task.id] = task
+end
+
+function Tasks.all(): { any }
+	return taskData.tasks
+end
+
+function Tasks.get(id: string): any?
+	return byId[id]
+end
+
+--- Simdi hangi &quot;gun&quot;deyiz? os.time() UTC saniye; resetHours'a bolunce
+--- gun numarasi cikiyor.
+local function currentDay(): number
+	return math.floor(os.time() / (economy.dailyTasks.resetHours * 3600))
+end
+
+--- Deterministik karistirma: ayni tohum -&gt; ayni sira. Roblox'un global
+--- `math.random`'ini kirletmemek icin kendi dogrusal uretecini kullaniyor.
+local function shuffledPool(seed: number): { any }
+	local pool = table.clone(taskData.tasks)
+	local state = (seed % 2147483647) + 1
+
+	local function nextRandom(limit: number): number
+		state = (state * 48271) % 2147483647
+		return (state % limit) + 1
+	end
+
+	for index = #pool, 2, -1 do
+		local swap = nextRandom(index)
+		pool[index], pool[swap] = pool[swap], pool[index]
+	end
+	return pool
+end
+
+--- Gun degistiyse gorevleri ve sayaclari yeniler. Her etkilesimden once
+--- cagrilmali; tek giris noktasi bu.
+function Tasks.ensure(data: Profile.Data, userId: number): boolean
+	local day = currentDay()
+	if data.daily.day == day and #data.daily.tasks &gt; 0 then
+		return false
+	end
+
+	local pool = shuffledPool(day * 1000003 + userId)
+	local chosen = {}
+	for index = 1, math.min(economy.dailyTasks.count, #pool) do
+		table.insert(chosen, { id = pool[index].id, progress = 0, done = false })
+	end
+
+	data.daily = { day = day, tasks = chosen, counters = {}, species = {} }
+	return true
+end
+
+--- Gunluk sayaci artirir. `kind` gorev tablosundaki kind ile ayni.
+function Tasks.bump(data: Profile.Data, kind: string, amount: number)
+	data.daily.counters[kind] = (data.daily.counters[kind] or 0) + amount
+end
+
+--- Gunluk sayaci dogrudan ayarlar (streak ve species gibi &quot;sayan degil,
+--- olan&quot; degerler icin).
+function Tasks.set(data: Profile.Data, kind: string, value: number)
+	data.daily.counters[kind] = math.max(data.daily.counters[kind] or 0, value)
+end
+
+--- O gun bakilan bir turu isaretler ve &quot;species&quot; sayacini gunceller.
+--- Ayni turu iki kez saymamasi icin sayac degil KUME tutuluyor.
+function Tasks.markSpecies(data: Profile.Data, animalId: string)
+	if data.daily.species[animalId] == true then
+		return
+	end
+	data.daily.species[animalId] = true
+
+	local total = 0
+	for _, treated in data.daily.species do
+		if treated == true then
+			total += 1
+		end
+	end
+	data.daily.counters.species = total
+end
+
+export type Completed = { id: string, nameKey: string, money: number, xp: number }
+
+--- Tamamlananlarin odulunu verir ve listesini doner.
+function Tasks.check(data: Profile.Data): { Completed }
+	local completed: { Completed } = {}
+
+	for _, entry in data.daily.tasks do
+		local task = byId[entry.id]
+		if task == nil then
+			-- Gorev veri dosyasindan silinmis: sessizce yutmuyoruz.
+			warn((&quot;[Tasks] profilde bilinmeyen gorev: '%s'&quot;):format(entry.id))
+			continue
+		end
+		entry.progress = math.min(data.daily.counters[task.kind] or 0, task.target)
+		if entry.done or entry.progress &lt; task.target then
+			continue
+		end
+
+		entry.done = true
+		data.money += task.reward.money
+		data.xp += task.reward.xp
+		data.stats.tasks += 1
+		table.insert(completed, {
+			id = task.id,
+			nameKey = task.nameKey,
+			money = task.reward.money,
+			xp = task.reward.xp,
+		})
+	end
+
+	return completed
+end
+
+--- Istemciye yollanan goruntu.
+function Tasks.snapshot(data: Profile.Data): any
+	local list = {}
+	local doneCount = 0
+
+	for _, entry in data.daily.tasks do
+		local task = byId[entry.id]
+		if task == nil then
+			continue
+		end
+		if entry.done then
+			doneCount += 1
+		end
+		table.insert(list, {
+			id = task.id,
+			nameKey = task.nameKey,
+			target = task.target,
+			value = math.min(data.daily.counters[task.kind] or 0, task.target),
+			done = entry.done,
+			money = task.reward.money,
+			xp = task.reward.xp,
+		})
+	end
+
+	-- Sonraki yenilenmeye kalan sure: arayuzde geri sayim gosteriliyor.
+	local period = economy.dailyTasks.resetHours * 3600
+	local remaining = period - (os.time() % period)
+
+	return { list = list, done = doneCount, total = #list, resetsIn = remaining }
+end
+
+return Tasks
+</ProtectedString>
+					</Properties>
+				</Item>
+				<Item class="ModuleScript" referent="RBX36">
 					<Properties>
 						<string name="Name">Treatment</string>
 						<ProtectedString name="Source">--!strict
@@ -5921,7 +8243,7 @@ return Treatment
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX31">
+				<Item class="ModuleScript" referent="RBX37">
 					<Properties>
 						<string name="Name">Upgrades</string>
 						<ProtectedString name="Source">--!strict
@@ -6144,11 +8466,11 @@ return Upgrades
 					</Properties>
 				</Item>
 			</Item>
-			<Item class="Folder" referent="RBX32">
+			<Item class="Folder" referent="RBX38">
 				<Properties>
 					<string name="Name">world</string>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX33">
+				<Item class="ModuleScript" referent="RBX39">
 					<Properties>
 						<string name="Name">AnimalAnimator</string>
 						<ProtectedString name="Source">--!strict
@@ -6386,6 +8708,24 @@ local function stepPose(entry: Entry, dt: number, movingSpeed: number)
 		end
 	end
 
+	-- Yilan: govde halkalari boyunca ilerleyen bir dalga. Faz kaymasi
+	-- halkadan halkaya sabit; dalga bastan kuyruga akiyor, yani hayvan
+	-- kendi uzerinde SURUNUYOR gibi gorunuyor. Dururken de kisik bir
+	-- genlikle devam ediyor: canli bir yilan tas gibi durmaz.
+	do
+		local index = 2
+		local amplitude = if walking then 0.42 else 0.12
+		while true do
+			local joint = joints[&quot;segment&quot; .. index]
+			if joint == nil then
+				break
+			end
+			local offset = (index - 1) * 0.7
+			joint.Transform = CFrame.Angles(0, math.sin(phase * 1.6 - offset) * amplitude, 0)
+			index += 1
+		end
+	end
+
 	-- Kanatlar: yururken cirpinir, dururken govdeye yapisir.
 	for index = 1, 2 do
 		local joint = joints[&quot;wing&quot; .. index]
@@ -6433,7 +8773,7 @@ return Animator
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX34">
+				<Item class="ModuleScript" referent="RBX40">
 					<Properties>
 						<string name="Name">AnimalFactory</string>
 						<ProtectedString name="Source">--!strict
@@ -6501,7 +8841,7 @@ function AnimalFactory.allIds(): { string }
 	return ids
 end
 
-local KNOWN_RIGS = { quadruped = true, bird = true, shelled = true }
+local KNOWN_RIGS = { quadruped = true, bird = true, shelled = true, serpentine = true }
 
 --- Iskelet adi taniniyor mu? verify_data.py ve SelfTest bunu soruyor.
 function AnimalFactory.knownRig(rig: string): boolean
@@ -6811,6 +9151,130 @@ local function buildTail(
 	parts.tail = part
 end
 
+--- Yilan govdesi: birbirine Motor6D ile bagli halkalar. Kuyruga dogru
+--- incelir. Ilk halka govde yerine geciyor, kafa ona takiliyor.
+---
+--- Neden ayri bir iskelet? Dortayakli govdesi tek bir kutu; yilanin
+--- kivrilmasi icin govdenin KENDISININ eklemli olmasi gerekiyor.
+local function buildSerpentine(
+	model: Model,
+	root: BasePart,
+	spec: any,
+	palette: { [string]: Color3 },
+	joints: { [string]: Motor6D },
+	parts: { [string]: BasePart },
+	torsoY: number
+): BasePart
+	local count = spec.segments.count
+	local taper = spec.segments.taper
+	local segmentLength = spec.body.length / count
+
+	local previous: BasePart? = nil
+	local firstSegment: BasePart? = nil
+
+	for index = 1, count do
+		-- Genislik bastan sona dogrusal olarak `taper` oranina iniyor.
+		local shrink = 1 - (1 - taper) * ((index - 1) / math.max(count - 1, 1))
+		local width = spec.body.width * shrink
+		local z = spec.body.length * 0.5 - segmentLength * (index - 0.5)
+
+		local segment = Build.part({
+			name = &quot;Halka&quot; .. index,
+			size = Vector3.new(width, spec.body.height * shrink, segmentLength),
+			cf = CFrame.new(0, torsoY, z),
+			color = if index % 2 == 0 then palette.accent else palette.body,
+			canCollide = false,
+			anchored = false,
+			parent = model,
+		})
+		parts[&quot;segment&quot; .. index] = segment
+
+		if previous == nil then
+			firstSegment = segment
+			joints.rootJoint = rigJoint(&quot;RootJoint&quot;, root, segment, Vector3.new(0, torsoY, z))
+		else
+			-- Eklem iki halkanin ARASINDA: burasi kivrilma noktasi.
+			local pivot = Vector3.new(0, torsoY, z + segmentLength * 0.5)
+			joints[&quot;segment&quot; .. index] = rigJoint(&quot;Segment&quot; .. index, previous, segment, pivot)
+		end
+		previous = segment
+	end
+
+	return firstSegment :: BasePart
+end
+
+--- Kirpi dikenleri: govdenin ustune yayilmis kucuk koniler (kama).
+local function buildSpines(model: Model, torso: BasePart, spec: any, palette: { [string]: Color3 })
+	local config = spec.spines
+	local rows = 4
+	local perRow = math.max(1, math.floor(config.count / rows))
+
+	for row = 1, rows do
+		for index = 1, perRow do
+			-- Govdenin ust yarisina, boyuna ve enine yayiliyor.
+			local along = (index - 0.5) / perRow - 0.5
+			local across = (row - 0.5) / rows - 0.5
+			local spine = Build.part({
+				name = &quot;Diken&quot;,
+				size = Vector3.new(config.thickness, config.length, config.thickness),
+				cf = torso.CFrame
+					* CFrame.new(
+						across * spec.body.width * 0.85,
+						spec.body.height * 0.45 + config.length * 0.4,
+						along * spec.body.length * 0.85
+					)
+					* CFrame.Angles(math.rad(across * -34), 0, math.rad(across * 34)),
+				color = palette.accent,
+				canCollide = false,
+				anchored = false,
+				parent = model,
+			})
+			rigidWeld(torso, spine)
+		end
+	end
+end
+
+--- Iguana sirt yelesi: govdenin uzerinde sirtboyu dizilmis ince plakalar.
+local function buildCrest(model: Model, torso: BasePart, spec: any, palette: { [string]: Color3 })
+	local config = spec.crest
+	for index = 1, config.count do
+		local along = (index - 0.5) / config.count - 0.5
+		-- Ortadaki plakalar en uzun: hayvan siluetine bir tepe veriyor.
+		local scale = 0.55 + 0.45 * math.cos(along * math.pi)
+		local plate = Build.part({
+			name = &quot;Yele&quot;,
+			size = Vector3.new(config.thickness, config.height * scale, spec.body.length / config.count * 0.6),
+			cf = torso.CFrame
+				* CFrame.new(0, spec.body.height * 0.5 + config.height * scale * 0.5, along * spec.body.length * 0.9),
+			color = palette.accent,
+			canCollide = false,
+			anchored = false,
+			parent = model,
+		})
+		rigidWeld(torso, plate)
+	end
+end
+
+--- At yelesi: boyun boyunca kafaya dogru inen tutamlar.
+local function buildMane(model: Model, torso: BasePart, head: BasePart, spec: any, palette: { [string]: Color3 })
+	local config = spec.mane
+	for index = 1, config.count do
+		local ratio = (index - 0.5) / config.count
+		local position = torso.Position:Lerp(head.Position, ratio)
+		local tuft = Build.part({
+			name = &quot;Yele&quot;,
+			size = Vector3.new(config.thickness, config.height, spec.body.length / config.count * 0.5),
+			cf = CFrame.new(position + Vector3.new(0, spec.body.height * 0.45, 0)),
+			color = palette.accent,
+			material = Enum.Material.Fabric,
+			canCollide = false,
+			anchored = false,
+			parent = model,
+		})
+		rigidWeld(torso, tuft)
+	end
+end
+
 --- Tam rigi kurar. `cframe` hayvanin ayaklarinin basacagi yer.
 function AnimalFactory.create(animalId: string, cframe: CFrame, parent: Instance): Rig?
 	local spec = byId[animalId]
@@ -6833,6 +9297,8 @@ function AnimalFactory.create(animalId: string, cframe: CFrame, parent: Instance
 	local joints: { [string]: Motor6D } = {}
 
 	local body = spec.body
+	-- Govde merkezinin yerden yuksekligi. Yilanda bacak yok, govde
+	-- dogrudan zeminde: legs.length = 0 oldugu icin formul ayni kaliyor.
 	local groundClearance = spec.legs.length
 	local torsoY = groundClearance + body.height * 0.5
 
@@ -6851,34 +9317,51 @@ function AnimalFactory.create(animalId: string, cframe: CFrame, parent: Instance
 	})
 	parts.root = root
 
-	local torso = Build.part({
-		name = &quot;Govde&quot;,
-		size = Vector3.new(body.width, body.height, body.length),
-		cf = CFrame.new(0, torsoY, 0),
-		color = palette.body,
-		canCollide = false,
-		anchored = false,
-		parent = model,
-	})
-	parts.torso = torso
-	joints.rootJoint = rigJoint(&quot;RootJoint&quot;, root, torso, Vector3.new(0, torsoY, 0))
+	local torso: BasePart
+	if spec.rig == &quot;serpentine&quot; then
+		torso = buildSerpentine(model, root, spec, palette, joints, parts, torsoY)
+		parts.torso = torso
+	else
+		torso = Build.part({
+			name = &quot;Govde&quot;,
+			size = Vector3.new(body.width, body.height, body.length),
+			cf = CFrame.new(0, torsoY, 0),
+			color = palette.body,
+			canCollide = false,
+			anchored = false,
+			parent = model,
+		})
+		parts.torso = torso
+		joints.rootJoint = rigJoint(&quot;RootJoint&quot;, root, torso, Vector3.new(0, torsoY, 0))
 
-	-- Karin: govdenin altinda acik renk serit. Tek renkli bir kutu yerine
-	-- iki tonlu govde hayvani gozle ayirt edilir kiliyor.
-	local belly = Build.part({
-		name = &quot;Karin&quot;,
-		size = Vector3.new(body.width * 0.72, body.height * 0.45, body.length * 0.82),
-		cf = CFrame.new(0, torsoY - body.height * 0.32, body.length * 0.04),
-		color = palette.belly,
-		canCollide = false,
-		anchored = false,
-		parent = model,
-	})
-	rigidWeld(torso, belly)
+		-- Karin: govdenin altinda acik renk serit. Tek renkli bir kutu yerine
+		-- iki tonlu govde hayvani gozle ayirt edilir kiliyor.
+		local belly = Build.part({
+			name = &quot;Karin&quot;,
+			size = Vector3.new(body.width * 0.72, body.height * 0.45, body.length * 0.82),
+			cf = CFrame.new(0, torsoY - body.height * 0.32, body.length * 0.04),
+			color = palette.belly,
+			canCollide = false,
+			anchored = false,
+			parent = model,
+		})
+		rigidWeld(torso, belly)
+	end
 
 	buildHead(model, torso, spec, palette, joints, parts)
 	buildLegs(model, torso, spec, palette, joints, parts)
 	buildTail(model, torso, spec, palette, joints, parts)
+
+	-- Istege bagli suslemeler: yalnizca veri tablosunda tanimliysa kuruluyor.
+	if spec.spines ~= nil then
+		buildSpines(model, torso, spec, palette)
+	end
+	if spec.crest ~= nil then
+		buildCrest(model, torso, spec, palette)
+	end
+	if spec.mane ~= nil and parts.head ~= nil then
+		buildMane(model, torso, parts.head, spec, palette)
+	end
 
 	if spec.rig == &quot;bird&quot; and spec.wings ~= nil then
 		for index, side in { -1, 1 } do
@@ -6961,7 +9444,7 @@ return AnimalFactory
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX35">
+				<Item class="ModuleScript" referent="RBX41">
 					<Properties>
 						<string name="Name">Clinic</string>
 						<ProtectedString name="Source">--!strict
@@ -7342,7 +9825,7 @@ return Clinic
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX36">
+				<Item class="ModuleScript" referent="RBX42">
 					<Properties>
 						<string name="Name">Lighting</string>
 						<ProtectedString name="Source">--!strict
@@ -7434,7 +9917,463 @@ return Sky
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX37">
+				<Item class="ModuleScript" referent="RBX43">
+					<Properties>
+						<string name="Name">OwnerFactory</string>
+						<ProtectedString name="Source">--!strict
+-- OwnerFactory.luau
+-- =================
+-- Hayvanin sahibi olan NPC'yi kurar.
+--
+-- Neden Humanoid degil, parcalardan?
+-- ----------------------------------
+-- Bir Humanoid karakter, animasyon asset'i olmadan T-poz durur; bu
+-- ortamda Roblox'a erisim olmadigi icin hicbir animasyon ID'si
+-- dogrulanamazdi. Buradaki NPC blok parcalardan kuruluyor ve OwnerFactory
+-- kendi duruslarini (ayakta / oturur / kollari kavusturmus) CFrame ile
+-- veriyor; ayrica bekleme odasinda nefes alip etrafina bakiyor.
+--
+-- Sahibin isi oynanista ne?
+-- -------------------------
+-- Iki sey: (1) basinin ustunde hastaligin `hintKey` ipucunu soyluyor -
+-- gercek bir muayenede de sahibin anlattigi sey tani degil, sikayettir;
+-- (2) MEMNUNIYETI var. Bekledikce duser, dogru teshis ve saglikli
+-- taburcu ile yukselir; yeterince memnunsa ucretin uzerine bahsis birakir.
+
+local RunService = game:GetService(&quot;RunService&quot;)
+
+local ReplicatedStorage = game:GetService(&quot;ReplicatedStorage&quot;)
+local Shared = ReplicatedStorage:WaitForChild(&quot;VetShared&quot;)
+
+local Build = require(Shared.Build)
+local Loc = require(Shared.Loc)
+
+local OwnerFactory = {}
+
+export type Owner = {
+	model: Model,
+	root: Part,
+	joints: { [string]: Motor6D },
+	bubble: BillboardGui,
+	bubbleText: TextLabel,
+	meter: Frame,
+	phase: number,
+}
+
+-- Sahipler rastgele gorunsun diye kucuk palet havuzlari. Oynanisi
+-- etkilemiyor, o yuzden veri dosyasinda degil burada.
+local SKIN = {
+	Color3.fromRGB(242, 208, 176),
+	Color3.fromRGB(218, 172, 132),
+	Color3.fromRGB(176, 126, 88),
+	Color3.fromRGB(126, 88, 62),
+	Color3.fromRGB(86, 58, 42),
+}
+local SHIRT = {
+	Color3.fromRGB(78, 132, 186),
+	Color3.fromRGB(196, 92, 86),
+	Color3.fromRGB(96, 156, 112),
+	Color3.fromRGB(206, 160, 72),
+	Color3.fromRGB(132, 108, 176),
+	Color3.fromRGB(64, 72, 92),
+}
+local TROUSERS = {
+	Color3.fromRGB(58, 64, 78),
+	Color3.fromRGB(46, 52, 62),
+	Color3.fromRGB(92, 80, 70),
+}
+local HAIR = {
+	Color3.fromRGB(44, 36, 32),
+	Color3.fromRGB(92, 62, 40),
+	Color3.fromRGB(186, 154, 96),
+	Color3.fromRGB(150, 148, 152),
+}
+
+local function pick&lt;T&gt;(list: { T }): T
+	return list[math.random(1, #list)]
+end
+
+local function rigJoint(name: string, part0: BasePart, part1: BasePart, pivot: Vector3): Motor6D
+	local pivotCF = CFrame.new(pivot)
+	local motor = Instance.new(&quot;Motor6D&quot;)
+	motor.Name = name
+	motor.Part0 = part0
+	motor.Part1 = part1
+	motor.C0 = part0.CFrame:ToObjectSpace(pivotCF)
+	motor.C1 = part1.CFrame:ToObjectSpace(pivotCF)
+	motor.Parent = part0
+	return motor
+end
+
+local function rigidWeld(part0: BasePart, part1: BasePart)
+	local weld = Instance.new(&quot;WeldConstraint&quot;)
+	weld.Part0 = part0
+	weld.Part1 = part1
+	weld.Parent = part0
+end
+
+--- Konusma balonu + memnuniyet cubugu.
+local function buildBubble(root: BasePart): (BillboardGui, TextLabel, Frame)
+	local billboard = Instance.new(&quot;BillboardGui&quot;)
+	billboard.Name = &quot;Balon&quot;
+	billboard.Size = UDim2.fromOffset(250, 92)
+	billboard.StudsOffsetWorldSpace = Vector3.new(0, 4.4, 0)
+	billboard.AlwaysOnTop = true
+	billboard.MaxDistance = 80
+	billboard.Parent = root
+
+	local frame = Instance.new(&quot;Frame&quot;)
+	frame.Size = UDim2.fromScale(1, 1)
+	frame.BackgroundColor3 = Color3.fromRGB(250, 250, 252)
+	frame.BackgroundTransparency = 0.06
+	frame.BorderSizePixel = 0
+	frame.Parent = billboard
+	local corner = Instance.new(&quot;UICorner&quot;)
+	corner.CornerRadius = UDim.new(0, 10)
+	corner.Parent = frame
+
+	local text = Instance.new(&quot;TextLabel&quot;)
+	text.Name = &quot;Metin&quot;
+	text.Size = UDim2.new(1, -16, 1, -26)
+	text.Position = UDim2.fromOffset(8, 6)
+	text.BackgroundTransparency = 1
+	text.Font = Enum.Font.GothamMedium
+	text.TextSize = 14
+	text.TextWrapped = true
+	text.TextColor3 = Color3.fromRGB(38, 44, 56)
+	text.Text = &quot;&quot;
+	text.Parent = frame
+
+	local track = Instance.new(&quot;Frame&quot;)
+	track.Name = &quot;Memnuniyet&quot;
+	track.Size = UDim2.new(1, -16, 0, 9)
+	track.Position = UDim2.new(0, 8, 1, -15)
+	track.BackgroundColor3 = Color3.fromRGB(214, 218, 224)
+	track.BorderSizePixel = 0
+	track.Parent = frame
+	local trackCorner = Instance.new(&quot;UICorner&quot;)
+	trackCorner.CornerRadius = UDim.new(0, 5)
+	trackCorner.Parent = track
+
+	local fill = Instance.new(&quot;Frame&quot;)
+	fill.Name = &quot;Dolgu&quot;
+	fill.Size = UDim2.fromScale(0.75, 1)
+	fill.BackgroundColor3 = Color3.fromRGB(96, 196, 120)
+	fill.BorderSizePixel = 0
+	fill.Parent = track
+	local fillCorner = Instance.new(&quot;UICorner&quot;)
+	fillCorner.CornerRadius = UDim.new(0, 5)
+	fillCorner.Parent = fill
+
+	return billboard, text, fill
+end
+
+--- Sahibi kurar. `cframe` ayaklarinin basacagi yer.
+function OwnerFactory.create(cframe: CFrame, hintKey: string, parent: Instance): Owner
+	local model = Build.model(&quot;Sahip&quot;, parent)
+	local skin = pick(SKIN)
+	local shirt = pick(SHIRT)
+	local trousers = pick(TROUSERS)
+	local hair = pick(HAIR)
+
+	local hipHeight = 3.0
+	local torsoHeight = 2.4
+	local torsoY = hipHeight + torsoHeight * 0.5
+
+	local root = Build.part({
+		name = &quot;Root&quot;,
+		size = Vector3.new(2, 0.4, 1),
+		cf = CFrame.new(0, torsoY, 0),
+		transparency = 1,
+		canCollide = false,
+		canQuery = false,
+		castShadow = false,
+		anchored = true,
+		parent = model,
+	})
+
+	local torso = Build.part({
+		name = &quot;Govde&quot;,
+		size = Vector3.new(2, torsoHeight, 1),
+		cf = CFrame.new(0, torsoY, 0),
+		color = shirt,
+		material = Enum.Material.Fabric,
+		canCollide = false,
+		anchored = false,
+		parent = model,
+	})
+	local joints: { [string]: Motor6D } = {}
+	joints.rootJoint = rigJoint(&quot;RootJoint&quot;, root, torso, Vector3.new(0, torsoY, 0))
+
+	local head = Build.part({
+		name = &quot;Kafa&quot;,
+		size = Vector3.new(1.15, 1.25, 1.15),
+		cf = CFrame.new(0, torsoY + torsoHeight * 0.5 + 0.7, 0),
+		color = skin,
+		canCollide = false,
+		anchored = false,
+		parent = model,
+	})
+	joints.neck = rigJoint(&quot;Neck&quot;, torso, head, Vector3.new(0, torsoY + torsoHeight * 0.5, 0))
+
+	local hairPart = Build.part({
+		name = &quot;Sac&quot;,
+		size = Vector3.new(1.25, 0.45, 1.25),
+		cf = head.CFrame * CFrame.new(0, 0.5, -0.04),
+		color = hair,
+		canCollide = false,
+		anchored = false,
+		parent = model,
+	})
+	rigidWeld(head, hairPart)
+
+	for _, side in { -1, 1 } do
+		local eye = Build.ball({
+			name = &quot;Goz&quot;,
+			size = Vector3.new(0.17, 0.17, 0.17),
+			cf = head.CFrame * CFrame.new(side * 0.26, 0.1, 0.56),
+			color = Color3.fromRGB(32, 30, 30),
+			canCollide = false,
+			anchored = false,
+			parent = model,
+		})
+		rigidWeld(head, eye)
+	end
+
+	for index, side in { -1, 1 } do
+		local shoulder = Vector3.new(side * 1.25, torsoY + torsoHeight * 0.42, 0)
+		local arm = Build.part({
+			name = &quot;Kol&quot; .. index,
+			size = Vector3.new(0.6, 2.1, 0.6),
+			cf = CFrame.new(shoulder - Vector3.new(0, 1.05, 0)),
+			color = shirt,
+			material = Enum.Material.Fabric,
+			canCollide = false,
+			anchored = false,
+			parent = model,
+		})
+		local hand = Build.part({
+			name = &quot;El&quot; .. index,
+			size = Vector3.new(0.58, 0.5, 0.58),
+			cf = CFrame.new(shoulder - Vector3.new(0, 2.1, 0)),
+			color = skin,
+			canCollide = false,
+			anchored = false,
+			parent = model,
+		})
+		rigidWeld(arm, hand)
+		joints[&quot;arm&quot; .. index] = rigJoint(&quot;Arm&quot; .. index, torso, arm, shoulder)
+
+		local hip = Vector3.new(side * 0.5, hipHeight, 0)
+		local leg = Build.part({
+			name = &quot;Bacak&quot; .. index,
+			size = Vector3.new(0.8, hipHeight, 0.8),
+			cf = CFrame.new(hip - Vector3.new(0, hipHeight * 0.5, 0)),
+			color = trousers,
+			canCollide = false,
+			anchored = false,
+			parent = model,
+		})
+		joints[&quot;leg&quot; .. index] = rigJoint(&quot;Leg&quot; .. index, torso, leg, hip)
+	end
+
+	local bubble, bubbleText, meter = buildBubble(root)
+	bubbleText.Text = Loc.get(hintKey)
+
+	model.PrimaryPart = root
+	root.CFrame = cframe * CFrame.new(0, torsoY, 0)
+
+	return {
+		model = model,
+		root = root,
+		joints = joints,
+		bubble = bubble,
+		bubbleText = bubbleText,
+		meter = meter,
+		phase = math.random() * math.pi * 2,
+	}
+end
+
+--- Memnuniyet cubugunu gunceller (0-100). Renk de duruma gore degisiyor:
+--- oyuncu bakip &quot;bu adam sinirlenmis&quot; diyebilmeli.
+function OwnerFactory.setSatisfaction(owner: Owner, value: number)
+	local ratio = math.clamp(value / 100, 0, 1)
+	owner.meter.Size = UDim2.fromScale(ratio, 1)
+	if ratio &gt;= 0.6 then
+		owner.meter.BackgroundColor3 = Color3.fromRGB(96, 196, 120)
+	elseif ratio &gt;= 0.3 then
+		owner.meter.BackgroundColor3 = Color3.fromRGB(232, 176, 72)
+	else
+		owner.meter.BackgroundColor3 = Color3.fromRGB(228, 96, 92)
+	end
+end
+
+--- Balondaki cumleyi degistirir.
+function OwnerFactory.say(owner: Owner, key: string, ...: any)
+	owner.bubbleText.Text = Loc.get(key, ...)
+end
+
+--- Durusu gunceller. Sahip bekleme odasinda durup nefes aliyor, arada
+--- etrafina bakiyor; sinirliyse kollarini kavusturuyor.
+function OwnerFactory.step(owner: Owner, dt: number, satisfaction: number, walking: boolean)
+	owner.phase += dt * (if walking then 8.5 else 1.3)
+	local phase = owner.phase
+	local annoyed = satisfaction &lt; 40
+
+	if owner.joints.rootJoint ~= nil then
+		owner.joints.rootJoint.Transform = CFrame.new(0, math.sin(phase) * 0.03, 0)
+	end
+	if owner.joints.neck ~= nil then
+		local look = if walking then 0 else math.sin(phase * 0.4) * 0.35
+		owner.joints.neck.Transform = CFrame.Angles(math.sin(phase * 0.7) * 0.04, look, 0)
+	end
+
+	for index = 1, 2 do
+		local side = if index == 1 then -1 else 1
+		local arm = owner.joints[&quot;arm&quot; .. index]
+		if arm ~= nil then
+			if annoyed and not walking then
+				-- Kollari kavusturmus: gorsel olarak &quot;bekliyorum&quot; demek.
+				arm.Transform = CFrame.Angles(math.rad(-72), 0, math.rad(side * -34))
+			elseif walking then
+				arm.Transform = CFrame.Angles(math.sin(phase + (if index == 1 then 0 else math.pi)) * 0.6, 0, 0)
+			else
+				arm.Transform = CFrame.Angles(math.sin(phase * 0.5) * 0.05, 0, 0)
+			end
+		end
+		local leg = owner.joints[&quot;leg&quot; .. index]
+		if leg ~= nil then
+			leg.Transform = if walking
+				then CFrame.Angles(math.sin(phase + (if index == 1 then math.pi else 0)) * 0.55, 0, 0)
+				else CFrame.new()
+		end
+	end
+end
+
+-- ── Hareket ve dongu ──────────────────────────────────────────────────
+-- Sahipler hayvanla birlikte yurur, bekleme odasinda durur. Kendi
+-- Heartbeat'ini tutuyor ki PatientFlow her kare NPC pozu hesaplamak
+-- zorunda kalmasin.
+
+type Entry = {
+	owner: Owner,
+	waypoints: { Vector3 },
+	facing: Vector3,
+	satisfaction: number,
+	onArrive: (() -&gt; ())?,
+}
+
+local entries: { [Model]: Entry } = {}
+local running = false
+local ARRIVE_DISTANCE = 1.6
+local WALK_SPEED = 13
+local TURN_RATE = 8
+
+function OwnerFactory.register(owner: Owner)
+	entries[owner.model] = {
+		owner = owner,
+		waypoints = {},
+		facing = owner.root.CFrame.LookVector,
+		satisfaction = 75,
+		onArrive = nil,
+	}
+end
+
+function OwnerFactory.unregister(owner: Owner)
+	entries[owner.model] = nil
+end
+
+function OwnerFactory.walkPath(owner: Owner, points: { Vector3 }, onArrive: (() -&gt; ())?)
+	local entry = entries[owner.model]
+	if entry == nil then
+		return
+	end
+	entry.waypoints = table.clone(points)
+	entry.onArrive = onArrive
+end
+
+--- Memnuniyeti hem cubukta hem de duruslarda kullanabilmek icin dongu
+--- de biliyor olmali.
+function OwnerFactory.updateSatisfaction(owner: Owner, value: number)
+	local entry = entries[owner.model]
+	if entry ~= nil then
+		entry.satisfaction = value
+	end
+	OwnerFactory.setSatisfaction(owner, value)
+end
+
+--- Yuzunu bir noktaya donduru (masadaki hayvanina bakmasi icin).
+function OwnerFactory.faceTowards(owner: Owner, target: Vector3)
+	local entry = entries[owner.model]
+	if entry == nil or #entry.waypoints &gt; 0 then
+		return
+	end
+	local here = owner.root.Position
+	local flat = Vector3.new(target.X, here.Y, target.Z)
+	if (flat - here).Magnitude &lt; 0.1 then
+		return
+	end
+	entry.facing = (flat - here).Unit
+	owner.root.CFrame = CFrame.lookAt(here, here + entry.facing)
+end
+
+function OwnerFactory.start()
+	if running then
+		return
+	end
+	running = true
+
+	RunService.Heartbeat:Connect(function(dt: number)
+		-- dt tavanlanıyor: Studio duraklatilip devam ettirildiginde tek
+		-- karede cok buyuk bir dt gelip NPC'leri duvardan gecirebiliyor.
+		local step = math.min(dt, 0.1)
+		for model, entry in entries do
+			if model.Parent == nil then
+				entries[model] = nil
+				continue
+			end
+
+			local walking = false
+			if #entry.waypoints &gt; 0 then
+				local root = entry.owner.root
+				local target = entry.waypoints[1]
+				local here = root.Position
+				local flatTarget = Vector3.new(target.X, here.Y, target.Z)
+				local delta = flatTarget - here
+				local distance = delta.Magnitude
+
+				if distance &lt;= ARRIVE_DISTANCE then
+					table.remove(entry.waypoints, 1)
+					if #entry.waypoints == 0 then
+						local callback = entry.onArrive
+						entry.onArrive = nil
+						if callback ~= nil then
+							task.spawn(callback)
+						end
+					end
+				else
+					walking = true
+					local direction = delta.Unit
+					entry.facing = entry.facing:Lerp(direction, math.clamp(TURN_RATE * step, 0, 1))
+					if entry.facing.Magnitude &lt; 1e-3 then
+						entry.facing = direction
+					end
+					local move = math.min(WALK_SPEED * step, distance)
+					local newPosition = here + direction * move
+					root.CFrame = CFrame.lookAt(newPosition, newPosition + entry.facing.Unit)
+				end
+			end
+
+			OwnerFactory.step(entry.owner, step, entry.satisfaction, walking)
+		end
+	end)
+end
+
+return OwnerFactory
+</ProtectedString>
+					</Properties>
+				</Item>
+				<Item class="ModuleScript" referent="RBX44">
 					<Properties>
 						<string name="Name">Props</string>
 						<ProtectedString name="Source">--!strict
@@ -7991,15 +10930,15 @@ return Props
 			</Item>
 		</Item>
 	</Item>
-	<Item class="StarterPlayer" referent="RBX38">
+	<Item class="StarterPlayer" referent="RBX45">
 		<Properties>
 			<string name="Name">StarterPlayer</string>
 		</Properties>
-		<Item class="StarterPlayerScripts" referent="RBX39">
+		<Item class="StarterPlayerScripts" referent="RBX46">
 			<Properties>
 				<string name="Name">StarterPlayerScripts</string>
 			</Properties>
-			<Item class="LocalScript" referent="RBX40">
+			<Item class="LocalScript" referent="RBX47">
 				<Properties>
 					<string name="Name">VetClient</string>
 					<ProtectedString name="Source">--!strict
@@ -8010,9 +10949,13 @@ return Props
 --
 -- Istemci OYUN KURALI CALISTIRMAZ
 -- -------------------------------
--- Burada hicbir para, seviye ya da teshis hesabi yok. Istemci
+-- Burada hicbir para, seviye, teshis ya da ilerleme hesabi yok. Istemci
 -- sunucudan gelen goruntuyu cizer ve niyet yollar. Bir panelin bir
 -- dugmeyi &quot;kilitli&quot; gostermesi kolaylik; gercek denetim sunucuda.
+--
+-- Tek istisna KAMERA: kamera tamamen istemcinin isi, cunku sunucunun
+-- oyuncunun ne gordugu hakkinda soyleyecegi bir sey yok. Ayarlar yine de
+-- sunucuda saklaniyor ki oyuncu baska bir cihazda da ayni deneyimi bulsun.
 
 local Players = game:GetService(&quot;Players&quot;)
 local UserInputService = game:GetService(&quot;UserInputService&quot;)
@@ -8022,10 +10965,14 @@ local Shared = ReplicatedStorage:WaitForChild(&quot;VetShared&quot;)
 local Loc = require(Shared.Loc)
 local Net = require(Shared.Net)
 
+local Camera = require(script.Camera)
 local Chart = require(script.Chart)
 local DiagnosisPanel = require(script.DiagnosisPanel)
+local Fps = require(script.Fps)
 local Hud = require(script.Hud)
 local Notify = require(script.Notify)
+local ProgressPanel = require(script.ProgressPanel)
+local SettingsPanel = require(script.SettingsPanel)
 local ShopPanel = require(script.ShopPanel)
 local SurgeryPanel = require(script.SurgeryPanel)
 local Theme = require(script.Theme)
@@ -8049,14 +10996,19 @@ TreatmentPanel.create(screen)
 ToolBar.create(screen)
 ShopPanel.create(screen)
 SurgeryPanel.create(screen)
+ProgressPanel.create(screen)
+Fps.create(screen)
+SettingsPanel.create(screen)
 Notify.create(screen)
+
+Camera.start()
 
 -- Kisayol serisi ekranin altinda: oyuncunun tuslari tahmin etmesi
 -- gerekmesin.
 local hints = Theme.label({
 	name = &quot;Kisayollar&quot;,
 	text = Loc.get(&quot;hud.keys&quot;),
-	size = UDim2.new(0, 520, 0, 18),
+	size = UDim2.new(0, 760, 0, 18),
 	position = UDim2.new(0.5, 0, 1, -88),
 	anchor = Vector2.new(0.5, 1),
 	textSize = 12,
@@ -8080,12 +11032,20 @@ end
 
 Net.get(&quot;StateUpdate&quot;).OnClientEvent:Connect(function(state: any)
 	lastState = state
+	-- Kayitli kamera ayarlari durumla birlikte geliyor.
+	if state ~= nil and state.settings ~= nil then
+		SettingsPanel.load(state.settings)
+	end
 	redraw()
 end)
 
 Net.get(&quot;ChartUpdate&quot;).OnClientEvent:Connect(function(chart: any)
 	lastChart = chart
 	redraw()
+end)
+
+Net.get(&quot;ProgressUpdate&quot;).OnClientEvent:Connect(function(progress: any)
+	ProgressPanel.update(progress)
 end)
 
 Net.get(&quot;Notify&quot;).OnClientEvent:Connect(function(kind: string, messageKey: string, args: { any })
@@ -8121,11 +11081,18 @@ UserInputService.InputBegan:Connect(function(input: InputObject, processed: bool
 	if processed then
 		return
 	end
-	if input.KeyCode == Enum.KeyCode.B then
+	local key = input.KeyCode
+	if key == Enum.KeyCode.B then
 		ShopPanel.toggle()
-	elseif input.KeyCode == Enum.KeyCode.E then
+	elseif key == Enum.KeyCode.G then
+		ProgressPanel.toggle()
+	elseif key == Enum.KeyCode.O then
+		SettingsPanel.toggle()
+	elseif key == Enum.KeyCode.V then
+		SettingsPanel.quickTogglePerspective()
+	elseif key == Enum.KeyCode.E then
 		Net.toServer(&quot;CallNext&quot;)
-	elseif input.KeyCode == Enum.KeyCode.T then
+	elseif key == Enum.KeyCode.T then
 		Net.toServer(&quot;Discharge&quot;)
 	end
 end)
@@ -8133,16 +11100,262 @@ end)
 print(&quot;[Veteriner] istemci hazir.&quot;)
 </ProtectedString>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX41">
+				<Item class="ModuleScript" referent="RBX48">
+					<Properties>
+						<string name="Name">Camera</string>
+						<ProtectedString name="Source">--!strict
+-- Camera.luau
+-- ===========
+-- Birinci/ucuncu sahis gecisi, kamera sallanmasi (bobbing), kosma ve
+-- FOV. Butun sayilar data/settings.json'dan geliyor.
+--
+-- Sallanmanin matematigi
+-- ----------------------
+-- Yuruyen bir insanin govdesi her ADIMDA bir kez inip kalkar, ama
+-- agirligi bir saga bir sola gecer. Yani DIKEY bilesen adim frekansinin
+-- IKI KATI, YATAY bilesen adim frekansindadir. Bu oran 2:1 olmazsa
+-- yuruyus &quot;kayiyor&quot; gibi hissettirir - camera bobbing'i kotu yapan sey
+-- neredeyse her zaman budur.
+--
+-- Sallanma hiza baglı: dururken tamamen kesiliyor. Dururken devam eden
+-- bir sallanma, oyuncuyu birkac dakikada rahatsiz eder.
+--
+-- Neden RenderStepped ve neden CFrame carpimi?
+-- -------------------------------------------
+-- Kamerayi Roblox'un kendi kamera betigi her karede yeniden yaziyor.
+-- Bizim yaptigimiz, o YAZDIKTAN SONRA (BindToRenderStep,
+-- Enum.RenderPriority.Camera.Value + 1) sonucun UZERINE bir ofset
+-- carpmak. Kamerayi tamamen devralmak, Roblox'un zoom/carpisma
+-- davranisini da yeniden yazmak demek olurdu.
+
+local Players = game:GetService(&quot;Players&quot;)
+local RunService = game:GetService(&quot;RunService&quot;)
+local UserInputService = game:GetService(&quot;UserInputService&quot;)
+local Workspace = game:GetService(&quot;Workspace&quot;)
+
+local ReplicatedStorage = game:GetService(&quot;ReplicatedStorage&quot;)
+local Data = ReplicatedStorage:WaitForChild(&quot;VetData&quot;)
+
+local settingsData = require(Data.settings)
+
+local Camera = {}
+
+local player = Players.LocalPlayer
+local config = settingsData.camera
+local movement = settingsData.movement
+
+local current = {
+	firstPerson = settingsData.defaults.firstPerson,
+	bobbing = settingsData.defaults.bobbing,
+	fieldOfView = settingsData.defaults.fieldOfView,
+	sprintEnabled = settingsData.defaults.sprintEnabled,
+}
+
+local phase = 0
+local landing = 0
+local smoothedSpeed = 0
+local smoothedFov = current.fieldOfView
+local sprinting = false
+local bound = false
+
+local RENDER_NAME = &quot;VeterinerKamera&quot;
+
+local function humanoidOf(): (Humanoid?, BasePart?)
+	local character = player.Character
+	if character == nil then
+		return nil, nil
+	end
+	local humanoid = character:FindFirstChildOfClass(&quot;Humanoid&quot;)
+	local root = character:FindFirstChild(&quot;HumanoidRootPart&quot;)
+	if humanoid == nil or root == nil or not root:IsA(&quot;BasePart&quot;) then
+		return nil, nil
+	end
+	return humanoid, root
+end
+
+--- Birinci/ucuncu sahis. Roblox'un kendi zoom sinirlarini kullaniyoruz:
+--- kamerayi elle konumlandirmak yerine sinirlari kisitlamak, fare
+--- tekerlegi ve carpisma davranisini bozmuyor.
+local function applyPerspective()
+	if current.firstPerson then
+		player.CameraMode = Enum.CameraMode.LockFirstPerson
+		player.CameraMinZoomDistance = 0.5
+		player.CameraMaxZoomDistance = 0.5
+	else
+		player.CameraMode = Enum.CameraMode.Classic
+		player.CameraMinZoomDistance = 6
+		player.CameraMaxZoomDistance = 26
+	end
+end
+
+local function applyWalkSpeed()
+	local humanoid = humanoidOf()
+	if humanoid == nil then
+		return
+	end
+	local wantsSprint = sprinting and current.sprintEnabled
+	humanoid.WalkSpeed = if wantsSprint then movement.sprintSpeed else movement.walkSpeed
+end
+
+local function step(dt: number)
+	local camera = Workspace.CurrentCamera
+	if camera == nil then
+		return
+	end
+
+	local humanoid, root = humanoidOf()
+	local speed = 0
+	if humanoid ~= nil and root ~= nil then
+		-- Yatay hiz: zipla/dusme dikey bileseni sallanmayi tetiklemesin.
+		speed = Vector3.new(root.AssemblyLinearVelocity.X, 0, root.AssemblyLinearVelocity.Z).Magnitude
+		if humanoid:GetState() == Enum.HumanoidStateType.Freefall then
+			speed = 0
+		end
+	end
+
+	-- Hizi yumusatiyoruz: ani durup kalkmalarda sallanma zıplamasin.
+	smoothedSpeed += (speed - smoothedSpeed) * math.clamp(config.smoothing * dt, 0, 1)
+
+	local sprintRatio = 0
+	if movement.sprintSpeed &gt; movement.walkSpeed then
+		sprintRatio = math.clamp(
+			(smoothedSpeed - movement.walkSpeed) / (movement.sprintSpeed - movement.walkSpeed),
+			0,
+			1
+		)
+	end
+
+	-- FOV: kosarken aciliyor. Hiz hissini veren sey buyuk olcude bu.
+	local targetFov = current.fieldOfView + config.sprintFovBoost * sprintRatio
+	smoothedFov += (targetFov - smoothedFov) * math.clamp(config.fovSmoothing * dt, 0, 1)
+	camera.FieldOfView = smoothedFov
+
+	local moving = smoothedSpeed &gt; config.minSpeedForBob
+	if moving then
+		local frequency = config.walkFrequency + (config.sprintFrequency - config.walkFrequency) * sprintRatio
+		phase += dt * frequency
+	else
+		-- Durunca fazi sifira degil, en yakin &quot;ayak yerde&quot; noktasina
+		-- getiriyoruz: kamera zıplayarak degil, yumusak duruyor.
+		phase += dt * 2
+	end
+
+	-- Inisin ardindan kisa bir cokme. Zeminle temasin agirligini veriyor.
+	landing = math.max(0, landing - dt * config.landingRecover)
+
+	local strength = current.bobbing * (if moving then math.min(smoothedSpeed / movement.walkSpeed, 1.4) else 0)
+
+	-- DIKEY: adim frekansinin iki kati. YATAY: adim frekansinda.
+	local vertical = math.sin(phase * 2) * config.verticalAmplitude * strength - landing
+	local horizontal = math.cos(phase) * config.horizontalAmplitude * strength
+	local roll = math.rad(math.cos(phase) * config.rollDegrees) * strength
+
+	-- Birinci sahiste kamera goz hizasinda; ucuncu sahiste Roblox'un
+	-- kendi konumu korunuyor, yalnizca ofset ekleniyor.
+	local offset = CFrame.new(horizontal, vertical, 0) * CFrame.Angles(0, 0, roll)
+	camera.CFrame = camera.CFrame * offset
+end
+
+--- Sunucudan gelen ayarlari uygular.
+function Camera.apply(settings: any)
+	if settings == nil then
+		return
+	end
+	if type(settings.firstPerson) == &quot;boolean&quot; then
+		current.firstPerson = settings.firstPerson
+	end
+	if type(settings.bobbing) == &quot;number&quot; then
+		current.bobbing = settings.bobbing
+	end
+	if type(settings.fieldOfView) == &quot;number&quot; then
+		current.fieldOfView = settings.fieldOfView
+	end
+	if type(settings.sprintEnabled) == &quot;boolean&quot; then
+		current.sprintEnabled = settings.sprintEnabled
+	end
+	applyPerspective()
+	applyWalkSpeed()
+end
+
+function Camera.settings(): any
+	return table.clone(current)
+end
+
+function Camera.toggleFirstPerson(): boolean
+	current.firstPerson = not current.firstPerson
+	applyPerspective()
+	return current.firstPerson
+end
+
+function Camera.start()
+	if bound then
+		return
+	end
+	bound = true
+
+	applyPerspective()
+
+	-- Roblox'un kamera betiginden SONRA calis: yoksa yazdigimiz ofseti
+	-- o ezer.
+	RunService:BindToRenderStep(RENDER_NAME, Enum.RenderPriority.Camera.Value + 1, step)
+
+	UserInputService.InputBegan:Connect(function(input: InputObject, processed: boolean)
+		if processed then
+			return
+		end
+		if input.KeyCode == Enum.KeyCode.LeftShift or input.KeyCode == Enum.KeyCode.RightShift then
+			sprinting = true
+			applyWalkSpeed()
+		end
+	end)
+	UserInputService.InputEnded:Connect(function(input: InputObject)
+		if input.KeyCode == Enum.KeyCode.LeftShift or input.KeyCode == Enum.KeyCode.RightShift then
+			sprinting = false
+			applyWalkSpeed()
+		end
+	end)
+
+	local function hookCharacter(character: Model)
+		local humanoid = character:WaitForChild(&quot;Humanoid&quot;, 10)
+		if humanoid == nil or not humanoid:IsA(&quot;Humanoid&quot;) then
+			return
+		end
+		applyWalkSpeed()
+		-- Yere inis: kamerayi kisa sureligine cokturuyoruz.
+		humanoid.StateChanged:Connect(function(_old, new)
+			if new == Enum.HumanoidStateType.Landed then
+				landing = config.landingDip * current.bobbing
+			end
+		end)
+	end
+
+	if player.Character ~= nil then
+		hookCharacter(player.Character)
+	end
+	player.CharacterAdded:Connect(hookCharacter)
+end
+
+return Camera
+</ProtectedString>
+					</Properties>
+				</Item>
+				<Item class="ModuleScript" referent="RBX49">
 					<Properties>
 						<string name="Name">Chart</string>
 						<ProtectedString name="Source">--!strict
 -- Chart.luau
 -- ==========
--- Hasta karti: tur, saglik/stres, BULUNMUS semptomlar ve taburcu dugmesi.
+-- Hasta karti: tur, sahibinin sikayeti, saglik/stres/memnuniyet ve
+-- BULUNMUS belirtiler. Ayrica acil vakalarin geri sayimi.
 --
 -- Kartta hastaligin adi ancak dogru teshisten SONRA cikiyor - cunku
 -- sunucu oncesinde onu hic yollamiyor (PatientFlow.chartSnapshot).
+--
+-- Sahibin sikayeti neden burada?
+-- ------------------------------
+-- NPC'nin basindaki balon uzaktan okunmuyor ve oyuncu masaya egildiginde
+-- kayboluyor. Ayni cumle kartta da duruyor: ipucu, isin yapildigi yerde
+-- goz onunde olmali.
 
 local ReplicatedStorage = game:GetService(&quot;ReplicatedStorage&quot;)
 local Shared = ReplicatedStorage:WaitForChild(&quot;VetShared&quot;)
@@ -8162,9 +11375,33 @@ local SEVERITY_COLOR = {
 }
 
 function Chart.create(parent: ScreenGui)
+	-- Acil vaka bandi ekranin ORTASINDA ve ustte: geri sayim, oyuncunun
+	-- gozunun kacinilmaz olarak dustugu yerde olmali.
+	local banner = Theme.frame({
+		name = &quot;AcilBandi&quot;,
+		size = UDim2.fromOffset(380, 44),
+		position = UDim2.new(0.5, 0, 0, 14),
+		anchor = Vector2.new(0.5, 0),
+		color = Color3.fromRGB(92, 26, 26),
+		transparency = 0.05,
+		parent = parent,
+		visible = false,
+	})
+	Theme.stroke(banner, Theme.color.bad, 2)
+	local bannerText = Theme.label({
+		name = &quot;Metin&quot;,
+		text = &quot;&quot;,
+		size = UDim2.new(1, -20, 1, 0),
+		position = UDim2.fromOffset(10, 0),
+		textSize = 17,
+		bold = true,
+		align = Enum.TextXAlignment.Center,
+		parent = banner,
+	})
+
 	local panel = Theme.frame({
 		name = &quot;HastaKarti&quot;,
-		size = UDim2.fromOffset(330, 268),
+		size = UDim2.fromOffset(330, 316),
 		position = UDim2.new(1, -16, 0, 82),
 		anchor = Vector2.new(1, 0),
 		parent = parent,
@@ -8191,40 +11428,47 @@ function Chart.create(parent: ScreenGui)
 		parent = panel,
 	})
 
-	local healthLabel = Theme.label({
-		name = &quot;SaglikYazi&quot;,
+	local hint = Theme.label({
+		name = &quot;Sikayet&quot;,
 		text = &quot;&quot;,
-		size = UDim2.new(1, -24, 0, 14),
-		position = UDim2.fromOffset(12, 54),
+		size = UDim2.new(1, -24, 0, 30),
+		position = UDim2.fromOffset(12, 52),
 		textSize = 11,
 		color = Theme.color.textDim,
+		wrapped = true,
 		parent = panel,
 	})
-	local healthBar = Theme.bar(panel, UDim2.new(1, -24, 0, 9), UDim2.fromOffset(12, 70), Theme.color.health)
 
-	local stressLabel = Theme.label({
-		name = &quot;StresYazi&quot;,
-		text = &quot;&quot;,
-		size = UDim2.new(1, -24, 0, 14),
-		position = UDim2.fromOffset(12, 84),
-		textSize = 11,
-		color = Theme.color.textDim,
-		parent = panel,
-	})
-	local stressBar = Theme.bar(panel, UDim2.new(1, -24, 0, 9), UDim2.fromOffset(12, 100), Theme.color.stress)
+	local function meter(labelName: string, y: number, color: Color3)
+		local label = Theme.label({
+			name = labelName,
+			text = &quot;&quot;,
+			size = UDim2.new(1, -24, 0, 14),
+			position = UDim2.fromOffset(12, y),
+			textSize = 11,
+			color = Theme.color.textDim,
+			parent = panel,
+		})
+		local bar = Theme.bar(panel, UDim2.new(1, -24, 0, 9), UDim2.fromOffset(12, y + 16), color)
+		return label, bar
+	end
+
+	local healthLabel, healthBar = meter(&quot;SaglikYazi&quot;, 84, Theme.color.health)
+	local stressLabel, stressBar = meter(&quot;StresYazi&quot;, 114, Theme.color.stress)
+	local satisfactionLabel, satisfactionBar = meter(&quot;MemnuniyetYazi&quot;, 144, Theme.color.accent)
 
 	Theme.label({
 		name = &quot;SemptomBaslik&quot;,
 		text = Loc.get(&quot;chart.symptoms&quot;),
 		size = UDim2.new(1, -24, 0, 16),
-		position = UDim2.fromOffset(12, 116),
+		position = UDim2.fromOffset(12, 176),
 		textSize = 12,
 		bold = true,
 		color = Theme.color.textDim,
 		parent = panel,
 	})
 
-	local list = Theme.scroller(panel, UDim2.new(1, -24, 0, 88), UDim2.fromOffset(12, 134))
+	local list = Theme.scroller(panel, UDim2.new(1, -24, 0, 80), UDim2.fromOffset(12, 194))
 	Theme.list(list, 3)
 
 	local discharge = Theme.button({
@@ -8241,12 +11485,17 @@ function Chart.create(parent: ScreenGui)
 
 	widgets = {
 		panel = panel,
+		banner = banner,
+		bannerText = bannerText,
 		title = title,
 		condition = condition,
+		hint = hint,
 		healthLabel = healthLabel,
 		healthBar = healthBar,
 		stressLabel = stressLabel,
 		stressBar = stressBar,
+		satisfactionLabel = satisfactionLabel,
+		satisfactionBar = satisfactionBar,
 		list = list,
 		discharge = discharge,
 	}
@@ -8260,13 +11509,17 @@ function Chart.update(chart: any)
 	if chart == nil or chart.present ~= true then
 		widgets.title.Text = Loc.get(&quot;chart.empty&quot;)
 		widgets.condition.Text = &quot;&quot;
+		widgets.hint.Text = &quot;&quot;
 		widgets.healthLabel.Text = &quot;&quot;
 		widgets.stressLabel.Text = &quot;&quot;
+		widgets.satisfactionLabel.Text = &quot;&quot;
 		Theme.setBar(widgets.healthBar, 0)
 		Theme.setBar(widgets.stressBar, 0)
+		Theme.setBar(widgets.satisfactionBar, 0)
 		widgets.list:ClearAllChildren()
 		Theme.list(widgets.list, 3)
 		widgets.discharge.Visible = false
+		widgets.banner.Visible = false
 		return
 	end
 
@@ -8276,10 +11529,23 @@ function Chart.update(chart: any)
 		else Loc.get(&quot;chart.undiagnosed&quot;)
 	widgets.condition.TextColor3 = if chart.diagnosed then Theme.color.good else Theme.color.warn
 
+	widgets.hint.Text = if chart.hintKey ~= nil then &quot;\u{201C}&quot; .. Loc.get(chart.hintKey) .. &quot;\u{201D}&quot; else &quot;&quot;
+
 	widgets.healthLabel.Text = Loc.get(&quot;chart.health&quot;, chart.health)
 	Theme.setBar(widgets.healthBar, chart.health / 100)
 	widgets.stressLabel.Text = Loc.get(&quot;chart.stress&quot;, chart.stress)
 	Theme.setBar(widgets.stressBar, chart.stress / 100)
+	widgets.satisfactionLabel.Text = Loc.get(&quot;chart.satisfaction&quot;, chart.satisfaction)
+	Theme.setBar(widgets.satisfactionBar, chart.satisfaction / 100)
+
+	-- Acil vaka geri sayimi. secondsLeft negatifse acil degil.
+	if chart.emergency == true and chart.secondsLeft &gt;= 0 then
+		local seconds = math.floor(chart.secondsLeft)
+		widgets.banner.Visible = true
+		widgets.bannerText.Text = Loc.get(&quot;chart.emergency&quot;, math.floor(seconds / 60), seconds % 60)
+	else
+		widgets.banner.Visible = false
+	end
 
 	widgets.list:ClearAllChildren()
 	Theme.list(widgets.list, 3)
@@ -8312,7 +11578,7 @@ return Chart
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX42">
+				<Item class="ModuleScript" referent="RBX50">
 					<Properties>
 						<string name="Name">DiagnosisPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -8343,7 +11609,7 @@ function DiagnosisPanel.create(parent: ScreenGui)
 	local panel = Theme.frame({
 		name = &quot;TeshisPaneli&quot;,
 		size = UDim2.fromOffset(330, 250),
-		position = UDim2.new(1, -16, 0, 358),
+		position = UDim2.new(1, -16, 0, 406),
 		anchor = Vector2.new(1, 0),
 		parent = parent,
 		visible = false,
@@ -8417,7 +11683,123 @@ return DiagnosisPanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX43">
+				<Item class="ModuleScript" referent="RBX51">
+					<Properties>
+						<string name="Name">Fps</string>
+						<ProtectedString name="Source">--!strict
+-- Fps.luau
+-- ========
+-- Kare hizi ve gecikme gostergesi.
+--
+-- Neden ortalama degil, &quot;son 1 saniyedeki kare sayisi&quot; ve ayrica EN
+-- KOTU kare? Ortalama FPS takilmalari gizler: 60 ortalama, arada 12'ye
+-- dusen bir oyun &quot;60 FPS&quot; gorunur. Takilmayi gosteren sey son
+-- saniyedeki en uzun karedir; gosterge onu da yaziyor.
+
+local Players = game:GetService(&quot;Players&quot;)
+local RunService = game:GetService(&quot;RunService&quot;)
+
+local ReplicatedStorage = game:GetService(&quot;ReplicatedStorage&quot;)
+local Shared = ReplicatedStorage:WaitForChild(&quot;VetShared&quot;)
+local Loc = require(Shared.Loc)
+
+local Theme = require(script.Parent.Theme)
+
+local Fps = {}
+
+local player = Players.LocalPlayer
+
+local widgets: any = nil
+local frames = 0
+local elapsed = 0
+local worstFrame = 0
+local connection: RBXScriptConnection? = nil
+
+local function colorFor(value: number): Color3
+	if value &gt;= 50 then
+		return Theme.color.good
+	elseif value &gt;= 28 then
+		return Theme.color.warn
+	end
+	return Theme.color.bad
+end
+
+function Fps.create(parent: ScreenGui)
+	local panel = Theme.frame({
+		name = &quot;Fps&quot;,
+		size = UDim2.fromOffset(146, 46),
+		position = UDim2.new(1, -16, 0, 78),
+		anchor = Vector2.new(1, 0),
+		transparency = 0.25,
+		radius = 8,
+		parent = parent,
+	})
+
+	local rate = Theme.label({
+		name = &quot;Kare&quot;,
+		text = &quot;&quot;,
+		size = UDim2.new(1, -16, 0, 20),
+		position = UDim2.fromOffset(8, 4),
+		textSize = 15,
+		bold = true,
+		parent = panel,
+	})
+	local detail = Theme.label({
+		name = &quot;Detay&quot;,
+		text = &quot;&quot;,
+		size = UDim2.new(1, -16, 0, 16),
+		position = UDim2.fromOffset(8, 24),
+		textSize = 11,
+		color = Theme.color.textDim,
+		parent = panel,
+	})
+
+	widgets = { panel = panel, rate = rate, detail = detail }
+
+	connection = RunService.RenderStepped:Connect(function(dt: number)
+		frames += 1
+		elapsed += dt
+		worstFrame = math.max(worstFrame, dt)
+
+		if elapsed &lt; 1 then
+			return
+		end
+
+		local value = math.floor(frames / elapsed + 0.5)
+		-- En uzun kareden turetilen &quot;en kotu FPS&quot;: takilmayi gosteren sey bu.
+		local worst = if worstFrame &gt; 0 then math.floor(1 / worstFrame + 0.5) else value
+		local ping = math.floor(player:GetNetworkPing() * 1000 + 0.5)
+
+		widgets.rate.Text = Loc.get(&quot;fps.rate&quot;, value)
+		widgets.rate.TextColor3 = colorFor(value)
+		widgets.detail.Text = Loc.get(&quot;fps.detail&quot;, worst, ping)
+
+		frames = 0
+		elapsed = 0
+		worstFrame = 0
+	end)
+end
+
+function Fps.setVisible(visible: boolean)
+	if widgets ~= nil then
+		widgets.panel.Visible = visible
+	end
+end
+
+--- Gosterge kapaliyken sayim da dursun: kapatilan bir seyin her karede
+--- is yapmaya devam etmesi anlamsiz.
+function Fps.destroy()
+	if connection ~= nil then
+		connection:Disconnect()
+		connection = nil
+	end
+end
+
+return Fps
+</ProtectedString>
+					</Properties>
+				</Item>
+				<Item class="ModuleScript" referent="RBX52">
 					<Properties>
 						<string name="Name">Hud</string>
 						<ProtectedString name="Source">--!strict
@@ -8576,7 +11958,7 @@ return Hud
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX44">
+				<Item class="ModuleScript" referent="RBX53">
 					<Properties>
 						<string name="Name">Notify</string>
 						<ProtectedString name="Source">--!strict
@@ -8605,15 +11987,15 @@ local MAX_VISIBLE = 5
 function Notify.create(parent: ScreenGui)
 	local frame = Theme.frame({
 		name = &quot;Bildirimler&quot;,
-		size = UDim2.new(0, 360, 0, 220),
-		position = UDim2.new(0.5, 0, 0, 16),
-		anchor = Vector2.new(0.5, 0),
+		size = UDim2.new(0, 330, 0, 240),
+		position = UDim2.new(0, 16, 0, 158),
+		anchor = Vector2.new(0, 0),
 		transparency = 1,
 		radius = 0,
 		parent = parent,
 	})
 	local layout = Theme.list(frame, 6)
-	layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+	layout.HorizontalAlignment = Enum.HorizontalAlignment.Left
 	container = frame
 end
 
@@ -8694,7 +12076,551 @@ return Notify
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX45">
+				<Item class="ModuleScript" referent="RBX54">
+					<Properties>
+						<string name="Name">ProgressPanel</string>
+						<ProtectedString name="Source">--!strict
+-- ProgressPanel.luau
+-- ==================
+-- Gunluk gorevler · Basarimlar · Istatistikler (G tusu).
+--
+-- Uc sekme tek panelde: hepsi &quot;ne kadar ilerledim&quot; sorusunun cevabi ve
+-- ayri ayri tuslara dagitmak oyuncuyu ezberlemeye zorlardi.
+--
+-- Icerik SUNUCUDAN geliyor (ProgressUpdate). Istemci hicbir ilerleme
+-- hesaplamiyor; yalnizca ciziyor.
+
+local ReplicatedStorage = game:GetService(&quot;ReplicatedStorage&quot;)
+local Shared = ReplicatedStorage:WaitForChild(&quot;VetShared&quot;)
+
+local Loc = require(Shared.Loc)
+local Net = require(Shared.Net)
+
+local Theme = require(script.Parent.Theme)
+
+local ProgressPanel = {}
+
+local widgets: any = nil
+local open = false
+local tab = &quot;tasks&quot;
+local latest: any = nil
+
+local function formatDuration(seconds: number): string
+	local hours = math.floor(seconds / 3600)
+	local minutes = math.floor((seconds % 3600) / 60)
+	return (&quot;%02d:%02d&quot;):format(hours, minutes)
+end
+
+--- Ilerleme cubuklu tek satir. Gorev ve basarim ayni gorunumu
+--- paylasiyor: ikisi de &quot;hedefe ne kadar kaldi&quot; anlatiyor.
+local function progressCard(
+	parent: Instance,
+	order: number,
+	titleKey: string,
+	descKey: string?,
+	value: number,
+	target: number,
+	done: boolean,
+	money: number,
+	xp: number
+)
+	local card = Theme.frame({
+		size = UDim2.new(1, -8, 0, if descKey ~= nil then 74 else 58),
+		color = Theme.color.panelLight,
+		transparency = 0.15,
+		radius = 8,
+		layoutOrder = order,
+		parent = parent,
+	})
+
+	Theme.label({
+		text = (if done then &quot;✓ &quot; else &quot;&quot;) .. Loc.get(titleKey),
+		size = UDim2.new(1, -24, 0, 20),
+		position = UDim2.fromOffset(12, 6),
+		textSize = 14,
+		bold = true,
+		color = if done then Theme.color.good else Theme.color.text,
+		parent = card,
+	})
+
+	local top = 26
+	if descKey ~= nil then
+		Theme.label({
+			text = Loc.get(descKey),
+			size = UDim2.new(1, -24, 0, 16),
+			position = UDim2.fromOffset(12, top),
+			textSize = 11,
+			color = Theme.color.textDim,
+			parent = card,
+		})
+		top += 18
+	end
+
+	local bar = Theme.bar(card, UDim2.new(1, -24, 0, 8), UDim2.fromOffset(12, top + 2), if done then Theme.color.good else Theme.color.accent)
+	Theme.setBar(bar, if target &gt; 0 then value / target else 0)
+
+	Theme.label({
+		text = (&quot;%d / %d&quot;):format(value, target),
+		size = UDim2.new(0.5, -12, 0, 16),
+		position = UDim2.fromOffset(12, top + 12),
+		textSize = 11,
+		color = Theme.color.textDim,
+		parent = card,
+	})
+	Theme.label({
+		text = Loc.get(&quot;progress.reward&quot;, money, xp),
+		size = UDim2.new(0.5, -12, 0, 16),
+		position = UDim2.new(0.5, 0, 0, top + 12),
+		textSize = 11,
+		align = Enum.TextXAlignment.Right,
+		color = Theme.color.money,
+		parent = card,
+	})
+end
+
+local function statRow(parent: Instance, order: number, labelKey: string, value: any)
+	local card = Theme.frame({
+		size = UDim2.new(1, -8, 0, 28),
+		color = Theme.color.panelLight,
+		transparency = 0.3,
+		radius = 6,
+		layoutOrder = order,
+		parent = parent,
+	})
+	Theme.label({
+		text = Loc.get(labelKey),
+		size = UDim2.new(1, -120, 1, 0),
+		position = UDim2.fromOffset(12, 0),
+		textSize = 13,
+		parent = card,
+	})
+	Theme.label({
+		text = tostring(value),
+		size = UDim2.fromOffset(100, 28),
+		position = UDim2.new(1, -112, 0, 0),
+		textSize = 13,
+		bold = true,
+		align = Enum.TextXAlignment.Right,
+		color = Theme.color.accent,
+		parent = card,
+	})
+end
+
+local function redraw()
+	if widgets == nil or latest == nil then
+		return
+	end
+
+	widgets.list:ClearAllChildren()
+	Theme.list(widgets.list, 6)
+
+	for name, button in widgets.tabs do
+		button.BackgroundColor3 = if name == tab then Theme.color.accentDark else Theme.color.panelLight
+	end
+
+	if tab == &quot;tasks&quot; then
+		local tasks = latest.tasks
+		widgets.subtitle.Text = Loc.get(&quot;progress.tasksSub&quot;, tasks.done, tasks.total, formatDuration(tasks.resetsIn))
+		for index, task in tasks.list do
+			progressCard(widgets.list, index, task.nameKey, nil, task.value, task.target, task.done, task.money, task.xp)
+		end
+	elseif tab == &quot;achievements&quot; then
+		local achievements = latest.achievements
+		widgets.subtitle.Text = Loc.get(&quot;progress.achSub&quot;, achievements.unlocked, achievements.total)
+		for index, achievement in achievements.list do
+			progressCard(
+				widgets.list,
+				index,
+				achievement.nameKey,
+				achievement.descKey,
+				achievement.value,
+				achievement.target,
+				achievement.unlocked,
+				achievement.money,
+				achievement.xp
+			)
+		end
+	else
+		local stats = latest.stats
+		local total = stats.correct + stats.wrong
+		local accuracy = if total &gt; 0 then math.floor(stats.correct / total * 100 + 0.5) else 0
+		widgets.subtitle.Text = Loc.get(&quot;progress.statsSub&quot;, accuracy)
+
+		statRow(widgets.list, 1, &quot;stat.patients&quot;, stats.patients)
+		statRow(widgets.list, 2, &quot;stat.correct&quot;, stats.correct)
+		statRow(widgets.list, 3, &quot;stat.wrong&quot;, stats.wrong)
+		statRow(widgets.list, 4, &quot;stat.accuracy&quot;, accuracy .. &quot;%&quot;)
+		statRow(widgets.list, 5, &quot;stat.streak&quot;, stats.streak)
+		statRow(widgets.list, 6, &quot;stat.bestStreak&quot;, stats.bestStreak)
+		statRow(widgets.list, 7, &quot;stat.earned&quot;, stats.earned)
+		statRow(widgets.list, 8, &quot;stat.tips&quot;, stats.tips)
+		statRow(widgets.list, 9, &quot;stat.surgeries&quot;, stats.surgeries)
+		statRow(widgets.list, 10, &quot;stat.perfectSurgeries&quot;, stats.perfectSurgeries)
+		statRow(widgets.list, 11, &quot;stat.emergencies&quot;, stats.emergencies)
+		statRow(widgets.list, 12, &quot;stat.lost&quot;, stats.lost)
+		statRow(widgets.list, 13, &quot;stat.tasks&quot;, stats.tasks)
+	end
+end
+
+function ProgressPanel.create(parent: ScreenGui)
+	local panel = Theme.frame({
+		name = &quot;Ilerleme&quot;,
+		size = UDim2.fromOffset(520, 452),
+		position = UDim2.new(0.5, 0, 0.5, 0),
+		anchor = Vector2.new(0.5, 0.5),
+		transparency = 0.03,
+		parent = parent,
+		visible = false,
+	})
+	Theme.stroke(panel, Theme.color.accent, 2)
+
+	Theme.label({
+		text = Loc.get(&quot;progress.title&quot;),
+		size = UDim2.new(1, -24, 0, 26),
+		position = UDim2.fromOffset(16, 10),
+		textSize = 20,
+		bold = true,
+		parent = panel,
+	})
+	Theme.button({
+		text = Loc.get(&quot;progress.close&quot;),
+		size = UDim2.fromOffset(86, 26),
+		position = UDim2.new(1, -102, 0, 10),
+		color = Theme.color.panelLight,
+		parent = panel,
+		onClick = function()
+			ProgressPanel.setOpen(false)
+		end,
+	})
+
+	local tabs: { [string]: TextButton } = {}
+	local names = { { &quot;tasks&quot;, &quot;progress.tabTasks&quot; }, { &quot;achievements&quot;, &quot;progress.tabAch&quot; }, { &quot;stats&quot;, &quot;progress.tabStats&quot; } }
+	for index, entry in names do
+		local name = entry[1]
+		tabs[name] = Theme.button({
+			name = name,
+			text = Loc.get(entry[2]),
+			size = UDim2.fromOffset(154, 28),
+			position = UDim2.fromOffset(16 + (index - 1) * 162, 44),
+			parent = panel,
+			onClick = function()
+				tab = name
+				redraw()
+			end,
+		})
+	end
+
+	local subtitle = Theme.label({
+		name = &quot;AltBaslik&quot;,
+		text = &quot;&quot;,
+		size = UDim2.new(1, -32, 0, 18),
+		position = UDim2.fromOffset(16, 78),
+		textSize = 12,
+		color = Theme.color.textDim,
+		parent = panel,
+	})
+
+	local list = Theme.scroller(panel, UDim2.new(1, -32, 1, -112), UDim2.fromOffset(16, 100))
+	Theme.list(list, 6)
+
+	widgets = { panel = panel, tabs = tabs, subtitle = subtitle, list = list }
+end
+
+function ProgressPanel.update(progress: any)
+	latest = progress
+	if open then
+		redraw()
+	end
+end
+
+function ProgressPanel.setOpen(value: boolean)
+	if widgets == nil then
+		return
+	end
+	open = value
+	widgets.panel.Visible = value
+	if value then
+		-- Panel acilirken taze veri iste: kapaliyken gelen guncellemeler
+		-- cizilmiyor, o yuzden acilista bir kez sormak gerekiyor.
+		Net.toServer(&quot;RequestProgress&quot;)
+		redraw()
+	end
+end
+
+function ProgressPanel.toggle()
+	ProgressPanel.setOpen(not open)
+end
+
+return ProgressPanel
+</ProtectedString>
+					</Properties>
+				</Item>
+				<Item class="ModuleScript" referent="RBX55">
+					<Properties>
+						<string name="Name">SettingsPanel</string>
+						<ProtectedString name="Source">--!strict
+-- SettingsPanel.luau
+-- ==================
+-- Ayarlar paneli (O tusu): kamera, sallanma, FOV, kare sayaci, kosma.
+--
+-- Neden kaydirici degil, &quot;- deger +&quot;?
+-- -----------------------------------
+-- Roblox'ta kaydirici hazir gelmiyor; elle yazilan bir kaydirici,
+-- imlecin panelden cikmasi ve dokunmatik ekran gibi durumlarda kolayca
+-- bozuluyor. Adimli dugmeler her girdi turunde ayni calisiyor ve
+-- data/settings.json'daki `step` degerine dogrudan bagli.
+--
+-- Kaydetme gecikmeli
+-- ------------------
+-- Her dugme basisinda sunucuya yazmak DataStore kotasini bosa harcar.
+-- Degisiklik once yerelde uygulaniyor (oyuncu aninda goruyor), sunucuya
+-- yazma kisa bir sessizlikten sonra tek seferde gidiyor.
+
+local ReplicatedStorage = game:GetService(&quot;ReplicatedStorage&quot;)
+local Shared = ReplicatedStorage:WaitForChild(&quot;VetShared&quot;)
+local Data = ReplicatedStorage:WaitForChild(&quot;VetData&quot;)
+
+local Loc = require(Shared.Loc)
+local Net = require(Shared.Net)
+
+local Camera = require(script.Parent.Camera)
+local Fps = require(script.Parent.Fps)
+local Theme = require(script.Parent.Theme)
+
+local settingsData = require(Data.settings)
+
+local SettingsPanel = {}
+
+local SAVE_DELAY = 0.75
+
+local widgets: any = nil
+local open = false
+local values: any = nil
+local saveToken = 0
+
+local function scheduleSave()
+	saveToken += 1
+	local token = saveToken
+	task.delay(SAVE_DELAY, function()
+		if token ~= saveToken then
+			return -- arkasindan baska bir degisiklik geldi
+		end
+		Net.toServer(&quot;SaveSettings&quot;, values)
+	end)
+end
+
+local function applyLocally()
+	Camera.apply(values)
+	Fps.setVisible(values.showFps)
+end
+
+local function refresh()
+	if widgets == nil or values == nil then
+		return
+	end
+	widgets.rows.firstPerson.value.Text = Loc.get(if values.firstPerson then &quot;set.on&quot; else &quot;set.off&quot;)
+	widgets.rows.sprintEnabled.value.Text = Loc.get(if values.sprintEnabled then &quot;set.on&quot; else &quot;set.off&quot;)
+	widgets.rows.showFps.value.Text = Loc.get(if values.showFps then &quot;set.on&quot; else &quot;set.off&quot;)
+	widgets.rows.bobbing.value.Text = (&quot;%.2f&quot;):format(values.bobbing)
+	widgets.rows.fieldOfView.value.Text = tostring(math.floor(values.fieldOfView + 0.5))
+end
+
+local function change(key: string, delta: number?)
+	if values == nil then
+		return
+	end
+	if delta == nil then
+		values[key] = not values[key]
+	else
+		local limit = settingsData.limits[key]
+		values[key] = math.clamp(values[key] + delta, limit.min, limit.max)
+	end
+	applyLocally()
+	refresh()
+	scheduleSave()
+end
+
+--- Tek ayar satiri. `limitKey` verilirse adimli sayi, verilmezse anahtar.
+local function row(parent: Instance, order: number, key: string, labelKey: string, descKey: string, limitKey: string?)
+	local card = Theme.frame({
+		name = key,
+		size = UDim2.new(1, -8, 0, 54),
+		color = Theme.color.panelLight,
+		transparency = 0.15,
+		radius = 8,
+		layoutOrder = order,
+		parent = parent,
+	})
+
+	Theme.label({
+		text = Loc.get(labelKey),
+		size = UDim2.new(1, -150, 0, 20),
+		position = UDim2.fromOffset(12, 6),
+		textSize = 14,
+		bold = true,
+		parent = card,
+	})
+	Theme.label({
+		text = Loc.get(descKey),
+		size = UDim2.new(1, -150, 0, 24),
+		position = UDim2.fromOffset(12, 26),
+		textSize = 11,
+		color = Theme.color.textDim,
+		wrapped = true,
+		parent = card,
+	})
+
+	local value = Theme.label({
+		name = &quot;Deger&quot;,
+		text = &quot;&quot;,
+		size = UDim2.fromOffset(64, 26),
+		position = UDim2.new(1, -86, 0.5, 0),
+		anchor = Vector2.new(0, 0.5),
+		textSize = 15,
+		bold = true,
+		align = Enum.TextXAlignment.Center,
+		color = Theme.color.accent,
+		parent = card,
+	})
+
+	if limitKey == nil then
+		Theme.button({
+			text = &quot;⇄&quot;,
+			size = UDim2.fromOffset(30, 26),
+			position = UDim2.new(1, -42, 0.5, 0),
+			anchor = Vector2.new(0, 0.5),
+			parent = card,
+			onClick = function()
+				change(key, nil)
+			end,
+		})
+	else
+		local step = settingsData.limits[limitKey].step
+		Theme.button({
+			text = &quot;−&quot;,
+			size = UDim2.fromOffset(28, 26),
+			position = UDim2.new(1, -128, 0.5, 0),
+			anchor = Vector2.new(0, 0.5),
+			parent = card,
+			onClick = function()
+				change(key, -step)
+			end,
+		})
+		Theme.button({
+			text = &quot;+&quot;,
+			size = UDim2.fromOffset(28, 26),
+			position = UDim2.new(1, -40, 0.5, 0),
+			anchor = Vector2.new(0, 0.5),
+			parent = card,
+			onClick = function()
+				change(key, step)
+			end,
+		})
+	end
+
+	return { card = card, value = value }
+end
+
+function SettingsPanel.create(parent: ScreenGui)
+	values = {
+		firstPerson = settingsData.defaults.firstPerson,
+		bobbing = settingsData.defaults.bobbing,
+		fieldOfView = settingsData.defaults.fieldOfView,
+		showFps = settingsData.defaults.showFps,
+		sprintEnabled = settingsData.defaults.sprintEnabled,
+	}
+
+	local panel = Theme.frame({
+		name = &quot;Ayarlar&quot;,
+		size = UDim2.fromOffset(460, 404),
+		position = UDim2.new(0.5, 0, 0.5, 0),
+		anchor = Vector2.new(0.5, 0.5),
+		transparency = 0.03,
+		parent = parent,
+		visible = false,
+	})
+	Theme.stroke(panel, Theme.color.accent, 2)
+
+	Theme.label({
+		text = Loc.get(&quot;set.title&quot;),
+		size = UDim2.new(1, -24, 0, 26),
+		position = UDim2.fromOffset(16, 10),
+		textSize = 20,
+		bold = true,
+		parent = panel,
+	})
+	Theme.button({
+		text = Loc.get(&quot;set.close&quot;),
+		size = UDim2.fromOffset(86, 26),
+		position = UDim2.new(1, -102, 0, 10),
+		color = Theme.color.panelLight,
+		parent = panel,
+		onClick = function()
+			SettingsPanel.setOpen(false)
+		end,
+	})
+
+	local list = Theme.scroller(panel, UDim2.new(1, -32, 1, -58), UDim2.fromOffset(16, 46))
+	Theme.list(list, 6)
+
+	local rows = {
+		firstPerson = row(list, 1, &quot;firstPerson&quot;, &quot;set.firstPerson&quot;, &quot;set.firstPerson.desc&quot;),
+		bobbing = row(list, 2, &quot;bobbing&quot;, &quot;set.bobbing&quot;, &quot;set.bobbing.desc&quot;, &quot;bobbing&quot;),
+		fieldOfView = row(list, 3, &quot;fieldOfView&quot;, &quot;set.fov&quot;, &quot;set.fov.desc&quot;, &quot;fieldOfView&quot;),
+		sprintEnabled = row(list, 4, &quot;sprintEnabled&quot;, &quot;set.sprint&quot;, &quot;set.sprint.desc&quot;),
+		showFps = row(list, 5, &quot;showFps&quot;, &quot;set.fps&quot;, &quot;set.fps.desc&quot;),
+	}
+
+	widgets = { panel = panel, rows = rows }
+	refresh()
+end
+
+--- Sunucudan gelen kayitli ayarlari yukler. Oyuncunun o an
+--- degistirdiginin uzerine yazmamasi icin bekleyen bir kayit varsa
+--- yok sayiliyor.
+function SettingsPanel.load(settings: any)
+	if settings == nil or values == nil then
+		return
+	end
+	if saveToken &gt; 0 then
+		return
+	end
+	for key, value in settings do
+		if values[key] ~= nil and type(value) == type(values[key]) then
+			values[key] = value
+		end
+	end
+	applyLocally()
+	refresh()
+end
+
+function SettingsPanel.setOpen(value: boolean)
+	if widgets == nil then
+		return
+	end
+	open = value
+	widgets.panel.Visible = value
+end
+
+function SettingsPanel.toggle()
+	SettingsPanel.setOpen(not open)
+end
+
+--- V tusu: paneli acmadan birinci/ucuncu sahis arasinda gecis.
+function SettingsPanel.quickTogglePerspective()
+	if values == nil then
+		return
+	end
+	values.firstPerson = Camera.toggleFirstPerson()
+	refresh()
+	scheduleSave()
+end
+
+return SettingsPanel
+</ProtectedString>
+					</Properties>
+				</Item>
+				<Item class="ModuleScript" referent="RBX56">
 					<Properties>
 						<string name="Name">ShopPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -8924,7 +12850,7 @@ return ShopPanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX46">
+				<Item class="ModuleScript" referent="RBX57">
 					<Properties>
 						<string name="Name">SurgeryPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -9181,7 +13107,7 @@ return SurgeryPanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX47">
+				<Item class="ModuleScript" referent="RBX58">
 					<Properties>
 						<string name="Name">Theme</string>
 						<ProtectedString name="Source">--!strict
@@ -9419,7 +13345,7 @@ return Theme
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX48">
+				<Item class="ModuleScript" referent="RBX59">
 					<Properties>
 						<string name="Name">ToolBar</string>
 						<ProtectedString name="Source">--!strict
@@ -9452,6 +13378,8 @@ local KEYS = {
 	[Enum.KeyCode.Four] = 4,
 	[Enum.KeyCode.Five] = 5,
 	[Enum.KeyCode.Six] = 6,
+	[Enum.KeyCode.Seven] = 7,
+	[Enum.KeyCode.Eight] = 8,
 }
 
 local function highlight()
@@ -9476,7 +13404,7 @@ end
 function ToolBar.create(parent: ScreenGui)
 	local frame = Theme.frame({
 		name = &quot;AletCubugu&quot;,
-		size = UDim2.fromOffset(560, 66),
+		size = UDim2.fromOffset(730, 66),
 		position = UDim2.new(0.5, 0, 1, -16),
 		anchor = Vector2.new(0.5, 1),
 		parent = parent,
@@ -9548,7 +13476,7 @@ return ToolBar
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX49">
+				<Item class="ModuleScript" referent="RBX60">
 					<Properties>
 						<string name="Name">TreatmentPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -9577,7 +13505,7 @@ function TreatmentPanel.create(parent: ScreenGui)
 	local panel = Theme.frame({
 		name = &quot;TedaviPaneli&quot;,
 		size = UDim2.fromOffset(330, 250),
-		position = UDim2.new(1, -16, 0, 358),
+		position = UDim2.new(1, -16, 0, 406),
 		anchor = Vector2.new(1, 0),
 		parent = parent,
 		visible = false,
@@ -9687,19 +13615,19 @@ return TreatmentPanel
 			</Item>
 		</Item>
 	</Item>
-	<Item class="StarterGui" referent="RBX50">
+	<Item class="StarterGui" referent="RBX61">
 		<Properties>
 			<string name="Name">StarterGui</string>
 			<bool name="ResetPlayerGuiOnSpawn">false</bool>
 		</Properties>
 	</Item>
-	<Item class="Players" referent="RBX51">
+	<Item class="Players" referent="RBX62">
 		<Properties>
 			<string name="Name">Players</string>
 			<bool name="CharacterAutoLoads">false</bool>
 		</Properties>
 	</Item>
-	<Item class="SoundService" referent="RBX52">
+	<Item class="SoundService" referent="RBX63">
 		<Properties>
 			<string name="Name">SoundService</string>
 		</Properties>

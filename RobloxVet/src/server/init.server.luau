@@ -23,11 +23,18 @@ local Validate = require(Shared.Validate)
 
 local AnimalAnimator = require(script.world.AnimalAnimator)
 local Clinic = require(script.world.Clinic)
+local OwnerFactory = require(script.world.OwnerFactory)
 local SkyLighting = require(script.world.Lighting)
 
+local Leaderboard = require(script.game.Leaderboard)
 local PatientFlow = require(script.game.PatientFlow)
 local Profile = require(script.game.Profile)
 local Surgery = require(script.game.Surgery)
+local Tasks = require(script.game.Tasks)
+local Upgrades = require(script.game.Upgrades)
+
+local Data = ReplicatedStorage:WaitForChild("VetData")
+local settingsData = require(Data.settings)
 
 -- ── Remote baglama ────────────────────────────────────────────────────
 
@@ -86,6 +93,7 @@ local setupOk, setupError = pcall(function()
 	SkyLighting.apply()
 	built = Clinic.build(workspace)
 	AnimalAnimator.start()
+	OwnerFactory.start()
 	PatientFlow.start(built :: Clinic.Built)
 end)
 
@@ -121,7 +129,11 @@ end
 -- ── Oyuncu yasam dongusu ──────────────────────────────────────────────
 
 local function onPlayerAdded(player: Player)
-	Profile.load(player)
+	local entry = Profile.load(player)
+	Leaderboard.attach(player)
+	-- Gunluk gorevler oyuncu girer girmez hazir olsun: gun degistiyse
+	-- burada yenileniyor.
+	Tasks.ensure(entry.data, player.UserId)
 	-- Istemci modullerinin kurulmasini beklemeye gerek yok: istemci
 	-- hazir olunca kendi durumunu istiyor (CallNext degil, ilk
 	-- StateUpdate asagida yollaniyor ve istemci StateUpdate'i
@@ -173,7 +185,7 @@ bind("BuyTool", function(player: Player, toolId: string)
 	if entry == nil then
 		return
 	end
-	local result = require(script.game.Upgrades).buyTool(entry.data, toolId)
+	local result = Upgrades.buyTool(entry.data, toolId)
 	Net.toPlayer("Notify", player, if result.ok then "good" else "warn", result.reasonKey, result.args)
 	if result.ok then
 		Profile.markDirty(player)
@@ -185,12 +197,50 @@ bind("BuyUpgrade", function(player: Player, upgradeId: string)
 	if entry == nil then
 		return
 	end
-	local result = require(script.game.Upgrades).buyUpgrade(entry.data, upgradeId)
+	local result = Upgrades.buyUpgrade(entry.data, upgradeId)
 	Net.toPlayer("Notify", player, if result.ok then "good" else "warn", result.reasonKey, result.args)
 	if result.ok then
 		Profile.markDirty(player)
 	end
 	PatientFlow.pushState(player)
+end)
+
+--- Ayarlar SUNUCUDA siniriyor: istemciden gelen degere guvenilmiyor.
+--- Bozuk bir deger (NaN, negatif FOV) kamerayi kilitleyebilirdi.
+local function sanitizeSettings(raw: any, current: any): any
+	local limits = settingsData.limits
+	local result = table.clone(current)
+
+	if type(raw.firstPerson) == "boolean" then
+		result.firstPerson = raw.firstPerson
+	end
+	if type(raw.showFps) == "boolean" then
+		result.showFps = raw.showFps
+	end
+	if type(raw.sprintEnabled) == "boolean" then
+		result.sprintEnabled = raw.sprintEnabled
+	end
+	if type(raw.bobbing) == "number" and raw.bobbing == raw.bobbing then
+		result.bobbing = math.clamp(raw.bobbing, limits.bobbing.min, limits.bobbing.max)
+	end
+	if type(raw.fieldOfView) == "number" and raw.fieldOfView == raw.fieldOfView then
+		result.fieldOfView = math.clamp(raw.fieldOfView, limits.fieldOfView.min, limits.fieldOfView.max)
+	end
+	return result
+end
+
+bind("SaveSettings", function(player: Player, raw: any)
+	local entry = Profile.get(player)
+	if entry == nil then
+		return
+	end
+	entry.data.settings = sanitizeSettings(raw, entry.data.settings)
+	Profile.markDirty(player)
+	PatientFlow.pushState(player)
+end)
+
+bind("RequestProgress", function(player: Player)
+	PatientFlow.pushProgress(player)
 end)
 
 -- Her sey bagli: artik oyuncular dogabilir.

@@ -233,6 +233,24 @@ local function stepPose(entry: Entry, dt: number, movingSpeed: number)
 		end
 	end
 
+	-- Yilan: govde halkalari boyunca ilerleyen bir dalga. Faz kaymasi
+	-- halkadan halkaya sabit; dalga bastan kuyruga akiyor, yani hayvan
+	-- kendi uzerinde SURUNUYOR gibi gorunuyor. Dururken de kisik bir
+	-- genlikle devam ediyor: canli bir yilan tas gibi durmaz.
+	do
+		local index = 2
+		local amplitude = if walking then 0.42 else 0.12
+		while true do
+			local joint = joints["segment" .. index]
+			if joint == nil then
+				break
+			end
+			local offset = (index - 1) * 0.7
+			joint.Transform = CFrame.Angles(0, math.sin(phase * 1.6 - offset) * amplitude, 0)
+			index += 1
+		end
+	end
+
 	-- Kanatlar: yururken cirpinir, dururken govdeye yapisir.
 	for index = 1, 2 do
 		local joint = joints["wing" .. index]

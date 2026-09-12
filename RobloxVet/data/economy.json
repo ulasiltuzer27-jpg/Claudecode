@@ -50,6 +50,35 @@
   "_alet_notu": "Her alet kullanimi hayvani biraz gerer. Boylece butun aletleri sirayla denemek bedava olmuyor: stres 100'e varirsa hayvan direnir.",
   "toolStress": 4,
 
+  "_acil_notu": "Acil vaka: ambulansla gelen agir hasta. Daha dusuk saglikla baslar, sure siniri vardir, ucreti ve XP'si yuksektir; kaybedilirse itibar cezasi agirdir. minLevel'den once cikmaz - yeni oyuncunun ilk 10 dakikasinda kaldiramayacagi bir sey olmasin.",
+  "emergency": {
+    "chance": 0.16,
+    "minLevel": 3,
+    "feeMultiplier": 1.8,
+    "xpMultiplier": 1.5,
+    "healthPenalty": 22,
+    "timeLimitSeconds": 165,
+    "reputationLoss": -12,
+    "reputationGain": 6
+  },
+
+  "_sahip_notu": "Hayvanin sahibi bekleme odasinda oturur. Memnuniyeti bekleme suresiyle duser, dogru teshis ve saglikli taburcu ile yukselir. Yeterince memnunsa ucretin uzerine BAHSIS birakir.",
+  "owner": {
+    "startSatisfaction": 75,
+    "decayPerSecond": 0.13,
+    "wrongDiagnosisHit": -18,
+    "correctDiagnosisGain": 10,
+    "healthyDischargeGain": 12,
+    "tipShare": 0.3,
+    "minTipSatisfaction": 60
+  },
+
+  "_gorev_notu": "Gunluk gorevler: havuzdan rastgele secilen hedefler. resetHours dolunca yenilenir; sayac oyuncunun profiline yaziliyor, yani sunucu degistirse de kaybolmuyor.",
+  "dailyTasks": {
+    "count": 3,
+    "resetHours": 24
+  },
+
   "wrongDiagnosisStress": 18,
   "wrongTreatmentStress": 12,
   "wrongTreatmentHealth": -6,
@@ -65,6 +94,11 @@
     { "level": 7,  "xp": 2600, "titleKey": "title.7" },
     { "level": 8,  "xp": 3700, "titleKey": "title.8" },
     { "level": 9,  "xp": 5100, "titleKey": "title.9" },
-    { "level": 10, "xp": 6900, "titleKey": "title.10" }
+    { "level": 10, "xp": 6900, "titleKey": "title.10" },
+    { "level": 11, "xp": 9000,  "titleKey": "title.11" },
+    { "level": 12, "xp": 11600, "titleKey": "title.12" },
+    { "level": 13, "xp": 14800, "titleKey": "title.13" },
+    { "level": 14, "xp": 18700, "titleKey": "title.14" },
+    { "level": 15, "xp": 23500, "titleKey": "title.15" }
   ]
 }

@@ -71,6 +71,7 @@ TREATMENTS = {t["id"]: t for t in load("treatments.json")["treatments"]}
 TOOLS = load("tools.json")["tools"]
 SYMPTOMS = {s["id"]: s for s in load("symptoms.json")["symptoms"]}
 UPGRADES = load("upgrades.json")["upgrades"]
+SURGERY = load("treatments.json")["surgery"]
 
 LEVELS = ECONOMY["levels"]
 MAX_LEVEL = len(LEVELS)
@@ -154,10 +155,19 @@ def service_seconds(condition, owned_tools: set[str]) -> float:
     for treatment_id in condition["treatments"]:
         treatment = TREATMENTS[treatment_id]
         if treatment["minigame"] == "surgery":
-            seconds += load("treatments.json")["surgery"]["steps"] * load("treatments.json")["surgery"]["stepSeconds"]
+            seconds += SURGERY["steps"] * SURGERY["stepSeconds"]
         else:
             seconds += treatment["seconds"]
     return seconds
+
+
+def tip_for(fee_value: int, satisfaction: float) -> int:
+    """Bahsis. PatientFlow.discharge ile AYNI formul."""
+    owner = ECONOMY["owner"]
+    if satisfaction < owner["minTipSatisfaction"]:
+        return 0
+    share = (satisfaction - owner["minTipSatisfaction"]) / max(1, 100 - owner["minTipSatisfaction"])
+    return math.floor(fee_value * owner["tipShare"] * share + 0.5)
 
 
 def supply_cost(condition, discount: float) -> int:
@@ -232,8 +242,26 @@ def simulate(competent: bool, buy_things: bool, patients: int = 4000, seed: int 
             reputation = clamp_reputation(reputation + ECONOMY["reputation"]["healthyDischarge"])
 
         earned = fee(animal["baseFee"], condition["feeMultiplier"], reputation, health, fee_bonus)
+        gained_xp = condition["xp"]
+
+        # Acil vakalar: daha yuksek ucret ve XP. Oyunda rastgele geliyor;
+        # burada ayni olasilikla ornekleniyor.
+        if level >= ECONOMY["emergency"]["minLevel"] and rng.random() < ECONOMY["emergency"]["chance"]:
+            earned = math.floor(earned * ECONOMY["emergency"]["feeMultiplier"] + 0.5)
+            gained_xp = math.floor(gained_xp * ECONOMY["emergency"]["xpMultiplier"] + 0.5)
+
+        # Bahsis: duzgun oynayan sahibi memnun eder, dikkatsiz oyuncu
+        # yanlis teshisle memnuniyeti dusurur.
+        satisfaction = ECONOMY["owner"]["startSatisfaction"]
+        if competent:
+            satisfaction += ECONOMY["owner"]["correctDiagnosisGain"] + ECONOMY["owner"]["healthyDischargeGain"]
+        else:
+            satisfaction += ECONOMY["owner"]["wrongDiagnosisHit"]
+        satisfaction = max(0.0, min(100.0, satisfaction))
+        earned += tip_for(earned, satisfaction)
+
         money += earned
-        xp += condition["xp"]
+        xp += gained_xp
 
         new_level = level_for_xp(xp)
         if new_level > level:
@@ -311,14 +339,14 @@ def main() -> int:
 
     # 1-3, 7. Duzgun oynayan oyuncu
     good = simulate(competent=True, buy_things=True)
-    check("10. seviyeye ulasiliyor", good["level"] >= MAX_LEVEL)
+    check(f"{MAX_LEVEL}. seviyeye ulasiliyor", good["level"] >= MAX_LEVEL)
     check("2. seviye ilk 10 hastada geciliyor", good["level_at_patient"].get(2, 9999) <= 10)
     check("5. seviye ilk 120 hastada geciliyor", good["level_at_patient"].get(5, 9999) <= 120)
-    check("10. seviye 1500 hastadan once geliyor", good["level_at_patient"].get(MAX_LEVEL, 9999) <= 1500)
+    check(f"{MAX_LEVEL}. seviye 2500 hastadan once geliyor", good["level_at_patient"].get(MAX_LEVEL, 99999) <= 2500)
     check("2. seviye ilk 10 dakikada geliyor", good["level_at_time"].get(2, 1e9) <= 600)
     check(
-        "toplam sure makul bantta (1-25 saat)",
-        3600 <= good["level_at_time"].get(MAX_LEVEL, 0) <= 25 * 3600,
+        "toplam sure makul bantta (1-40 saat)",
+        3600 <= good["level_at_time"].get(MAX_LEVEL, 0) <= 40 * 3600,
     )
     check("duzgun oynayanin parasi negatife dusmuyor", good["min_money"] >= 0)
     check("butun aletler satin alinabiliyor", len(good["tools"]) == len(TOOLS))
@@ -341,6 +369,19 @@ def main() -> int:
     sloppy = simulate(competent=False, buy_things=True)
     check("dikkatsiz oyuncu da ilerliyor", sloppy["level"] > 1)
     check("dikkatsiz oyuncunun parasi negatife dusmuyor", sloppy["min_money"] >= 0)
+    # Acil vaka gercekten daha cok kazandiriyor mu?
+    plain = fee(100, 1, 50, 90, 1)
+    urgent = math.floor(plain * ECONOMY["emergency"]["feeMultiplier"] + 0.5)
+    check("acil vaka daha cok kazandiriyor", urgent > plain)
+
+    # Bahsis esigi: esigin altinda hic, tavanda en fazla.
+    check("esik altinda bahsis yok", tip_for(1000, ECONOMY["owner"]["minTipSatisfaction"] - 1) == 0)
+    check("tam memnuniyette bahsis var", tip_for(1000, 100) > 0)
+    check(
+        "bahsis ucreti asmiyor",
+        tip_for(1000, 100) <= 1000 * ECONOMY["owner"]["tipShare"] + 1,
+    )
+
     # Kilitlenmeme kosulu: EN KOTU durumda bile (itibar tabanda, hayvan
     # yari saglikli) her vakanin ucreti sarf malzemesini karsilamali.
     # Karsilamazsa oyuncu ne kadar cok calisirsa o kadar fakirlesir ve

@@ -63,7 +63,7 @@ function AnimalFactory.allIds(): { string }
 	return ids
 end
 
-local KNOWN_RIGS = { quadruped = true, bird = true, shelled = true }
+local KNOWN_RIGS = { quadruped = true, bird = true, shelled = true, serpentine = true }
 
 --- Iskelet adi taniniyor mu? verify_data.py ve SelfTest bunu soruyor.
 function AnimalFactory.knownRig(rig: string): boolean
@@ -373,6 +373,130 @@ local function buildTail(
 	parts.tail = part
 end
 
+--- Yilan govdesi: birbirine Motor6D ile bagli halkalar. Kuyruga dogru
+--- incelir. Ilk halka govde yerine geciyor, kafa ona takiliyor.
+---
+--- Neden ayri bir iskelet? Dortayakli govdesi tek bir kutu; yilanin
+--- kivrilmasi icin govdenin KENDISININ eklemli olmasi gerekiyor.
+local function buildSerpentine(
+	model: Model,
+	root: BasePart,
+	spec: any,
+	palette: { [string]: Color3 },
+	joints: { [string]: Motor6D },
+	parts: { [string]: BasePart },
+	torsoY: number
+): BasePart
+	local count = spec.segments.count
+	local taper = spec.segments.taper
+	local segmentLength = spec.body.length / count
+
+	local previous: BasePart? = nil
+	local firstSegment: BasePart? = nil
+
+	for index = 1, count do
+		-- Genislik bastan sona dogrusal olarak `taper` oranina iniyor.
+		local shrink = 1 - (1 - taper) * ((index - 1) / math.max(count - 1, 1))
+		local width = spec.body.width * shrink
+		local z = spec.body.length * 0.5 - segmentLength * (index - 0.5)
+
+		local segment = Build.part({
+			name = "Halka" .. index,
+			size = Vector3.new(width, spec.body.height * shrink, segmentLength),
+			cf = CFrame.new(0, torsoY, z),
+			color = if index % 2 == 0 then palette.accent else palette.body,
+			canCollide = false,
+			anchored = false,
+			parent = model,
+		})
+		parts["segment" .. index] = segment
+
+		if previous == nil then
+			firstSegment = segment
+			joints.rootJoint = rigJoint("RootJoint", root, segment, Vector3.new(0, torsoY, z))
+		else
+			-- Eklem iki halkanin ARASINDA: burasi kivrilma noktasi.
+			local pivot = Vector3.new(0, torsoY, z + segmentLength * 0.5)
+			joints["segment" .. index] = rigJoint("Segment" .. index, previous, segment, pivot)
+		end
+		previous = segment
+	end
+
+	return firstSegment :: BasePart
+end
+
+--- Kirpi dikenleri: govdenin ustune yayilmis kucuk koniler (kama).
+local function buildSpines(model: Model, torso: BasePart, spec: any, palette: { [string]: Color3 })
+	local config = spec.spines
+	local rows = 4
+	local perRow = math.max(1, math.floor(config.count / rows))
+
+	for row = 1, rows do
+		for index = 1, perRow do
+			-- Govdenin ust yarisina, boyuna ve enine yayiliyor.
+			local along = (index - 0.5) / perRow - 0.5
+			local across = (row - 0.5) / rows - 0.5
+			local spine = Build.part({
+				name = "Diken",
+				size = Vector3.new(config.thickness, config.length, config.thickness),
+				cf = torso.CFrame
+					* CFrame.new(
+						across * spec.body.width * 0.85,
+						spec.body.height * 0.45 + config.length * 0.4,
+						along * spec.body.length * 0.85
+					)
+					* CFrame.Angles(math.rad(across * -34), 0, math.rad(across * 34)),
+				color = palette.accent,
+				canCollide = false,
+				anchored = false,
+				parent = model,
+			})
+			rigidWeld(torso, spine)
+		end
+	end
+end
+
+--- Iguana sirt yelesi: govdenin uzerinde sirtboyu dizilmis ince plakalar.
+local function buildCrest(model: Model, torso: BasePart, spec: any, palette: { [string]: Color3 })
+	local config = spec.crest
+	for index = 1, config.count do
+		local along = (index - 0.5) / config.count - 0.5
+		-- Ortadaki plakalar en uzun: hayvan siluetine bir tepe veriyor.
+		local scale = 0.55 + 0.45 * math.cos(along * math.pi)
+		local plate = Build.part({
+			name = "Yele",
+			size = Vector3.new(config.thickness, config.height * scale, spec.body.length / config.count * 0.6),
+			cf = torso.CFrame
+				* CFrame.new(0, spec.body.height * 0.5 + config.height * scale * 0.5, along * spec.body.length * 0.9),
+			color = palette.accent,
+			canCollide = false,
+			anchored = false,
+			parent = model,
+		})
+		rigidWeld(torso, plate)
+	end
+end
+
+--- At yelesi: boyun boyunca kafaya dogru inen tutamlar.
+local function buildMane(model: Model, torso: BasePart, head: BasePart, spec: any, palette: { [string]: Color3 })
+	local config = spec.mane
+	for index = 1, config.count do
+		local ratio = (index - 0.5) / config.count
+		local position = torso.Position:Lerp(head.Position, ratio)
+		local tuft = Build.part({
+			name = "Yele",
+			size = Vector3.new(config.thickness, config.height, spec.body.length / config.count * 0.5),
+			cf = CFrame.new(position + Vector3.new(0, spec.body.height * 0.45, 0)),
+			color = palette.accent,
+			material = Enum.Material.Fabric,
+			canCollide = false,
+			anchored = false,
+			parent = model,
+		})
+		rigidWeld(torso, tuft)
+	end
+end
+
 --- Tam rigi kurar. `cframe` hayvanin ayaklarinin basacagi yer.
 function AnimalFactory.create(animalId: string, cframe: CFrame, parent: Instance): Rig?
 	local spec = byId[animalId]
@@ -395,6 +519,8 @@ function AnimalFactory.create(animalId: string, cframe: CFrame, parent: Instance
 	local joints: { [string]: Motor6D } = {}
 
 	local body = spec.body
+	-- Govde merkezinin yerden yuksekligi. Yilanda bacak yok, govde
+	-- dogrudan zeminde: legs.length = 0 oldugu icin formul ayni kaliyor.
 	local groundClearance = spec.legs.length
 	local torsoY = groundClearance + body.height * 0.5
 
@@ -413,34 +539,51 @@ function AnimalFactory.create(animalId: string, cframe: CFrame, parent: Instance
 	})
 	parts.root = root
 
-	local torso = Build.part({
-		name = "Govde",
-		size = Vector3.new(body.width, body.height, body.length),
-		cf = CFrame.new(0, torsoY, 0),
-		color = palette.body,
-		canCollide = false,
-		anchored = false,
-		parent = model,
-	})
-	parts.torso = torso
-	joints.rootJoint = rigJoint("RootJoint", root, torso, Vector3.new(0, torsoY, 0))
+	local torso: BasePart
+	if spec.rig == "serpentine" then
+		torso = buildSerpentine(model, root, spec, palette, joints, parts, torsoY)
+		parts.torso = torso
+	else
+		torso = Build.part({
+			name = "Govde",
+			size = Vector3.new(body.width, body.height, body.length),
+			cf = CFrame.new(0, torsoY, 0),
+			color = palette.body,
+			canCollide = false,
+			anchored = false,
+			parent = model,
+		})
+		parts.torso = torso
+		joints.rootJoint = rigJoint("RootJoint", root, torso, Vector3.new(0, torsoY, 0))
 
-	-- Karin: govdenin altinda acik renk serit. Tek renkli bir kutu yerine
-	-- iki tonlu govde hayvani gozle ayirt edilir kiliyor.
-	local belly = Build.part({
-		name = "Karin",
-		size = Vector3.new(body.width * 0.72, body.height * 0.45, body.length * 0.82),
-		cf = CFrame.new(0, torsoY - body.height * 0.32, body.length * 0.04),
-		color = palette.belly,
-		canCollide = false,
-		anchored = false,
-		parent = model,
-	})
-	rigidWeld(torso, belly)
+		-- Karin: govdenin altinda acik renk serit. Tek renkli bir kutu yerine
+		-- iki tonlu govde hayvani gozle ayirt edilir kiliyor.
+		local belly = Build.part({
+			name = "Karin",
+			size = Vector3.new(body.width * 0.72, body.height * 0.45, body.length * 0.82),
+			cf = CFrame.new(0, torsoY - body.height * 0.32, body.length * 0.04),
+			color = palette.belly,
+			canCollide = false,
+			anchored = false,
+			parent = model,
+		})
+		rigidWeld(torso, belly)
+	end
 
 	buildHead(model, torso, spec, palette, joints, parts)
 	buildLegs(model, torso, spec, palette, joints, parts)
 	buildTail(model, torso, spec, palette, joints, parts)
+
+	-- Istege bagli suslemeler: yalnizca veri tablosunda tanimliysa kuruluyor.
+	if spec.spines ~= nil then
+		buildSpines(model, torso, spec, palette)
+	end
+	if spec.crest ~= nil then
+		buildCrest(model, torso, spec, palette)
+	end
+	if spec.mane ~= nil and parts.head ~= nil then
+		buildMane(model, torso, parts.head, spec, palette)
+	end
 
 	if spec.rig == "bird" and spec.wings ~= nil then
 		for index, side in { -1, 1 } do

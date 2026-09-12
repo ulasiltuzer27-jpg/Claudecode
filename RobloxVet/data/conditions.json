@@ -1,85 +1,161 @@
 {
   "_comment": "(VERI) Hastaliklar. Oyunun bulmacasi burada: oyuncu aletlerle semptom toplar, semptom kumesinden hastaligi cikarir, dogru tedavi zincirini uygular.",
   "_cozulebilirlik_notu": "Ayni turde iki hastaligin semptom kumesi BIREBIR AYNI olmamali - yoksa bulmaca cozulemez. verify_data.py bunu denetliyor. Alt kume iliskisi (orn. kirik = burkulma + rontgen bulgusu) kasitli: dogru aleti almak oduldur.",
+  "_ipucu_notu": "hintKey, hayvanin sahibi olan NPC'nin bekleme odasinda soyledigi cumle. Semptomu dogrudan soylemez, yonlendirir: gercek bir muayenede de sahibin anlattigi sey tanı degil, sikayettir.",
   "conditions": [
-    { "id": "kennelCough",   "nameKey": "condition.kennelCough",   "species": ["dog"],
+    { "id": "kennelCough", "nameKey": "condition.kennelCough", "hintKey": "hint.kennelCough",
+      "species": ["dog"],
       "symptoms": ["wheezing", "fever"], "treatments": ["pill", "injection"],
       "feeMultiplier": 1.3, "xp": 30, "unlockLevel": 2, "wrongPenalty": 35, "severity": 1 },
 
-    { "id": "earMites",      "nameKey": "condition.earMites",      "species": ["dog", "cat", "rabbit"],
+    { "id": "earMites", "nameKey": "condition.earMites", "hintKey": "hint.earMites",
+      "species": ["dog", "cat", "rabbit", "hedgehog"],
       "symptoms": ["earMites", "lethargy"], "treatments": ["drops", "wash"],
       "feeMultiplier": 1.2, "xp": 28, "unlockLevel": 3, "wrongPenalty": 30, "severity": 1 },
 
-    { "id": "fleas",         "nameKey": "condition.fleas",         "species": ["dog", "cat", "rabbit", "hamster"],
+    { "id": "fleas", "nameKey": "condition.fleas", "hintKey": "hint.fleas",
+      "species": ["dog", "cat", "rabbit", "hamster", "hedgehog"],
       "symptoms": ["rash", "lethargy"], "treatments": ["wash", "drops"],
       "feeMultiplier": 1.1, "xp": 22, "unlockLevel": 1, "wrongPenalty": 25, "severity": 1 },
 
-    { "id": "dehydration",   "nameKey": "condition.dehydration",   "species": ["dog", "cat", "rabbit", "hamster", "parrot", "turtle"],
+    { "id": "dehydration", "nameKey": "condition.dehydration", "hintKey": "hint.dehydration",
+      "species": ["dog", "cat", "rabbit", "hamster", "parrot", "turtle", "hedgehog", "snake", "iguana", "horse"],
       "symptoms": ["lethargy", "rapidHeartbeat"], "treatments": ["water", "injection"],
       "feeMultiplier": 1.15, "xp": 26, "unlockLevel": 1, "wrongPenalty": 28, "severity": 2 },
 
-    { "id": "sprainedLeg",   "nameKey": "condition.sprainedLeg",   "species": ["dog", "cat", "rabbit"],
+    { "id": "sprainedLeg", "nameKey": "condition.sprainedLeg", "hintKey": "hint.sprainedLeg",
+      "species": ["dog", "cat", "rabbit", "iguana", "horse"],
       "symptoms": ["limp", "swelling"], "treatments": ["bandage", "pill"],
       "feeMultiplier": 1.35, "xp": 34, "unlockLevel": 2, "wrongPenalty": 40, "severity": 2 },
 
-    { "id": "eyeInfection",  "nameKey": "condition.eyeInfection",  "species": ["dog", "cat", "rabbit", "hamster", "parrot"],
+    { "id": "eyeInfection", "nameKey": "condition.eyeInfection", "hintKey": "hint.eyeInfection",
+      "species": ["dog", "cat", "rabbit", "hamster", "parrot", "iguana"],
       "symptoms": ["discharge", "rash"], "treatments": ["drops", "wash"],
       "feeMultiplier": 1.25, "xp": 30, "unlockLevel": 2, "wrongPenalty": 32, "severity": 1 },
 
-    { "id": "intestinalParasite", "nameKey": "condition.intestinalParasite", "species": ["dog", "cat", "rabbit", "hamster"],
+    { "id": "intestinalParasite", "nameKey": "condition.intestinalParasite", "hintKey": "hint.intestinalParasite",
+      "species": ["dog", "cat", "rabbit", "hamster", "hedgehog", "horse"],
       "symptoms": ["weightLoss", "parasiteEggs"], "treatments": ["pill", "feed"],
       "feeMultiplier": 1.5, "xp": 44, "unlockLevel": 5, "wrongPenalty": 48, "severity": 2 },
 
-    { "id": "featherPlucking", "nameKey": "condition.featherPlucking", "species": ["parrot"],
+    { "id": "featherPlucking", "nameKey": "condition.featherPlucking", "hintKey": "hint.featherPlucking",
+      "species": ["parrot"],
       "symptoms": ["rash", "weightLoss"], "treatments": ["feed", "drops"],
       "feeMultiplier": 1.4, "xp": 38, "unlockLevel": 4, "wrongPenalty": 40, "severity": 2 },
 
-    { "id": "shellRot",      "nameKey": "condition.shellRot",      "species": ["turtle"],
+    { "id": "shellRot", "nameKey": "condition.shellRot", "hintKey": "hint.shellRot",
+      "species": ["turtle"],
       "symptoms": ["rash", "lethargy", "swelling"], "treatments": ["wash", "drops", "injection"],
       "feeMultiplier": 1.6, "xp": 48, "unlockLevel": 5, "wrongPenalty": 52, "severity": 2 },
 
-    { "id": "bacterialInfection", "nameKey": "condition.bacterialInfection", "species": ["dog", "cat", "rabbit", "hamster", "parrot", "turtle"],
+    { "id": "bacterialInfection", "nameKey": "condition.bacterialInfection", "hintKey": "hint.bacterialInfection",
+      "species": ["dog", "cat", "rabbit", "hamster", "parrot", "turtle", "hedgehog", "snake", "iguana", "horse"],
       "symptoms": ["fever", "highWbc"], "treatments": ["injection", "pill"],
       "feeMultiplier": 1.55, "xp": 46, "unlockLevel": 5, "wrongPenalty": 50, "severity": 2 },
 
-    { "id": "brokenBone",    "nameKey": "condition.brokenBone",    "species": ["dog", "cat", "rabbit", "hamster", "parrot", "turtle"],
+    { "id": "brokenBone", "nameKey": "condition.brokenBone", "hintKey": "hint.brokenBone",
+      "species": ["dog", "cat", "rabbit", "hamster", "parrot", "turtle", "hedgehog", "snake", "iguana", "horse"],
       "symptoms": ["limp", "swelling", "fracture"], "treatments": ["surgery", "bandage", "pill"],
       "feeMultiplier": 3.0, "xp": 75, "unlockLevel": 4, "wrongPenalty": 70, "severity": 3 },
 
-    { "id": "anemia",        "nameKey": "condition.anemia",        "species": ["dog", "cat", "rabbit", "hamster", "parrot", "turtle"],
+    { "id": "anemia", "nameKey": "condition.anemia", "hintKey": "hint.anemia",
+      "species": ["dog", "cat", "rabbit", "hamster", "parrot", "turtle", "hedgehog", "snake", "iguana", "horse"],
       "symptoms": ["lethargy", "anemia"], "treatments": ["injection", "feed"],
       "feeMultiplier": 1.6, "xp": 50, "unlockLevel": 5, "wrongPenalty": 54, "severity": 2 },
 
-    { "id": "earInfection",  "nameKey": "condition.earInfection",  "species": ["dog", "cat", "rabbit"],
+    { "id": "earInfection", "nameKey": "condition.earInfection", "hintKey": "hint.earInfection",
+      "species": ["dog", "cat", "rabbit", "hedgehog"],
       "symptoms": ["earInfection", "fever"], "treatments": ["drops", "injection"],
       "feeMultiplier": 1.45, "xp": 40, "unlockLevel": 3, "wrongPenalty": 42, "severity": 2 },
 
-    { "id": "soreThroat",    "nameKey": "condition.soreThroat",    "species": ["dog", "cat", "parrot"],
+    { "id": "soreThroat", "nameKey": "condition.soreThroat", "hintKey": "hint.soreThroat",
+      "species": ["dog", "cat", "parrot"],
       "symptoms": ["throatRedness", "lethargy"], "treatments": ["pill", "water"],
       "feeMultiplier": 1.3, "xp": 34, "unlockLevel": 3, "wrongPenalty": 34, "severity": 1 },
 
-    { "id": "hypothermia",   "nameKey": "condition.hypothermia",   "species": ["rabbit", "hamster", "parrot", "turtle"],
+    { "id": "hypothermia", "nameKey": "condition.hypothermia", "hintKey": "hint.hypothermia",
+      "species": ["rabbit", "hamster", "parrot", "turtle", "hedgehog", "snake", "iguana"],
       "symptoms": ["hypothermia", "lethargy"], "treatments": ["feed", "water", "pill"],
       "feeMultiplier": 1.5, "xp": 42, "unlockLevel": 2, "wrongPenalty": 44, "severity": 2 },
 
-    { "id": "swallowedObject", "nameKey": "condition.swallowedObject", "species": ["dog", "cat"],
+    { "id": "swallowedObject", "nameKey": "condition.swallowedObject", "hintKey": "hint.swallowedObject",
+      "species": ["dog", "cat", "snake"],
       "symptoms": ["gutSilence", "foreignObject"], "treatments": ["surgery", "pill", "water"],
       "feeMultiplier": 2.4, "xp": 90, "unlockLevel": 4, "wrongPenalty": 80, "severity": 3 },
 
-    { "id": "pneumonia",     "nameKey": "condition.pneumonia",     "species": ["dog", "cat", "rabbit", "hamster", "parrot", "turtle"],
+    { "id": "pneumonia", "nameKey": "condition.pneumonia", "hintKey": "hint.pneumonia",
+      "species": ["dog", "cat", "rabbit", "hamster", "parrot", "turtle", "hedgehog", "snake", "iguana", "horse"],
       "symptoms": ["wheezing", "fever", "lungOpacity"], "treatments": ["injection", "pill", "water"],
       "feeMultiplier": 2.0, "xp": 72, "unlockLevel": 4, "wrongPenalty": 68, "severity": 3 },
 
-    { "id": "kidneyTrouble", "nameKey": "condition.kidneyTrouble", "species": ["dog", "cat", "turtle"],
+    { "id": "kidneyTrouble", "nameKey": "condition.kidneyTrouble", "hintKey": "hint.kidneyTrouble",
+      "species": ["dog", "cat", "turtle", "iguana"],
       "symptoms": ["weightLoss", "kidneyMarkers"], "treatments": ["injection", "water", "feed"],
       "feeMultiplier": 2.2, "xp": 82, "unlockLevel": 5, "wrongPenalty": 76, "severity": 3 },
 
-    { "id": "arthritis",     "nameKey": "condition.arthritis",     "species": ["dog", "cat", "turtle"],
+    { "id": "arthritis", "nameKey": "condition.arthritis", "hintKey": "hint.arthritis",
+      "species": ["dog", "cat", "turtle"],
       "symptoms": ["limp", "jointWear"], "treatments": ["pill", "injection"],
       "feeMultiplier": 1.8, "xp": 60, "unlockLevel": 4, "wrongPenalty": 58, "severity": 2 },
 
-    { "id": "heartMurmur",   "nameKey": "condition.heartMurmur",   "species": ["dog", "cat"],
+    { "id": "heartMurmur", "nameKey": "condition.heartMurmur", "hintKey": "hint.heartMurmur",
+      "species": ["dog", "cat"],
       "symptoms": ["heartMurmur", "lethargy"], "treatments": ["pill", "injection", "water"],
-      "feeMultiplier": 2.3, "xp": 86, "unlockLevel": 6, "wrongPenalty": 78, "severity": 3 }
+      "feeMultiplier": 2.3, "xp": 86, "unlockLevel": 6, "wrongPenalty": 78, "severity": 3 },
+
+    { "id": "urinaryInfection", "nameKey": "condition.urinaryInfection", "hintKey": "hint.urinaryInfection",
+      "species": ["dog", "cat", "rabbit", "horse"],
+      "symptoms": ["urineInfection", "fever"], "treatments": ["injection", "pill", "water"],
+      "feeMultiplier": 1.7, "xp": 54, "unlockLevel": 6, "wrongPenalty": 50, "severity": 2 },
+
+    { "id": "spineLoss", "nameKey": "condition.spineLoss", "hintKey": "hint.spineLoss",
+      "species": ["hedgehog"],
+      "symptoms": ["spineLoss", "dullCoat"], "treatments": ["drops", "feed", "wash"],
+      "feeMultiplier": 1.5, "xp": 46, "unlockLevel": 6, "wrongPenalty": 44, "severity": 2 },
+
+    { "id": "diabetes", "nameKey": "condition.diabetes", "hintKey": "hint.diabetes",
+      "species": ["dog", "cat", "hamster", "horse"],
+      "symptoms": ["highGlucose", "weightLoss"], "treatments": ["injection", "feed", "pill"],
+      "feeMultiplier": 2.1, "xp": 78, "unlockLevel": 6, "wrongPenalty": 72, "severity": 3 },
+
+    { "id": "shedProblem", "nameKey": "condition.shedProblem", "hintKey": "hint.shedProblem",
+      "species": ["snake"],
+      "symptoms": ["stuckShed", "lethargy"], "treatments": ["wash", "water", "feed"],
+      "feeMultiplier": 1.5, "xp": 46, "unlockLevel": 7, "wrongPenalty": 44, "severity": 2 },
+
+    { "id": "bladderStones", "nameKey": "condition.bladderStones", "hintKey": "hint.bladderStones",
+      "species": ["dog", "cat", "rabbit"],
+      "symptoms": ["bladderStone", "bloodInUrine"], "treatments": ["surgery", "pill", "water"],
+      "feeMultiplier": 2.6, "xp": 95, "unlockLevel": 7, "wrongPenalty": 85, "severity": 3 },
+
+    { "id": "pregnancyCheck", "nameKey": "condition.pregnancyCheck", "hintKey": "hint.pregnancyCheck",
+      "species": ["dog", "cat", "rabbit", "snake", "horse"],
+      "symptoms": ["pregnancy"], "treatments": ["feed", "water"],
+      "feeMultiplier": 1.4, "xp": 40, "unlockLevel": 7, "wrongPenalty": 30, "severity": 1 },
+
+    { "id": "organEnlargement", "nameKey": "condition.organEnlargement", "hintKey": "hint.organEnlargement",
+      "species": ["dog", "cat", "rabbit", "hamster", "parrot", "turtle", "hedgehog", "snake", "iguana", "horse"],
+      "symptoms": ["organSwelling", "lethargy"], "treatments": ["pill", "injection", "water"],
+      "feeMultiplier": 2.4, "xp": 88, "unlockLevel": 7, "wrongPenalty": 80, "severity": 3 },
+
+    { "id": "arrhythmia", "nameKey": "condition.arrhythmia", "hintKey": "hint.arrhythmia",
+      "species": ["dog", "cat", "horse"],
+      "symptoms": ["irregularRhythm", "lethargy"], "treatments": ["pill", "injection"],
+      "feeMultiplier": 2.5, "xp": 94, "unlockLevel": 8, "wrongPenalty": 86, "severity": 3 },
+
+    { "id": "metabolicBone", "nameKey": "condition.metabolicBone", "hintKey": "hint.metabolicBone",
+      "species": ["iguana", "turtle"],
+      "symptoms": ["fracture", "dullCoat"], "treatments": ["injection", "feed", "pill"],
+      "feeMultiplier": 2.3, "xp": 84, "unlockLevel": 8, "wrongPenalty": 78, "severity": 3 },
+
+    { "id": "colic", "nameKey": "condition.colic", "hintKey": "hint.colic",
+      "species": ["horse"],
+      "symptoms": ["gutSilence", "lethargy"], "treatments": ["water", "pill", "injection"],
+      "feeMultiplier": 2.4, "xp": 90, "unlockLevel": 9, "wrongPenalty": 80, "severity": 3 },
+
+    { "id": "laminitis", "nameKey": "condition.laminitis", "hintKey": "hint.laminitis",
+      "species": ["horse"],
+      "symptoms": ["limp", "jointWear"], "treatments": ["bandage", "pill", "injection"],
+      "feeMultiplier": 2.5, "xp": 92, "unlockLevel": 9, "wrongPenalty": 84, "severity": 3 }
   ]
 }

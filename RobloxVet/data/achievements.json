@@ -1,0 +1,29 @@
+{
+  "_comment": "(VERI) Basarimlar. kind, Achievements.luau'nun okudugu sayac adi; target o sayacin ulasmasi gereken deger.",
+  "_sayac_notu": "Gecerli sayaclar: patients, correct, earned, level, surgeries, perfectSurgeries, emergencies, species, reputation, tasks, streak. Yeni bir sayac eklemek icin Achievements.luau'daki COUNTERS tablosuna da yazmak gerekiyor; verify_data.py ikisini karsilastiriyor.",
+  "counters": ["patients", "correct", "earned", "level", "surgeries", "perfectSurgeries", "emergencies", "species", "reputation", "tasks", "streak"],
+  "achievements": [
+    { "id": "firstPatient",  "nameKey": "ach.firstPatient",  "descKey": "ach.firstPatient.desc",  "kind": "patients",         "target": 1,      "order": 1,  "reward": { "money": 100,   "xp": 20 } },
+    { "id": "tenPatients",   "nameKey": "ach.tenPatients",   "descKey": "ach.tenPatients.desc",   "kind": "patients",         "target": 10,     "order": 2,  "reward": { "money": 400,   "xp": 60 } },
+    { "id": "hundred",       "nameKey": "ach.hundred",       "descKey": "ach.hundred.desc",       "kind": "patients",         "target": 100,    "order": 3,  "reward": { "money": 3000,  "xp": 300 } },
+    { "id": "fiveHundred",   "nameKey": "ach.fiveHundred",   "descKey": "ach.fiveHundred.desc",   "kind": "patients",         "target": 500,    "order": 4,  "reward": { "money": 15000, "xp": 1200 } },
+
+    { "id": "sharpEye",      "nameKey": "ach.sharpEye",      "descKey": "ach.sharpEye.desc",      "kind": "correct",          "target": 50,     "order": 5,  "reward": { "money": 1500,  "xp": 160 } },
+    { "id": "diagnostician", "nameKey": "ach.diagnostician", "descKey": "ach.diagnostician.desc", "kind": "correct",          "target": 250,    "order": 6,  "reward": { "money": 9000,  "xp": 700 } },
+    { "id": "flawless",      "nameKey": "ach.flawless",      "descKey": "ach.flawless.desc",      "kind": "streak",           "target": 10,     "order": 7,  "reward": { "money": 2500,  "xp": 220 } },
+    { "id": "unerring",      "nameKey": "ach.unerring",      "descKey": "ach.unerring.desc",      "kind": "streak",           "target": 25,     "order": 8,  "reward": { "money": 8000,  "xp": 600 } },
+
+    { "id": "firstThousand", "nameKey": "ach.firstThousand", "descKey": "ach.firstThousand.desc", "kind": "earned",           "target": 1000,   "order": 9,  "reward": { "money": 250,   "xp": 40 } },
+    { "id": "tenThousand",   "nameKey": "ach.tenThousand",   "descKey": "ach.tenThousand.desc",   "kind": "earned",           "target": 10000,  "order": 10, "reward": { "money": 2000,  "xp": 200 } },
+    { "id": "hundredK",      "nameKey": "ach.hundredK",      "descKey": "ach.hundredK.desc",      "kind": "earned",           "target": 100000, "order": 11, "reward": { "money": 20000, "xp": 1500 } },
+
+    { "id": "surgeon",       "nameKey": "ach.surgeon",       "descKey": "ach.surgeon.desc",       "kind": "surgeries",        "target": 10,     "order": 12, "reward": { "money": 2500,  "xp": 250 } },
+    { "id": "steadyHands",   "nameKey": "ach.steadyHands",   "descKey": "ach.steadyHands.desc",   "kind": "perfectSurgeries", "target": 5,      "order": 13, "reward": { "money": 4000,  "xp": 350 } },
+    { "id": "lifeSaver",     "nameKey": "ach.lifeSaver",     "descKey": "ach.lifeSaver.desc",     "kind": "emergencies",      "target": 10,     "order": 14, "reward": { "money": 5000,  "xp": 420 } },
+
+    { "id": "zoologist",     "nameKey": "ach.zoologist",     "descKey": "ach.zoologist.desc",     "kind": "species",          "target": 10,     "order": 15, "reward": { "money": 12000, "xp": 900 } },
+    { "id": "trusted",       "nameKey": "ach.trusted",       "descKey": "ach.trusted.desc",       "kind": "reputation",       "target": 100,    "order": 16, "reward": { "money": 6000,  "xp": 500 } },
+    { "id": "taskmaster",    "nameKey": "ach.taskmaster",    "descKey": "ach.taskmaster.desc",    "kind": "tasks",            "target": 15,     "order": 17, "reward": { "money": 7000,  "xp": 550 } },
+    { "id": "chiefVet",      "nameKey": "ach.chiefVet",      "descKey": "ach.chiefVet.desc",      "kind": "level",            "target": 15,     "order": 18, "reward": { "money": 25000, "xp": 0 } }
+  ]
+}

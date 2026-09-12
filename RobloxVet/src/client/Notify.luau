@@ -24,15 +24,15 @@ local MAX_VISIBLE = 5
 function Notify.create(parent: ScreenGui)
 	local frame = Theme.frame({
 		name = "Bildirimler",
-		size = UDim2.new(0, 360, 0, 220),
-		position = UDim2.new(0.5, 0, 0, 16),
-		anchor = Vector2.new(0.5, 0),
+		size = UDim2.new(0, 330, 0, 240),
+		position = UDim2.new(0, 16, 0, 158),
+		anchor = Vector2.new(0, 0),
 		transparency = 1,
 		radius = 0,
 		parent = parent,
 	})
 	local layout = Theme.list(frame, 6)
-	layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+	layout.HorizontalAlignment = Enum.HorizontalAlignment.Left
 	container = frame
 end
 

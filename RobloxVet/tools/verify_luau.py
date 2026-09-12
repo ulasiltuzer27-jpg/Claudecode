@@ -27,6 +27,13 @@ Kontroller
 8. Istemci, sunucu modullerine uzanmiyor mu? (ReplicatedStorage disinda
    bir sey require etmek istemcide sessizce nil doner.)
 9. Hastaligin kimligi istemciye sizdiran bilinen kalip var mi?
+10. Bir yerel fonksiyon, kendisinden ONCE tanimlanmis bir fonksiyonun
+   govdesinde cagriliyor mu? Lua'da `local function f` yalnizca kendinden
+   SONRAKI koda gorunur; oncesinde ayni ad kuresel olarak cozulur ve nil
+   kalir. Derleme hatasi vermez, o satir CALISINCA patlar - yani Studio
+   acilmadan gorunmez. (Bu denetim gercek bir hatayi yakaladi:
+   PatientFlow.pushState, kendisinden sonra tanimlanan pushProgress'i
+   cagiriyordu ve ilk oyuncu girdiginde sunucu hata veriyordu.)
 
 Cikis kodu: hata yoksa 0, varsa 1.
 
@@ -73,6 +80,39 @@ def check(label: str, ok: bool) -> None:
     checks += 1
     if not ok:
         errors.append(label)
+
+
+def _out_of_order_calls(lines: list[str]) -> list[tuple[int, str, str, int]]:
+    """Tanimlanmadan once cagrilan yerel fonksiyonlari bulur.
+
+    Dosyayi sutun-0 `end` satirlarina gore kaba bloklara ayirir; Luau
+    kaynagimizda her ust duzey fonksiyon boyle kapandigi icin bu yeterli
+    ve bir ayristirici yazmaya gerek birakmiyor.
+    """
+    definitions: dict[str, int] = {}
+    for number, line in enumerate(lines, 1):
+        match = re.match(r"^local function (\w+)", line)
+        if match:
+            definitions.setdefault(match.group(1), number)
+
+    bodies: list[tuple[str, int, int]] = []
+    for number, line in enumerate(lines, 1):
+        match = re.match(r"^local function (\w+)", line) or re.match(r"^function (\w+\.\w+)", line)
+        if match is None:
+            continue
+        closing = number
+        while closing < len(lines) and lines[closing] != "end":
+            closing += 1
+        bodies.append((match.group(1), number, closing + 1))
+
+    found = []
+    for name, start, stop in bodies:
+        for index in range(start, min(stop, len(lines))):
+            for called in re.findall(r"(?<![\w.:])(\w+)\s*\(", lines[index]):
+                defined_at = definitions.get(called)
+                if defined_at is not None and defined_at > start:
+                    found.append((index + 1, name, called, defined_at))
+    return sorted(set(found))
 
 
 def luau_files() -> list[str]:
@@ -242,6 +282,18 @@ def main() -> int:
                 continue  # "tool." .. toolId gibi birlestirme onekleri
             check(f"'{relative}' anahtari tr.json'da var: {key}", key in strings)
 
+        # 10. Tanimlanmadan once cagrilan yerel fonksiyon
+        out_of_order = _out_of_order_calls(text.splitlines())
+        detail = "; ".join(
+            f"{number}: '{holder}' -> '{called}' (tanim {defined_at})"
+            for number, holder, called, defined_at in out_of_order
+        )
+        check(
+            f"'{relative}' yerel fonksiyonlari tanimlandiktan sonra cagiriyor"
+            + (f" [{detail}]" if detail else ""),
+            not out_of_order,
+        )
+
         # 8. Istemci sunucuya uzanmasin
         if relative.startswith(os.path.join("src", "client")):
             check(
@@ -252,6 +304,32 @@ def main() -> int:
                 f"'{relative}' ServerStorage'a uzanmiyor",
                 "ServerStorage" not in text,
             )
+
+    # ── Denetleyicinin kendi dogrulamasi ──────────────────────────────
+    # Bilerek bozuk bir ornek: `erken` fonksiyonu, kendisinden SONRA
+    # tanimlanan `gec`i cagiriyor. Denetim bunu gormezse sessizce ise
+    # yaramayan bir denetim olurdu.
+    broken = [
+        "local function erken()",
+        "\tgec()",
+        "end",
+        "",
+        "local function gec()",
+        "\treturn 1",
+        "end",
+    ]
+    check("sira denetimi bozuk ornegi yakaliyor", len(_out_of_order_calls(broken)) == 1)
+
+    healthy = [
+        "local function gec()",
+        "\treturn 1",
+        "end",
+        "",
+        "local function erken()",
+        "\tgec()",
+        "end",
+    ]
+    check("sira denetimi dogru siradan sikayet etmiyor", len(_out_of_order_calls(healthy)) == 0)
 
     # ── 9. Hastalik kimliginin sizmasi ────────────────────────────────
     flow = sources[os.path.join(SRC, "server", "game", "PatientFlow.luau")]

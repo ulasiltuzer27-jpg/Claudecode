@@ -32,6 +32,7 @@ Net.Schema = {
 	ToolResult = { direction = "toClient", args = { "string", "table" } },
 	SurgeryBegin = { direction = "toClient", args = { "table" } },
 	SurgeryEnd = { direction = "toClient", args = { "boolean", "number" } },
+	ProgressUpdate = { direction = "toClient", args = { "table" } },
 
 	-- ── Istemci -> Sunucu ──────────────────────────────────────────────
 	CallNext = { direction = "toServer", args = {} },
@@ -43,6 +44,8 @@ Net.Schema = {
 	Discharge = { direction = "toServer", args = {} },
 	BuyTool = { direction = "toServer", args = { "string" } },
 	BuyUpgrade = { direction = "toServer", args = { "string" } },
+	SaveSettings = { direction = "toServer", args = { "table" } },
+	RequestProgress = { direction = "toServer", args = {} },
 }
 
 -- Istemcinin saniyede kac kez gonderebilecegi. Dogrulama sunucuda
@@ -57,6 +60,11 @@ Net.RateLimit = {
 	Discharge = 4,
 	BuyTool = 4,
 	BuyUpgrade = 4,
+	-- Ayar kaydetme seyrek olmali: her kaydirici hareketinde DataStore'a
+	-- yazmak hem gereksiz hem de kota yakar. Istemci de kendi tarafinda
+	-- bekletiyor (SettingsPanel).
+	SaveSettings = 3,
+	RequestProgress = 3,
 }
 
 local folderName = "VetRemotes"

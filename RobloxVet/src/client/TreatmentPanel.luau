@@ -24,7 +24,7 @@ function TreatmentPanel.create(parent: ScreenGui)
 	local panel = Theme.frame({
 		name = "TedaviPaneli",
 		size = UDim2.fromOffset(330, 250),
-		position = UDim2.new(1, -16, 0, 358),
+		position = UDim2.new(1, -16, 0, 406),
 		anchor = Vector2.new(1, 0),
 		parent = parent,
 		visible = false,

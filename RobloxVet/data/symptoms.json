@@ -28,6 +28,19 @@
     { "id": "highWbc",        "nameKey": "symptom.highWbc",        "revealedBy": "bloodtest",   "severity": 2 },
     { "id": "anemia",         "nameKey": "symptom.anemia",         "revealedBy": "bloodtest",   "severity": 2 },
     { "id": "kidneyMarkers",  "nameKey": "symptom.kidneyMarkers",  "revealedBy": "bloodtest",   "severity": 3 },
-    { "id": "parasiteEggs",   "nameKey": "symptom.parasiteEggs",   "revealedBy": "bloodtest",   "severity": 2 }
+    { "id": "parasiteEggs",   "nameKey": "symptom.parasiteEggs",   "revealedBy": "bloodtest",   "severity": 2 },
+    { "id": "irregularRhythm", "nameKey": "symptom.irregularRhythm", "revealedBy": "stethoscope", "severity": 3 },
+
+    { "id": "spineLoss",      "nameKey": "symptom.spineLoss",      "revealedBy": "visual",      "severity": 2 },
+    { "id": "stuckShed",      "nameKey": "symptom.stuckShed",      "revealedBy": "visual",      "severity": 2 },
+    { "id": "dullCoat",       "nameKey": "symptom.dullCoat",       "revealedBy": "visual",      "severity": 1 },
+
+    { "id": "bloodInUrine",   "nameKey": "symptom.bloodInUrine",   "revealedBy": "urinalysis",  "severity": 3 },
+    { "id": "highGlucose",    "nameKey": "symptom.highGlucose",    "revealedBy": "urinalysis",  "severity": 2 },
+    { "id": "urineInfection", "nameKey": "symptom.urineInfection", "revealedBy": "urinalysis",  "severity": 2 },
+
+    { "id": "pregnancy",      "nameKey": "symptom.pregnancy",      "revealedBy": "ultrasound",  "severity": 1 },
+    { "id": "organSwelling",  "nameKey": "symptom.organSwelling",  "revealedBy": "ultrasound",  "severity": 3 },
+    { "id": "bladderStone",   "nameKey": "symptom.bladderStone",   "revealedBy": "ultrasound",  "severity": 3 }
   ]
 }

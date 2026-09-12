@@ -7,6 +7,8 @@
     { "id": "thermometer",  "nameKey": "tool.thermometer",  "order": 3, "price": 250,  "unlockLevel": 2, "useSeconds": 1.5, "color": [232, 236, 240], "handHeld": true },
     { "id": "otoscope",     "nameKey": "tool.otoscope",     "order": 4, "price": 700,  "unlockLevel": 3, "useSeconds": 1.7, "color": [214, 176, 72],  "handHeld": true },
     { "id": "xray",         "nameKey": "tool.xray",         "order": 5, "price": 2500, "unlockLevel": 4, "useSeconds": 2.8, "color": [104, 150, 196], "handHeld": false },
-    { "id": "bloodtest",    "nameKey": "tool.bloodtest",    "order": 6, "price": 3200, "unlockLevel": 5, "useSeconds": 3.2, "color": [196, 74, 82],   "handHeld": true }
+    { "id": "bloodtest",    "nameKey": "tool.bloodtest",    "order": 6, "price": 3200, "unlockLevel": 5, "useSeconds": 3.2, "color": [196, 74, 82],   "handHeld": true },
+    { "id": "urinalysis",   "nameKey": "tool.urinalysis",   "order": 7, "price": 2600, "unlockLevel": 6, "useSeconds": 2.6, "color": [214, 196, 96],  "handHeld": true },
+    { "id": "ultrasound",   "nameKey": "tool.ultrasound",   "order": 8, "price": 4800, "unlockLevel": 7, "useSeconds": 3.4, "color": [96, 140, 190],  "handHeld": true }
   ]
 }
