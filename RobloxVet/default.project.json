@@ -1,0 +1,47 @@
+{
+  "name": "VeterinerSimulatoru",
+  "tree": {
+    "$className": "DataModel",
+
+    "ReplicatedStorage": {
+      "$className": "ReplicatedStorage",
+      "VetShared": { "$path": "src/shared" },
+      "VetData": { "$path": "build/data" }
+    },
+
+    "ServerScriptService": {
+      "$className": "ServerScriptService",
+      "VetServer": { "$path": "src/server" }
+    },
+
+    "StarterPlayer": {
+      "$className": "StarterPlayer",
+      "StarterPlayerScripts": {
+        "$className": "StarterPlayerScripts",
+        "VetClient": { "$path": "src/client" }
+      }
+    },
+
+    "Workspace": {
+      "$className": "Workspace",
+      "$properties": { "FilteringEnabled": true }
+    },
+
+    "Lighting": {
+      "$className": "Lighting",
+      "$properties": { "Technology": "Future" }
+    },
+
+    "StarterGui": {
+      "$className": "StarterGui",
+      "$properties": { "ResetPlayerGuiOnSpawn": false }
+    },
+
+    "Players": {
+      "$className": "Players",
+      "$properties": { "CharacterAutoLoads": false }
+    },
+
+    "SoundService": { "$className": "SoundService" }
+  }
+}

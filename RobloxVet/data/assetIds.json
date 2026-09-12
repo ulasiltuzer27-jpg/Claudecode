@@ -1,0 +1,36 @@
+{
+  "_comment": "(VERI) Creator Store asset ID yuvalari. 0 = o yuva BOS, prosedurel (kod ile uretilen) model/ses kullanilir.",
+  "_nasil_notu": "Roblox Creator Store'da begendigin modeli ac, adres cubugundaki .../library/SAYI/... kismindaki SAYIyi ilgili yuvaya yaz, sonra python3 build.py calistir. Yuva doluysa Assets.luau prosedurel modeli o mesh ile degistirir. Yanlis/silinmis bir ID yazilirsa model yuklenmez ve Assets.luau sessizce prosedurel modele geri doner - oyun bozulmaz.",
+  "_uyari": "Bu dosya bilerek BOS geliyor: bu depoyu ureten ortamda Roblox'a ag erisimi yok, bu yuzden hicbir ID'nin gercek oldugu dogrulanamadi. Uydurma ID yazmak oyunda gri/kirik model demek olurdu.",
+  "meshes": {
+    "dog": 0,
+    "cat": 0,
+    "rabbit": 0,
+    "hamster": 0,
+    "parrot": 0,
+    "turtle": 0,
+    "examTable": 0,
+    "receptionDesk": 0,
+    "xrayMachine": 0,
+    "surgeryTable": 0,
+    "kennelCage": 0,
+    "medicineShelf": 0
+  },
+  "sounds": {
+    "bark": 0,
+    "meow": 0,
+    "chirp": 0,
+    "heartbeat": 0,
+    "cashRegister": 0,
+    "levelUp": 0,
+    "success": 0,
+    "error": 0,
+    "ambience": 0
+  },
+  "images": {
+    "logo": 0,
+    "xray.dog": 0,
+    "xray.cat": 0,
+    "posterCare": 0
+  }
+}

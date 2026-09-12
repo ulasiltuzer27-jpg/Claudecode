@@ -1,0 +1,70 @@
+{
+  "_comment": "(VERI) Ilerleme ve ekonomi. Butun sayilar burada; oyunun dengesini degistirmek icin kod degil bu dosya duzenlenir. tools/simulate_economy.py egriyi bassiz dogruluyor.",
+  "startingMoney": 500,
+  "startingReputation": 50,
+
+  "_rezerv_notu": "Magaza, kasayi bu tutarin altina indiren bir satin almayi reddeder. Sebep: butun parasini alete yatiran oyuncu sarf malzemesi alamaz, tedavi edemez, para kazanamaz ve oyun KILITLENIR. tools/simulate_economy.py bu durumu yakaladi.",
+  "minimumReserve": 150,
+
+  "_ucret_notu": "Ucret = baseFee x feeMultiplier x itibarCarpani x feeBonus(yukseltme) x saglikOrani. Itibar carpani reputationFeeFloor ile reputationFeeCeil arasinda dogrusal.",
+  "fee": {
+    "reputationFeeFloor": 0.7,
+    "reputationFeeCeil": 1.35,
+    "healthShare": 0.35,
+    "minimumFee": 20
+  },
+
+  "_hasta_notu": "Hastalar araliksiz gelir; aralik itibar ve yukseltmelerle kisalir. patienceSeconds dolarsa hasta kizip gider ve itibar duser.",
+  "arrival": {
+    "baseSeconds": 26,
+    "minSeconds": 9,
+    "reputationSpeedup": 0.35,
+    "patienceSeconds": 260,
+    "queueSlots": 3
+  },
+
+  "_itibar_notu": "Itibar 0-100. Dogru teshis ve saglikli taburcu yukseltir; yanlis teshis, stresli taburcu ve bekletip kacirmak dusurur.",
+  "reputation": {
+    "min": 0,
+    "max": 100,
+    "correctDiagnosis": 2,
+    "wrongDiagnosis": -7,
+    "healthyDischarge": 3,
+    "stressedDischarge": -4,
+    "timeout": -8
+  },
+
+  "_hayvan_notu": "Hayvanin sagligi ve stresi. Saglik 0'a duserse hasta kaybedilir; stres 100'e ulasirsa hayvan direnir ve o tedavi bosa gider.",
+  "patient": {
+    "startHealthMin": 35,
+    "startHealthMax": 65,
+    "startStressMin": 10,
+    "startStressMax": 30,
+    "healthDrainPerSecond": 0.05,
+    "stressDecayPerSecond": 1.2,
+    "resistStress": 100,
+    "dischargeHealth": 85,
+    "healthyDischargeThreshold": 90
+  },
+
+  "_alet_notu": "Her alet kullanimi hayvani biraz gerer. Boylece butun aletleri sirayla denemek bedava olmuyor: stres 100'e varirsa hayvan direnir.",
+  "toolStress": 4,
+
+  "wrongDiagnosisStress": 18,
+  "wrongTreatmentStress": 12,
+  "wrongTreatmentHealth": -6,
+
+  "_seviye_notu": "xp, O SEVIYEYE ULASMAK icin gereken toplam XP. titleKey oyuncunun unvani.",
+  "levels": [
+    { "level": 1,  "xp": 0,    "titleKey": "title.1" },
+    { "level": 2,  "xp": 120,  "titleKey": "title.2" },
+    { "level": 3,  "xp": 320,  "titleKey": "title.3" },
+    { "level": 4,  "xp": 640,  "titleKey": "title.4" },
+    { "level": 5,  "xp": 1100, "titleKey": "title.5" },
+    { "level": 6,  "xp": 1750, "titleKey": "title.6" },
+    { "level": 7,  "xp": 2600, "titleKey": "title.7" },
+    { "level": 8,  "xp": 3700, "titleKey": "title.8" },
+    { "level": 9,  "xp": 5100, "titleKey": "title.9" },
+    { "level": 10, "xp": 6900, "titleKey": "title.10" }
+  ]
+}

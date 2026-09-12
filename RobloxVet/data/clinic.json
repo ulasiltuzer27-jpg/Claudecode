@@ -1,0 +1,160 @@
+{
+  "_comment": "(VERI) Klinigin yerlesim plani. Clinic.luau duvarlari, zeminleri ve isiklari; Props.luau esyalari bu tablodan kuruyor. Olculer stud, konumlar [x,z], aci Y ekseninde derece.",
+  "_duvar_notu": "Her duvar bir dogru parcasi; kapilar o parcanin uzerinde bosluk acar. at, kapinin merkezinin duvar ekseni uzerindeki konumu (yatay duvarlarda x, dikey duvarlarda z).",
+
+  "floorY": 0,
+  "wallHeight": 14,
+  "wallThickness": 1,
+  "doorHeight": 9.5,
+  "ceiling": true,
+
+  "bounds": { "min": [-40, -30], "max": [40, 30] },
+  "groundSize": 260,
+  "spawn": { "at": [0, -46], "facing": 0 },
+  "entrance": { "outside": [0, -40], "inside": [0, -24] },
+
+  "colors": {
+    "wall": [238, 241, 244],
+    "wallTrim": [206, 214, 220],
+    "ceiling": [248, 250, 252],
+    "ground": [128, 168, 104],
+    "path": [204, 200, 192],
+    "roof": [86, 126, 158]
+  },
+
+  "rooms": [
+    { "id": "reception", "nameKey": "room.reception", "min": [-40, -30], "max": [10, -4],
+      "floorColor": [226, 218, 206], "floorMaterial": "WoodPlanks",
+      "lights": [[-28, -22], [-10, -22], [-28, -10], [-10, -10]],
+      "queuePoints": [[-32, -20], [-27, -20], [-22, -20], [-17, -20], [-32, -13], [-27, -13], [-22, -13], [-17, -13]],
+      "props": [
+        { "id": "receptionDesk", "at": [-15, -8], "rot": 180, "tag": "reception" },
+        { "id": "waitingBench",  "at": [-36, -22], "rot": 90 },
+        { "id": "waitingBench",  "at": [-36, -14], "rot": 90 },
+        { "id": "waitingBench",  "at": [-2, -22],  "rot": 270 },
+        { "id": "waterCooler",   "at": [4, -9],    "rot": 200 },
+        { "id": "plant",         "at": [-37, -28], "rot": 0 },
+        { "id": "plant",         "at": [6, -28],   "rot": 0 },
+        { "id": "trashBin",      "at": [1, -27],   "rot": 0 },
+        { "id": "poster",        "at": [-20, -29.3], "rot": 0 },
+        { "id": "poster",        "at": [-8, -29.3],  "rot": 0 }
+      ]
+    },
+    { "id": "pharmacy", "nameKey": "room.pharmacy", "min": [10, -30], "max": [40, -4],
+      "floorColor": [214, 216, 220], "floorMaterial": "SmoothPlastic",
+      "lights": [[18, -22], [32, -22], [25, -9]],
+      "props": [
+        { "id": "medicineShelf", "at": [15, -27.5], "rot": 0, "tag": "pharmacy" },
+        { "id": "medicineShelf", "at": [23, -27.5], "rot": 0 },
+        { "id": "medicineShelf", "at": [31, -27.5], "rot": 0 },
+        { "id": "cabinet",       "at": [37.5, -20], "rot": 90 },
+        { "id": "receptionDesk", "at": [25, -8],    "rot": 180 },
+        { "id": "plant",         "at": [37, -27],   "rot": 0 }
+      ]
+    },
+    { "id": "exam1", "nameKey": "room.exam1", "min": [-40, -4], "max": [-12, 18],
+      "floorColor": [218, 226, 230], "floorMaterial": "SmoothPlastic",
+      "lights": [[-30, 2], [-18, 2], [-30, 13], [-18, 13]],
+      "props": [
+        { "id": "examTable", "at": [-26, 7],   "rot": 0, "tag": "station:exam1" },
+        { "id": "cabinet",   "at": [-37.5, 1], "rot": 90 },
+        { "id": "sink",      "at": [-37.5, 13],"rot": 90 },
+        { "id": "monitor",   "at": [-14.5, 3], "rot": 270 },
+        { "id": "ivStand",   "at": [-21, 11],  "rot": 0 },
+        { "id": "scale",     "at": [-14.5, 14],"rot": 270 },
+        { "id": "trashBin",  "at": [-37, 16],  "rot": 0 }
+      ]
+    },
+    { "id": "exam2", "nameKey": "room.exam2", "min": [-12, -4], "max": [16, 18],
+      "floorColor": [218, 226, 230], "floorMaterial": "SmoothPlastic",
+      "lights": [[-4, 2], [10, 2], [-4, 13], [10, 13]],
+      "props": [
+        { "id": "examTable",   "at": [2, 7],     "rot": 0, "tag": "station:exam2" },
+        { "id": "xrayMachine", "at": [12.5, 15], "rot": 225, "tag": "xray" },
+        { "id": "cabinet",     "at": [-9.5, 1],  "rot": 90 },
+        { "id": "sink",        "at": [-9.5, 13], "rot": 90 },
+        { "id": "monitor",     "at": [13.5, 2],  "rot": 270 },
+        { "id": "ivStand",     "at": [6, 11],    "rot": 0 },
+        { "id": "trashBin",    "at": [-10, 16],  "rot": 0 }
+      ]
+    },
+    { "id": "surgery", "nameKey": "room.surgery", "min": [16, -4], "max": [40, 18],
+      "floorColor": [204, 218, 224], "floorMaterial": "SmoothPlastic",
+      "lights": [[22, 2], [34, 2], [22, 14], [34, 14]],
+      "props": [
+        { "id": "surgeryTable", "at": [28, 7],   "rot": 0, "tag": "station:surgery" },
+        { "id": "surgeryLight", "at": [28, 7],   "rot": 0 },
+        { "id": "cabinet",      "at": [37.5, 1], "rot": 90 },
+        { "id": "sink",         "at": [37.5, 14],"rot": 90 },
+        { "id": "monitor",      "at": [21, 1],   "rot": 20 },
+        { "id": "ivStand",      "at": [24, 12],  "rot": 0 },
+        { "id": "trashBin",     "at": [37, 17],  "rot": 0 }
+      ]
+    },
+    { "id": "kennels", "nameKey": "room.kennels", "min": [-40, 18], "max": [0, 30],
+      "floorColor": [206, 200, 190], "floorMaterial": "Concrete",
+      "lights": [[-30, 24], [-18, 24], [-6, 24]],
+      "restPoints": [[-36, 22], [-29, 22], [-22, 22], [-15, 22], [-8, 22]],
+      "props": [
+        { "id": "kennelCage", "at": [-36, 27.5], "rot": 0, "tag": "kennel" },
+        { "id": "kennelCage", "at": [-29, 27.5], "rot": 0 },
+        { "id": "kennelCage", "at": [-22, 27.5], "rot": 0 },
+        { "id": "kennelCage", "at": [-15, 27.5], "rot": 0 },
+        { "id": "kennelCage", "at": [-8, 27.5],  "rot": 0 },
+        { "id": "feedStation","at": [-36, 20],   "rot": 180 },
+        { "id": "plant",      "at": [-3, 20],    "rot": 0 }
+      ]
+    },
+    { "id": "wash", "nameKey": "room.wash", "min": [0, 18], "max": [40, 30],
+      "floorColor": [196, 214, 222], "floorMaterial": "Concrete",
+      "lights": [[10, 24], [22, 24], [34, 24]],
+      "props": [
+        { "id": "washTub",    "at": [9, 25],   "rot": 0, "tag": "station:wash" },
+        { "id": "washTub",    "at": [19, 25],  "rot": 0 },
+        { "id": "towelShelf", "at": [3, 21],   "rot": 90 },
+        { "id": "dryerRack",  "at": [30, 27],  "rot": 0 },
+        { "id": "sink",       "at": [37.5, 21],"rot": 270 }
+      ]
+    }
+  ],
+
+  "walls": [
+    { "from": [-40, -30], "to": [40, -30], "doors": [{ "at": 0, "width": 12 }] },
+    { "from": [-40, 30],  "to": [40, 30],  "doors": [] },
+    { "from": [-40, -30], "to": [-40, 30], "doors": [] },
+    { "from": [40, -30],  "to": [40, 30],  "doors": [] },
+
+    { "from": [-40, -4], "to": [40, -4], "doors": [{ "at": -26, "width": 8 }, { "at": 2, "width": 8 }, { "at": 28, "width": 8 }] },
+    { "from": [-40, 18], "to": [40, 18], "doors": [{ "at": -20, "width": 8 }, { "at": 20, "width": 8 }] },
+    { "from": [-12, -4], "to": [-12, 18], "doors": [{ "at": 8, "width": 8 }] },
+    { "from": [16, -4],  "to": [16, 18],  "doors": [{ "at": 8, "width": 8 }] },
+    { "from": [10, -30], "to": [10, -4],  "doors": [{ "at": -17, "width": 8 }] },
+    { "from": [0, 18],   "to": [0, 30],   "doors": [{ "at": 24, "width": 6 }] }
+  ],
+
+  "outdoor": {
+    "_comment": "Bina disi. path, girise giden yol; props bahce.",
+    "path": { "from": [0, -30], "to": [0, -56], "width": 12 },
+    "props": [
+      { "id": "clinicSign", "at": [0, -30.8],  "rot": 0 },
+      { "id": "lampPost",   "at": [-9, -37],   "rot": 0 },
+      { "id": "lampPost",   "at": [9, -37],    "rot": 0 },
+      { "id": "lampPost",   "at": [-9, -50],   "rot": 0 },
+      { "id": "lampPost",   "at": [9, -50],    "rot": 0 },
+      { "id": "outdoorBench", "at": [-16, -40], "rot": 90 },
+      { "id": "outdoorBench", "at": [16, -40],  "rot": 270 },
+      { "id": "tree",       "at": [-30, -44],  "rot": 0 },
+      { "id": "tree",       "at": [28, -46],   "rot": 0 },
+      { "id": "tree",       "at": [-50, -14],  "rot": 0 },
+      { "id": "tree",       "at": [52, 8],     "rot": 0 },
+      { "id": "tree",       "at": [-52, 26],   "rot": 0 },
+      { "id": "tree",       "at": [48, 40],    "rot": 0 },
+      { "id": "bush",       "at": [-14, -33],  "rot": 0 },
+      { "id": "bush",       "at": [14, -33],   "rot": 0 },
+      { "id": "bush",       "at": [-22, -48],  "rot": 0 },
+      { "id": "bush",       "at": [22, -48],   "rot": 0 },
+      { "id": "bush",       "at": [-44, 34],   "rot": 0 },
+      { "id": "bush",       "at": [44, 34],    "rot": 0 }
+    ]
+  }
+}

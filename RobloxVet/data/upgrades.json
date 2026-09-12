@@ -1,0 +1,16 @@
+{
+  "_comment": "(VERI) Klinik yukseltmeleri. effect anahtarlari Upgrades.luau'nun GERCEKTEN okudugu anahtarlar olmali - verify_data.py ikisini karsilastiriyor.",
+  "_etki_notu": "queueSlots eklenir; arrivalScale/treatSpeed/supplyDiscount/feeBonus/repGain carpilir; surgeryTolerance ve washBonus eklenir.",
+  "effectKeys": ["queueSlots", "arrivalScale", "treatSpeed", "supplyDiscount", "feeBonus", "repGain", "surgeryTolerance", "washBonus"],
+  "upgrades": [
+    { "id": "waitingRoom",     "nameKey": "upgrade.waitingRoom",     "descKey": "upgrade.waitingRoom.desc",     "order": 1, "cost": 1200,  "unlockLevel": 2, "effect": { "queueSlots": 2 } },
+    { "id": "betterTable",     "nameKey": "upgrade.betterTable",     "descKey": "upgrade.betterTable.desc",     "order": 2, "cost": 2000,  "unlockLevel": 3, "effect": { "treatSpeed": 0.85 } },
+    { "id": "groomingStation", "nameKey": "upgrade.groomingStation", "descKey": "upgrade.groomingStation.desc", "order": 3, "cost": 2500,  "unlockLevel": 3, "effect": { "washBonus": 6 } },
+    { "id": "adCampaign",      "nameKey": "upgrade.adCampaign",      "descKey": "upgrade.adCampaign.desc",      "order": 4, "cost": 3000,  "unlockLevel": 3, "effect": { "arrivalScale": 0.8 } },
+    { "id": "kennelWing",      "nameKey": "upgrade.kennelWing",      "descKey": "upgrade.kennelWing.desc",      "order": 5, "cost": 4500,  "unlockLevel": 4, "effect": { "queueSlots": 3 } },
+    { "id": "surgeryRoom",     "nameKey": "upgrade.surgeryRoom",     "descKey": "upgrade.surgeryRoom.desc",     "order": 6, "cost": 9000,  "unlockLevel": 4, "effect": { "surgeryTolerance": 0.08 } },
+    { "id": "pharmacy",        "nameKey": "upgrade.pharmacy",        "descKey": "upgrade.pharmacy.desc",        "order": 7, "cost": 6000,  "unlockLevel": 5, "effect": { "supplyDiscount": 0.75 } },
+    { "id": "reputationBoard", "nameKey": "upgrade.reputationBoard", "descKey": "upgrade.reputationBoard.desc", "order": 8, "cost": 7000,  "unlockLevel": 6, "effect": { "repGain": 1.5 } },
+    { "id": "premiumCare",     "nameKey": "upgrade.premiumCare",     "descKey": "upgrade.premiumCare.desc",     "order": 9, "cost": 12000, "unlockLevel": 6, "effect": { "feeBonus": 1.25 } }
+  ]
+}

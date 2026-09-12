@@ -1,0 +1,12 @@
+{
+  "_comment": "(VERI) Teshis aletleri. Her alet belirli semptomlari GORUNUR kilar; hangi semptomu hangi aletin actigi symptoms.json'daki revealedBy alaninda yaziyor.",
+  "_sira_notu": "order alani magazadaki ve alet cubugundaki sirayi belirler.",
+  "tools": [
+    { "id": "visual",       "nameKey": "tool.visual",       "order": 1, "price": 0,    "unlockLevel": 1, "useSeconds": 1.2, "color": [236, 240, 243], "handHeld": false },
+    { "id": "stethoscope",  "nameKey": "tool.stethoscope",  "order": 2, "price": 0,    "unlockLevel": 1, "useSeconds": 1.8, "color": [58, 62, 70],    "handHeld": true },
+    { "id": "thermometer",  "nameKey": "tool.thermometer",  "order": 3, "price": 250,  "unlockLevel": 2, "useSeconds": 1.5, "color": [232, 236, 240], "handHeld": true },
+    { "id": "otoscope",     "nameKey": "tool.otoscope",     "order": 4, "price": 700,  "unlockLevel": 3, "useSeconds": 1.7, "color": [214, 176, 72],  "handHeld": true },
+    { "id": "xray",         "nameKey": "tool.xray",         "order": 5, "price": 2500, "unlockLevel": 4, "useSeconds": 2.8, "color": [104, 150, 196], "handHeld": false },
+    { "id": "bloodtest",    "nameKey": "tool.bloodtest",    "order": 6, "price": 3200, "unlockLevel": 5, "useSeconds": 3.2, "color": [196, 74, 82],   "handHeld": true }
+  ]
+}

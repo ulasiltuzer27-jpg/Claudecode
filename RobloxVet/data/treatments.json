@@ -1,0 +1,24 @@
+{
+  "_comment": "(VERI) Tedaviler. kind, TreatmentPanel'in hangi ikonu/animasyonu kullanacagini belirler. supplyCost her uygulamada kasadan dusulur - tedavi bedava degil.",
+  "_stres_notu": "stressDelta pozitifse hayvan gerilir, negatifse rahatlar. Stres 100'e ulasirsa hayvan direnir ve tedavi basarisiz olur; bu yuzden agri veren islemler arasina yikama/besleme sikistirmak gerekiyor.",
+  "treatments": [
+    { "id": "injection", "nameKey": "treatment.injection", "kind": "injection", "order": 1, "supplyCost": 25, "unlockLevel": 1, "seconds": 2.6, "stressDelta": 14, "healthDelta": 20, "minigame": "" },
+    { "id": "pill",      "nameKey": "treatment.pill",      "kind": "pill",      "order": 2, "supplyCost": 15, "unlockLevel": 1, "seconds": 2.0, "stressDelta": 5,  "healthDelta": 13, "minigame": "" },
+    { "id": "bandage",   "nameKey": "treatment.bandage",   "kind": "bandage",   "order": 3, "supplyCost": 20, "unlockLevel": 1, "seconds": 3.2, "stressDelta": 7,  "healthDelta": 15, "minigame": "" },
+    { "id": "drops",     "nameKey": "treatment.drops",     "kind": "drops",     "order": 4, "supplyCost": 18, "unlockLevel": 1, "seconds": 2.2, "stressDelta": 6,  "healthDelta": 13, "minigame": "" },
+    { "id": "wash",      "nameKey": "treatment.wash",      "kind": "wash",      "order": 5, "supplyCost": 10, "unlockLevel": 1, "seconds": 4.0, "stressDelta": -12, "healthDelta": 9,  "minigame": "" },
+    { "id": "feed",      "nameKey": "treatment.feed",      "kind": "feed",      "order": 6, "supplyCost": 12, "unlockLevel": 1, "seconds": 3.0, "stressDelta": -9,  "healthDelta": 11, "minigame": "" },
+    { "id": "water",     "nameKey": "treatment.water",     "kind": "water",     "order": 7, "supplyCost": 5,  "unlockLevel": 1, "seconds": 2.2, "stressDelta": -7,  "healthDelta": 10, "minigame": "" },
+    { "id": "surgery",   "nameKey": "treatment.surgery",   "kind": "surgery",   "order": 8, "supplyCost": 80, "unlockLevel": 4, "seconds": 0,   "stressDelta": 26, "healthDelta": 45, "minigame": "surgery" }
+  ],
+  "surgery": {
+    "_comment": "Ameliyat mini-oyunu. Adim programi SUNUCUDA uretilir, tiklamalar SUNUCUDA dogrulanir - istemci yalnizca cizer.",
+    "steps": 5,
+    "stepSeconds": 2.4,
+    "perfectWindow": 0.18,
+    "goodWindow": 0.34,
+    "perfectBonus": 0.12,
+    "missPenalty": 0.18,
+    "minScoreToPass": 0.55
+  }
+}

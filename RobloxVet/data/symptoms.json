@@ -1,0 +1,33 @@
+{
+  "_comment": "(VERI) Semptomlar. revealedBy, semptomu gorunur kilan aletin id'si (tools.json). severity hasta kartindaki renk kodunu belirler: 1 hafif, 2 orta, 3 agir.",
+  "symptoms": [
+    { "id": "limp",           "nameKey": "symptom.limp",           "revealedBy": "visual",      "severity": 2 },
+    { "id": "swelling",       "nameKey": "symptom.swelling",       "revealedBy": "visual",      "severity": 2 },
+    { "id": "rash",           "nameKey": "symptom.rash",           "revealedBy": "visual",      "severity": 1 },
+    { "id": "weightLoss",     "nameKey": "symptom.weightLoss",     "revealedBy": "visual",      "severity": 2 },
+    { "id": "discharge",      "nameKey": "symptom.discharge",      "revealedBy": "visual",      "severity": 1 },
+    { "id": "lethargy",       "nameKey": "symptom.lethargy",       "revealedBy": "visual",      "severity": 1 },
+
+    { "id": "heartMurmur",    "nameKey": "symptom.heartMurmur",    "revealedBy": "stethoscope", "severity": 3 },
+    { "id": "rapidHeartbeat", "nameKey": "symptom.rapidHeartbeat", "revealedBy": "stethoscope", "severity": 2 },
+    { "id": "wheezing",       "nameKey": "symptom.wheezing",       "revealedBy": "stethoscope", "severity": 2 },
+    { "id": "gutSilence",     "nameKey": "symptom.gutSilence",     "revealedBy": "stethoscope", "severity": 3 },
+
+    { "id": "fever",          "nameKey": "symptom.fever",          "revealedBy": "thermometer", "severity": 2 },
+    { "id": "hypothermia",    "nameKey": "symptom.hypothermia",    "revealedBy": "thermometer", "severity": 3 },
+
+    { "id": "earMites",       "nameKey": "symptom.earMites",       "revealedBy": "otoscope",    "severity": 1 },
+    { "id": "earInfection",   "nameKey": "symptom.earInfection",   "revealedBy": "otoscope",    "severity": 2 },
+    { "id": "throatRedness",  "nameKey": "symptom.throatRedness",  "revealedBy": "otoscope",    "severity": 2 },
+
+    { "id": "fracture",       "nameKey": "symptom.fracture",       "revealedBy": "xray",        "severity": 3 },
+    { "id": "foreignObject",  "nameKey": "symptom.foreignObject",  "revealedBy": "xray",        "severity": 3 },
+    { "id": "jointWear",      "nameKey": "symptom.jointWear",      "revealedBy": "xray",        "severity": 2 },
+    { "id": "lungOpacity",    "nameKey": "symptom.lungOpacity",    "revealedBy": "xray",        "severity": 3 },
+
+    { "id": "highWbc",        "nameKey": "symptom.highWbc",        "revealedBy": "bloodtest",   "severity": 2 },
+    { "id": "anemia",         "nameKey": "symptom.anemia",         "revealedBy": "bloodtest",   "severity": 2 },
+    { "id": "kidneyMarkers",  "nameKey": "symptom.kidneyMarkers",  "revealedBy": "bloodtest",   "severity": 3 },
+    { "id": "parasiteEggs",   "nameKey": "symptom.parasiteEggs",   "revealedBy": "bloodtest",   "severity": 2 }
+  ]
+}

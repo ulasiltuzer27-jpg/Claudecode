@@ -1,0 +1,140 @@
+{
+  "_comment": "(VERI) Hasta turleri. Oranlar stud cinsinden, renkler [r,g,b]. AnimalFactory bu tabloyu okuyup rigi kuruyor - yeni bir tur eklemek icin kod degistirmek gerekmiyor.",
+  "_rig_notu": "rig alani AnimalFactory'nin bildigi bir iskelet adi olmali: quadruped, bird, shelled. verify_data.py bunu denetliyor.",
+  "animals": [
+    {
+      "id": "dog",
+      "nameKey": "animal.dog",
+      "rig": "quadruped",
+      "unlockLevel": 1,
+      "baseFee": 140,
+      "temperament": 0.9,
+      "walkSpeed": 8,
+      "palette": {
+        "body": [186, 140, 88],
+        "belly": [232, 214, 186],
+        "ear": [156, 112, 66],
+        "nose": [42, 38, 36],
+        "eye": [28, 24, 22],
+        "accent": [156, 112, 66]
+      },
+      "body": { "length": 4.2, "height": 1.9, "width": 1.8 },
+      "head": { "size": 1.7, "offsetY": 1.0, "offsetZ": 2.4, "snoutLength": 1.2, "snoutHeight": 0.8 },
+      "legs": { "count": 4, "length": 1.7, "thickness": 0.58, "spreadX": 0.62, "spreadZ": 1.5 },
+      "ears": { "type": "floppy", "length": 1.3, "width": 0.7 },
+      "tail": { "type": "wag", "length": 1.7, "thickness": 0.38 }
+    },
+    {
+      "id": "cat",
+      "nameKey": "animal.cat",
+      "rig": "quadruped",
+      "unlockLevel": 1,
+      "baseFee": 120,
+      "temperament": 1.35,
+      "walkSpeed": 9,
+      "palette": {
+        "body": [118, 114, 120],
+        "belly": [226, 224, 228],
+        "ear": [232, 174, 178],
+        "nose": [214, 148, 152],
+        "eye": [96, 176, 96],
+        "accent": [84, 80, 86]
+      },
+      "body": { "length": 3.2, "height": 1.35, "width": 1.35 },
+      "head": { "size": 1.25, "offsetY": 0.75, "offsetZ": 1.85, "snoutLength": 0.6, "snoutHeight": 0.5 },
+      "legs": { "count": 4, "length": 1.35, "thickness": 0.4, "spreadX": 0.45, "spreadZ": 1.1 },
+      "ears": { "type": "pointy", "length": 0.8, "width": 0.55 },
+      "tail": { "type": "wag", "length": 2.2, "thickness": 0.28 }
+    },
+    {
+      "id": "rabbit",
+      "nameKey": "animal.rabbit",
+      "rig": "quadruped",
+      "unlockLevel": 2,
+      "baseFee": 95,
+      "temperament": 1.6,
+      "walkSpeed": 7,
+      "palette": {
+        "body": [238, 234, 228],
+        "belly": [252, 250, 248],
+        "ear": [236, 186, 190],
+        "nose": [226, 156, 162],
+        "eye": [64, 44, 44],
+        "accent": [214, 208, 200]
+      },
+      "body": { "length": 2.3, "height": 1.35, "width": 1.25 },
+      "head": { "size": 1.05, "offsetY": 0.7, "offsetZ": 1.35, "snoutLength": 0.42, "snoutHeight": 0.42 },
+      "legs": { "count": 4, "length": 0.85, "thickness": 0.38, "spreadX": 0.42, "spreadZ": 0.8 },
+      "ears": { "type": "long", "length": 2.3, "width": 0.5 },
+      "tail": { "type": "puff", "length": 0.45, "thickness": 0.45 }
+    },
+    {
+      "id": "hamster",
+      "nameKey": "animal.hamster",
+      "rig": "quadruped",
+      "unlockLevel": 3,
+      "baseFee": 80,
+      "temperament": 1.2,
+      "walkSpeed": 6,
+      "palette": {
+        "body": [226, 176, 116],
+        "belly": [246, 236, 220],
+        "ear": [206, 156, 132],
+        "nose": [198, 132, 132],
+        "eye": [30, 26, 24],
+        "accent": [196, 146, 92]
+      },
+      "body": { "length": 1.5, "height": 1.05, "width": 1.05 },
+      "head": { "size": 0.9, "offsetY": 0.5, "offsetZ": 0.9, "snoutLength": 0.3, "snoutHeight": 0.3 },
+      "legs": { "count": 4, "length": 0.42, "thickness": 0.3, "spreadX": 0.34, "spreadZ": 0.5 },
+      "ears": { "type": "round", "length": 0.42, "width": 0.42 },
+      "tail": { "type": "none", "length": 0, "thickness": 0 }
+    },
+    {
+      "id": "parrot",
+      "nameKey": "animal.parrot",
+      "rig": "bird",
+      "unlockLevel": 4,
+      "baseFee": 165,
+      "temperament": 1.45,
+      "walkSpeed": 5,
+      "palette": {
+        "body": [58, 168, 88],
+        "belly": [248, 206, 74],
+        "ear": [226, 86, 68],
+        "nose": [246, 212, 96],
+        "eye": [24, 22, 22],
+        "accent": [226, 86, 68]
+      },
+      "body": { "length": 1.3, "height": 1.9, "width": 1.15 },
+      "head": { "size": 1.0, "offsetY": 1.25, "offsetZ": 0.15, "snoutLength": 0.55, "snoutHeight": 0.5 },
+      "legs": { "count": 2, "length": 0.7, "thickness": 0.22, "spreadX": 0.34, "spreadZ": 0 },
+      "ears": { "type": "none", "length": 0, "width": 0 },
+      "tail": { "type": "feather", "length": 1.9, "thickness": 0.7 },
+      "wings": { "length": 1.7, "height": 0.9, "thickness": 0.28 }
+    },
+    {
+      "id": "turtle",
+      "nameKey": "animal.turtle",
+      "rig": "shelled",
+      "unlockLevel": 5,
+      "baseFee": 150,
+      "temperament": 0.5,
+      "walkSpeed": 3,
+      "palette": {
+        "body": [126, 168, 96],
+        "belly": [212, 200, 148],
+        "ear": [126, 168, 96],
+        "nose": [92, 128, 72],
+        "eye": [26, 24, 22],
+        "accent": [122, 92, 54]
+      },
+      "body": { "length": 2.7, "height": 1.0, "width": 2.3 },
+      "head": { "size": 0.85, "offsetY": 0.35, "offsetZ": 1.7, "snoutLength": 0.35, "snoutHeight": 0.3 },
+      "legs": { "count": 4, "length": 0.55, "thickness": 0.46, "spreadX": 0.95, "spreadZ": 0.85 },
+      "ears": { "type": "none", "length": 0, "width": 0 },
+      "tail": { "type": "none", "length": 0, "thickness": 0 },
+      "shell": { "height": 1.35, "overhang": 0.25 }
+    }
+  ]
+}

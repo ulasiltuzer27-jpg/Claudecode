@@ -22,3 +22,11 @@ saves/
 # Oyuncunun kontrol ayarlari (tus atamalari, fare hassasiyeti).
 # Kisiye ozel; depoya girmemeli. Dosya yoksa varsayilanlar kullaniliyor.
 config/
+
+# Roblox projesi: uretilen ara ciktilar
+# (dist/ BILEREK isleniyor - kullanicinin python calistirmadan acabilmesi icin)
+RobloxVet/build/
+
+# Python ara ciktilari
+__pycache__/
+*.pyc
