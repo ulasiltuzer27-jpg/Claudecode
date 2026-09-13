@@ -96,6 +96,9 @@ export type Data = {
 	-- Ise alinmis personel. Sema 4 ile geldi; eski kayitlarda yok,
 	-- migrate() bos tabloyla dolduruyor.
 	staff: { [string]: boolean },
+	-- ORTAK klinik XP'si. Oyuncunun kendi XP'sinden ayri: bina bununla
+	-- seviye atliyor ve acilanlar odadaki herkese aciliyor.
+	clinicXp: number,
 	stats: Stats,
 	species: { [string]: boolean },
 	achievements: { [string]: boolean },
@@ -184,6 +187,7 @@ local function defaultData(): Data
 		upgrades = {},
 		decor = starterDecor(),
 		staff = {},
+		clinicXp = 0,
 		stats = defaultStats(),
 		species = {},
 		achievements = {},
@@ -228,6 +232,7 @@ local function migrate(raw: any): Data
 			end
 		end
 	end
+	result.clinicXp = if type(raw.clinicXp) == "number" then raw.clinicXp else fresh.clinicXp
 	if type(raw.staff) == "table" then
 		for id, hired in raw.staff do
 			if hired == true then

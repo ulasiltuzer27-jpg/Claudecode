@@ -72,6 +72,7 @@ TOOLS = load("tools.json")["tools"]
 SYMPTOMS = {s["id"]: s for s in load("symptoms.json")["symptoms"]}
 UPGRADES = load("upgrades.json")["upgrades"]
 STAFF = load("staff.json")["staff"]
+CLINIC_LEVELS = load("clinicLevels.json")
 DAYCYCLE = load("daycycle.json")
 SURGERY = load("treatments.json")["surgery"]
 
@@ -93,6 +94,26 @@ def level_for_xp(xp: float) -> int:
         else:
             break
     return level
+
+
+def clinic_level_for_xp(clinic_xp: float) -> int:
+    level = 1
+    for row in CLINIC_LEVELS["levels"]:
+        if clinic_xp >= row["xp"]:
+            level = row["level"]
+    return level
+
+
+def clinic_effects(clinic_xp: float):
+    """ClinicLevel.effectsAt ile AYNI kademeli toplama."""
+    level = clinic_level_for_xp(clinic_xp)
+    fee_bonus, arrival_scale = 1.0, 1.0
+    for row in CLINIC_LEVELS["levels"]:
+        if row["level"] > level:
+            continue
+        fee_bonus *= row["effect"].get("feeBonus", 1)
+        arrival_scale *= row["effect"].get("arrivalScale", 1)
+    return level, fee_bonus, arrival_scale
 
 
 def reputation_multiplier(reputation: float) -> float:
@@ -187,8 +208,19 @@ def supply_cost(condition, discount: float) -> int:
     )
 
 
-def simulate(competent: bool, buy_things: bool, patients: int = 4000, seed: int = 7):
-    """Bir oyuncuyu hasta hasta simule eder ve kayit doner."""
+def simulate(
+    competent: bool,
+    buy_things: bool,
+    patients: int = 4000,
+    seed: int = 7,
+    stop_when_done: bool = True,
+):
+    """Bir oyuncuyu hasta hasta simule eder ve kayit doner.
+
+    `stop_when_done` KISISEL ilerleme bitince duruyor. Ortak klinik
+    seviyesi kisisel tavandan SONRA da yukselmeye devam ettigi icin,
+    onun ulasilabilirligini olcerken bu durus kapatiliyor.
+    """
     rng = random.Random(seed)
 
     money = float(ECONOMY["startingMoney"])
@@ -203,6 +235,12 @@ def simulate(competent: bool, buy_things: bool, patients: int = 4000, seed: int 
     day_seconds = DAYCYCLE["dayMinutes"] * 60
     wages_paid = 0.0
     paid_days = 0
+    # Ortak klinik XP'si. Tek oyunculu simulasyonda aktif seviye zaten
+    # bu oyuncunun seviyesi (online oyuncularin en yuksegi). Modele
+    # girmezse ucret ve gelis sikligi oldugundan DUSUK cikar.
+    clinic_xp = 0.0
+    clinic_share = CLINIC_LEVELS["xpShare"]
+    clinic_at_patient = {1: 0}
     elapsed = 0.0
     min_money = money
     level_at_patient = {1: 0}
@@ -225,9 +263,10 @@ def simulate(competent: bool, buy_things: bool, patients: int = 4000, seed: int 
         needed_tools = {SYMPTOMS[s]["revealedBy"] for s in condition["symptoms"]}
         solvable = needed_tools <= owned_tools
 
-        fee_bonus = 1.0
+        clinic_level, clinic_fee, clinic_arrival = clinic_effects(clinic_xp)
+        fee_bonus = clinic_fee
         discount = 1.0
-        arrival_scale = 1.0
+        arrival_scale = clinic_arrival
         for upgrade in UPGRADES:
             if upgrade["id"] in owned_upgrades:
                 fee_bonus *= upgrade["effect"].get("feeBonus", 1)
@@ -260,16 +299,22 @@ def simulate(competent: bool, buy_things: bool, patients: int = 4000, seed: int 
             continue
 
         cost = supply_cost(condition, discount)
-        if money < cost:
+        # Dikkatsiz oyuncu once yanlis tedaviyi uyguluyor: FAZLADAN bir
+        # sarf bedeli. Bu bedel odeme gucu denetiminin ICINDE olmali -
+        # oyunda her tedavi kendi parasi varken uygulanabiliyor, yani
+        # oyuncu asla eksiye dusemiyor. Denetimin disinda kalinca model
+        # kasayi 2 TL eksiye dusuruyordu; oyunun yapamayacagi bir sey.
+        extra = 0
+        if not competent:
+            extra = max(0, math.floor(TREATMENTS["pill"]["supplyCost"] * discount + 0.5))
+        if money < cost + extra:
             # Oyunda da olan sey: parasi yetmeyen oyuncu tedaviyi
             # uygulayamaz, hasta bekler ve gider.
             reputation = clamp_reputation(reputation + ECONOMY["reputation"]["timeout"])
             continue
         if not competent:
-            # Once yanlis tahmin, sonra dogru: itibar cezasi + fazladan
-            # bir yanlis tedavinin sarf bedeli.
             reputation = clamp_reputation(reputation + ECONOMY["reputation"]["wrongDiagnosis"])
-            cost += max(0, math.floor(TREATMENTS["pill"]["supplyCost"] * discount + 0.5))
+            cost += extra
 
         money -= cost
         min_money = min(min_money, money)
@@ -300,6 +345,10 @@ def simulate(competent: bool, buy_things: bool, patients: int = 4000, seed: int 
 
         money += earned
         xp += gained_xp
+        previous_clinic = clinic_level_for_xp(clinic_xp)
+        clinic_xp += math.floor(gained_xp * clinic_share + 0.5)
+        for step in range(previous_clinic + 1, clinic_level_for_xp(clinic_xp) + 1):
+            clinic_at_patient[step] = index
 
         new_level = level_for_xp(xp)
         if new_level > level:
@@ -343,7 +392,8 @@ def simulate(competent: bool, buy_things: bool, patients: int = 4000, seed: int 
                     owned_staff.add(member["id"])
 
         if (
-            level >= MAX_LEVEL
+            stop_when_done
+            and level >= MAX_LEVEL
             and len(owned_tools) == len(TOOLS)
             and len(owned_upgrades) == len(UPGRADES)
         ):
@@ -361,6 +411,9 @@ def simulate(competent: bool, buy_things: bool, patients: int = 4000, seed: int 
         "upgrades": owned_upgrades,
         "staff": owned_staff,
         "wages": wages_paid,
+        "clinicXp": clinic_xp,
+        "clinicLevel": clinic_level_for_xp(clinic_xp),
+        "clinic_at_patient": clinic_at_patient,
         "level_at_patient": level_at_patient,
         "level_at_time": level_at_time,
         "tool_bought_at": tool_bought_at,
@@ -402,6 +455,40 @@ def main() -> int:
     check("duzgun oynayanin parasi negatife dusmuyor", good["min_money"] >= 0)
     check("butun aletler satin alinabiliyor", len(good["tools"]) == len(TOOLS))
     check("butun yukseltmeler satin alinabiliyor", len(good["upgrades"]) == len(UPGRADES))
+
+    # ── Ortak klinik seviyesi ─────────────────────────────────────────
+    #
+    # Klinik seviyesi KISISEL tavandan sonra da yukselmeye devam eden
+    # ortak hedef. Iki yonlu denetim gerekiyor:
+    #   - cok erken bitmemeli (yoksa "ortak hedef" ilk saatte tukenir),
+    #   - ulasilamaz da olmamali (yoksa ustteki seviyeler suslemedir).
+    max_clinic = CLINIC_LEVELS["levels"][-1]["level"]
+    check("klinik seviyesi kisisel tavana kadar ilerliyor", good["clinicLevel"] >= 3)
+    check(
+        f"klinik tavani ({max_clinic}) kisisel tavandan once BITMIYOR",
+        good["clinicLevel"] < max_clinic,
+    )
+    # Kisisel ilerleme durdugunda da oynamaya devam eden bir oyuncu
+    # klinik tavanina ulasabilmeli.
+    endless = simulate(competent=True, buy_things=True, patients=3000, stop_when_done=False)
+    reached = endless["clinic_at_patient"].get(max_clinic)
+    personal_cap = good["patients"]
+    check(f"klinik tavanina ulasiliyor ({max_clinic}. seviye)", reached is not None)
+    check(
+        f"klinik tavani makul mesafede (kisisel tavan {personal_cap}. hastada, "
+        f"klinik tavani {reached}. hastada)",
+        reached is not None and reached <= personal_cap * 3,
+    )
+    # Etkiler gercekten isliyor mu? Ayni ucret, iki farkli klinik
+    # seviyesinde: ustteki DAHA COK kazandirmali.
+    _, top_fee, top_arrival = clinic_effects(CLINIC_LEVELS["levels"][-1]["xp"])
+    _, base_fee_bonus, base_arrival = clinic_effects(0)
+    check("klinik seviyesi ucreti artiriyor", top_fee > base_fee_bonus)
+    check("klinik seviyesi hasta arasini kisaltiyor", top_arrival < base_arrival)
+    check(
+        "klinik ucret zammi asiri degil (en fazla iki kat)",
+        top_fee <= 2.0,
+    )
 
     # ── Personel ──────────────────────────────────────────────────────
     # Personel gec oyundaki para yigininin karsiligi. Iki yonlu denetim:
@@ -500,7 +587,8 @@ def main() -> int:
         f"Sonuc: {good['patients']} hasta · {int(good['money'])} TL · "
         f"{int(good['xp'])} XP · itibar {int(good['reputation'])} · "
         f"{good['elapsed'] / 3600:.1f} saat · "
-        f"{len(good['staff'])}/{len(STAFF)} personel, {int(good['wages'])} TL maas"
+        f"{len(good['staff'])}/{len(STAFF)} personel, {int(good['wages'])} TL maas, "
+        f"klinik {good['clinicLevel']}/{max_clinic}"
     )
     print()
 

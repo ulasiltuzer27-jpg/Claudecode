@@ -286,6 +286,58 @@ def main() -> int:
         for key in upgrade["effect"]:
             check(f"yukseltme '{upgrade['id']}' bilinen etki kullaniyor: {key}", key in declared)
 
+    # 9a3. Ortak klinik seviyesi (data/clinicLevels.json)
+    #
+    # Klinik seviyesi bir ESIK TABLOSU: yanlis siralanmis ya da atlanmis
+    # bir satir, oyuncunun seviye atlayip hicbir sey acmamasi ya da iki
+    # seviyeyi birden atlamasi demek. Burada oynanistan once yakalaniyor.
+    clinic_levels_file = load("clinicLevels.json")
+    clinic_levels = clinic_levels_file["levels"]
+    share = clinic_levels_file["xpShare"]
+    check("clinicLevels.json xpShare 0 ile 1 arasinda", 0 < share <= 1)
+    check("clinicLevels.json en az 3 seviye tanimliyor", len(clinic_levels) >= 3)
+    check("clinicLevels.json ilk seviye 1 ve 0 XP", clinic_levels[0]["level"] == 1 and clinic_levels[0]["xp"] == 0)
+    check(
+        "clinicLevels.json ilk seviyenin etkisi bos (taban durum)",
+        clinic_levels[0]["effect"] == {},
+    )
+
+    clinic_effect_keys = {"queueSlots", "feeBonus", "arrivalScale"}
+    with open(os.path.join(ROOT, "src", "server", "game", "ClinicLevel.luau"), "r", encoding="utf-8") as handle:
+        clinic_src = handle.read()
+    # Kodun TOPLADIGI etki kumesi ile verinin YAZDIGI kume ayni olmali;
+    # yukseltme ve personeldeki `effectKeys` kaliginin aynisi.
+    code_effect_keys = set(re.findall(r"effect\.(\w+) ~= nil", clinic_src))
+    check(
+        "clinicLevels.json etkileri ile ClinicLevel.luau ayni kumeyi tanimliyor",
+        code_effect_keys == clinic_effect_keys,
+    )
+
+    previous_level = 0
+    previous_xp = -1
+    for row in clinic_levels:
+        level = row["level"]
+        check(f"klinik seviye {level} sirali (bir onceki + 1)", level == previous_level + 1)
+        check(f"klinik seviye {level} XP esigi artiyor", row["xp"] > previous_xp)
+        check(f"klinik seviye {level} adi tr.json'da var", row["nameKey"] in strings)
+        for key in row["effect"]:
+            check(f"klinik seviye {level} etkisi '{key}' taniniyor", key in clinic_effect_keys)
+        if "queueSlots" in row["effect"]:
+            check(f"klinik seviye {level} queueSlots pozitif tamsayi", isinstance(row["effect"]["queueSlots"], int) and row["effect"]["queueSlots"] > 0)
+        if "feeBonus" in row["effect"]:
+            check(f"klinik seviye {level} feeBonus 1'in uzerinde", row["effect"]["feeBonus"] > 1)
+        if "arrivalScale" in row["effect"]:
+            # 1'in ALTINDA = hastalar daha sik geliyor. Ustunde olsaydi
+            # seviye atlamak oyuncuyu cezalandirirdi.
+            check(f"klinik seviye {level} arrivalScale 1'in altinda", 0 < row["effect"]["arrivalScale"] < 1)
+        previous_level = level
+        previous_xp = row["xp"]
+
+    # En ust seviyenin esigi, tek bir vardiyada ulasilamayacak kadar
+    # yuksek olmali; yoksa "ortak hedef" ilk saatte bitiyor.
+    top_xp = clinic_levels[-1]["xp"]
+    check(f"en ust klinik seviyesi ({top_xp} XP) anlamli bir hedef", top_xp >= 5000)
+
     # 9a2. Personel (data/staff.json)
     #
     # Yukseltmelerdeki kalibin aynisi: veri ile KODUN OKUDUGU etki
@@ -771,8 +823,14 @@ def main() -> int:
 
     # Toplam bekleme noktasi, ekonomideki kuyruk kapasitesini karsilamali.
     queue_points = sum(len(room.get("queuePoints", [])) for room in clinic["rooms"])
-    max_slots = economy["arrival"]["queueSlots"] + sum(
-        u["effect"].get("queueSlots", 0) for u in upgrades
+    # Bekleme yeri UC kaynaktan aciliyor: yukseltme, personel ve ortak
+    # klinik seviyesi. Ucunu de saymazsak en kotu durumda satin alinan
+    # bir yer SESSIZCE calismaz (kod min() ile kirpiyor).
+    max_slots = (
+        economy["arrival"]["queueSlots"]
+        + sum(u["effect"].get("queueSlots", 0) for u in upgrades)
+        + sum(m["effect"].get("queueSlots", 0) for m in staff_list)
+        + sum(row["effect"].get("queueSlots", 0) for row in clinic_levels)
     )
     check(
         f"bekleme noktasi sayisi ({queue_points}) tam yukseltilmis kuyrugu ({max_slots}) karsiliyor",

@@ -295,6 +295,79 @@ function Hud.create(parent: ScreenGui)
 		zIndex = 2,
 	})
 
+	-- ── Ortak klinik seviyesi ─────────────────────────────────────────
+	-- Sol ustteki XP cubugu OYUNCUNUN kendi ilerlemesi; bu ise BINANIN
+	-- ve herkeste ayni deger gorunuyor. Ayri renkte (accent) ve ayri
+	-- kosede duruyor ki ikisi birbirine karismasin.
+	local clinic = Theme.card({
+		name = "Klinik",
+		size = UDim2.fromOffset(228, 78),
+		position = UDim2.new(1, -Theme.space.lg, 0, Theme.space.lg + 124),
+		anchor = Vector2.new(1, 0),
+		parent = parent,
+	})
+	local clinicIcon = Theme.icon({
+		name = "clinic",
+		size = 14,
+		color = Theme.color.accentGlow,
+		position = UDim2.fromOffset(Theme.space.md, 9),
+		parent = clinic,
+		zIndex = 2,
+	})
+	local clinicCap = Theme.label({
+		name = "Baslik",
+		text = "",
+		size = UDim2.fromOffset(60, 14),
+		position = UDim2.fromOffset(Theme.space.md + 20, 9),
+		textSize = Theme.size.micro,
+		bold = true,
+		color = Theme.color.textDim,
+		parent = clinic,
+		zIndex = 2,
+	})
+	local clinicLevel = Theme.label({
+		name = "Seviye",
+		text = "",
+		size = UDim2.new(1, -Theme.space.md * 2 - 80, 0, 14),
+		position = UDim2.fromOffset(Theme.space.md + 80, 9),
+		textSize = Theme.size.micro,
+		bold = true,
+		align = Enum.TextXAlignment.Right,
+		color = Theme.color.accentGlow,
+		parent = clinic,
+		zIndex = 2,
+	})
+	local clinicName = Theme.label({
+		name = "Ad",
+		text = "",
+		size = UDim2.new(1, -Theme.space.md * 2, 0, 16),
+		position = UDim2.fromOffset(Theme.space.md, 24),
+		textSize = Theme.size.small,
+		bold = true,
+		parent = clinic,
+		zIndex = 2,
+	})
+	local clinicBar = Theme.bar(
+		clinic,
+		UDim2.new(1, -Theme.space.md * 2, 0, 8),
+		UDim2.fromOffset(Theme.space.md, 44),
+		Theme.color.accentGlow,
+		{ segments = 6 }
+	)
+	clinicBar.track.ZIndex = 2
+	clinicBar.fill.ZIndex = 3
+	local clinicHint = Theme.label({
+		name = "Ipucu",
+		text = "",
+		size = UDim2.new(1, -Theme.space.md * 2, 0, 14),
+		position = UDim2.fromOffset(Theme.space.md, 56),
+		textSize = Theme.size.micro,
+		color = Theme.color.textDim,
+		align = Enum.TextXAlignment.Right,
+		parent = clinic,
+		zIndex = 2,
+	})
+
 	-- ── Kazanc yazilari ───────────────────────────────────────────────
 	local floaters = Theme.frame({
 		name = "Kazanclar",
@@ -333,11 +406,20 @@ function Hud.create(parent: ScreenGui)
 		shiftClock = shiftClock,
 		shiftLabel = shiftLabel,
 		shiftNight = false,
+		clinic = clinic,
+		clinicIcon = clinicIcon,
+		clinicCap = clinicCap,
+		clinicLevel = clinicLevel,
+		clinicName = clinicName,
+		clinicBar = clinicBar,
+		clinicHint = clinicHint,
+		clinicShown = -1,
 	}
 
 	widgets.moneyCaption.Text = Loc.get("hud.capMoney")
 	widgets.levelCaption.Text = Loc.get("hud.capLevel")
 	widgets.repCaption.Text = Loc.get("hud.capReputation")
+	widgets.clinicCap.Text = Loc.get("hud.clinicCap")
 	objective.Visible = false
 end
 
@@ -371,6 +453,26 @@ function Hud.update(state: any)
 
 	widgets.warning.Visible = state.transient == true
 	widgets.queueText.Text = Loc.get("hud.queue", state.queueWaiting, state.queueSlots)
+
+	-- Ortak klinik seviyesi. `state.clinic` sunucudan geliyor ve HERKESTE
+	-- ayni: online oyuncularin en yuksek klinik XP'si. Istemci burada
+	-- hicbir sey HESAPLAMIYOR, yalnizca ciziyor.
+	if state.clinic ~= nil then
+		local info = state.clinic
+		widgets.clinicLevel.Text = ("%d / %d"):format(info.level, info.maxLevel)
+		widgets.clinicName.Text = Loc.get(info.nameKey)
+		Theme.setBar(widgets.clinicBar, info.progress, firstDraw)
+		widgets.clinicHint.Text = if info.level >= info.maxLevel
+			then Loc.get("hud.clinicMax")
+			else Loc.get("hud.clinicNext", math.floor(info.progress * 100 + 0.5))
+
+		-- Seviye ATLAYINCA kart bir kez parliyor. Duyuru bildirimi
+		-- kayabilir; kartin kendisi kacmaz.
+		if widgets.clinicShown >= 0 and info.level > widgets.clinicShown then
+			Theme.flash(widgets.clinic, Theme.color.accentGlow)
+		end
+		widgets.clinicShown = info.level
+	end
 
 	if state.shift ~= nil then
 		local hours = math.floor(state.shift.clockTime)

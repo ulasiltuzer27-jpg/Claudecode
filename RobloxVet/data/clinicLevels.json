@@ -1,0 +1,16 @@
+{
+  "_comment": "(VERI) ORTAK KLINIK SEVIYESI. Oyuncunun kendi seviyesi kisisel; bu ise BINANIN seviyesi ve herkese ayni sekilde isliyor.",
+  "_neden_notu": "Cok oyunculuda herkes kendi XP'sini topluyordu ve birlikte oynamanin ortak bir hedefi yoktu. Klinik seviyesi o bosluga giriyor: taburcu edilen her hasta klinige de puan kazandiriyor ve acilan her sey ODADAKI HERKESE aciliyor.",
+  "_kaynak_notu": "Klinik XP'si oyuncunun PROFILINDE saklaniyor (Profile.clinicXp); aktif seviye ise online oyuncularin EN YUKSEGI - yukseltmelerdeki CLINIC_WIDE kuralinin aynisi. Boylece sunucu kapandiginda ilerleme kaybolmuyor ama klinik de tek bir kisinin sirtinda kalmiyor.",
+  "_yer_notu": "Klinik seviyesi TEK bir bekleme yeri aciyor (2. seviye). Daha fazlasi resepsiyonun fiziksel kapasitesini asardi: kuyruk yuvasi sayisi kodda min() ile bekleme NOKTASI sayisina kirpiliyor, yani fazlasi sessizce hicbir ise yaramazdi. verify_data bu dengeyi denetliyor.",
+  "_etki_notu": "Etkiler KADEMELI toplaniyor: 4. seviyedeki klinik 2., 3. ve 4. seviyenin etkilerinin toplamini tasiyor. queueSlots toplanir, feeBonus ve arrivalScale carpilir (arrivalScale 1'in altinda = hastalar daha sik gelir).",
+  "xpShare": 0.6,
+  "levels": [
+    { "level": 1, "xp": 0, "nameKey": "clinicLevel.1", "effect": {} },
+    { "level": 2, "xp": 900, "nameKey": "clinicLevel.2", "effect": { "queueSlots": 1 } },
+    { "level": 3, "xp": 2600, "nameKey": "clinicLevel.3", "effect": { "arrivalScale": 0.92 } },
+    { "level": 4, "xp": 5600, "nameKey": "clinicLevel.4", "effect": { "feeBonus": 1.08 } },
+    { "level": 5, "xp": 10200, "nameKey": "clinicLevel.5", "effect": { "arrivalScale": 0.95 } },
+    { "level": 6, "xp": 17000, "nameKey": "clinicLevel.6", "effect": { "feeBonus": 1.1, "arrivalScale": 0.94 } }
+  ]
+}

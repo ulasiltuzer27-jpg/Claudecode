@@ -114,6 +114,24 @@ function Theme.pulse(target: Instance, property: string, to: any, period: number
 	}
 end
 
+--- Tek seferlik parlama: kenarligi bir an accent rengine cekip geri
+--- birakiyor. `Theme.pulse` SUREKLI atar ve durdurulmasi gerekir;
+--- bu ise "bir sey oldu" demek icin - kapatmayi unutmak mumkun degil.
+---
+--- Kenarligi olmayan bir cerceveye cagrilirsa sessizce gecip gidiyor:
+--- bir kutlama efekti icin kart yapisini degistirmek dogru olmazdi.
+function Theme.flash(target: GuiObject, color: Color3?)
+	local stroke = target:FindFirstChildOfClass("UIStroke")
+	if stroke == nil then
+		return
+	end
+	local originalColor = stroke.Color
+	local originalThickness = stroke.Thickness
+	stroke.Color = color or Theme.color.accentGlow
+	stroke.Thickness = originalThickness + 1.5
+	Theme.tween(stroke, { Color = originalColor, Thickness = originalThickness }, Theme.motion.slow)
+end
+
 -- ── Kucuk yapi yardimcilari ───────────────────────────────────────────
 function Theme.corner(parent: Instance, radius: number): UICorner
 	local corner = Instance.new("UICorner")
@@ -294,6 +312,15 @@ local ICONS: { [string]: { Shape } } = {
 		{ "d", 0.08, 0.08, 0.84, 0.84 },
 		{ "d", 0.26, 0.26, 0.48, 0.48, 0, 0.75 },
 		{ "k", 0.46, 0.18, 0.08, 0.64 },
+	},
+	-- Klinik: bina govdesi + catisi + uzerindeki sagli hac. Ortak
+	-- klinik seviyesi BINANIN seviyesi oldugu icin ikon da bir bina;
+	-- oyuncunun kendi seviyesindeki elmastan ayri dursun diye.
+	clinic = {
+		{ "k", 0.16, 0.40, 0.68, 0.48 },
+		{ "k", 0.26, 0.14, 0.36, 0.20, 45 },
+		{ "k", 0.44, 0.50, 0.12, 0.30, 0, 0.55 },
+		{ "k", 0.35, 0.59, 0.30, 0.12, 0, 0.55 },
 	},
 	-- Seviye: elmas (45 derece dondurulmus kare)
 	level = {

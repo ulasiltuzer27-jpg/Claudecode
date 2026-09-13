@@ -33,6 +33,7 @@ local Effects = require(script.Parent.Parent.world.Effects)
 local OwnerFactory = require(script.Parent.Parent.world.OwnerFactory)
 local SkyLighting = require(script.Parent.Parent.world.Lighting)
 local Achievements = require(script.Parent.Achievements)
+local ClinicLevel = require(script.Parent.ClinicLevel)
 local Diagnosis = require(script.Parent.Diagnosis)
 local Economy = require(script.Parent.Economy)
 local Leaderboard = require(script.Parent.Leaderboard)
@@ -127,7 +128,13 @@ local function queueSlotCount(): number
 	local clinicEffects = Upgrades.clinicEffects(players)
 	-- Resepsiyonist de bekleme yeri aciyor: yukseltmeyle ayni kanal.
 	local staffEffects = Staff.clinicEffects(players)
-	local total = economy.arrival.queueSlots + clinicEffects.queueSlots + staffEffects.queueSlots
+	-- Ortak klinik seviyesi de ayni kanaldan yer aciyor: uc kaynak da
+	-- TOPLANIYOR, cunku ucu de "daha cok bekleme yeri" anlamina geliyor.
+	local levelEffects = ClinicLevel.effects(players)
+	local total = economy.arrival.queueSlots
+		+ clinicEffects.queueSlots
+		+ staffEffects.queueSlots
+		+ levelEffects.queueSlots
 	local available = if clinic ~= nil then #clinic.queuePoints else 0
 	return math.min(total, available)
 end
@@ -392,6 +399,10 @@ local function stateSnapshot(player: Player): any
 		-- Gunduz/gece: saat, nobet rozeti ve ucret carpani. Sunucu
 		-- saati tek kaynak; istemci yalnizca ciziyor.
 		shift = DayCycle.snapshot(),
+		-- Ortak klinik seviyesi: online oyuncularin EN YUKSEK klinik
+		-- XP'sinden cikiyor, yani herkeste AYNI deger gorunuyor. Kendi
+		-- seviyesi (`level`) kisisel, bu ise binanin.
+		clinic = ClinicLevel.snapshot(Players:GetPlayers()),
 	}
 end
 
@@ -417,6 +428,20 @@ local function applyLevel(player: Player, data: any, previousLevel: number)
 		local tool = Upgrades.tool(toolId)
 		notify(player, "good", "notify.toolUnlocked", { if tool ~= nil then tool.nameKey else toolId })
 	end
+end
+
+--- Kisisel XP'nin bir payi ORTAK klinige de yaziliyor. Tek yerde
+--- olsun diye ayri fonksiyon: pay orani veriden (`clinicLevels.xpShare`)
+--- geliyor, kodda sabit degil.
+---
+--- Neden profilde? Klinik XP'si sunucunun belleginde tutulsaydi sunucu
+--- kapaninca ilerleme silinirdi. Profilde tutulup aktif seviye online
+--- oyuncularin EN YUKSEGINDEN okununca hem kalici oluyor hem de ortak.
+local function awardClinicXp(data: any, xpGain: number)
+	if xpGain <= 0 then
+		return
+	end
+	data.clinicXp += math.floor(xpGain * ClinicLevel.xpShare() + 0.5)
 end
 
 local function pushProgress(player: Player)
@@ -465,6 +490,24 @@ local function pushStateAll()
 	for _, player in Players:GetPlayers() do
 		pushState(player)
 	end
+end
+
+--- Ortak klinik seviyesi yukseldiyse HERKESE duyuruyor ve herkesin
+--- HUD'ini tazeliyor. `before` odul verilmeden ONCE okunmus aktif
+--- seviye - sonra okunursa atlama hic fark edilmez (`applyLevel` ile
+--- ayni kalip).
+---
+--- Neden herkese? Klinik seviyesi binanin; bir oyuncunun taburcusuyla
+--- yukselse bile acilan sey odadaki HERKESE aciliyor. Yalnizca taburcu
+--- edene haber vermek, digerlerinin kuyrugunun neden uzadigini
+--- anlamamasi demekti.
+local function settleClinicLevel(before: number)
+	local now = ClinicLevel.activeLevel(Players:GetPlayers())
+	if now <= before then
+		return
+	end
+	notifyAll("good", "notify.clinicLevelUp", { now, ClinicLevel.nameKey(now) })
+	pushStateAll()
 end
 
 --- Ameliyathanedeki oyunculara "asistanlik edebilirsin" haberi.
@@ -1412,6 +1455,7 @@ local function tickWard()
 		end
 	end
 
+	local clinicBefore = ClinicLevel.activeLevel(Players:GetPlayers())
 	for _, entry in result.done do
 		local patient = patients[entry.patientId]
 		local score = Ward.careScore(entry)
@@ -1427,6 +1471,7 @@ local function tickWard()
 				local xpGain = math.floor(ward.boardingXp * score + 0.5)
 				data.money += fee
 				data.xp += xpGain
+				awardClinicXp(data, xpGain)
 				data.stats.earned += fee
 				Tasks.bump(data, "earned", fee)
 				applyLevel(vet, data, previousLevel)
@@ -1441,6 +1486,7 @@ local function tickWard()
 		end
 	end
 
+	settleClinicLevel(clinicBefore)
 	pushWard()
 end
 
@@ -1546,17 +1592,23 @@ function PatientFlow.discharge(player: Player)
 		return
 	end
 
+	-- Ucret carpani IKI kaynaktan: oyuncunun kendi yukseltmeleri ve
+	-- ortak klinik seviyesi. Ikisi de "ucret zammi" oldugu icin
+	-- CARPILIYORLAR; toplansalardi iki kucuk zam bir buyuk zamdan daha
+	-- cok eder, yani yanlis olurdu.
+	local clinicBonus = ClinicLevel.effects(Players:GetPlayers())
 	local fee = Economy.fee({
 		baseFee = animal.baseFee,
 		feeMultiplier = condition.feeMultiplier,
 		reputation = data.reputation,
 		health = patient.health,
-		feeBonus = effects.feeBonus,
+		feeBonus = effects.feeBonus * clinicBonus.feeBonus,
 	})
 
 	-- Seviye, XP eklenmeden ONCE okunmali: sonra okunursa atlama hic
 	-- fark edilmez.
 	local previousLevel = data.level
+	local clinicBefore = ClinicLevel.activeLevel(Players:GetPlayers())
 	local xpGain = condition.xp
 
 	-- Gece nobeti zammi: gece hasta seyrek ama ucret ve XP zamli.
@@ -1587,6 +1639,7 @@ function PatientFlow.discharge(player: Player)
 
 	data.money += fee + tip
 	data.xp += xpGain
+	awardClinicXp(data, xpGain)
 	data.stats.patients += 1
 	data.stats.earned += fee + tip
 	data.stats.tips += tip
@@ -1616,6 +1669,7 @@ function PatientFlow.discharge(player: Player)
 	end
 
 	applyLevel(player, data, previousLevel)
+	settleClinicLevel(clinicBefore)
 
 	if tip > 0 then
 		notify(player, "good", "notify.dischargedTip", { fee, tip, xpGain })
@@ -1824,9 +1878,13 @@ function PatientFlow.start(built: Clinic.Built)
 			-- Gece hasta SEYREK geliyor: arrivalScale 1'in ustunde,
 			-- yani bekleme suresi uzuyor.
 			local shift = DayCycle.modifiers()
+			-- Klinik seviyesi de gelis arasini kisaltiyor (arrivalScale
+			-- 1'in altinda). Uc carpan da ayni eksende oldugu icin
+			-- carpiliyor.
+			local levelEffects = ClinicLevel.effects(Players:GetPlayers())
 			task.wait(Economy.arrivalSeconds(
 				bestReputation(),
-				clinicEffects.arrivalScale * shift.arrivalScale
+				clinicEffects.arrivalScale * shift.arrivalScale * levelEffects.arrivalScale
 			))
 		end
 	end)

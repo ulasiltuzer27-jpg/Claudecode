@@ -41,6 +41,7 @@ local Economy = require(script.Parent.game.Economy)
 local Profile = require(script.Parent.game.Profile)
 local Tasks = require(script.Parent.game.Tasks)
 local Staff = require(script.Parent.game.Staff)
+local ClinicLevel = require(script.Parent.game.ClinicLevel)
 local Surgery = require(script.Parent.game.Surgery)
 local Ward = require(script.Parent.game.Ward)
 local ToolGame = require(script.Parent.game.ToolGame)
@@ -704,6 +705,38 @@ do
 	end
 	check("devriye rotasi tanimli", #Staff.patrol() >= 3)
 	check("klinik bastan personelsiz", StaffFactory.count() == 0)
+
+	-- Ortak klinik seviyesi: esik tablosu ile kodun okudugu seviye
+	-- ayni mi? Tablo veriden geliyor; burada KODUN o tabloyu nasil
+	-- okudugu olculuyor - esikte duran bir XP degeri yanlis seviyeye
+	-- dusuyorsa oyuncu seviye atladigini gorur ama hicbir sey acilmaz.
+	check("klinik seviye tablosu en az 3 satir", ClinicLevel.MAX >= 3)
+	check("klinik XP payi 0 ile 1 arasinda", ClinicLevel.xpShare() > 0 and ClinicLevel.xpShare() <= 1)
+	check("0 XP birinci klinik seviyesi", ClinicLevel.levelForXp(0) == 1)
+	for level = 1, ClinicLevel.MAX do
+		local threshold = ClinicLevel.xpForLevel(level)
+		check(("klinik esigi %d tam o seviyeyi veriyor"):format(level), ClinicLevel.levelForXp(threshold) == level)
+		check(
+			("klinik esiginin 1 alti bir alt seviye (%d)"):format(level),
+			level == 1 or ClinicLevel.levelForXp(threshold - 1) == level - 1
+		)
+		check(("klinik seviye %d adi cevrili"):format(level), Loc.has(ClinicLevel.nameKey(level)))
+		local effects = ClinicLevel.effectsAt(level)
+		-- Kademeli toplamin YONU: ust seviye asla alttan kotu olamaz.
+		local previous = ClinicLevel.effectsAt(math.max(1, level - 1))
+		check(
+			("klinik seviye %d etkileri gerilemiyor"):format(level),
+			effects.queueSlots >= previous.queueSlots
+				and effects.feeBonus >= previous.feeBonus
+				and effects.arrivalScale <= previous.arrivalScale
+		)
+	end
+	-- En ust seviyenin uzerindeki XP hala en ust seviye olmali.
+	check(
+		"tavanin uzerindeki XP tavanda kaliyor",
+		ClinicLevel.levelForXp(ClinicLevel.xpForLevel(ClinicLevel.MAX) * 10) == ClinicLevel.MAX
+	)
+	check("klinik bos sunucuda 1. seviyede", ClinicLevel.activeLevel({}) == 1)
 
 	-- Kogus: yataklar kurulmus mu ve padoklarin ici hastayi aliyor mu?
 	-- Eski kafeslerin ici (4,8 stud) en buyuk hastanin ayak izinden
