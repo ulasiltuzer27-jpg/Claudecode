@@ -37,6 +37,7 @@ local Validate = require(Shared.Validate)
 local AnimalAnimator = require(script.world.AnimalAnimator)
 local Clinic = require(script.world.Clinic)
 local Decor = require(script.world.Decor)
+local Doors = require(script.world.Doors)
 local Lobby = require(script.world.Lobby)
 local OwnerFactory = require(script.world.OwnerFactory)
 local SkyLighting = require(script.world.Lighting)
@@ -162,6 +163,7 @@ local function startClinic()
 
 	local ok, err = pcall(function()
 		clinicBuilt = Clinic.build(workspace)
+		Doors.start()
 		AnimalAnimator.start()
 		OwnerFactory.start()
 		PatientFlow.start(clinicBuilt :: Clinic.Built)
@@ -360,6 +362,9 @@ local function sanitizeSettings(raw: any, current: any): any
 
 	if type(raw.showFps) == "boolean" then
 		result.showFps = raw.showFps
+	end
+	if type(raw.viewModel) == "boolean" then
+		result.viewModel = raw.viewModel
 	end
 	if type(raw.sprintEnabled) == "boolean" then
 		result.sprintEnabled = raw.sprintEnabled

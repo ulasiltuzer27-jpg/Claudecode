@@ -2,13 +2,262 @@
   "_comment": "(VERI) Teshis aletleri. Her alet belirli semptomlari GORUNUR kilar; hangi semptomu hangi aletin actigi symptoms.json'daki revealedBy alaninda yaziyor.",
   "_sira_notu": "order alani magazadaki ve alet cubugundaki sirayi belirler.",
   "tools": [
-    { "id": "visual",       "nameKey": "tool.visual",       "order": 1, "price": 0,    "unlockLevel": 1, "useSeconds": 1.2, "color": [236, 240, 243], "handHeld": false },
-    { "id": "stethoscope",  "nameKey": "tool.stethoscope",  "order": 2, "price": 0,    "unlockLevel": 1, "useSeconds": 1.8, "color": [58, 62, 70],    "handHeld": true },
-    { "id": "thermometer",  "nameKey": "tool.thermometer",  "order": 3, "price": 250,  "unlockLevel": 2, "useSeconds": 1.5, "color": [232, 236, 240], "handHeld": true },
-    { "id": "otoscope",     "nameKey": "tool.otoscope",     "order": 4, "price": 700,  "unlockLevel": 3, "useSeconds": 1.7, "color": [214, 176, 72],  "handHeld": true },
-    { "id": "xray",         "nameKey": "tool.xray",         "order": 5, "price": 2500, "unlockLevel": 4, "useSeconds": 2.8, "color": [104, 150, 196], "handHeld": false },
-    { "id": "bloodtest",    "nameKey": "tool.bloodtest",    "order": 6, "price": 3200, "unlockLevel": 5, "useSeconds": 3.2, "color": [196, 74, 82],   "handHeld": true },
-    { "id": "urinalysis",   "nameKey": "tool.urinalysis",   "order": 7, "price": 2600, "unlockLevel": 6, "useSeconds": 2.6, "color": [214, 196, 96],  "handHeld": true },
-    { "id": "ultrasound",   "nameKey": "tool.ultrasound",   "order": 8, "price": 4800, "unlockLevel": 7, "useSeconds": 3.4, "color": [96, 140, 190],  "handHeld": true }
-  ]
+    {
+      "id": "visual",
+      "nameKey": "tool.visual",
+      "order": 1,
+      "price": 0,
+      "unlockLevel": 1,
+      "useSeconds": 1.2,
+      "color": [
+        236,
+        240,
+        243
+      ],
+      "handHeld": false,
+      "viewModel": {
+        "body": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "tip": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "tipColor": [
+          236,
+          240,
+          243
+        ],
+        "motion": "point"
+      }
+    },
+    {
+      "id": "stethoscope",
+      "nameKey": "tool.stethoscope",
+      "order": 2,
+      "price": 0,
+      "unlockLevel": 1,
+      "useSeconds": 1.8,
+      "color": [
+        58,
+        62,
+        70
+      ],
+      "handHeld": true,
+      "viewModel": {
+        "body": [
+          0.16,
+          0.16,
+          1.5
+        ],
+        "tip": [
+          0.62,
+          0.62,
+          0.2
+        ],
+        "tipColor": [
+          188,
+          194,
+          200
+        ],
+        "motion": "press"
+      }
+    },
+    {
+      "id": "thermometer",
+      "nameKey": "tool.thermometer",
+      "order": 3,
+      "price": 250,
+      "unlockLevel": 2,
+      "useSeconds": 1.5,
+      "color": [
+        232,
+        236,
+        240
+      ],
+      "handHeld": true,
+      "viewModel": {
+        "body": [
+          0.14,
+          0.14,
+          1.1
+        ],
+        "tip": [
+          0.2,
+          0.2,
+          0.26
+        ],
+        "tipColor": [
+          226,
+          104,
+          94
+        ],
+        "motion": "press"
+      }
+    },
+    {
+      "id": "otoscope",
+      "nameKey": "tool.otoscope",
+      "order": 4,
+      "price": 700,
+      "unlockLevel": 3,
+      "useSeconds": 1.7,
+      "color": [
+        214,
+        176,
+        72
+      ],
+      "handHeld": true,
+      "viewModel": {
+        "body": [
+          0.26,
+          0.26,
+          1.0
+        ],
+        "tip": [
+          0.34,
+          0.34,
+          0.5
+        ],
+        "tipColor": [
+          240,
+          206,
+          96
+        ],
+        "motion": "reach"
+      }
+    },
+    {
+      "id": "xray",
+      "nameKey": "tool.xray",
+      "order": 5,
+      "price": 2500,
+      "unlockLevel": 4,
+      "useSeconds": 2.8,
+      "color": [
+        104,
+        150,
+        196
+      ],
+      "handHeld": false,
+      "viewModel": {
+        "body": [
+          1.2,
+          0.7,
+          0.34
+        ],
+        "tip": [
+          0.9,
+          0.5,
+          0.1
+        ],
+        "tipColor": [
+          168,
+          212,
+          212
+        ],
+        "motion": "sweep"
+      }
+    },
+    {
+      "id": "bloodtest",
+      "nameKey": "tool.bloodtest",
+      "order": 6,
+      "price": 3200,
+      "unlockLevel": 5,
+      "useSeconds": 3.2,
+      "color": [
+        196,
+        74,
+        82
+      ],
+      "handHeld": true,
+      "viewModel": {
+        "body": [
+          0.2,
+          0.2,
+          1.2
+        ],
+        "tip": [
+          0.12,
+          0.12,
+          0.5
+        ],
+        "tipColor": [
+          226,
+          104,
+          94
+        ],
+        "motion": "press"
+      }
+    },
+    {
+      "id": "urinalysis",
+      "nameKey": "tool.urinalysis",
+      "order": 7,
+      "price": 2600,
+      "unlockLevel": 6,
+      "useSeconds": 2.6,
+      "color": [
+        214,
+        196,
+        96
+      ],
+      "handHeld": true,
+      "viewModel": {
+        "body": [
+          0.5,
+          0.7,
+          0.5
+        ],
+        "tip": [
+          0.42,
+          0.16,
+          0.42
+        ],
+        "tipColor": [
+          240,
+          206,
+          96
+        ],
+        "motion": "twist"
+      }
+    },
+    {
+      "id": "ultrasound",
+      "nameKey": "tool.ultrasound",
+      "order": 8,
+      "price": 4800,
+      "unlockLevel": 7,
+      "useSeconds": 3.4,
+      "color": [
+        96,
+        140,
+        190
+      ],
+      "handHeld": true,
+      "viewModel": {
+        "body": [
+          0.3,
+          0.3,
+          0.9
+        ],
+        "tip": [
+          0.46,
+          0.2,
+          0.46
+        ],
+        "tipColor": [
+          118,
+          184,
+          220
+        ],
+        "motion": "sweep"
+      }
+    }
+  ],
+  "_viewmodel_notu": "Birinci sahis el modelinin (src/client/ViewModel.luau) olculeri. `body` sap, `tip` uc; ikisi de [genislik, yukseklik, uzunluk]. Olculerden biri 0 ise o parca cizilmiyor - 'gozle muayene'nin elinde bir alet yok, yalnizca isaret eden el var. `motion` aletin kullanim animasyonu: point / press / reach / twist / sweep."
 }

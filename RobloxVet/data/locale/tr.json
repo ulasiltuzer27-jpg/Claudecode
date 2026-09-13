@@ -363,6 +363,8 @@
     "set.sprint.desc": "Shift basılı tutunca hızlanma ve görüş açısının açılması.",
     "set.fps": "Kare sayacı",
     "set.fps.desc": "Sağ üstte FPS, en düşük kare ve gecikme göstergesi.",
+    "set.viewModel": "Ellerini göster",
+    "set.viewModel.desc": "Birinci şahısta elin ve elindeki alet ekranda görünür.",
     "progress.title": "İLERLEME",
     "progress.close": "Kapat (G)",
     "progress.tabTasks": "Günlük Görevler",

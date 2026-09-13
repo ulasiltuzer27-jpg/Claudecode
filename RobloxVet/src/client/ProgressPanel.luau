@@ -183,16 +183,14 @@ local function redraw()
 end
 
 function ProgressPanel.create(parent: ScreenGui)
-	local panel = Theme.frame({
+	local panel = Theme.card({
 		name = "Ilerleme",
 		size = UDim2.fromOffset(520, 452),
 		position = UDim2.new(0.5, 0, 0.5, 0),
 		anchor = Vector2.new(0.5, 0.5),
-		transparency = 0.03,
 		parent = parent,
 		visible = false,
-	})
-	Theme.stroke(panel, Theme.color.accent, 2)
+	}, Theme.color.accent)
 
 	Theme.label({
 		text = Loc.get("progress.title"),
@@ -258,7 +256,11 @@ function ProgressPanel.setOpen(value: boolean)
 		return
 	end
 	open = value
-	widgets.panel.Visible = value
+	if value then
+		Theme.open(widgets.panel)
+	else
+		Theme.close(widgets.panel)
+	end
 	Audio.play(if value then "uiOpen" else "uiClose")
 	if value then
 		-- Panel acilirken taze veri iste: kapaliyken gelen guncellemeler

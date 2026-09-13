@@ -25,6 +25,7 @@ local Net = require(Shared.Net)
 
 local Camera = require(script.Camera)
 local Chart = require(script.Chart)
+local Crosshair = require(script.Crosshair)
 local DiagnosisPanel = require(script.DiagnosisPanel)
 local Fps = require(script.Fps)
 local Hud = require(script.Hud)
@@ -37,6 +38,7 @@ local SurgeryPanel = require(script.SurgeryPanel)
 local Theme = require(script.Theme)
 local ToolBar = require(script.ToolBar)
 local TreatmentPanel = require(script.TreatmentPanel)
+local ViewModel = require(script.ViewModel)
 
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
@@ -61,6 +63,7 @@ lobbyScreen.Enabled = false
 lobbyScreen.Parent = playerGui
 
 Hud.create(screen)
+Crosshair.create(screen)
 Chart.create(screen)
 DiagnosisPanel.create(screen)
 TreatmentPanel.create(screen)
@@ -74,6 +77,9 @@ Notify.create(screen)
 LobbyPanel.create(lobbyScreen)
 
 Camera.start()
+-- Birinci sahis el/alet modeli kameradan SONRA baslamali: sallanma
+-- verisini Camera.motion()'dan okuyor.
+ViewModel.start()
 
 -- Butun hazir sesleri bir kez yukle ve tutmayanlari Output'a raporla.
 -- Bu depoyu ureten ortamda Roblox'a erisim yoktu; hangi rbxasset yolunun

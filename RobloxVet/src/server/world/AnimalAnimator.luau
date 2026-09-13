@@ -31,6 +31,10 @@ type Entry = {
 	limpStrength: number,
 	stressLevel: number,
 	coiled: boolean,
+	-- Tepki katmani: sinus katmaninin USTUNE binen, tek seferlik
+	-- hareket. Bosken "" ve hicbir maliyeti yok.
+	reaction: string,
+	reactionTime: number,
 	waypoints: { Vector3 },
 	onArrive: (() -> ())?,
 	facing: Vector3,
@@ -53,6 +57,8 @@ function Animator.register(rig: AnimalFactory.Rig)
 		limpStrength = 0,
 		stressLevel = 0,
 		coiled = false,
+		reaction = "",
+		reactionTime = 0,
 		waypoints = {},
 		onArrive = nil,
 		facing = rig.root.CFrame.LookVector,
@@ -90,6 +96,44 @@ function Animator.setCoiled(rig: AnimalFactory.Rig, coiled: boolean)
 	if entry ~= nil then
 		entry.coiled = coiled
 	end
+end
+
+-- Tepki suresi (saniye). Anahtar kumesi burada tek yerde; PatientFlow
+-- bilinmeyen bir tepki yollarsa sessizce yutulmuyor, uyariliyor.
+local REACTION_SECONDS = {
+	flinch = 0.55,
+	relax = 1.8,
+	wag = 1.9,
+	breathe = 3.2,
+	shake = 0.8,
+	perk = 0.9,
+}
+
+--- Tek seferlik tepki oynatir: igne yiyince IRKILME, yikanirken
+--- GEVSEME, dogru teshiste KUYRUK SALLAMA, ameliyatta DERIN NEFES.
+--- Mevcut sinus katmanini durdurmuyor, uzerine biniyor - hayvan hem
+--- nefes almaya devam ediyor hem irkiliyor.
+function Animator.react(rig: AnimalFactory.Rig, kind: string)
+	local entry = entryOf(rig)
+	if entry == nil then
+		return
+	end
+	if REACTION_SECONDS[kind] == nil then
+		warn(("[AnimalAnimator] bilinmeyen tepki: '%s'"):format(kind))
+		return
+	end
+	entry.reaction = kind
+	entry.reactionTime = 0
+end
+
+--- Tanimli tepkiler (SelfTest ve verify_data karsilastirmasi icin).
+function Animator.reactionKinds(): { string }
+	local kinds = {}
+	for kind in REACTION_SECONDS do
+		table.insert(kinds, kind)
+	end
+	table.sort(kinds)
+	return kinds
 end
 
 --- Topallama. `leg` 0 ise topallama yok; 1..4 bacak numarasi.
@@ -182,11 +226,36 @@ local function stepMovement(entry: Entry, dt: number): number
 	return speed
 end
 
+--- Tepkinin o andaki gucu (0..1 arasi, basta ve sonda 0) ve adi.
+--- Suresi dolan tepki kendiliginden temizleniyor.
+local function stepReaction(entry: Entry, dt: number): (string, number)
+	if entry.reaction == "" then
+		return "", 0
+	end
+	local total = REACTION_SECONDS[entry.reaction]
+	if total == nil then
+		entry.reaction = ""
+		return "", 0
+	end
+	entry.reactionTime += dt
+	if entry.reactionTime >= total then
+		entry.reaction = ""
+		return "", 0
+	end
+	local progress = entry.reactionTime / total
+	-- Irkilme HIZLI baslayip sonuyor; digerleri yumusak bir yay.
+	local strength = if entry.reaction == "flinch"
+		then (1 - progress) * (1 - progress)
+		else math.sin(progress * math.pi)
+	return entry.reaction, strength
+end
+
 --- Animasyon: eklem Transform'larini surer.
 local function stepPose(entry: Entry, dt: number, movingSpeed: number)
 	local rig = entry.rig
 	local joints = rig.joints
 	local walking = entry.state == "walk" and movingSpeed > 0
+	local reaction, reactStrength = stepReaction(entry, dt)
 
 	local stress = entry.stressLevel / 100
 	local breathRate = 1.4 + stress * 2.2 + (if entry.state == "distress" then 1.6 else 0)
@@ -195,12 +264,30 @@ local function stepPose(entry: Entry, dt: number, movingSpeed: number)
 	entry.phase += dt * (if walking then strideRate else breathRate)
 	local phase = entry.phase
 
-	-- Govde: nefes alip verme + yururken hafif salinim.
+	-- Govde: nefes alip verme + yururken hafif salinim + TEPKI.
 	if joints.rootJoint ~= nil then
 		local breath = math.sin(phase * (if walking then 0.5 else 1)) * (0.035 + stress * 0.03)
 		local sway = if walking then math.sin(phase * 2) * 0.03 else 0
 		local tilt = entry.limpStrength * math.sin(phase) * 0.05
-		joints.rootJoint.Transform = CFrame.new(0, breath, 0) * CFrame.Angles(sway, 0, tilt)
+
+		-- Tepki katmani: govdenin yuksekligine ve egimine ekleniyor.
+		local lift, pitch = 0, 0
+		if reaction == "flinch" then
+			lift = reactStrength * 0.32
+			pitch = -reactStrength * 0.26
+		elseif reaction == "relax" then
+			lift = -reactStrength * 0.18
+		elseif reaction == "wag" then
+			lift = math.abs(math.sin(entry.reactionTime * 11)) * reactStrength * 0.16
+		elseif reaction == "breathe" then
+			-- Derin nefes: normal nefesin uzerine yavas ve genis bir dalga.
+			lift = math.sin(entry.reactionTime * 2.1) * reactStrength * 0.22
+		elseif reaction == "shake" then
+			sway += math.sin(entry.reactionTime * 26) * reactStrength * 0.08
+		end
+
+		joints.rootJoint.Transform = CFrame.new(0, breath + lift, 0)
+			* CFrame.Angles(sway + pitch, 0, tilt)
 	end
 
 	-- Bacaklar: capraz yuruyus. Topallayan bacagin genligi dusuk ve
@@ -229,6 +316,20 @@ local function stepPose(entry: Entry, dt: number, movingSpeed: number)
 		local nod = if walking then math.sin(phase * 2) * 0.08 else math.sin(phase * 0.55) * 0.05
 		local turn = if walking then 0 else math.sin(phase * 0.32) * 0.22
 		local droop = (if entry.state == "distress" then 0.2 else 0) + stress * 0.12
+
+		if reaction == "flinch" then
+			nod += reactStrength * 0.38
+			turn += reactStrength * 0.2
+		elseif reaction == "relax" then
+			droop += reactStrength * 0.26
+		elseif reaction == "shake" then
+			turn += math.sin(entry.reactionTime * 24) * reactStrength * 0.55
+		elseif reaction == "perk" then
+			nod += reactStrength * 0.22
+		elseif reaction == "wag" then
+			nod += reactStrength * 0.14
+		end
+
 		joints.neck.Transform = CFrame.Angles(nod - droop, turn, 0)
 	end
 
@@ -236,7 +337,19 @@ local function stepPose(entry: Entry, dt: number, movingSpeed: number)
 	if joints.tail ~= nil then
 		local wagAmplitude = (0.45 - stress * 0.35) * (if walking then 1.3 else 1)
 		local wag = math.sin(phase * 2.4) * math.max(wagAmplitude, 0.05)
-		joints.tail.Transform = CFrame.Angles(-stress * 0.5, wag, 0)
+		local lift = -stress * 0.5
+		if reaction == "wag" then
+			-- Dogru teshiste kuyruk HIZLI ve genis sallaniyor; oyuncunun
+			-- gordugu ilk "dogru yaptin" isareti bu.
+			wag = math.sin(entry.reactionTime * 16) * (0.5 + reactStrength * 0.7)
+			lift += reactStrength * 0.45
+		elseif reaction == "flinch" then
+			wag *= 0.2
+			lift -= reactStrength * 0.5
+		elseif reaction == "relax" then
+			wag = math.sin(entry.reactionTime * 3) * 0.3 * reactStrength
+		end
+		joints.tail.Transform = CFrame.Angles(lift, wag, 0)
 	end
 
 	-- Kulaklar: stres arttikca geriye yatiyor, arada bir seyiriyor.
@@ -245,7 +358,15 @@ local function stepPose(entry: Entry, dt: number, movingSpeed: number)
 		if joint ~= nil then
 			local side = if index == 1 then -1 else 1
 			local twitch = math.sin(phase * 3.1 + index) * 0.05
-			joint.Transform = CFrame.Angles(-stress * 0.55, 0, side * (twitch + stress * 0.25))
+			local flatten = stress * 0.55
+			if reaction == "flinch" then
+				flatten += reactStrength * 0.5
+			elseif reaction == "perk" or reaction == "wag" then
+				flatten -= reactStrength * 0.45
+			elseif reaction == "shake" then
+				twitch += math.sin(entry.reactionTime * 22 + index) * reactStrength * 0.3
+			end
+			joint.Transform = CFrame.Angles(-flatten, 0, side * (twitch + stress * 0.25))
 		end
 	end
 

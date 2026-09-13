@@ -119,10 +119,49 @@ def main() -> int:
         check(f"semptom '{symptom['id']}' var olan bir aletle aciliyor", symptom["revealedBy"] in tool_ids)
         check(f"semptom '{symptom['id']}' siddeti 1-3", symptom["severity"] in (1, 2, 3))
 
+    # Birinci sahis el modeli bu tablodan kuruluyor (ViewModel.luau).
+    # Eksik bir `viewModel` alani, o alet secilince elin BOS kalmasi
+    # demek - Studio acilmadan gorunmeyecek bir eksik.
+    VIEWMODEL_MOTIONS = {"point", "press", "reach", "twist", "sweep"}
     for tool in tools:
         check(f"alet '{tool['id']}' fiyati negatif degil", tool["price"] >= 0)
         check(f"alet '{tool['id']}' suresi pozitif", tool["useSeconds"] > 0)
         check(f"alet '{tool['id']}' acilis seviyesi egrinin icinde", 1 <= tool["unlockLevel"] <= level_max)
+
+        view = tool.get("viewModel")
+        check(f"alet '{tool['id']}' viewModel bildiriyor", view is not None)
+        if view is None:
+            continue
+        check(
+            f"alet '{tool['id']}' viewModel hareketi taniniyor: {view.get('motion')}",
+            view.get("motion") in VIEWMODEL_MOTIONS,
+        )
+        for field in ("body", "tip"):
+            size = view.get(field)
+            check(
+                f"alet '{tool['id']}' viewModel.{field} uc olcu bildiriyor",
+                isinstance(size, list) and len(size) == 3 and all(value >= 0 for value in size),
+            )
+        check(
+            f"alet '{tool['id']}' viewModel.tipColor 3 kanal, 0-255",
+            len(view.get("tipColor", [])) == 3
+            and all(0 <= value <= 255 for value in view.get("tipColor", [])),
+        )
+
+    # Ayarlardaki viewModel bloku: ViewModel.luau bu alanlari DOGRUDAN
+    # okuyor, eksigi calisma aninda "attempt to index nil" olur.
+    settings_file = load("settings.json")
+    check("settings.json viewModel bloku var", "viewModel" in settings_file)
+    check(
+        "settings.json defaults.viewModel var",
+        isinstance(settings_file["defaults"].get("viewModel"), bool),
+    )
+    for field in (
+        "scale", "rightOffset", "leftOffset", "swayDegrees", "swayResponse",
+        "bobScale", "breathSpeed", "breathAmount", "useSeconds",
+        "skinColor", "sleeveColor", "gloveColor",
+    ):
+        check(f"settings.json viewModel.{field} var", field in settings_file.get("viewModel", {}))
 
     for treatment in treatments:
         check(f"tedavi '{treatment['id']}' sarf bedeli negatif degil", treatment["supplyCost"] >= 0)

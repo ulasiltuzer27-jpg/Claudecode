@@ -36,6 +36,9 @@ export type Owner = {
 	bubbleText: TextLabel,
 	meter: Frame,
 	phase: number,
+	-- Jest katmani: tek seferlik kol/bas hareketi. Bosken "".
+	gesture: string,
+	gestureTime: number,
 }
 
 -- Sahipler rastgele gorunsun diye kucuk palet havuzlari. Oynanisi
@@ -269,6 +272,8 @@ function OwnerFactory.create(cframe: CFrame, hintKey: string, parent: Instance):
 		bubbleText = bubbleText,
 		meter = meter,
 		phase = math.random() * math.pi * 2,
+		gesture = "",
+		gestureTime = 0,
 	}
 end
 
@@ -291,6 +296,37 @@ function OwnerFactory.say(owner: Owner, key: string, ...: any)
 	owner.bubbleText.Text = Loc.get(key, ...)
 end
 
+-- Jest sureleri (saniye). Hayvan tepkileriyle ayni kalip: sinus
+-- katmaninin USTUNE binen, kendi kendini temizleyen tek seferlik
+-- hareket.
+local GESTURE_SECONDS = {
+	point = 1.4,
+	relief = 1.8,
+	worry = 1.6,
+}
+
+--- Sahibin jesti: hayvanini GOSTERME, teshis dogruyken RAHATLAMA,
+--- acil vakada ENDISE. Konusma balonu tek basina yetmiyordu - uzaktan
+--- bakan oyuncu balonu okumadan once kolu goruyor.
+function OwnerFactory.gesture(owner: Owner, kind: string)
+	if GESTURE_SECONDS[kind] == nil then
+		warn(("[OwnerFactory] bilinmeyen jest: '%s'"):format(kind))
+		return
+	end
+	owner.gesture = kind
+	owner.gestureTime = 0
+end
+
+--- Tanimli jestler (SelfTest icin).
+function OwnerFactory.gestureKinds(): { string }
+	local kinds = {}
+	for kind in GESTURE_SECONDS do
+		table.insert(kinds, kind)
+	end
+	table.sort(kinds)
+	return kinds
+end
+
 --- Durusu gunceller. Sahip bekleme odasinda durup nefes aliyor, arada
 --- etrafina bakiyor; sinirliyse kollarini kavusturuyor.
 function OwnerFactory.step(owner: Owner, dt: number, satisfaction: number, walking: boolean)
@@ -298,19 +334,58 @@ function OwnerFactory.step(owner: Owner, dt: number, satisfaction: number, walki
 	local phase = owner.phase
 	local annoyed = satisfaction < 40
 
+	-- Jest zamanlayicisi: suresi dolunca kendini temizliyor.
+	local gesture = owner.gesture
+	local gestureStrength = 0
+	if gesture ~= "" then
+		local total = GESTURE_SECONDS[gesture]
+		if total == nil then
+			owner.gesture = ""
+			gesture = ""
+		else
+			owner.gestureTime += dt
+			if owner.gestureTime >= total then
+				owner.gesture = ""
+				gesture = ""
+			else
+				gestureStrength = math.sin(owner.gestureTime / total * math.pi)
+			end
+		end
+	end
+
 	if owner.joints.rootJoint ~= nil then
 		owner.joints.rootJoint.Transform = CFrame.new(0, math.sin(phase) * 0.03, 0)
 	end
 	if owner.joints.neck ~= nil then
 		local look = if walking then 0 else math.sin(phase * 0.4) * 0.35
-		owner.joints.neck.Transform = CFrame.Angles(math.sin(phase * 0.7) * 0.04, look, 0)
+		local nod = math.sin(phase * 0.7) * 0.04
+		if gesture == "point" then
+			-- Gosterirken basini hayvana dogru egiyor.
+			nod += gestureStrength * 0.22
+		elseif gesture == "relief" then
+			-- Rahatlarken basini geriye atiyor.
+			nod -= gestureStrength * 0.3
+		elseif gesture == "worry" then
+			nod += gestureStrength * 0.34
+			look += math.sin(owner.gestureTime * 9) * gestureStrength * 0.4
+		end
+		owner.joints.neck.Transform = CFrame.Angles(nod, look, 0)
 	end
 
 	for index = 1, 2 do
 		local side = if index == 1 then -1 else 1
 		local arm = owner.joints["arm" .. index]
 		if arm ~= nil then
-			if annoyed and not walking then
+			if gesture == "point" and index == 2 then
+				-- Sag kol one uzanip hayvani gosteriyor.
+				arm.Transform = CFrame.Angles(math.rad(-95 * gestureStrength), 0, math.rad(side * -18 * gestureStrength))
+			elseif gesture == "relief" then
+				-- Iki kol da hafifce aciliyor: "cok sukur" durusu.
+				arm.Transform = CFrame.Angles(math.rad(-28 * gestureStrength), 0, math.rad(side * -46 * gestureStrength))
+			elseif gesture == "worry" then
+				-- Eller yuze yakin: endise.
+				arm.Transform = CFrame.Angles(math.rad(-118 * gestureStrength), 0, math.rad(side * -26 * gestureStrength))
+			elseif annoyed and not walking then
 				-- Kollari kavusturmus: gorsel olarak "bekliyorum" demek.
 				arm.Transform = CFrame.Angles(math.rad(-72), 0, math.rad(side * -34))
 			elseif walking then

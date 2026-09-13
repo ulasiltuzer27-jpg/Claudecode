@@ -24,7 +24,12 @@ local Audio = require(Shared.Audio)
 local Loc = require(Shared.Loc)
 local Net = require(Shared.Net)
 
+local AnimalAnimator = require(script.Parent.world.AnimalAnimator)
 local AnimalFactory = require(script.Parent.world.AnimalFactory)
+local Decor = require(script.Parent.world.Decor)
+local Doors = require(script.Parent.world.Doors)
+local Effects = require(script.Parent.world.Effects)
+local OwnerFactory = require(script.Parent.world.OwnerFactory)
 local Props = require(script.Parent.world.Props)
 
 local Achievements = require(script.Parent.game.Achievements)
@@ -37,6 +42,8 @@ local Treatment = require(script.Parent.game.Treatment)
 local Upgrades = require(script.Parent.game.Upgrades)
 
 local clinicPlan = require(Data.clinic)
+local decorData = require(Data.decor)
+local toolData = require(Data.tools)
 local lobbyPlan = require(Data.lobby)
 local propData = require(Data.props)
 local settingsData = require(Data.settings)
@@ -525,6 +532,72 @@ do
 	for _, spec in lobbyPlan.props do
 		check(("lobi esyasi '%s' biliniyor"):format(spec.id), Props.known(spec.id))
 	end
+end
+
+-- ── Dekorasyon, kapilar, tepkiler ─────────────────────────────────────
+--
+-- Bu blok KURULMUS dunyaya bakiyor: klinik init.server tarafindan
+-- insa edildikten sonra calistigi icin "tema hic parca bulamadi" ya da
+-- "kapi kurulmadi" gibi ancak calisma aninda ortaya cikan hatalari
+-- yakaliyor.
+
+do
+	-- Tema parcalari ADA gore bulunuyor (Decor.ROLE_BY_NAME); Clinic'te
+	-- bir parcanin adi degisirse tema sessizce hicbir seyi boyamaz.
+	check("dekorasyon temasi boyayacak parca buldu", Decor.paintedCount() > 0)
+	check("bir tema uygulanmis durumda", Decor.activeTheme() ~= "")
+	check(
+		("kurulan sus esyasi sayisi decor.json ile ayni (%d)"):format(#decorData.props),
+		Decor.propCount() == #decorData.props
+	)
+	for _, item in decorData.props do
+		check(("dekor '%s' govdesi Props'ta var"):format(item.id), Props.known(item.prop))
+		check(("dekor '%s' adi cevrili"):format(item.id), Loc.has(item.nameKey))
+		check(("dekor '%s' magazada taniniyor"):format(item.id), Upgrades.knownDecor(item.id))
+	end
+	for _, theme in decorData.themes do
+		check(("tema '%s' magazada taniniyor"):format(theme.id), Upgrades.knownDecor(theme.id))
+	end
+
+	-- Kapilar: plandaki her kapi bosluguna bir cift kanat.
+	local doorCount = 0
+	for _, wall in clinicPlan.walls do
+		doorCount += #(wall.doors or {})
+	end
+	check(("kurulan kapi sayisi plandakiyle ayni (%d)"):format(doorCount), Doors.count() == doorCount)
+
+	-- Hayvan tepkileri ve sahip jestleri: PatientFlow'un yolladigi her
+	-- ad tanimli olmali; bilinmeyen ad sessizce hicbir sey oynatmiyor.
+	local reactions = {}
+	for _, kind in AnimalAnimator.reactionKinds() do
+		reactions[kind] = true
+	end
+	for _, kind in { "flinch", "relax", "wag", "breathe", "shake", "perk" } do
+		check(("hayvan tepkisi '%s' tanimli"):format(kind), reactions[kind] == true)
+	end
+	local gestures = {}
+	for _, kind in OwnerFactory.gestureKinds() do
+		gestures[kind] = true
+	end
+	for _, kind in { "point", "relief", "worry" } do
+		check(("sahip jesti '%s' tanimli"):format(kind), gestures[kind] == true)
+	end
+
+	-- Her tedavinin bir efekt rengi olmali: eksigi, tedavinin sessizce
+	-- hicbir gorsel geri bildirim vermemesi demek.
+	local effectIds = {}
+	for _, id in Effects.knownTreatments() do
+		effectIds[id] = true
+	end
+	for _, treatment in Treatment.all() do
+		check(("tedavi '%s' icin efekt tanimli"):format(treatment.id), effectIds[treatment.id] == true)
+	end
+
+	-- Birinci sahis el modeli: her aletin viewModel bloku olmali.
+	for _, tool in toolData.tools do
+		check(("alet '%s' viewModel bildiriyor"):format(tool.id), tool.viewModel ~= nil)
+	end
+	check("ayarlarda viewModel bloku var", settingsData.viewModel ~= nil)
 end
 
 -- ── Rapor ─────────────────────────────────────────────────────────────

@@ -28,6 +28,7 @@ local Audio = require(Shared.Audio)
 local Camera = require(script.Parent.Camera)
 local Fps = require(script.Parent.Fps)
 local Theme = require(script.Parent.Theme)
+local ViewModel = require(script.Parent.ViewModel)
 
 local settingsData = require(Data.settings)
 
@@ -54,6 +55,7 @@ end
 local function applyLocally()
 	Camera.apply(values)
 	Fps.setVisible(values.showFps)
+	ViewModel.setEnabled(values.viewModel)
 	Audio.setVolumes(values)
 end
 
@@ -63,6 +65,7 @@ local function refresh()
 	end
 	widgets.rows.sprintEnabled.value.Text = Loc.get(if values.sprintEnabled then "set.on" else "set.off")
 	widgets.rows.showFps.value.Text = Loc.get(if values.showFps then "set.on" else "set.off")
+	widgets.rows.viewModel.value.Text = Loc.get(if values.viewModel then "set.on" else "set.off")
 	widgets.rows.bobbing.value.Text = ("%.2f"):format(values.bobbing)
 	widgets.rows.fieldOfView.value.Text = tostring(math.floor(values.fieldOfView + 0.5))
 	-- Ses seviyeleri yuzde olarak daha okunur.
@@ -173,21 +176,20 @@ function SettingsPanel.create(parent: ScreenGui)
 		fieldOfView = settingsData.defaults.fieldOfView,
 		showFps = settingsData.defaults.showFps,
 		sprintEnabled = settingsData.defaults.sprintEnabled,
+		viewModel = settingsData.defaults.viewModel,
 		masterVolume = settingsData.defaults.masterVolume,
 		musicVolume = settingsData.defaults.musicVolume,
 		sfxVolume = settingsData.defaults.sfxVolume,
 	}
 
-	local panel = Theme.frame({
+	local panel = Theme.card({
 		name = "Ayarlar",
 		size = UDim2.fromOffset(470, 470),
 		position = UDim2.new(0.5, 0, 0.5, 0),
 		anchor = Vector2.new(0.5, 0.5),
-		transparency = 0.03,
 		parent = parent,
 		visible = false,
-	})
-	Theme.stroke(panel, Theme.color.accent, 2)
+	}, Theme.color.accent)
 
 	Theme.label({
 		text = Loc.get("set.title"),
@@ -219,6 +221,7 @@ function SettingsPanel.create(parent: ScreenGui)
 		fieldOfView = row(list, 5, "fieldOfView", "set.fov", "set.fov.desc", "fieldOfView"),
 		sprintEnabled = row(list, 6, "sprintEnabled", "set.sprint", "set.sprint.desc"),
 		showFps = row(list, 7, "showFps", "set.fps", "set.fps.desc"),
+		viewModel = row(list, 8, "viewModel", "set.viewModel", "set.viewModel.desc"),
 	}
 
 	widgets = { panel = panel, rows = rows }
@@ -249,7 +252,11 @@ function SettingsPanel.setOpen(value: boolean)
 		return
 	end
 	open = value
-	widgets.panel.Visible = value
+	if value then
+		Theme.open(widgets.panel)
+	else
+		Theme.close(widgets.panel)
+	end
 	Audio.play(if value then "uiOpen" else "uiClose")
 end
 

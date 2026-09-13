@@ -19,6 +19,7 @@ local Detail = require(Shared.Detail)
 local Loc = require(Shared.Loc)
 local Props = require(script.Parent.Props)
 local Decor = require(script.Parent.Decor)
+local Doors = require(script.Parent.Doors)
 local SkyLighting = require(script.Parent.Lighting)
 
 local plan = require(Data.clinic)
@@ -479,6 +480,11 @@ function Clinic.build(parent: Instance): Built
 	end
 
 	buildSpawn(root)
+
+	-- Kapi kanatlari: yapinin kapi bosluklarina oturuyor. Dekorasyondan
+	-- ONCE kuruluyor ki kanatlar da temaya gore boyanabilsin degil -
+	-- kanatlar kendi rengini tasiyor; sira yalnizca okunabilirlik icin.
+	Doors.build(structure)
 
 	-- Dekorasyon en sonda baglaniyor: boyanacak parcalar ve sus
 	-- esyalarinin yerleri ancak yapi bittikten sonra belli.

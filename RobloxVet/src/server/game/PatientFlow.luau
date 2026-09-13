@@ -28,6 +28,7 @@ local Net = require(Shared.Net)
 local AnimalAnimator = require(script.Parent.Parent.world.AnimalAnimator)
 local AnimalFactory = require(script.Parent.Parent.world.AnimalFactory)
 local Clinic = require(script.Parent.Parent.world.Clinic)
+local Effects = require(script.Parent.Parent.world.Effects)
 local OwnerFactory = require(script.Parent.Parent.world.OwnerFactory)
 local SkyLighting = require(script.Parent.Parent.world.Lighting)
 local Achievements = require(script.Parent.Achievements)
@@ -584,6 +585,7 @@ local function spawnPatient()
 		end)
 		Audio.ambience("emergencySiren", rig.root)
 		OwnerFactory.say(owner, "hint.emergency")
+		OwnerFactory.gesture(owner, "worry")
 	end
 
 	-- Topallayan hastalik gozle belli olsun: oyuncu daha aleti eline
@@ -608,9 +610,23 @@ local function spawnPatient()
 		end
 	end)
 
-	-- Sahip hayvanin yaninda yuruyor; bekleme noktasinin biraz saginda
-	-- duruyor ki ikisi ust uste binmesin.
-	local ownerSpot = queuePoint.Position + Vector3.new(3, 0, 1.5)
+	-- Sahip DATA'DAN gelen kendi noktasina yuruyor.
+	--
+	-- Eskiden bu nokta "kuyruk noktasinin 3 stud sagi" diye kodda
+	-- hesaplaniyordu; oysa `data/clinic.json`'daki `ownerPoints` ayri
+	-- yazili ve tools/verify_layout.py cakisma denetimini O NOKTALAR
+	-- uzerinde yapiyor. Ikisi ayri olunca denetlenen yer ile durulan yer
+	-- birbirinden kayiyordu - yani denetim bir sey garanti etmiyordu.
+	-- Artik tek kaynak var; nokta yoksa eski davranisa duseceğine
+	-- kuyruk noktasinin yaninda duruyor ve bu durum gorunur.
+	local ownerPoint = clinic.ownerPoints[slot]
+	if ownerPoint == nil then
+		warn(("[PatientFlow] %d. kuyruk yuvasi icin sahip noktasi yok (data/clinic.json)"):format(slot))
+	end
+	local ownerSpot = if ownerPoint ~= nil
+		then ownerPoint.Position
+		else queuePoint.Position + Vector3.new(3, 0, 1.5)
+
 	OwnerFactory.walkPath(owner, {
 		clinic.entranceOutside + Vector3.new(3, 0, 0),
 		clinic.entranceInside + Vector3.new(3, 0, 0),
@@ -619,6 +635,10 @@ local function spawnPatient()
 		local current = patients[id]
 		if current ~= nil and current.owner ~= nil then
 			OwnerFactory.faceTowards(current.owner, current.rig.root.Position)
+			-- Yerine varinca hayvanini GOSTERIYOR: oyuncu kalabalik bir
+			-- bekleme odasinda hangi sahibin hangi hayvana ait oldugunu
+			-- bu jestle okuyor.
+			OwnerFactory.gesture(current.owner, "point")
 		end
 	end)
 
@@ -849,6 +869,9 @@ function PatientFlow.useTool(player: Player, toolId: string)
 	-- denemek bedava degil.
 	patient.stress = math.clamp(patient.stress + economy.toolStress, 0, 100)
 	AnimalAnimator.setStress(patient.rig, patient.stress)
+	-- Alet degdiginde hayvan basini kaldiriyor: muayenenin oyuncuya
+	-- donen tarafi.
+	AnimalAnimator.react(patient.rig, if #found > 0 then "perk" else "shake")
 
 	local names = {}
 	for _, symptomId in found do
@@ -903,9 +926,14 @@ function PatientFlow.submitDiagnosis(player: Player, conditionId: string)
 			100
 		)
 		local condition = Diagnosis.condition(conditionId)
+		-- Dogru teshisin ILK isareti hayvanin kendisi: kuyruk sallamasi
+		-- ve etrafindaki isilti, bildirimden once goruluyor.
+		AnimalAnimator.react(patient.rig, "wag")
+		Effects.sparkle(patient.rig.model, patient.rig.root.CFrame, Color3.fromRGB(96, 196, 120))
 		if patient.owner ~= nil then
 			OwnerFactory.updateSatisfaction(patient.owner, patient.satisfaction)
 			OwnerFactory.say(patient.owner, "hint.relieved")
+			OwnerFactory.gesture(patient.owner, "relief")
 		end
 		Audio.play("animal" .. patient.animalId:sub(1, 1):upper() .. patient.animalId:sub(2), patient.rig.root)
 		notify(player, "good", "notify.diagnosisCorrect", { condition.nameKey })
@@ -926,6 +954,7 @@ function PatientFlow.submitDiagnosis(player: Player, conditionId: string)
 		if patient.owner ~= nil then
 			OwnerFactory.updateSatisfaction(patient.owner, patient.satisfaction)
 			OwnerFactory.say(patient.owner, "hint.worried")
+			OwnerFactory.gesture(patient.owner, "worry")
 		end
 		notify(player, "bad", "notify.diagnosisWrong")
 	end
@@ -935,10 +964,30 @@ function PatientFlow.submitDiagnosis(player: Player, conditionId: string)
 	pushChart(player)
 end
 
+-- Tedavi -> hayvanin tepkisi. Igne IRKILTIR, yikama GEVSETIR, besleme
+-- ILGISINI CEKER. Bilinmeyen tedavi icin "perk": sessiz kalmaktansa
+-- hayvanin basini kaldirmasi dogru.
+local REACTION_FOR_TREATMENT = {
+	injection = "flinch",
+	pill = "shake",
+	bandage = "flinch",
+	drops = "shake",
+	wash = "relax",
+	feed = "perk",
+	water = "relax",
+	surgery = "breathe",
+}
+
 local function finishTreatment(player: Player, patient: Patient, treatmentId: string, outcome: Treatment.Outcome)
 	patient.health = math.clamp(patient.health + outcome.healthDelta, 0, 100)
 	patient.stress = math.clamp(patient.stress + outcome.stressDelta, 0, 100)
 	AnimalAnimator.setStress(patient.rig, patient.stress)
+
+	-- Tepki ve efekt DOGRU/YANLIS ayrimi yapmadan oynuyor: hayvan yanlis
+	-- tedaviye de tepki verir ve oyuncunun "bir sey oldu" gormesi
+	-- gerekiyor. Ayrim, tepkinin TURUNDE degil sonucunda.
+	AnimalAnimator.react(patient.rig, REACTION_FOR_TREATMENT[treatmentId] or "perk")
+	Effects.treatment(patient.rig.model, patient.rig.root.CFrame, treatmentId)
 
 	if outcome.correct then
 		Audio.play("treat" .. treatmentId:sub(1, 1):upper() .. treatmentId:sub(2), patient.rig.root)
@@ -1172,6 +1221,7 @@ function PatientFlow.discharge(player: Player)
 	if patient.owner ~= nil then
 		OwnerFactory.updateSatisfaction(patient.owner, patient.satisfaction)
 		OwnerFactory.say(patient.owner, if tip > 0 then "hint.thanks" else "hint.goodbye")
+		OwnerFactory.gesture(patient.owner, "relief")
 	end
 
 	applyLevel(player, data, previousLevel)

@@ -5757,6 +5757,8 @@ return {
 		[&quot;set.sprint.desc&quot;] = &quot;Shift basılı tutunca hızlanma ve görüş açısının açılması.&quot;,
 		[&quot;set.fps&quot;] = &quot;Kare sayacı&quot;,
 		[&quot;set.fps.desc&quot;] = &quot;Sağ üstte FPS, en düşük kare ve gecikme göstergesi.&quot;,
+		[&quot;set.viewModel&quot;] = &quot;Ellerini göster&quot;,
+		[&quot;set.viewModel.desc&quot;] = &quot;Birinci şahısta elin ve elindeki alet ekranda görünür.&quot;,
 		[&quot;progress.title&quot;] = &quot;İLERLEME&quot;,
 		[&quot;progress.close&quot;] = &quot;Kapat (G)&quot;,
 		[&quot;progress.tabTasks&quot;] = &quot;Günlük Görevler&quot;,
@@ -6271,6 +6273,7 @@ return {
 		[&quot;masterVolume&quot;] = 0.8,
 		[&quot;musicVolume&quot;] = 0.5,
 		[&quot;sfxVolume&quot;] = 0.8,
+		[&quot;viewModel&quot;] = true,
 	},
 	[&quot;limits&quot;] = {
 		[&quot;bobbing&quot;] = {
@@ -6316,6 +6319,40 @@ return {
 	[&quot;movement&quot;] = {
 		[&quot;walkSpeed&quot;] = 16,
 		[&quot;sprintSpeed&quot;] = 26,
+	},
+	[&quot;viewModel&quot;] = {
+		[&quot;scale&quot;] = 1,
+		[&quot;rightOffset&quot;] = {
+			0.95,
+			-1.05,
+			-1.5,
+		},
+		[&quot;leftOffset&quot;] = {
+			-0.85,
+			-1.15,
+			-1.35,
+		},
+		[&quot;swayDegrees&quot;] = 5,
+		[&quot;swayResponse&quot;] = 9,
+		[&quot;bobScale&quot;] = 0.55,
+		[&quot;breathSpeed&quot;] = 1.5,
+		[&quot;breathAmount&quot;] = 0.035,
+		[&quot;useSeconds&quot;] = 0.4,
+		[&quot;skinColor&quot;] = {
+			232,
+			190,
+			160,
+		},
+		[&quot;sleeveColor&quot;] = {
+			74,
+			168,
+			168,
+		},
+		[&quot;gloveColor&quot;] = {
+			238,
+			242,
+			246,
+		},
 	},
 }
 </ProtectedString>
@@ -6679,6 +6716,24 @@ return {
 				243,
 			},
 			[&quot;handHeld&quot;] = false,
+			[&quot;viewModel&quot;] = {
+				[&quot;body&quot;] = {
+					0,
+					0,
+					0,
+				},
+				[&quot;tip&quot;] = {
+					0,
+					0,
+					0,
+				},
+				[&quot;tipColor&quot;] = {
+					236,
+					240,
+					243,
+				},
+				[&quot;motion&quot;] = &quot;point&quot;,
+			},
 		},
 		{
 			[&quot;id&quot;] = &quot;stethoscope&quot;,
@@ -6693,6 +6748,24 @@ return {
 				70,
 			},
 			[&quot;handHeld&quot;] = true,
+			[&quot;viewModel&quot;] = {
+				[&quot;body&quot;] = {
+					0.16,
+					0.16,
+					1.5,
+				},
+				[&quot;tip&quot;] = {
+					0.62,
+					0.62,
+					0.2,
+				},
+				[&quot;tipColor&quot;] = {
+					188,
+					194,
+					200,
+				},
+				[&quot;motion&quot;] = &quot;press&quot;,
+			},
 		},
 		{
 			[&quot;id&quot;] = &quot;thermometer&quot;,
@@ -6707,6 +6780,24 @@ return {
 				240,
 			},
 			[&quot;handHeld&quot;] = true,
+			[&quot;viewModel&quot;] = {
+				[&quot;body&quot;] = {
+					0.14,
+					0.14,
+					1.1,
+				},
+				[&quot;tip&quot;] = {
+					0.2,
+					0.2,
+					0.26,
+				},
+				[&quot;tipColor&quot;] = {
+					226,
+					104,
+					94,
+				},
+				[&quot;motion&quot;] = &quot;press&quot;,
+			},
 		},
 		{
 			[&quot;id&quot;] = &quot;otoscope&quot;,
@@ -6721,6 +6812,24 @@ return {
 				72,
 			},
 			[&quot;handHeld&quot;] = true,
+			[&quot;viewModel&quot;] = {
+				[&quot;body&quot;] = {
+					0.26,
+					0.26,
+					1,
+				},
+				[&quot;tip&quot;] = {
+					0.34,
+					0.34,
+					0.5,
+				},
+				[&quot;tipColor&quot;] = {
+					240,
+					206,
+					96,
+				},
+				[&quot;motion&quot;] = &quot;reach&quot;,
+			},
 		},
 		{
 			[&quot;id&quot;] = &quot;xray&quot;,
@@ -6735,6 +6844,24 @@ return {
 				196,
 			},
 			[&quot;handHeld&quot;] = false,
+			[&quot;viewModel&quot;] = {
+				[&quot;body&quot;] = {
+					1.2,
+					0.7,
+					0.34,
+				},
+				[&quot;tip&quot;] = {
+					0.9,
+					0.5,
+					0.1,
+				},
+				[&quot;tipColor&quot;] = {
+					168,
+					212,
+					212,
+				},
+				[&quot;motion&quot;] = &quot;sweep&quot;,
+			},
 		},
 		{
 			[&quot;id&quot;] = &quot;bloodtest&quot;,
@@ -6749,6 +6876,24 @@ return {
 				82,
 			},
 			[&quot;handHeld&quot;] = true,
+			[&quot;viewModel&quot;] = {
+				[&quot;body&quot;] = {
+					0.2,
+					0.2,
+					1.2,
+				},
+				[&quot;tip&quot;] = {
+					0.12,
+					0.12,
+					0.5,
+				},
+				[&quot;tipColor&quot;] = {
+					226,
+					104,
+					94,
+				},
+				[&quot;motion&quot;] = &quot;press&quot;,
+			},
 		},
 		{
 			[&quot;id&quot;] = &quot;urinalysis&quot;,
@@ -6763,6 +6908,24 @@ return {
 				96,
 			},
 			[&quot;handHeld&quot;] = true,
+			[&quot;viewModel&quot;] = {
+				[&quot;body&quot;] = {
+					0.5,
+					0.7,
+					0.5,
+				},
+				[&quot;tip&quot;] = {
+					0.42,
+					0.16,
+					0.42,
+				},
+				[&quot;tipColor&quot;] = {
+					240,
+					206,
+					96,
+				},
+				[&quot;motion&quot;] = &quot;twist&quot;,
+			},
 		},
 		{
 			[&quot;id&quot;] = &quot;ultrasound&quot;,
@@ -6777,6 +6940,24 @@ return {
 				190,
 			},
 			[&quot;handHeld&quot;] = true,
+			[&quot;viewModel&quot;] = {
+				[&quot;body&quot;] = {
+					0.3,
+					0.3,
+					0.9,
+				},
+				[&quot;tip&quot;] = {
+					0.46,
+					0.2,
+					0.46,
+				},
+				[&quot;tipColor&quot;] = {
+					118,
+					184,
+					220,
+				},
+				[&quot;motion&quot;] = &quot;sweep&quot;,
+			},
 		},
 	},
 }
@@ -7073,6 +7254,7 @@ local Validate = require(Shared.Validate)
 local AnimalAnimator = require(script.world.AnimalAnimator)
 local Clinic = require(script.world.Clinic)
 local Decor = require(script.world.Decor)
+local Doors = require(script.world.Doors)
 local Lobby = require(script.world.Lobby)
 local OwnerFactory = require(script.world.OwnerFactory)
 local SkyLighting = require(script.world.Lighting)
@@ -7198,6 +7380,7 @@ local function startClinic()
 
 	local ok, err = pcall(function()
 		clinicBuilt = Clinic.build(workspace)
+		Doors.start()
 		AnimalAnimator.start()
 		OwnerFactory.start()
 		PatientFlow.start(clinicBuilt :: Clinic.Built)
@@ -7397,6 +7580,9 @@ local function sanitizeSettings(raw: any, current: any): any
 	if type(raw.showFps) == &quot;boolean&quot; then
 		result.showFps = raw.showFps
 	end
+	if type(raw.viewModel) == &quot;boolean&quot; then
+		result.viewModel = raw.viewModel
+	end
 	if type(raw.sprintEnabled) == &quot;boolean&quot; then
 		result.sprintEnabled = raw.sprintEnabled
 	end
@@ -7490,7 +7676,12 @@ local Audio = require(Shared.Audio)
 local Loc = require(Shared.Loc)
 local Net = require(Shared.Net)
 
+local AnimalAnimator = require(script.Parent.world.AnimalAnimator)
 local AnimalFactory = require(script.Parent.world.AnimalFactory)
+local Decor = require(script.Parent.world.Decor)
+local Doors = require(script.Parent.world.Doors)
+local Effects = require(script.Parent.world.Effects)
+local OwnerFactory = require(script.Parent.world.OwnerFactory)
 local Props = require(script.Parent.world.Props)
 
 local Achievements = require(script.Parent.game.Achievements)
@@ -7503,6 +7694,8 @@ local Treatment = require(script.Parent.game.Treatment)
 local Upgrades = require(script.Parent.game.Upgrades)
 
 local clinicPlan = require(Data.clinic)
+local decorData = require(Data.decor)
+local toolData = require(Data.tools)
 local lobbyPlan = require(Data.lobby)
 local propData = require(Data.props)
 local settingsData = require(Data.settings)
@@ -7991,6 +8184,72 @@ do
 	for _, spec in lobbyPlan.props do
 		check((&quot;lobi esyasi '%s' biliniyor&quot;):format(spec.id), Props.known(spec.id))
 	end
+end
+
+-- ── Dekorasyon, kapilar, tepkiler ─────────────────────────────────────
+--
+-- Bu blok KURULMUS dunyaya bakiyor: klinik init.server tarafindan
+-- insa edildikten sonra calistigi icin &quot;tema hic parca bulamadi&quot; ya da
+-- &quot;kapi kurulmadi&quot; gibi ancak calisma aninda ortaya cikan hatalari
+-- yakaliyor.
+
+do
+	-- Tema parcalari ADA gore bulunuyor (Decor.ROLE_BY_NAME); Clinic'te
+	-- bir parcanin adi degisirse tema sessizce hicbir seyi boyamaz.
+	check(&quot;dekorasyon temasi boyayacak parca buldu&quot;, Decor.paintedCount() &gt; 0)
+	check(&quot;bir tema uygulanmis durumda&quot;, Decor.activeTheme() ~= &quot;&quot;)
+	check(
+		(&quot;kurulan sus esyasi sayisi decor.json ile ayni (%d)&quot;):format(#decorData.props),
+		Decor.propCount() == #decorData.props
+	)
+	for _, item in decorData.props do
+		check((&quot;dekor '%s' govdesi Props'ta var&quot;):format(item.id), Props.known(item.prop))
+		check((&quot;dekor '%s' adi cevrili&quot;):format(item.id), Loc.has(item.nameKey))
+		check((&quot;dekor '%s' magazada taniniyor&quot;):format(item.id), Upgrades.knownDecor(item.id))
+	end
+	for _, theme in decorData.themes do
+		check((&quot;tema '%s' magazada taniniyor&quot;):format(theme.id), Upgrades.knownDecor(theme.id))
+	end
+
+	-- Kapilar: plandaki her kapi bosluguna bir cift kanat.
+	local doorCount = 0
+	for _, wall in clinicPlan.walls do
+		doorCount += #(wall.doors or {})
+	end
+	check((&quot;kurulan kapi sayisi plandakiyle ayni (%d)&quot;):format(doorCount), Doors.count() == doorCount)
+
+	-- Hayvan tepkileri ve sahip jestleri: PatientFlow'un yolladigi her
+	-- ad tanimli olmali; bilinmeyen ad sessizce hicbir sey oynatmiyor.
+	local reactions = {}
+	for _, kind in AnimalAnimator.reactionKinds() do
+		reactions[kind] = true
+	end
+	for _, kind in { &quot;flinch&quot;, &quot;relax&quot;, &quot;wag&quot;, &quot;breathe&quot;, &quot;shake&quot;, &quot;perk&quot; } do
+		check((&quot;hayvan tepkisi '%s' tanimli&quot;):format(kind), reactions[kind] == true)
+	end
+	local gestures = {}
+	for _, kind in OwnerFactory.gestureKinds() do
+		gestures[kind] = true
+	end
+	for _, kind in { &quot;point&quot;, &quot;relief&quot;, &quot;worry&quot; } do
+		check((&quot;sahip jesti '%s' tanimli&quot;):format(kind), gestures[kind] == true)
+	end
+
+	-- Her tedavinin bir efekt rengi olmali: eksigi, tedavinin sessizce
+	-- hicbir gorsel geri bildirim vermemesi demek.
+	local effectIds = {}
+	for _, id in Effects.knownTreatments() do
+		effectIds[id] = true
+	end
+	for _, treatment in Treatment.all() do
+		check((&quot;tedavi '%s' icin efekt tanimli&quot;):format(treatment.id), effectIds[treatment.id] == true)
+	end
+
+	-- Birinci sahis el modeli: her aletin viewModel bloku olmali.
+	for _, tool in toolData.tools do
+		check((&quot;alet '%s' viewModel bildiriyor&quot;):format(tool.id), tool.viewModel ~= nil)
+	end
+	check(&quot;ayarlarda viewModel bloku var&quot;, settingsData.viewModel ~= nil)
 end
 
 -- ── Rapor ─────────────────────────────────────────────────────────────
@@ -8773,6 +9032,7 @@ local Net = require(Shared.Net)
 local AnimalAnimator = require(script.Parent.Parent.world.AnimalAnimator)
 local AnimalFactory = require(script.Parent.Parent.world.AnimalFactory)
 local Clinic = require(script.Parent.Parent.world.Clinic)
+local Effects = require(script.Parent.Parent.world.Effects)
 local OwnerFactory = require(script.Parent.Parent.world.OwnerFactory)
 local SkyLighting = require(script.Parent.Parent.world.Lighting)
 local Achievements = require(script.Parent.Achievements)
@@ -9329,6 +9589,7 @@ local function spawnPatient()
 		end)
 		Audio.ambience(&quot;emergencySiren&quot;, rig.root)
 		OwnerFactory.say(owner, &quot;hint.emergency&quot;)
+		OwnerFactory.gesture(owner, &quot;worry&quot;)
 	end
 
 	-- Topallayan hastalik gozle belli olsun: oyuncu daha aleti eline
@@ -9353,9 +9614,23 @@ local function spawnPatient()
 		end
 	end)
 
-	-- Sahip hayvanin yaninda yuruyor; bekleme noktasinin biraz saginda
-	-- duruyor ki ikisi ust uste binmesin.
-	local ownerSpot = queuePoint.Position + Vector3.new(3, 0, 1.5)
+	-- Sahip DATA'DAN gelen kendi noktasina yuruyor.
+	--
+	-- Eskiden bu nokta &quot;kuyruk noktasinin 3 stud sagi&quot; diye kodda
+	-- hesaplaniyordu; oysa `data/clinic.json`'daki `ownerPoints` ayri
+	-- yazili ve tools/verify_layout.py cakisma denetimini O NOKTALAR
+	-- uzerinde yapiyor. Ikisi ayri olunca denetlenen yer ile durulan yer
+	-- birbirinden kayiyordu - yani denetim bir sey garanti etmiyordu.
+	-- Artik tek kaynak var; nokta yoksa eski davranisa duseceğine
+	-- kuyruk noktasinin yaninda duruyor ve bu durum gorunur.
+	local ownerPoint = clinic.ownerPoints[slot]
+	if ownerPoint == nil then
+		warn((&quot;[PatientFlow] %d. kuyruk yuvasi icin sahip noktasi yok (data/clinic.json)&quot;):format(slot))
+	end
+	local ownerSpot = if ownerPoint ~= nil
+		then ownerPoint.Position
+		else queuePoint.Position + Vector3.new(3, 0, 1.5)
+
 	OwnerFactory.walkPath(owner, {
 		clinic.entranceOutside + Vector3.new(3, 0, 0),
 		clinic.entranceInside + Vector3.new(3, 0, 0),
@@ -9364,6 +9639,10 @@ local function spawnPatient()
 		local current = patients[id]
 		if current ~= nil and current.owner ~= nil then
 			OwnerFactory.faceTowards(current.owner, current.rig.root.Position)
+			-- Yerine varinca hayvanini GOSTERIYOR: oyuncu kalabalik bir
+			-- bekleme odasinda hangi sahibin hangi hayvana ait oldugunu
+			-- bu jestle okuyor.
+			OwnerFactory.gesture(current.owner, &quot;point&quot;)
 		end
 	end)
 
@@ -9594,6 +9873,9 @@ function PatientFlow.useTool(player: Player, toolId: string)
 	-- denemek bedava degil.
 	patient.stress = math.clamp(patient.stress + economy.toolStress, 0, 100)
 	AnimalAnimator.setStress(patient.rig, patient.stress)
+	-- Alet degdiginde hayvan basini kaldiriyor: muayenenin oyuncuya
+	-- donen tarafi.
+	AnimalAnimator.react(patient.rig, if #found &gt; 0 then &quot;perk&quot; else &quot;shake&quot;)
 
 	local names = {}
 	for _, symptomId in found do
@@ -9648,9 +9930,14 @@ function PatientFlow.submitDiagnosis(player: Player, conditionId: string)
 			100
 		)
 		local condition = Diagnosis.condition(conditionId)
+		-- Dogru teshisin ILK isareti hayvanin kendisi: kuyruk sallamasi
+		-- ve etrafindaki isilti, bildirimden once goruluyor.
+		AnimalAnimator.react(patient.rig, &quot;wag&quot;)
+		Effects.sparkle(patient.rig.model, patient.rig.root.CFrame, Color3.fromRGB(96, 196, 120))
 		if patient.owner ~= nil then
 			OwnerFactory.updateSatisfaction(patient.owner, patient.satisfaction)
 			OwnerFactory.say(patient.owner, &quot;hint.relieved&quot;)
+			OwnerFactory.gesture(patient.owner, &quot;relief&quot;)
 		end
 		Audio.play(&quot;animal&quot; .. patient.animalId:sub(1, 1):upper() .. patient.animalId:sub(2), patient.rig.root)
 		notify(player, &quot;good&quot;, &quot;notify.diagnosisCorrect&quot;, { condition.nameKey })
@@ -9671,6 +9958,7 @@ function PatientFlow.submitDiagnosis(player: Player, conditionId: string)
 		if patient.owner ~= nil then
 			OwnerFactory.updateSatisfaction(patient.owner, patient.satisfaction)
 			OwnerFactory.say(patient.owner, &quot;hint.worried&quot;)
+			OwnerFactory.gesture(patient.owner, &quot;worry&quot;)
 		end
 		notify(player, &quot;bad&quot;, &quot;notify.diagnosisWrong&quot;)
 	end
@@ -9680,10 +9968,30 @@ function PatientFlow.submitDiagnosis(player: Player, conditionId: string)
 	pushChart(player)
 end
 
+-- Tedavi -&gt; hayvanin tepkisi. Igne IRKILTIR, yikama GEVSETIR, besleme
+-- ILGISINI CEKER. Bilinmeyen tedavi icin &quot;perk&quot;: sessiz kalmaktansa
+-- hayvanin basini kaldirmasi dogru.
+local REACTION_FOR_TREATMENT = {
+	injection = &quot;flinch&quot;,
+	pill = &quot;shake&quot;,
+	bandage = &quot;flinch&quot;,
+	drops = &quot;shake&quot;,
+	wash = &quot;relax&quot;,
+	feed = &quot;perk&quot;,
+	water = &quot;relax&quot;,
+	surgery = &quot;breathe&quot;,
+}
+
 local function finishTreatment(player: Player, patient: Patient, treatmentId: string, outcome: Treatment.Outcome)
 	patient.health = math.clamp(patient.health + outcome.healthDelta, 0, 100)
 	patient.stress = math.clamp(patient.stress + outcome.stressDelta, 0, 100)
 	AnimalAnimator.setStress(patient.rig, patient.stress)
+
+	-- Tepki ve efekt DOGRU/YANLIS ayrimi yapmadan oynuyor: hayvan yanlis
+	-- tedaviye de tepki verir ve oyuncunun &quot;bir sey oldu&quot; gormesi
+	-- gerekiyor. Ayrim, tepkinin TURUNDE degil sonucunda.
+	AnimalAnimator.react(patient.rig, REACTION_FOR_TREATMENT[treatmentId] or &quot;perk&quot;)
+	Effects.treatment(patient.rig.model, patient.rig.root.CFrame, treatmentId)
 
 	if outcome.correct then
 		Audio.play(&quot;treat&quot; .. treatmentId:sub(1, 1):upper() .. treatmentId:sub(2), patient.rig.root)
@@ -9917,6 +10225,7 @@ function PatientFlow.discharge(player: Player)
 	if patient.owner ~= nil then
 		OwnerFactory.updateSatisfaction(patient.owner, patient.satisfaction)
 		OwnerFactory.say(patient.owner, if tip &gt; 0 then &quot;hint.thanks&quot; else &quot;hint.goodbye&quot;)
+		OwnerFactory.gesture(patient.owner, &quot;relief&quot;)
 	end
 
 	applyLevel(player, data, previousLevel)
@@ -10166,6 +10475,9 @@ export type Settings = {
 	fieldOfView: number,
 	showFps: boolean,
 	sprintEnabled: boolean,
+	-- Birinci sahis el/alet modeli. Kucuk ekranlarda goruntuyu
+	-- kapatabilecegi icin kapatilabilir olmasi gerekiyordu.
+	viewModel: boolean,
 	masterVolume: number,
 	musicVolume: number,
 	sfxVolume: number,
@@ -10263,6 +10575,7 @@ local function defaultSettings(): Settings
 		fieldOfView = defaults.fieldOfView,
 		showFps = defaults.showFps,
 		sprintEnabled = defaults.sprintEnabled,
+		viewModel = defaults.viewModel,
 		masterVolume = defaults.masterVolume,
 		musicVolume = defaults.musicVolume,
 		sfxVolume = defaults.sfxVolume,
@@ -10384,6 +10697,9 @@ local function migrate(raw: any): Data
 		-- birinci sahis); sessizce yok sayiliyor, profil bozulmuyor.
 		if type(raw.settings.showFps) == &quot;boolean&quot; then
 			result.settings.showFps = raw.settings.showFps
+		end
+		if type(raw.settings.viewModel) == &quot;boolean&quot; then
+			result.settings.viewModel = raw.settings.viewModel
 		end
 		if type(raw.settings.sprintEnabled) == &quot;boolean&quot; then
 			result.settings.sprintEnabled = raw.settings.sprintEnabled
@@ -11423,6 +11739,10 @@ type Entry = {
 	limpStrength: number,
 	stressLevel: number,
 	coiled: boolean,
+	-- Tepki katmani: sinus katmaninin USTUNE binen, tek seferlik
+	-- hareket. Bosken &quot;&quot; ve hicbir maliyeti yok.
+	reaction: string,
+	reactionTime: number,
 	waypoints: { Vector3 },
 	onArrive: (() -&gt; ())?,
 	facing: Vector3,
@@ -11445,6 +11765,8 @@ function Animator.register(rig: AnimalFactory.Rig)
 		limpStrength = 0,
 		stressLevel = 0,
 		coiled = false,
+		reaction = &quot;&quot;,
+		reactionTime = 0,
 		waypoints = {},
 		onArrive = nil,
 		facing = rig.root.CFrame.LookVector,
@@ -11482,6 +11804,44 @@ function Animator.setCoiled(rig: AnimalFactory.Rig, coiled: boolean)
 	if entry ~= nil then
 		entry.coiled = coiled
 	end
+end
+
+-- Tepki suresi (saniye). Anahtar kumesi burada tek yerde; PatientFlow
+-- bilinmeyen bir tepki yollarsa sessizce yutulmuyor, uyariliyor.
+local REACTION_SECONDS = {
+	flinch = 0.55,
+	relax = 1.8,
+	wag = 1.9,
+	breathe = 3.2,
+	shake = 0.8,
+	perk = 0.9,
+}
+
+--- Tek seferlik tepki oynatir: igne yiyince IRKILME, yikanirken
+--- GEVSEME, dogru teshiste KUYRUK SALLAMA, ameliyatta DERIN NEFES.
+--- Mevcut sinus katmanini durdurmuyor, uzerine biniyor - hayvan hem
+--- nefes almaya devam ediyor hem irkiliyor.
+function Animator.react(rig: AnimalFactory.Rig, kind: string)
+	local entry = entryOf(rig)
+	if entry == nil then
+		return
+	end
+	if REACTION_SECONDS[kind] == nil then
+		warn((&quot;[AnimalAnimator] bilinmeyen tepki: '%s'&quot;):format(kind))
+		return
+	end
+	entry.reaction = kind
+	entry.reactionTime = 0
+end
+
+--- Tanimli tepkiler (SelfTest ve verify_data karsilastirmasi icin).
+function Animator.reactionKinds(): { string }
+	local kinds = {}
+	for kind in REACTION_SECONDS do
+		table.insert(kinds, kind)
+	end
+	table.sort(kinds)
+	return kinds
 end
 
 --- Topallama. `leg` 0 ise topallama yok; 1..4 bacak numarasi.
@@ -11574,11 +11934,36 @@ local function stepMovement(entry: Entry, dt: number): number
 	return speed
 end
 
+--- Tepkinin o andaki gucu (0..1 arasi, basta ve sonda 0) ve adi.
+--- Suresi dolan tepki kendiliginden temizleniyor.
+local function stepReaction(entry: Entry, dt: number): (string, number)
+	if entry.reaction == &quot;&quot; then
+		return &quot;&quot;, 0
+	end
+	local total = REACTION_SECONDS[entry.reaction]
+	if total == nil then
+		entry.reaction = &quot;&quot;
+		return &quot;&quot;, 0
+	end
+	entry.reactionTime += dt
+	if entry.reactionTime &gt;= total then
+		entry.reaction = &quot;&quot;
+		return &quot;&quot;, 0
+	end
+	local progress = entry.reactionTime / total
+	-- Irkilme HIZLI baslayip sonuyor; digerleri yumusak bir yay.
+	local strength = if entry.reaction == &quot;flinch&quot;
+		then (1 - progress) * (1 - progress)
+		else math.sin(progress * math.pi)
+	return entry.reaction, strength
+end
+
 --- Animasyon: eklem Transform'larini surer.
 local function stepPose(entry: Entry, dt: number, movingSpeed: number)
 	local rig = entry.rig
 	local joints = rig.joints
 	local walking = entry.state == &quot;walk&quot; and movingSpeed &gt; 0
+	local reaction, reactStrength = stepReaction(entry, dt)
 
 	local stress = entry.stressLevel / 100
 	local breathRate = 1.4 + stress * 2.2 + (if entry.state == &quot;distress&quot; then 1.6 else 0)
@@ -11587,12 +11972,30 @@ local function stepPose(entry: Entry, dt: number, movingSpeed: number)
 	entry.phase += dt * (if walking then strideRate else breathRate)
 	local phase = entry.phase
 
-	-- Govde: nefes alip verme + yururken hafif salinim.
+	-- Govde: nefes alip verme + yururken hafif salinim + TEPKI.
 	if joints.rootJoint ~= nil then
 		local breath = math.sin(phase * (if walking then 0.5 else 1)) * (0.035 + stress * 0.03)
 		local sway = if walking then math.sin(phase * 2) * 0.03 else 0
 		local tilt = entry.limpStrength * math.sin(phase) * 0.05
-		joints.rootJoint.Transform = CFrame.new(0, breath, 0) * CFrame.Angles(sway, 0, tilt)
+
+		-- Tepki katmani: govdenin yuksekligine ve egimine ekleniyor.
+		local lift, pitch = 0, 0
+		if reaction == &quot;flinch&quot; then
+			lift = reactStrength * 0.32
+			pitch = -reactStrength * 0.26
+		elseif reaction == &quot;relax&quot; then
+			lift = -reactStrength * 0.18
+		elseif reaction == &quot;wag&quot; then
+			lift = math.abs(math.sin(entry.reactionTime * 11)) * reactStrength * 0.16
+		elseif reaction == &quot;breathe&quot; then
+			-- Derin nefes: normal nefesin uzerine yavas ve genis bir dalga.
+			lift = math.sin(entry.reactionTime * 2.1) * reactStrength * 0.22
+		elseif reaction == &quot;shake&quot; then
+			sway += math.sin(entry.reactionTime * 26) * reactStrength * 0.08
+		end
+
+		joints.rootJoint.Transform = CFrame.new(0, breath + lift, 0)
+			* CFrame.Angles(sway + pitch, 0, tilt)
 	end
 
 	-- Bacaklar: capraz yuruyus. Topallayan bacagin genligi dusuk ve
@@ -11621,6 +12024,20 @@ local function stepPose(entry: Entry, dt: number, movingSpeed: number)
 		local nod = if walking then math.sin(phase * 2) * 0.08 else math.sin(phase * 0.55) * 0.05
 		local turn = if walking then 0 else math.sin(phase * 0.32) * 0.22
 		local droop = (if entry.state == &quot;distress&quot; then 0.2 else 0) + stress * 0.12
+
+		if reaction == &quot;flinch&quot; then
+			nod += reactStrength * 0.38
+			turn += reactStrength * 0.2
+		elseif reaction == &quot;relax&quot; then
+			droop += reactStrength * 0.26
+		elseif reaction == &quot;shake&quot; then
+			turn += math.sin(entry.reactionTime * 24) * reactStrength * 0.55
+		elseif reaction == &quot;perk&quot; then
+			nod += reactStrength * 0.22
+		elseif reaction == &quot;wag&quot; then
+			nod += reactStrength * 0.14
+		end
+
 		joints.neck.Transform = CFrame.Angles(nod - droop, turn, 0)
 	end
 
@@ -11628,7 +12045,19 @@ local function stepPose(entry: Entry, dt: number, movingSpeed: number)
 	if joints.tail ~= nil then
 		local wagAmplitude = (0.45 - stress * 0.35) * (if walking then 1.3 else 1)
 		local wag = math.sin(phase * 2.4) * math.max(wagAmplitude, 0.05)
-		joints.tail.Transform = CFrame.Angles(-stress * 0.5, wag, 0)
+		local lift = -stress * 0.5
+		if reaction == &quot;wag&quot; then
+			-- Dogru teshiste kuyruk HIZLI ve genis sallaniyor; oyuncunun
+			-- gordugu ilk &quot;dogru yaptin&quot; isareti bu.
+			wag = math.sin(entry.reactionTime * 16) * (0.5 + reactStrength * 0.7)
+			lift += reactStrength * 0.45
+		elseif reaction == &quot;flinch&quot; then
+			wag *= 0.2
+			lift -= reactStrength * 0.5
+		elseif reaction == &quot;relax&quot; then
+			wag = math.sin(entry.reactionTime * 3) * 0.3 * reactStrength
+		end
+		joints.tail.Transform = CFrame.Angles(lift, wag, 0)
 	end
 
 	-- Kulaklar: stres arttikca geriye yatiyor, arada bir seyiriyor.
@@ -11637,7 +12066,15 @@ local function stepPose(entry: Entry, dt: number, movingSpeed: number)
 		if joint ~= nil then
 			local side = if index == 1 then -1 else 1
 			local twitch = math.sin(phase * 3.1 + index) * 0.05
-			joint.Transform = CFrame.Angles(-stress * 0.55, 0, side * (twitch + stress * 0.25))
+			local flatten = stress * 0.55
+			if reaction == &quot;flinch&quot; then
+				flatten += reactStrength * 0.5
+			elseif reaction == &quot;perk&quot; or reaction == &quot;wag&quot; then
+				flatten -= reactStrength * 0.45
+			elseif reaction == &quot;shake&quot; then
+				twitch += math.sin(entry.reactionTime * 22 + index) * reactStrength * 0.3
+			end
+			joint.Transform = CFrame.Angles(-flatten, 0, side * (twitch + stress * 0.25))
 		end
 	end
 
@@ -12689,6 +13126,7 @@ local Detail = require(Shared.Detail)
 local Loc = require(Shared.Loc)
 local Props = require(script.Parent.Props)
 local Decor = require(script.Parent.Decor)
+local Doors = require(script.Parent.Doors)
 local SkyLighting = require(script.Parent.Lighting)
 
 local plan = require(Data.clinic)
@@ -13150,6 +13588,11 @@ function Clinic.build(parent: Instance): Built
 
 	buildSpawn(root)
 
+	-- Kapi kanatlari: yapinin kapi bosluklarina oturuyor. Dekorasyondan
+	-- ONCE kuruluyor ki kanatlar da temaya gore boyanabilsin degil -
+	-- kanatlar kendi rengini tasiyor; sira yalnizca okunabilirlik icin.
+	Doors.build(structure)
+
 	-- Dekorasyon en sonda baglaniyor: boyanacak parcalar ve sus
 	-- esyalarinin yerleri ancak yapi bittikten sonra belli.
 	Decor.attach(structure, furniture, Props.build)
@@ -13412,6 +13855,436 @@ return Decor
 				</Item>
 				<Item class="ModuleScript" referent="RBX51">
 					<Properties>
+						<string name="Name">Doors</string>
+						<ProtectedString name="Source">--!strict
+-- Doors.luau
+-- ==========
+-- Yaklasinca acilan cift kanatli kapilar.
+--
+-- Neden kapi?
+-- -----------
+-- Klinikte kapi bosluklari vardi ama kapi yoktu: odalar birbirine acik
+-- deliklerle bagliydi ve bina &quot;bitmemis&quot; duruyordu. Yaklasinca acilan
+-- kanatlar hem binayi bitiriyor hem de klinikte &quot;gecis&quot; hissini veriyor.
+--
+-- Kanatlar CARPISMIYOR
+-- --------------------
+-- Kapali bir kanat carpisan bir duvar olsaydi, acilma gecikmesinde ya da
+-- bir hata durumunda oyuncu kapida SIKISIRDI. Gorunum icin kapi, oynanis
+-- icin acik gecit. Yerlesim denetimi (tools/verify_layout.py) kapi
+-- bosluklarinin bos kalmasini zaten sart kosuyor; kanatlar o bosluga
+-- oturuyor ve esyalarla asla cakismiyor.
+--
+-- Neden CFrameValue suruyor?
+-- --------------------------
+-- Bir kanat tek parca degil: govde + cam panel + kulp. TweenService bir
+-- Model'i tasiyamiyor, ankorlu parcalara kaynak (weld) da islemiyor.
+-- Bu yuzden bir `CFrameValue` tweenleniyor ve her degisiminde kanadin
+-- butun parcalari o cerceveye gore yeniden konumlaniyor - tek kaynak,
+-- parcalar arasi kayma imkansiz.
+
+local Players = game:GetService(&quot;Players&quot;)
+local RunService = game:GetService(&quot;RunService&quot;)
+local TweenService = game:GetService(&quot;TweenService&quot;)
+
+local ReplicatedStorage = game:GetService(&quot;ReplicatedStorage&quot;)
+local Shared = ReplicatedStorage:WaitForChild(&quot;VetShared&quot;)
+local Data = ReplicatedStorage:WaitForChild(&quot;VetData&quot;)
+
+local Build = require(Shared.Build)
+
+local plan = require(Data.clinic)
+
+local Doors = {}
+
+type Leaf = {
+	driver: CFrameValue,
+	closed: CFrame,
+	open: CFrame,
+}
+
+type Door = {
+	center: Vector3,
+	leaves: { Leaf },
+	openNow: boolean,
+}
+
+local doors: { Door } = {}
+local running = false
+
+-- Oyuncu bu mesafeye girince kapi aciliyor. Kapi genisliginden bagimsiz
+-- sabit: kapi ne kadar genis olursa olsun &quot;yaklasma&quot; ayni.
+local TRIGGER_DISTANCE = 9
+local SWING_SECONDS = 0.45
+
+--- Tek bir kapi bosluguna cift kanat kurar.
+local function buildDoor(parent: Instance, center: Vector3, horizontal: boolean, width: number)
+	local height = plan.doorHeight - 0.4
+	local leafWidth = width * 0.5 - 0.2
+	local thickness = 0.24
+	local woodColor = Build.color(plan.colors.windowFrame)
+	local trimColor = Build.color(plan.colors.wallTrim)
+	local glassColor = Build.color(plan.colors.glass)
+
+	local leaves: { Leaf } = {}
+	for side = -1, 1, 2 do
+		local offset = if horizontal
+			then Vector3.new(side * (leafWidth * 0.5 + 0.06), height * 0.5, 0)
+			else Vector3.new(0, height * 0.5, side * (leafWidth * 0.5 + 0.06))
+		local base = CFrame.new(center + offset)
+
+		local parts: { { part: BasePart, offset: CFrame } } = {}
+		local function add(part: BasePart)
+			table.insert(parts, { part = part, offset = base:ToObjectSpace(part.CFrame) })
+		end
+
+		add(Build.part({
+			name = &quot;Kanat&quot;,
+			size = if horizontal
+				then Vector3.new(leafWidth, height, thickness)
+				else Vector3.new(thickness, height, leafWidth),
+			cf = base,
+			color = woodColor,
+			material = Enum.Material.Wood,
+			canCollide = false,
+			castShadow = false,
+			parent = parent,
+		}))
+
+		-- Kanadin ust yarisinda cam panel: kapali kapinin ardini gormek,
+		-- klinikte nereye gittigini bilmek demek.
+		local glass = Build.part({
+			name = &quot;KanatCami&quot;,
+			size = if horizontal
+				then Vector3.new(leafWidth * 0.62, height * 0.34, thickness + 0.06)
+				else Vector3.new(thickness + 0.06, height * 0.34, leafWidth * 0.62),
+			cf = base * CFrame.new(0, height * 0.2, 0),
+			color = glassColor,
+			material = Enum.Material.Glass,
+			canCollide = false,
+			castShadow = false,
+			parent = parent,
+		})
+		glass.Transparency = 0.62
+		add(glass)
+
+		-- Alt panel ve kulp: duz bir dikdortgen &quot;kapi&quot; degil, &quot;levha&quot;
+		-- gibi duruyordu.
+		add(Build.part({
+			name = &quot;KanatPaneli&quot;,
+			size = if horizontal
+				then Vector3.new(leafWidth * 0.7, height * 0.3, thickness + 0.05)
+				else Vector3.new(thickness + 0.05, height * 0.3, leafWidth * 0.7),
+			cf = base * CFrame.new(0, -height * 0.26, 0),
+			color = trimColor,
+			canCollide = false,
+			castShadow = false,
+			parent = parent,
+		}))
+
+		local handleSide = if horizontal
+			then Vector3.new(-side * leafWidth * 0.34, -height * 0.02, thickness * 0.85)
+			else Vector3.new(thickness * 0.85, -height * 0.02, -side * leafWidth * 0.34)
+		add(Build.part({
+			name = &quot;KanatKulpu&quot;,
+			size = Vector3.new(0.16, 0.9, 0.16),
+			cf = base * CFrame.new(handleSide),
+			color = trimColor,
+			material = Enum.Material.Metal,
+			canCollide = false,
+			castShadow = false,
+			parent = parent,
+		}))
+
+		-- Mentese DIS kenarda: kanat gecidin disina dogru aciliyor.
+		local hingeOffset = if horizontal
+			then Vector3.new(side * leafWidth * 0.5, 0, 0)
+			else Vector3.new(0, 0, side * leafWidth * 0.5)
+		local hinge = base * CFrame.new(hingeOffset)
+		local openBase = hinge * CFrame.Angles(0, side * math.rad(-95), 0) * hinge:ToObjectSpace(base)
+
+		local driver = Instance.new(&quot;CFrameValue&quot;)
+		driver.Name = &quot;KanatSurucusu&quot;
+		driver.Value = base
+		driver.Parent = parent
+		driver.Changed:Connect(function(value: CFrame)
+			for _, entry in parts do
+				entry.part.CFrame = value * entry.offset
+			end
+		end)
+
+		table.insert(leaves, { driver = driver, closed = base, open = openBase })
+	end
+
+	table.insert(doors, { center = center, leaves = leaves, openNow = false })
+end
+
+--- Klinik planindaki her kapiya kanat kurar.
+function Doors.build(parent: Instance): Model
+	doors = {}
+	local model = Build.model(&quot;Kapilar&quot;, parent)
+
+	for _, wall in plan.walls do
+		local horizontal = math.abs(wall.to[2] - wall.from[2]) &lt; 1e-6
+		local fixed = if horizontal then wall.from[2] else wall.from[1]
+		for _, door in wall.doors or {} do
+			local center = if horizontal
+				then Vector3.new(door.at, plan.floorY, fixed)
+				else Vector3.new(fixed, plan.floorY, door.at)
+			buildDoor(model, center, horizontal, door.width)
+		end
+	end
+	return model
+end
+
+local function setOpen(door: Door, open: boolean)
+	if door.openNow == open then
+		return
+	end
+	door.openNow = open
+	for _, leaf in door.leaves do
+		TweenService:Create(
+			leaf.driver,
+			TweenInfo.new(SWING_SECONDS, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+			{ Value = if open then leaf.open else leaf.closed }
+		):Play()
+	end
+end
+
+--- Yakinlik dongusu. Her karede degil, saniyede ~6 kez bakiyor: acilma
+--- mesafesi 9 stud ve en hizli oyuncu bu surede ~4 stud gidiyor - yani
+--- kapi hep zamaninda aciliyor ama 60 yerine 6 kez hesap yapiliyor.
+function Doors.start()
+	if running then
+		return
+	end
+	running = true
+
+	local accumulator = 0
+	RunService.Heartbeat:Connect(function(dt: number)
+		accumulator += dt
+		if accumulator &lt; 1 / 6 then
+			return
+		end
+		accumulator = 0
+
+		local positions: { Vector3 } = {}
+		for _, player in Players:GetPlayers() do
+			local character = player.Character
+			local root = if character ~= nil then character:FindFirstChild(&quot;HumanoidRootPart&quot;) else nil
+			if root ~= nil and root:IsA(&quot;BasePart&quot;) then
+				table.insert(positions, root.Position)
+			end
+		end
+
+		for _, door in doors do
+			local near = false
+			for _, position in positions do
+				if (position - door.center).Magnitude &lt;= TRIGGER_DISTANCE then
+					near = true
+					break
+				end
+			end
+			setOpen(door, near)
+		end
+	end)
+end
+
+--- Kurulmus kapi sayisi (SelfTest olcuyor).
+function Doors.count(): number
+	return #doors
+end
+
+return Doors
+</ProtectedString>
+					</Properties>
+				</Item>
+				<Item class="ModuleScript" referent="RBX52">
+					<Properties>
+						<string name="Name">Effects</string>
+						<ProtectedString name="Source">--!strict
+-- Effects.luau
+-- ============
+-- Tedavi ve olay efektleri: damla, buhar, isilti, toz.
+--
+-- Neden ParticleEmitter YOK?
+-- --------------------------
+-- Bir ParticleEmitter'in gorunumu `Texture` alanina bagli ve o bir
+-- asset. Bu depoyu ureten ortamda Roblox'a ag erisimi yoktu; yuklenmeyen
+-- bir doku, emitter'i sessizce BOS birakir - Studio acilmadan fark
+-- edilmez. Tweenlenen kucuk parcalar hicbir asset istemiyor, olculeri
+-- ve omru koddan belli, ve gorunumu burada okunabiliyor.
+--
+-- Maliyet
+-- -------
+-- Her efekt en fazla 10 parca yaratiyor ve omru dolunca kendini yok
+-- ediyor. Parcalar carpismiyor, sorgulanmiyor, golge dusurmuyor:
+-- fizik ve isik motoruna hic girmiyorlar.
+
+local Debris = game:GetService(&quot;Debris&quot;)
+local TweenService = game:GetService(&quot;TweenService&quot;)
+
+local Effects = {}
+
+local DEFAULT_LIFETIME = 0.9
+
+local function spark(parent: Instance, cframe: CFrame, size: Vector3, color: Color3, material: Enum.Material?): BasePart
+	local part = Instance.new(&quot;Part&quot;)
+	part.Name = &quot;Efekt&quot;
+	part.Size = size
+	part.CFrame = cframe
+	part.Color = color
+	part.Material = material or Enum.Material.Neon
+	part.Anchored = true
+	part.CanCollide = false
+	part.CanQuery = false
+	part.CanTouch = false
+	part.CastShadow = false
+	part.Shape = Enum.PartType.Ball
+	part.Transparency = 0.1
+	part.Parent = parent
+	return part
+end
+
+--- Bir parcayi hedefe tasiyip soldurur ve sonunda yok eder.
+local function fly(part: BasePart, target: CFrame, seconds: number, endSize: Vector3?)
+	local goal: { [string]: any } = { CFrame = target, Transparency = 1 }
+	if endSize ~= nil then
+		goal.Size = endSize
+	end
+	TweenService:Create(
+		part,
+		TweenInfo.new(seconds, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+		goal
+	):Play()
+	Debris:AddItem(part, seconds + 0.1)
+end
+
+--- Damla: yukaridan asagi dusen kucuk kureler (damla, ilac, su).
+function Effects.drops(parent: Instance, origin: CFrame, color: Color3, count: number?)
+	local total = count or 5
+	for index = 1, total do
+		local offset = CFrame.new(
+			(math.random() - 0.5) * 1.2,
+			1.4 + index * 0.12,
+			(math.random() - 0.5) * 1.2
+		)
+		local part = spark(parent, origin * offset, Vector3.new(0.16, 0.22, 0.16), color, Enum.Material.Glass)
+		part.Transparency = 0.25
+		fly(part, origin * offset * CFrame.new(0, -1.5, 0), 0.45 + index * 0.05, Vector3.new(0.3, 0.06, 0.3))
+	end
+end
+
+--- Buhar: yukari suzulup buyuyerek kaybolan yumusak kureler (yikama).
+function Effects.steam(parent: Instance, origin: CFrame, color: Color3, count: number?)
+	local total = count or 6
+	for index = 1, total do
+		local offset = CFrame.new(
+			(math.random() - 0.5) * 1.8,
+			0.4,
+			(math.random() - 0.5) * 1.8
+		)
+		local part = spark(parent, origin * offset, Vector3.new(0.5, 0.5, 0.5), color, Enum.Material.SmoothPlastic)
+		part.Transparency = 0.55
+		fly(
+			part,
+			origin * offset * CFrame.new(0, 2.2 + index * 0.15, 0),
+			1.1 + index * 0.06,
+			Vector3.new(1.6, 1.6, 1.6)
+		)
+	end
+end
+
+--- Isilti: disari dogru acilan kucuk parlak noktalar (iyilesme, odul).
+function Effects.sparkle(parent: Instance, origin: CFrame, color: Color3, count: number?)
+	local total = count or 8
+	for index = 1, total do
+		local angle = index / total * math.pi * 2
+		local part = spark(parent, origin * CFrame.new(0, 0.6, 0), Vector3.new(0.24, 0.24, 0.24), color)
+		fly(
+			part,
+			origin * CFrame.new(math.cos(angle) * 1.9, 1.5 + math.sin(angle * 2) * 0.5, math.sin(angle) * 1.9),
+			DEFAULT_LIFETIME,
+			Vector3.new(0.05, 0.05, 0.05)
+		)
+	end
+end
+
+--- Halka: zeminden yukari acilan tek bir halka (ameliyat bitisi,
+--- seviye atlama gibi &quot;bir sey tamamlandi&quot; anlari).
+function Effects.ring(parent: Instance, origin: CFrame, color: Color3)
+	local part = Instance.new(&quot;Part&quot;)
+	part.Name = &quot;EfektHalkasi&quot;
+	part.Shape = Enum.PartType.Cylinder
+	part.Size = Vector3.new(0.12, 1.2, 1.2)
+	-- Silindir X ekseninde uzuyor; yatay bir halka icin Z etrafinda
+	-- 90 derece cevriliyor (Build.pillar ile ayni tuzak).
+	part.CFrame = origin * CFrame.new(0, 0.35, 0) * CFrame.Angles(0, 0, math.pi / 2)
+	part.Color = color
+	part.Material = Enum.Material.Neon
+	part.Anchored = true
+	part.CanCollide = false
+	part.CanQuery = false
+	part.CanTouch = false
+	part.CastShadow = false
+	part.Transparency = 0.25
+	part.Parent = parent
+
+	TweenService:Create(
+		part,
+		TweenInfo.new(0.7, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
+		{ Size = Vector3.new(0.05, 7, 7), Transparency = 1 }
+	):Play()
+	Debris:AddItem(part, 0.85)
+end
+
+-- Tedavi turu -&gt; efekt. Bilinmeyen tedavi isiltiyla gecistiriliyor:
+-- yeni bir tedavi eklendiginde efektsiz kalmasindansa genel bir efekt
+-- gorunmesi dogru.
+local KIND_COLORS = {
+	injection = Color3.fromRGB(226, 104, 94),
+	pill = Color3.fromRGB(240, 206, 96),
+	bandage = Color3.fromRGB(238, 228, 210),
+	drops = Color3.fromRGB(118, 184, 220),
+	wash = Color3.fromRGB(206, 228, 238),
+	feed = Color3.fromRGB(196, 154, 96),
+	water = Color3.fromRGB(118, 184, 220),
+	surgery = Color3.fromRGB(120, 226, 224),
+}
+
+--- Tedaviye uygun efekti oynatir.
+function Effects.treatment(parent: Instance, origin: CFrame, treatmentId: string)
+	local color = KIND_COLORS[treatmentId] or Color3.fromRGB(120, 226, 224)
+	if treatmentId == &quot;wash&quot; then
+		Effects.steam(parent, origin, color)
+	elseif treatmentId == &quot;drops&quot; or treatmentId == &quot;water&quot; then
+		Effects.drops(parent, origin, color)
+	elseif treatmentId == &quot;injection&quot; or treatmentId == &quot;pill&quot; then
+		Effects.drops(parent, origin, color, 3)
+		Effects.sparkle(parent, origin, color, 5)
+	elseif treatmentId == &quot;surgery&quot; then
+		Effects.ring(parent, origin, color)
+	else
+		Effects.sparkle(parent, origin, color)
+	end
+end
+
+--- Bilinen tedavi efektleri (SelfTest karsilastirmasi icin).
+function Effects.knownTreatments(): { string }
+	local ids = {}
+	for id in KIND_COLORS do
+		table.insert(ids, id)
+	end
+	table.sort(ids)
+	return ids
+end
+
+return Effects
+</ProtectedString>
+					</Properties>
+				</Item>
+				<Item class="ModuleScript" referent="RBX53">
+					<Properties>
 						<string name="Name">Lighting</string>
 						<ProtectedString name="Source">--!strict
 -- Lighting.luau
@@ -13533,7 +14406,7 @@ return Sky
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX52">
+				<Item class="ModuleScript" referent="RBX54">
 					<Properties>
 						<string name="Name">Lobby</string>
 						<ProtectedString name="Source">--!strict
@@ -13792,7 +14665,7 @@ return Lobby
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX53">
+				<Item class="ModuleScript" referent="RBX55">
 					<Properties>
 						<string name="Name">OwnerFactory</string>
 						<ProtectedString name="Source">--!strict
@@ -13833,6 +14706,9 @@ export type Owner = {
 	bubbleText: TextLabel,
 	meter: Frame,
 	phase: number,
+	-- Jest katmani: tek seferlik kol/bas hareketi. Bosken &quot;&quot;.
+	gesture: string,
+	gestureTime: number,
 }
 
 -- Sahipler rastgele gorunsun diye kucuk palet havuzlari. Oynanisi
@@ -14066,6 +14942,8 @@ function OwnerFactory.create(cframe: CFrame, hintKey: string, parent: Instance):
 		bubbleText = bubbleText,
 		meter = meter,
 		phase = math.random() * math.pi * 2,
+		gesture = &quot;&quot;,
+		gestureTime = 0,
 	}
 end
 
@@ -14088,6 +14966,37 @@ function OwnerFactory.say(owner: Owner, key: string, ...: any)
 	owner.bubbleText.Text = Loc.get(key, ...)
 end
 
+-- Jest sureleri (saniye). Hayvan tepkileriyle ayni kalip: sinus
+-- katmaninin USTUNE binen, kendi kendini temizleyen tek seferlik
+-- hareket.
+local GESTURE_SECONDS = {
+	point = 1.4,
+	relief = 1.8,
+	worry = 1.6,
+}
+
+--- Sahibin jesti: hayvanini GOSTERME, teshis dogruyken RAHATLAMA,
+--- acil vakada ENDISE. Konusma balonu tek basina yetmiyordu - uzaktan
+--- bakan oyuncu balonu okumadan once kolu goruyor.
+function OwnerFactory.gesture(owner: Owner, kind: string)
+	if GESTURE_SECONDS[kind] == nil then
+		warn((&quot;[OwnerFactory] bilinmeyen jest: '%s'&quot;):format(kind))
+		return
+	end
+	owner.gesture = kind
+	owner.gestureTime = 0
+end
+
+--- Tanimli jestler (SelfTest icin).
+function OwnerFactory.gestureKinds(): { string }
+	local kinds = {}
+	for kind in GESTURE_SECONDS do
+		table.insert(kinds, kind)
+	end
+	table.sort(kinds)
+	return kinds
+end
+
 --- Durusu gunceller. Sahip bekleme odasinda durup nefes aliyor, arada
 --- etrafina bakiyor; sinirliyse kollarini kavusturuyor.
 function OwnerFactory.step(owner: Owner, dt: number, satisfaction: number, walking: boolean)
@@ -14095,19 +15004,58 @@ function OwnerFactory.step(owner: Owner, dt: number, satisfaction: number, walki
 	local phase = owner.phase
 	local annoyed = satisfaction &lt; 40
 
+	-- Jest zamanlayicisi: suresi dolunca kendini temizliyor.
+	local gesture = owner.gesture
+	local gestureStrength = 0
+	if gesture ~= &quot;&quot; then
+		local total = GESTURE_SECONDS[gesture]
+		if total == nil then
+			owner.gesture = &quot;&quot;
+			gesture = &quot;&quot;
+		else
+			owner.gestureTime += dt
+			if owner.gestureTime &gt;= total then
+				owner.gesture = &quot;&quot;
+				gesture = &quot;&quot;
+			else
+				gestureStrength = math.sin(owner.gestureTime / total * math.pi)
+			end
+		end
+	end
+
 	if owner.joints.rootJoint ~= nil then
 		owner.joints.rootJoint.Transform = CFrame.new(0, math.sin(phase) * 0.03, 0)
 	end
 	if owner.joints.neck ~= nil then
 		local look = if walking then 0 else math.sin(phase * 0.4) * 0.35
-		owner.joints.neck.Transform = CFrame.Angles(math.sin(phase * 0.7) * 0.04, look, 0)
+		local nod = math.sin(phase * 0.7) * 0.04
+		if gesture == &quot;point&quot; then
+			-- Gosterirken basini hayvana dogru egiyor.
+			nod += gestureStrength * 0.22
+		elseif gesture == &quot;relief&quot; then
+			-- Rahatlarken basini geriye atiyor.
+			nod -= gestureStrength * 0.3
+		elseif gesture == &quot;worry&quot; then
+			nod += gestureStrength * 0.34
+			look += math.sin(owner.gestureTime * 9) * gestureStrength * 0.4
+		end
+		owner.joints.neck.Transform = CFrame.Angles(nod, look, 0)
 	end
 
 	for index = 1, 2 do
 		local side = if index == 1 then -1 else 1
 		local arm = owner.joints[&quot;arm&quot; .. index]
 		if arm ~= nil then
-			if annoyed and not walking then
+			if gesture == &quot;point&quot; and index == 2 then
+				-- Sag kol one uzanip hayvani gosteriyor.
+				arm.Transform = CFrame.Angles(math.rad(-95 * gestureStrength), 0, math.rad(side * -18 * gestureStrength))
+			elseif gesture == &quot;relief&quot; then
+				-- Iki kol da hafifce aciliyor: &quot;cok sukur&quot; durusu.
+				arm.Transform = CFrame.Angles(math.rad(-28 * gestureStrength), 0, math.rad(side * -46 * gestureStrength))
+			elseif gesture == &quot;worry&quot; then
+				-- Eller yuze yakin: endise.
+				arm.Transform = CFrame.Angles(math.rad(-118 * gestureStrength), 0, math.rad(side * -26 * gestureStrength))
+			elseif annoyed and not walking then
 				-- Kollari kavusturmus: gorsel olarak &quot;bekliyorum&quot; demek.
 				arm.Transform = CFrame.Angles(math.rad(-72), 0, math.rad(side * -34))
 			elseif walking then
@@ -14248,7 +15196,7 @@ return OwnerFactory
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX54">
+				<Item class="ModuleScript" referent="RBX56">
 					<Properties>
 						<string name="Name">Props</string>
 						<ProtectedString name="Source">--!strict
@@ -15349,15 +16297,15 @@ return Props
 			</Item>
 		</Item>
 	</Item>
-	<Item class="StarterPlayer" referent="RBX55">
+	<Item class="StarterPlayer" referent="RBX57">
 		<Properties>
 			<string name="Name">StarterPlayer</string>
 		</Properties>
-		<Item class="StarterPlayerScripts" referent="RBX56">
+		<Item class="StarterPlayerScripts" referent="RBX58">
 			<Properties>
 				<string name="Name">StarterPlayerScripts</string>
 			</Properties>
-			<Item class="LocalScript" referent="RBX57">
+			<Item class="LocalScript" referent="RBX59">
 				<Properties>
 					<string name="Name">VetClient</string>
 					<ProtectedString name="Source">--!strict
@@ -15387,6 +16335,7 @@ local Net = require(Shared.Net)
 
 local Camera = require(script.Camera)
 local Chart = require(script.Chart)
+local Crosshair = require(script.Crosshair)
 local DiagnosisPanel = require(script.DiagnosisPanel)
 local Fps = require(script.Fps)
 local Hud = require(script.Hud)
@@ -15399,6 +16348,7 @@ local SurgeryPanel = require(script.SurgeryPanel)
 local Theme = require(script.Theme)
 local ToolBar = require(script.ToolBar)
 local TreatmentPanel = require(script.TreatmentPanel)
+local ViewModel = require(script.ViewModel)
 
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild(&quot;PlayerGui&quot;)
@@ -15423,6 +16373,7 @@ lobbyScreen.Enabled = false
 lobbyScreen.Parent = playerGui
 
 Hud.create(screen)
+Crosshair.create(screen)
 Chart.create(screen)
 DiagnosisPanel.create(screen)
 TreatmentPanel.create(screen)
@@ -15436,6 +16387,9 @@ Notify.create(screen)
 LobbyPanel.create(lobbyScreen)
 
 Camera.start()
+-- Birinci sahis el/alet modeli kameradan SONRA baslamali: sallanma
+-- verisini Camera.motion()'dan okuyor.
+ViewModel.start()
 
 -- Butun hazir sesleri bir kez yukle ve tutmayanlari Output'a raporla.
 -- Bu depoyu ureten ortamda Roblox'a erisim yoktu; hangi rbxasset yolunun
@@ -15586,7 +16540,7 @@ end)
 print(&quot;[Veteriner] istemci hazir.&quot;)
 </ProtectedString>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX58">
+				<Item class="ModuleScript" referent="RBX60">
 					<Properties>
 						<string name="Name">Camera</string>
 						<ProtectedString name="Source">--!strict
@@ -15763,6 +16717,28 @@ function Camera.settings(): any
 	return table.clone(current)
 end
 
+--- Yuruyus hareketinin ANLIK durumu. ViewModel bunu okuyup ellerini
+--- ayni ritimde sallandiriyor: iki ayri faz saydirmak, elin kamerayla
+--- birkac saniyede faz farkina dusmesi demekti - goz bunu &quot;yuzen el&quot;
+--- olarak okuyor.
+function Camera.motion(): { phase: number, strength: number, sprint: number, landing: number }
+	local sprint = 0
+	if movement.sprintSpeed &gt; movement.walkSpeed then
+		sprint = math.clamp(
+			(smoothedSpeed - movement.walkSpeed) / (movement.sprintSpeed - movement.walkSpeed),
+			0,
+			1
+		)
+	end
+	local moving = smoothedSpeed &gt; config.minSpeedForBob
+	return {
+		phase = phase,
+		strength = current.bobbing * (if moving then math.min(smoothedSpeed / movement.walkSpeed, 1.4) else 0),
+		sprint = sprint,
+		landing = landing,
+	}
+end
+
 function Camera.start()
 	if bound then
 		return
@@ -15815,7 +16791,7 @@ return Camera
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX59">
+				<Item class="ModuleScript" referent="RBX61">
 					<Properties>
 						<string name="Name">Chart</string>
 						<ProtectedString name="Source">--!strict
@@ -16196,7 +17172,155 @@ return Chart
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX60">
+				<Item class="ModuleScript" referent="RBX62">
+					<Properties>
+						<string name="Name">Crosshair</string>
+						<ProtectedString name="Source">--!strict
+-- Crosshair.luau
+-- ==============
+-- Ekranin ortasindaki baglama duyarli nisangah.
+--
+-- Neden gerekli?
+-- --------------
+-- Birinci sahiste &quot;neye baktigim&quot; bilgisi kaybolur: ekranin ortasinda
+-- bir isaret yoksa oyuncu masaya mi yoksa duvara mi baktigini
+-- denemeyerek ogrenir. Bos haldeyken kucuk bir nokta, etkilesim
+-- menzilinde acilan bir halka ve eylemin adi.
+--
+-- Menzili kim soyluyor?
+-- ---------------------
+-- ProximityPromptService. Klinikteki istasyonlarda zaten ProximityPrompt
+-- var (init.server.luau kuruyor); onlarin gorunme/kaybolma olaylarini
+-- dinlemek, kendi raycast'imizi yazmaktan hem ucuz hem de DOGRU:
+-- menzil tanimi tek yerde kaliyor ve ikisi birbirinden kayamiyor.
+
+local ProximityPromptService = game:GetService(&quot;ProximityPromptService&quot;)
+
+local Theme = require(script.Parent.Theme)
+
+local Crosshair = {}
+
+local widgets: any = nil
+local activePrompts = 0
+
+local DOT = 4
+local RING_IDLE = 14
+local RING_ACTIVE = 26
+
+function Crosshair.create(parent: ScreenGui)
+	local root = Theme.frame({
+		name = &quot;Nisangah&quot;,
+		size = UDim2.fromOffset(160, 80),
+		position = UDim2.fromScale(0.5, 0.5),
+		anchor = Vector2.new(0.5, 0.5),
+		transparency = 1,
+		radius = 0,
+		parent = parent,
+		zIndex = 1,
+	})
+
+	local dot = Theme.frame({
+		name = &quot;Nokta&quot;,
+		size = UDim2.fromOffset(DOT, DOT),
+		position = UDim2.fromScale(0.5, 0.5),
+		anchor = Vector2.new(0.5, 0.5),
+		color = Theme.color.text,
+		transparency = 0.15,
+		radius = DOT,
+		parent = root,
+		zIndex = 3,
+	})
+
+	local ring = Theme.frame({
+		name = &quot;Halka&quot;,
+		size = UDim2.fromOffset(RING_IDLE, RING_IDLE),
+		position = UDim2.fromScale(0.5, 0.5),
+		anchor = Vector2.new(0.5, 0.5),
+		transparency = 1,
+		radius = RING_IDLE,
+		parent = root,
+		zIndex = 2,
+	})
+	local stroke = Theme.stroke(ring, Theme.color.text, 1.5)
+	stroke.Transparency = 0.55
+
+	local action = Theme.label({
+		name = &quot;Eylem&quot;,
+		text = &quot;&quot;,
+		size = UDim2.new(1, 0, 0, 16),
+		position = UDim2.new(0.5, 0, 0.5, 24),
+		anchor = Vector2.new(0.5, 0),
+		textSize = Theme.size.micro,
+		bold = true,
+		align = Enum.TextXAlignment.Center,
+		color = Theme.color.accentGlow,
+		parent = root,
+		zIndex = 3,
+	})
+	action.TextStrokeTransparency = 0.6
+	action.TextTransparency = 1
+
+	widgets = { root = root, dot = dot, ring = ring, stroke = stroke, action = action }
+
+	-- Istem gorununce halka aciliyor, kaybolunca kapaniyor. Sayac
+	-- tutuyoruz: iki istem ust uste gorunurse birinin kapanmasi
+	-- digerini de kapatmasin.
+	ProximityPromptService.PromptShown:Connect(function(prompt: ProximityPrompt)
+		activePrompts += 1
+		Crosshair.setAction(prompt.ActionText)
+	end)
+	ProximityPromptService.PromptHidden:Connect(function()
+		activePrompts = math.max(0, activePrompts - 1)
+		if activePrompts == 0 then
+			Crosshair.setAction(&quot;&quot;)
+		end
+	end)
+end
+
+--- Eylem adini gosterir. Bos dize nisangahi bos haline dondurur.
+function Crosshair.setAction(text: string)
+	if widgets == nil then
+		return
+	end
+	local active = text ~= &quot;&quot;
+	local size = if active then RING_ACTIVE else RING_IDLE
+	Theme.tween(widgets.ring, { Size = UDim2.fromOffset(size, size) }, Theme.motion.quick)
+	Theme.tween(widgets.stroke, {
+		Transparency = if active then 0.1 else 0.55,
+		Color = if active then Theme.color.accentGlow else Theme.color.text,
+	}, Theme.motion.quick)
+	Theme.tween(widgets.dot, {
+		BackgroundTransparency = if active then 0.6 else 0.15,
+	}, Theme.motion.quick)
+
+	if active then
+		widgets.action.Text = text
+	end
+	Theme.tween(widgets.action, { TextTransparency = if active then 0 else 1 }, Theme.motion.quick)
+end
+
+--- Alet kullanildiginda nisangah bir kez aciliyor: &quot;gitti&quot; geri
+--- bildirimi, alet cubuguna bakmadan ekranin ortasinda.
+function Crosshair.kick()
+	if widgets == nil then
+		return
+	end
+	widgets.ring.Size = UDim2.fromOffset(RING_ACTIVE + 14, RING_ACTIVE + 14)
+	local target = if activePrompts &gt; 0 then RING_ACTIVE else RING_IDLE
+	Theme.tween(widgets.ring, { Size = UDim2.fromOffset(target, target) }, Theme.motion.normal)
+end
+
+function Crosshair.setVisible(visible: boolean)
+	if widgets ~= nil then
+		widgets.root.Visible = visible
+	end
+end
+
+return Crosshair
+</ProtectedString>
+					</Properties>
+				</Item>
+				<Item class="ModuleScript" referent="RBX63">
 					<Properties>
 						<string name="Name">DiagnosisPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -16386,7 +17510,7 @@ return DiagnosisPanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX61">
+				<Item class="ModuleScript" referent="RBX64">
 					<Properties>
 						<string name="Name">Fps</string>
 						<ProtectedString name="Source">--!strict
@@ -16502,7 +17626,7 @@ return Fps
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX62">
+				<Item class="ModuleScript" referent="RBX65">
 					<Properties>
 						<string name="Name">Hud</string>
 						<ProtectedString name="Source">--!strict
@@ -16912,7 +18036,7 @@ return Hud
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX63">
+				<Item class="ModuleScript" referent="RBX66">
 					<Properties>
 						<string name="Name">LobbyPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -17202,7 +18326,7 @@ return LobbyPanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX64">
+				<Item class="ModuleScript" referent="RBX67">
 					<Properties>
 						<string name="Name">Notify</string>
 						<ProtectedString name="Source">--!strict
@@ -17388,7 +18512,7 @@ return Notify
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX65">
+				<Item class="ModuleScript" referent="RBX68">
 					<Properties>
 						<string name="Name">ProgressPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -17576,16 +18700,14 @@ local function redraw()
 end
 
 function ProgressPanel.create(parent: ScreenGui)
-	local panel = Theme.frame({
+	local panel = Theme.card({
 		name = &quot;Ilerleme&quot;,
 		size = UDim2.fromOffset(520, 452),
 		position = UDim2.new(0.5, 0, 0.5, 0),
 		anchor = Vector2.new(0.5, 0.5),
-		transparency = 0.03,
 		parent = parent,
 		visible = false,
-	})
-	Theme.stroke(panel, Theme.color.accent, 2)
+	}, Theme.color.accent)
 
 	Theme.label({
 		text = Loc.get(&quot;progress.title&quot;),
@@ -17651,7 +18773,11 @@ function ProgressPanel.setOpen(value: boolean)
 		return
 	end
 	open = value
-	widgets.panel.Visible = value
+	if value then
+		Theme.open(widgets.panel)
+	else
+		Theme.close(widgets.panel)
+	end
 	Audio.play(if value then &quot;uiOpen&quot; else &quot;uiClose&quot;)
 	if value then
 		-- Panel acilirken taze veri iste: kapaliyken gelen guncellemeler
@@ -17669,7 +18795,7 @@ return ProgressPanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX66">
+				<Item class="ModuleScript" referent="RBX69">
 					<Properties>
 						<string name="Name">SettingsPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -17702,6 +18828,7 @@ local Audio = require(Shared.Audio)
 local Camera = require(script.Parent.Camera)
 local Fps = require(script.Parent.Fps)
 local Theme = require(script.Parent.Theme)
+local ViewModel = require(script.Parent.ViewModel)
 
 local settingsData = require(Data.settings)
 
@@ -17728,6 +18855,7 @@ end
 local function applyLocally()
 	Camera.apply(values)
 	Fps.setVisible(values.showFps)
+	ViewModel.setEnabled(values.viewModel)
 	Audio.setVolumes(values)
 end
 
@@ -17737,6 +18865,7 @@ local function refresh()
 	end
 	widgets.rows.sprintEnabled.value.Text = Loc.get(if values.sprintEnabled then &quot;set.on&quot; else &quot;set.off&quot;)
 	widgets.rows.showFps.value.Text = Loc.get(if values.showFps then &quot;set.on&quot; else &quot;set.off&quot;)
+	widgets.rows.viewModel.value.Text = Loc.get(if values.viewModel then &quot;set.on&quot; else &quot;set.off&quot;)
 	widgets.rows.bobbing.value.Text = (&quot;%.2f&quot;):format(values.bobbing)
 	widgets.rows.fieldOfView.value.Text = tostring(math.floor(values.fieldOfView + 0.5))
 	-- Ses seviyeleri yuzde olarak daha okunur.
@@ -17847,21 +18976,20 @@ function SettingsPanel.create(parent: ScreenGui)
 		fieldOfView = settingsData.defaults.fieldOfView,
 		showFps = settingsData.defaults.showFps,
 		sprintEnabled = settingsData.defaults.sprintEnabled,
+		viewModel = settingsData.defaults.viewModel,
 		masterVolume = settingsData.defaults.masterVolume,
 		musicVolume = settingsData.defaults.musicVolume,
 		sfxVolume = settingsData.defaults.sfxVolume,
 	}
 
-	local panel = Theme.frame({
+	local panel = Theme.card({
 		name = &quot;Ayarlar&quot;,
 		size = UDim2.fromOffset(470, 470),
 		position = UDim2.new(0.5, 0, 0.5, 0),
 		anchor = Vector2.new(0.5, 0.5),
-		transparency = 0.03,
 		parent = parent,
 		visible = false,
-	})
-	Theme.stroke(panel, Theme.color.accent, 2)
+	}, Theme.color.accent)
 
 	Theme.label({
 		text = Loc.get(&quot;set.title&quot;),
@@ -17893,6 +19021,7 @@ function SettingsPanel.create(parent: ScreenGui)
 		fieldOfView = row(list, 5, &quot;fieldOfView&quot;, &quot;set.fov&quot;, &quot;set.fov.desc&quot;, &quot;fieldOfView&quot;),
 		sprintEnabled = row(list, 6, &quot;sprintEnabled&quot;, &quot;set.sprint&quot;, &quot;set.sprint.desc&quot;),
 		showFps = row(list, 7, &quot;showFps&quot;, &quot;set.fps&quot;, &quot;set.fps.desc&quot;),
+		viewModel = row(list, 8, &quot;viewModel&quot;, &quot;set.viewModel&quot;, &quot;set.viewModel.desc&quot;),
 	}
 
 	widgets = { panel = panel, rows = rows }
@@ -17923,7 +19052,11 @@ function SettingsPanel.setOpen(value: boolean)
 		return
 	end
 	open = value
-	widgets.panel.Visible = value
+	if value then
+		Theme.open(widgets.panel)
+	else
+		Theme.close(widgets.panel)
+	end
 	Audio.play(if value then &quot;uiOpen&quot; else &quot;uiClose&quot;)
 end
 
@@ -17935,7 +19068,7 @@ return SettingsPanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX67">
+				<Item class="ModuleScript" referent="RBX70">
 					<Properties>
 						<string name="Name">ShopPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -18318,7 +19451,7 @@ return ShopPanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX68">
+				<Item class="ModuleScript" referent="RBX71">
 					<Properties>
 						<string name="Name">SurgeryPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -18679,7 +19812,7 @@ return SurgeryPanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX69">
+				<Item class="ModuleScript" referent="RBX72">
 					<Properties>
 						<string name="Name">Theme</string>
 						<ProtectedString name="Source">--!strict
@@ -19663,7 +20796,7 @@ return Theme
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX70">
+				<Item class="ModuleScript" referent="RBX73">
 					<Properties>
 						<string name="Name">ToolBar</string>
 						<ProtectedString name="Source">--!strict
@@ -19693,7 +20826,9 @@ local Audio = require(Shared.Audio)
 local Loc = require(Shared.Loc)
 local Net = require(Shared.Net)
 
+local Crosshair = require(script.Parent.Crosshair)
 local Theme = require(script.Parent.Theme)
+local ViewModel = require(script.Parent.ViewModel)
 
 local ToolBar = {}
 
@@ -19745,6 +20880,12 @@ local function use(index: number)
 	highlight()
 	sweep(cells[index])
 	Audio.play(&quot;uiClick&quot;)
+	-- Elin ve nisangahin geri bildirimi: sunucunun cevabini beklemeden
+	-- oynatiliyor. Sunucu reddetse bile oyuncunun tusa bastigini
+	-- gormesi dogru; sonucu zaten ayrica bildiriliyor.
+	ViewModel.setTool(toolId)
+	ViewModel.playUse()
+	Crosshair.kick()
 	Net.toServer(&quot;SelectTool&quot;, toolId)
 	Net.toServer(&quot;UseTool&quot;, toolId)
 end
@@ -19896,7 +21037,7 @@ return ToolBar
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX71">
+				<Item class="ModuleScript" referent="RBX74">
 					<Properties>
 						<string name="Name">TreatmentPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -20135,22 +21276,399 @@ return TreatmentPanel
 </ProtectedString>
 					</Properties>
 				</Item>
+				<Item class="ModuleScript" referent="RBX75">
+					<Properties>
+						<string name="Name">ViewModel</string>
+						<ProtectedString name="Source">--!strict
+-- ViewModel.luau
+-- ==============
+-- Birinci sahis el ve alet modeli.
+--
+-- Neden var?
+-- ----------
+-- Oyun yalnizca birinci sahis (Camera.luau -&gt; LockFirstPerson) ama
+-- asagi bakinca hicbir sey gorunmuyordu: ne el, ne alet. Birinci sahis
+-- oyunu birinci sahis yapan sey buyuk olcude elini gormek. Alet
+-- kullandiginda elin uzanmasi, &quot;alet calisti&quot; geri bildiriminin
+-- kendisi oluyor - yazi okumaya gerek kalmiyor.
+--
+-- Nasil cizilyor?
+-- ---------------
+-- Parcalar `Workspace.CurrentCamera` altinda duruyor: kameranin
+-- cocuklari SUNUCUYA REPLIKE OLMUYOR, yani baska oyuncular bizim
+-- ellerimizi gormuyor ve sunucuda hicbir sey yaratilmiyor.
+--
+-- Her parca ANKORLU ve her karede elle konumlandiriliyor. Motor6D ve
+-- Animator ile kurmak da mumkundu; ama o yol bir Animation asset'i
+-- gerektiriyor ve bu depoyu ureten ortamda Roblox'a erisim yoktu -
+-- yuklenemeyen bir animasyon ID'si sessizce hicbir sey oynatmaz.
+-- Elle konumlandirma asset'siz calisiyor ve dogrulanabiliyor.
+--
+-- Sallanma nereden geliyor?
+-- -------------------------
+-- `Camera.motion()`den. Ayri bir faz saymiyoruz: iki sayac birkac
+-- saniyede faz farkina duser ve el kameradan bagimsiz &quot;yuzer&quot;.
+
+local Players = game:GetService(&quot;Players&quot;)
+local RunService = game:GetService(&quot;RunService&quot;)
+local UserInputService = game:GetService(&quot;UserInputService&quot;)
+local Workspace = game:GetService(&quot;Workspace&quot;)
+
+local ReplicatedStorage = game:GetService(&quot;ReplicatedStorage&quot;)
+local Data = ReplicatedStorage:WaitForChild(&quot;VetData&quot;)
+
+local settingsData = require(Data.settings)
+local toolData = require(Data.tools)
+
+local Camera = require(script.Parent.Camera)
+
+local ViewModel = {}
+
+local player = Players.LocalPlayer
+local config = settingsData.viewModel
+
+local RENDER_NAME = &quot;VeterinerElModeli&quot;
+
+type Piece = { part: BasePart, offset: CFrame, group: string }
+
+local model: Model? = nil
+local pieces: { Piece } = {}
+local toolPieces: { [string]: { Piece } } = {}
+local toolById: { [string]: any } = {}
+for _, tool in toolData.tools do
+	toolById[tool.id] = tool
+end
+
+local enabled = if settingsData.defaults.viewModel == nil then true else settingsData.defaults.viewModel
+local started = false
+local activeTool = &quot;&quot;
+local swayX, swayY = 0, 0
+local useTime = -1
+local useMotion = &quot;press&quot;
+local breath = 0
+
+local function toColor(channels: { number }): Color3
+	return Color3.fromRGB(channels[1], channels[2], channels[3])
+end
+
+--- Gorunum parcasi. Carpismaz, isin tutmaz, golge dusurmez: bunlar
+--- birinci sahis modelinde yalnizca kare yakar ve oynanisi bozar
+--- (elin kendi golgesi duvara vurur, raycast ele carpar).
+local function piece(name: string, size: Vector3, offset: CFrame, color: Color3, group: string, shape: Enum.PartType?): BasePart
+	local part = Instance.new(&quot;Part&quot;)
+	part.Name = name
+	part.Size = size
+	part.Color = color
+	part.Material = Enum.Material.SmoothPlastic
+	part.Anchored = true
+	part.CanCollide = false
+	part.CanQuery = false
+	part.CanTouch = false
+	part.CastShadow = false
+	part.Massless = true
+	part.TopSurface = Enum.SurfaceType.Smooth
+	part.BottomSurface = Enum.SurfaceType.Smooth
+	if shape ~= nil then
+		part.Shape = shape
+	end
+	part.Parent = model
+	table.insert(pieces, { part = part, offset = offset, group = group })
+	return part
+end
+
+--- Bir el: on kol, avuc ve uc parmak. Detayi burada bitiriyoruz;
+--- birinci sahiste elin ancak bu kadari gorunuyor ve her parmak
+--- eklemi cizmek gorunmeyen bir seye kare harcamak olurdu.
+local function buildHand(group: string, side: number, base: CFrame)
+	local skin = toColor(config.skinColor)
+	local sleeve = toColor(config.sleeveColor)
+	local glove = toColor(config.gloveColor)
+
+	piece(group .. &quot;Kol&quot;, Vector3.new(0.42, 0.42, 1.5), base * CFrame.new(0, 0, 0.75), sleeve, group)
+	piece(group .. &quot;Manset&quot;, Vector3.new(0.46, 0.46, 0.2), base * CFrame.new(0, 0, 0.02), glove, group)
+	piece(group .. &quot;Bilek&quot;, Vector3.new(0.36, 0.36, 0.3), base * CFrame.new(0, 0, -0.16), skin, group)
+	piece(group .. &quot;Avuc&quot;, Vector3.new(0.4, 0.22, 0.52), base * CFrame.new(0, 0, -0.52), skin, group)
+
+	for index = 1, 3 do
+		local spread = (index - 2) * 0.12 * side
+		piece(
+			group .. &quot;Parmak&quot; .. index,
+			Vector3.new(0.1, 0.12, 0.34),
+			base * CFrame.new(spread, -0.02, -0.92) * CFrame.Angles(math.rad(-8 * index), 0, 0),
+			skin,
+			group
+		)
+	end
+	piece(
+		group .. &quot;Basparmak&quot;,
+		Vector3.new(0.12, 0.12, 0.26),
+		base * CFrame.new(0.18 * side, -0.04, -0.66) * CFrame.Angles(0, math.rad(28 * side), 0),
+		skin,
+		group
+	)
+end
+
+--- Aletin govdesi. `viewModel.body`/`tip` olculerinden biri sifirsa o
+--- parca hic kurulmuyor: &quot;gozle muayene&quot;nin elinde alet yok.
+local function buildTool(tool: any)
+	local spec = tool.viewModel
+	if spec == nil then
+		return
+	end
+	local before = #pieces
+	local color = toColor(tool.color)
+	local tipColor = toColor(spec.tipColor)
+
+	local body = spec.body
+	if body[1] &gt; 0 and body[2] &gt; 0 and body[3] &gt; 0 then
+		piece(
+			tool.id .. &quot;Govde&quot;,
+			Vector3.new(body[1], body[2], body[3]),
+			CFrame.new(0, 0, -body[3] * 0.5),
+			color,
+			&quot;tool&quot;
+		)
+	end
+	local tip = spec.tip
+	if tip[1] &gt; 0 and tip[2] &gt; 0 and tip[3] &gt; 0 then
+		piece(
+			tool.id .. &quot;Uc&quot;,
+			Vector3.new(tip[1], tip[2], tip[3]),
+			CFrame.new(0, 0, -body[3] - tip[3] * 0.5),
+			tipColor,
+			&quot;tool&quot;
+		)
+	end
+
+	-- Bu aletin parcalarini ayri tutuyoruz: alet degisince yalnizca
+	-- secili olan gorunur oluyor, digerleri gizleniyor. Her secimde
+	-- yeniden yaratmak, secim sirasinda bir kare bosluk demekti.
+	local list = {}
+	for index = before + 1, #pieces do
+		table.insert(list, pieces[index])
+		pieces[index].part.Transparency = 1
+	end
+	toolPieces[tool.id] = list
+end
+
+local function build()
+	if model ~= nil then
+		return
+	end
+	local camera = Workspace.CurrentCamera
+	if camera == nil then
+		return
+	end
+
+	model = Instance.new(&quot;Model&quot;)
+	;(model :: Model).Name = &quot;ElModeli&quot;
+	;(model :: Model).Parent = camera
+
+	local right = config.rightOffset
+	local left = config.leftOffset
+	buildHand(&quot;right&quot;, 1, CFrame.new(right[1], right[2], right[3]) * CFrame.Angles(math.rad(-8), math.rad(-6), 0))
+	buildHand(&quot;left&quot;, -1, CFrame.new(left[1], left[2], left[3]) * CFrame.Angles(math.rad(-12), math.rad(10), 0))
+
+	for _, tool in toolData.tools do
+		buildTool(tool)
+	end
+end
+
+--- Alet kullanim animasyonunun o anki donusumu. `motion` alanina gore
+--- degisiyor: iğne BASTIRIYOR, otoskop UZANIYOR, rontgen SUPURUYOR.
+local function useTransform(progress: number): CFrame
+	-- 0 -&gt; 1 -&gt; 0 arasi yumusak bir yay: animasyon basta ve sonda
+	-- durgun, ortada en guclu.
+	local swing = math.sin(math.clamp(progress, 0, 1) * math.pi)
+	if useMotion == &quot;press&quot; then
+		return CFrame.new(0, -0.18 * swing, -0.42 * swing) * CFrame.Angles(math.rad(-16 * swing), 0, 0)
+	elseif useMotion == &quot;reach&quot; then
+		return CFrame.new(0, 0.06 * swing, -0.7 * swing) * CFrame.Angles(math.rad(-6 * swing), 0, 0)
+	elseif useMotion == &quot;twist&quot; then
+		return CFrame.new(0, -0.08 * swing, -0.2 * swing) * CFrame.Angles(0, 0, math.rad(48 * swing))
+	elseif useMotion == &quot;sweep&quot; then
+		return CFrame.new(0.34 * math.sin(progress * math.pi * 2), 0, -0.2 * swing)
+			* CFrame.Angles(0, math.rad(18 * math.sin(progress * math.pi * 2)), 0)
+	end
+	-- &quot;point&quot;: alet yok, el isaret ediyor.
+	return CFrame.new(0, 0.1 * swing, -0.5 * swing) * CFrame.Angles(math.rad(-18 * swing), 0, 0)
+end
+
+local function step(dt: number)
+	local camera = Workspace.CurrentCamera
+	if model == nil or camera == nil then
+		return
+	end
+
+	-- ── Savrulma (sway) ───────────────────────────────────────────────
+	-- Fare hareketi eli GECIKMELI takip ediyor: kamera aninda donuyor,
+	-- el arkasindan yetisiyor. Birinci sahisi &quot;agir&quot; hissettiren sey bu.
+	local delta = UserInputService:GetMouseDelta()
+	local response = math.clamp(config.swayResponse * dt, 0, 1)
+	swayX += (-delta.X * 0.06 - swayX) * response
+	swayY += (-delta.Y * 0.06 - swayY) * response
+	swayX = math.clamp(swayX, -config.swayDegrees, config.swayDegrees)
+	swayY = math.clamp(swayY, -config.swayDegrees, config.swayDegrees)
+
+	-- ── Yuruyus sallanmasi ────────────────────────────────────────────
+	local motion = Camera.motion()
+	local bob = config.bobScale * motion.strength
+	local vertical = math.sin(motion.phase * 2) * 0.1 * bob - motion.landing * 0.4
+	local horizontal = math.cos(motion.phase) * 0.08 * bob
+	local roll = math.rad(math.cos(motion.phase) * 1.6) * bob
+
+	-- ── Nefes ─────────────────────────────────────────────────────────
+	breath += dt * config.breathSpeed
+	local idle = CFrame.new(0, math.sin(breath) * config.breathAmount, 0)
+		* CFrame.Angles(math.rad(math.sin(breath * 0.6) * 0.7), 0, 0)
+
+	local sway = CFrame.Angles(math.rad(swayY), math.rad(swayX), math.rad(roll))
+	local walk = CFrame.new(horizontal, vertical, 0)
+
+	local use = CFrame.identity
+	if useTime &gt;= 0 then
+		useTime += dt
+		local progress = useTime / config.useSeconds
+		if progress &gt;= 1 then
+			useTime = -1
+		else
+			use = useTransform(progress)
+		end
+	end
+
+	local base = camera.CFrame * walk * sway * idle
+
+	for _, entry in pieces do
+		local groupCF = if entry.group == &quot;left&quot; then CFrame.identity else use
+		entry.part.CFrame = base * groupCF * entry.offset
+	end
+
+	-- Secili aletin parcalari sag elin ONUNDE duruyor: aletin kendi
+	-- ofseti ele gore degil, elin tuttugu noktaya gore.
+	local hold = base * use * CFrame.new(
+		config.rightOffset[1],
+		config.rightOffset[2] + 0.05,
+		config.rightOffset[3] - 0.8
+	)
+	local list = toolPieces[activeTool]
+	if list ~= nil then
+		for _, entry in list do
+			entry.part.CFrame = hold * entry.offset
+		end
+	end
+end
+
+--- Yerel oyuncunun GERCEK govdesi gizleniyor. Roblox birinci sahiste
+--- yalnizca kafayi gizliyor; asagi bakinca havada yuzen bir govde
+--- gormek birinci sahis hissini bozuyor. `LocalTransparencyModifier`
+--- her karede sifirlandigi icin surekli yazmak gerekiyor.
+local function hideCharacter()
+	local character = player.Character
+	if character == nil then
+		return
+	end
+	for _, item in character:GetDescendants() do
+		if item:IsA(&quot;BasePart&quot;) then
+			item.LocalTransparencyModifier = 1
+		elseif item:IsA(&quot;Decal&quot;) or item:IsA(&quot;Texture&quot;) then
+			item.Transparency = 1
+		end
+	end
+end
+
+local function refreshVisibility()
+	for id, list in toolPieces do
+		local show = enabled and id == activeTool
+		for _, entry in list do
+			entry.part.Transparency = if show then 0 else 1
+		end
+	end
+	for _, entry in pieces do
+		if entry.group ~= &quot;tool&quot; then
+			entry.part.Transparency = if enabled then 0 else 1
+		end
+	end
+end
+
+--- Secili aleti bildirir; el o aletin bicimine gecer.
+function ViewModel.setTool(toolId: string)
+	if activeTool == toolId then
+		return
+	end
+	activeTool = toolId
+	local tool = toolById[toolId]
+	useMotion = if tool ~= nil and tool.viewModel ~= nil then tool.viewModel.motion else &quot;press&quot;
+	refreshVisibility()
+	-- Alet degistirmenin kendisi de kucuk bir hareket: el bir kez
+	-- asagi inip cikiyor.
+	useTime = 0
+end
+
+--- Alet kullanildi: kullanim animasyonunu bastan oynatir.
+function ViewModel.playUse()
+	useTime = 0
+end
+
+function ViewModel.setEnabled(value: boolean)
+	enabled = value
+	if model ~= nil then
+		refreshVisibility()
+	end
+end
+
+function ViewModel.isEnabled(): boolean
+	return enabled
+end
+
+function ViewModel.start()
+	if started then
+		return
+	end
+	started = true
+	build()
+	refreshVisibility()
+
+	RunService:BindToRenderStep(RENDER_NAME, Enum.RenderPriority.Camera.Value + 2, function(dt: number)
+		if enabled then
+			step(dt)
+		end
+		hideCharacter()
+	end)
+
+	player.CharacterAdded:Connect(function()
+		task.defer(hideCharacter)
+	end)
+
+	-- Kamera degisirse (oyuncu yeniden dogunca olabiliyor) model yeni
+	-- kameraya tasinmali; yoksa eski kamerayla birlikte yok oluyor.
+	Workspace:GetPropertyChangedSignal(&quot;CurrentCamera&quot;):Connect(function()
+		local camera = Workspace.CurrentCamera
+		if model ~= nil and camera ~= nil then
+			(model :: Model).Parent = camera
+		end
+	end)
+end
+
+return ViewModel
+</ProtectedString>
+					</Properties>
+				</Item>
 			</Item>
 		</Item>
 	</Item>
-	<Item class="StarterGui" referent="RBX72">
+	<Item class="StarterGui" referent="RBX76">
 		<Properties>
 			<string name="Name">StarterGui</string>
 			<bool name="ResetPlayerGuiOnSpawn">false</bool>
 		</Properties>
 	</Item>
-	<Item class="Players" referent="RBX73">
+	<Item class="Players" referent="RBX77">
 		<Properties>
 			<string name="Name">Players</string>
 			<bool name="CharacterAutoLoads">false</bool>
 		</Properties>
 	</Item>
-	<Item class="SoundService" referent="RBX74">
+	<Item class="SoundService" referent="RBX78">
 		<Properties>
 			<string name="Name">SoundService</string>
 		</Properties>

@@ -25,7 +25,9 @@ local Audio = require(Shared.Audio)
 local Loc = require(Shared.Loc)
 local Net = require(Shared.Net)
 
+local Crosshair = require(script.Parent.Crosshair)
 local Theme = require(script.Parent.Theme)
+local ViewModel = require(script.Parent.ViewModel)
 
 local ToolBar = {}
 
@@ -77,6 +79,12 @@ local function use(index: number)
 	highlight()
 	sweep(cells[index])
 	Audio.play("uiClick")
+	-- Elin ve nisangahin geri bildirimi: sunucunun cevabini beklemeden
+	-- oynatiliyor. Sunucu reddetse bile oyuncunun tusa bastigini
+	-- gormesi dogru; sonucu zaten ayrica bildiriliyor.
+	ViewModel.setTool(toolId)
+	ViewModel.playUse()
+	Crosshair.kick()
 	Net.toServer("SelectTool", toolId)
 	Net.toServer("UseTool", toolId)
 end

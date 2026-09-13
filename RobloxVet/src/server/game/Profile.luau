@@ -63,6 +63,9 @@ export type Settings = {
 	fieldOfView: number,
 	showFps: boolean,
 	sprintEnabled: boolean,
+	-- Birinci sahis el/alet modeli. Kucuk ekranlarda goruntuyu
+	-- kapatabilecegi icin kapatilabilir olmasi gerekiyordu.
+	viewModel: boolean,
 	masterVolume: number,
 	musicVolume: number,
 	sfxVolume: number,
@@ -160,6 +163,7 @@ local function defaultSettings(): Settings
 		fieldOfView = defaults.fieldOfView,
 		showFps = defaults.showFps,
 		sprintEnabled = defaults.sprintEnabled,
+		viewModel = defaults.viewModel,
 		masterVolume = defaults.masterVolume,
 		musicVolume = defaults.musicVolume,
 		sfxVolume = defaults.sfxVolume,
@@ -281,6 +285,9 @@ local function migrate(raw: any): Data
 		-- birinci sahis); sessizce yok sayiliyor, profil bozulmuyor.
 		if type(raw.settings.showFps) == "boolean" then
 			result.settings.showFps = raw.settings.showFps
+		end
+		if type(raw.settings.viewModel) == "boolean" then
+			result.settings.viewModel = raw.settings.viewModel
 		end
 		if type(raw.settings.sprintEnabled) == "boolean" then
 			result.settings.sprintEnabled = raw.settings.sprintEnabled

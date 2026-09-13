@@ -172,6 +172,28 @@ function Camera.settings(): any
 	return table.clone(current)
 end
 
+--- Yuruyus hareketinin ANLIK durumu. ViewModel bunu okuyup ellerini
+--- ayni ritimde sallandiriyor: iki ayri faz saydirmak, elin kamerayla
+--- birkac saniyede faz farkina dusmesi demekti - goz bunu "yuzen el"
+--- olarak okuyor.
+function Camera.motion(): { phase: number, strength: number, sprint: number, landing: number }
+	local sprint = 0
+	if movement.sprintSpeed > movement.walkSpeed then
+		sprint = math.clamp(
+			(smoothedSpeed - movement.walkSpeed) / (movement.sprintSpeed - movement.walkSpeed),
+			0,
+			1
+		)
+	end
+	local moving = smoothedSpeed > config.minSpeedForBob
+	return {
+		phase = phase,
+		strength = current.bobbing * (if moving then math.min(smoothedSpeed / movement.walkSpeed, 1.4) else 0),
+		sprint = sprint,
+		landing = landing,
+	}
+end
+
 function Camera.start()
 	if bound then
 		return
