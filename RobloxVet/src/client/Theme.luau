@@ -879,6 +879,11 @@ end
 --- gozunun nereye bakacagini bilmemesine sebep oluyor; 0.22 saniyelik
 --- bir giris bakisi panele cekiyor.
 function Theme.open(root: GuiObject)
+	-- Kapanma animasyonu suruyorsa iptal ediliyor. Aksi halde kapanis
+	-- tweeni bitince paneli gizler ve YENI ACILAN panel bir anda
+	-- kaybolurdu. (Hasta hizlica taburcu edilip yenisi masaya alininca
+	-- tam olarak bu oluyordu.)
+	root:SetAttribute("Kapaniyor", false)
 	root.Visible = true
 	local scale = scaleOf(root)
 	scale.Scale = 0.94
@@ -907,9 +912,18 @@ function Theme.open(root: GuiObject)
 end
 
 function Theme.close(root: GuiObject)
+	if not root.Visible then
+		return
+	end
+	root:SetAttribute("Kapaniyor", true)
 	local scale = scaleOf(root)
 	local tween = Theme.tween(scale, { Scale = 0.94 }, Theme.motion.quick)
 	tween.Completed:Once(function()
+		-- Bu arada yeniden acildiysa gizleme.
+		if root:GetAttribute("Kapaniyor") ~= true then
+			return
+		end
+		root:SetAttribute("Kapaniyor", false)
 		root.Visible = false
 		scale.Scale = 1
 	end)

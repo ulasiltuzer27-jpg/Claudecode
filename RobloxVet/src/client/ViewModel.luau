@@ -362,9 +362,17 @@ function ViewModel.start()
 	-- kameraya tasinmali; yoksa eski kamerayla birlikte yok oluyor.
 	Workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(function()
 		local camera = Workspace.CurrentCamera
-		if model ~= nil and camera ~= nil then
-			(model :: Model).Parent = camera
+		if camera == nil then
+			return
 		end
+		if model == nil then
+			-- Baslangicta kamera henuz yoksa model kurulamamis olabilir;
+			-- kamera gelince kuruluyor. Aksi halde el hic gorunmezdi.
+			build()
+			refreshVisibility()
+			return
+		end
+		(model :: Model).Parent = camera
 	end)
 end
 

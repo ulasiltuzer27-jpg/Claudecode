@@ -52,12 +52,17 @@ local function clearStage()
 	widgets.marks = {}
 end
 
-local function stop()
+--- Yalnizca oturumu ve donguyu birakir; paneli KAPATMAZ.
+local function release()
 	if connection ~= nil then
 		connection:Disconnect()
 		connection = nil
 	end
 	session = nil
+end
+
+local function stop()
+	release()
 	if widgets ~= nil and widgets.panel.Visible then
 		Theme.close(widgets.panel)
 	end
@@ -336,7 +341,9 @@ function ToolGamePanel.begin(payload: any)
 	if widgets == nil or payload == nil then
 		return
 	end
-	stop()
+	-- Onceki oturumu birak ama paneli KAPATMA: kapanis tweeni bitince
+	-- yeni acilan paneli gizlerdi.
+	release()
 	session = payload
 	clearStage()
 

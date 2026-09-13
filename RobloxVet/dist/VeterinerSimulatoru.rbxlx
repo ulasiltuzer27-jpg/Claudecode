@@ -21688,6 +21688,11 @@ end
 --- gozunun nereye bakacagini bilmemesine sebep oluyor; 0.22 saniyelik
 --- bir giris bakisi panele cekiyor.
 function Theme.open(root: GuiObject)
+	-- Kapanma animasyonu suruyorsa iptal ediliyor. Aksi halde kapanis
+	-- tweeni bitince paneli gizler ve YENI ACILAN panel bir anda
+	-- kaybolurdu. (Hasta hizlica taburcu edilip yenisi masaya alininca
+	-- tam olarak bu oluyordu.)
+	root:SetAttribute(&quot;Kapaniyor&quot;, false)
 	root.Visible = true
 	local scale = scaleOf(root)
 	scale.Scale = 0.94
@@ -21716,9 +21721,18 @@ function Theme.open(root: GuiObject)
 end
 
 function Theme.close(root: GuiObject)
+	if not root.Visible then
+		return
+	end
+	root:SetAttribute(&quot;Kapaniyor&quot;, true)
 	local scale = scaleOf(root)
 	local tween = Theme.tween(scale, { Scale = 0.94 }, Theme.motion.quick)
 	tween.Completed:Once(function()
+		-- Bu arada yeniden acildiysa gizleme.
+		if root:GetAttribute(&quot;Kapaniyor&quot;) ~= true then
+			return
+		end
+		root:SetAttribute(&quot;Kapaniyor&quot;, false)
 		root.Visible = false
 		scale.Scale = 1
 	end)
@@ -22086,12 +22100,17 @@ local function clearStage()
 	widgets.marks = {}
 end
 
-local function stop()
+--- Yalnizca oturumu ve donguyu birakir; paneli KAPATMAZ.
+local function release()
 	if connection ~= nil then
 		connection:Disconnect()
 		connection = nil
 	end
 	session = nil
+end
+
+local function stop()
+	release()
 	if widgets ~= nil and widgets.panel.Visible then
 		Theme.close(widgets.panel)
 	end
@@ -22370,7 +22389,9 @@ function ToolGamePanel.begin(payload: any)
 	if widgets == nil or payload == nil then
 		return
 	end
-	stop()
+	-- Onceki oturumu birak ama paneli KAPATMA: kapanis tweeni bitince
+	-- yeni acilan paneli gizlerdi.
+	release()
 	session = payload
 	clearStage()
 
@@ -23086,9 +23107,17 @@ function ViewModel.start()
 	-- kameraya tasinmali; yoksa eski kamerayla birlikte yok oluyor.
 	Workspace:GetPropertyChangedSignal(&quot;CurrentCamera&quot;):Connect(function()
 		local camera = Workspace.CurrentCamera
-		if model ~= nil and camera ~= nil then
-			(model :: Model).Parent = camera
+		if camera == nil then
+			return
 		end
+		if model == nil then
+			-- Baslangicta kamera henuz yoksa model kurulamamis olabilir;
+			-- kamera gelince kuruluyor. Aksi halde el hic gorunmezdi.
+			build()
+			refreshVisibility()
+			return
+		end
+		(model :: Model).Parent = camera
 	end)
 end
 
