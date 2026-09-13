@@ -619,6 +619,43 @@ do
 		check(("mini-oyun '%s' ipucu cevrili"):format(kind), Loc.has("toolgame." .. kind .. ".hint"))
 	end
 
+	-- Animasyon iskeleti: her turun beklenen eklem ve parcalari olmali.
+	-- Eksik bir eklem, o hayvanin sessizce daha az hareket etmesi demek -
+	-- Studio acilmadan fark edilmezdi.
+	-- Gecici klasor: denetim biten rigleri tek seferde temizliyor ve
+	-- hicbiri sahnede unutulmuyor.
+	local scratch = Instance.new("Folder")
+	scratch.Name = "SelfTestGecici"
+	scratch.Parent = workspace
+
+	for _, animal in require(Data.animals).animals do
+		local rig = AnimalFactory.create(animal.id, CFrame.new(0, -500, 0), scratch)
+		check(("tur '%s' kurulabildi"):format(animal.id), rig ~= nil)
+		if rig == nil then
+			continue
+		end
+		check(("tur '%s' cene eklemi var"):format(animal.id), rig.joints.jaw ~= nil)
+		for index = 1, 2 do
+			check(
+				("tur '%s' %d. goz kapagi var"):format(animal.id, index),
+				rig.parts["lid" .. index] ~= nil
+			)
+		end
+		-- Bacakli turlerde her bacagin DIZI olmali: iki eklemli bacak
+		-- olmadan adim dongusu kurulamiyor ve ayak yerde kaymaya donuyor.
+		for index = 1, animal.legs.count do
+			check(
+				("tur '%s' %d. bacak kalca eklemi var"):format(animal.id, index),
+				rig.joints["leg" .. index] ~= nil
+			)
+			check(
+				("tur '%s' %d. bacak DIZ eklemi var"):format(animal.id, index),
+				rig.joints["leg" .. index .. "Lower"] ~= nil
+			)
+		end
+	end
+	scratch:Destroy()
+
 	-- Gunduz/gece: sokak lambalari bulunmus mu, carpanlar makul mu.
 	check("sokak lambalari gece dongusune baglandi", DayCycle.lampCount() > 0)
 	check("saat 0-24 araliginda", DayCycle.clockTime() >= 0 and DayCycle.clockTime() < 24)

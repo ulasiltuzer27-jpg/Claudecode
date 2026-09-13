@@ -39,6 +39,10 @@ export type Owner = {
 	-- Jest katmani: tek seferlik kol/bas hareketi. Bosken "".
 	gesture: string,
 	gestureTime: number,
+	-- Son uygulanan poz: yumusatma bunun uzerinden gidiyor.
+	pose: { [string]: CFrame },
+	-- Bakis hedefi (hayvani ya da veteriner).
+	lookTarget: Vector3?,
 }
 
 -- Sahipler rastgele gorunsun diye kucuk palet havuzlari. Oynanisi
@@ -274,6 +278,8 @@ function OwnerFactory.create(cframe: CFrame, hintKey: string, parent: Instance):
 		phase = math.random() * math.pi * 2,
 		gesture = "",
 		gestureTime = 0,
+		pose = {},
+		lookTarget = nil,
 	}
 end
 
@@ -329,6 +335,30 @@ end
 
 --- Durusu gunceller. Sahip bekleme odasinda durup nefes aliyor, arada
 --- etrafina bakiyor; sinirliyse kollarini kavusturuyor.
+-- Yumusatma hizlari. Bacaklar hizli: yavas yumusatma adimin salinim
+-- fazini eziyor ve yuruyus yeniden "kayar" gorunuyor.
+local SMOOTH_BODY = 12
+local SMOOTH_LIMB = 26
+
+-- Adim dongusunun DURUS fazi. AnimalAnimator ile ayni oran: ayak yerde
+-- sabit hizla geriye gidiyor, govde ustunden geciyor.
+local STANCE = 0.62
+
+--- Bir eklemi hedefe yumusatarak surer.
+local function drive(owner: Owner, name: string, joint: Motor6D, target: CFrame, rate: number, dt: number)
+	local previous = owner.pose[name]
+	local blended = if previous == nil
+		then target
+		else previous:Lerp(target, math.clamp(rate * dt, 0, 1))
+	owner.pose[name] = blended
+	joint.Transform = blended
+end
+
+--- Sahibin basini bir noktaya cevirir. `nil` bakisi birakir.
+function OwnerFactory.lookAt(owner: Owner, target: Vector3?)
+	owner.lookTarget = target
+end
+
 function OwnerFactory.step(owner: Owner, dt: number, satisfaction: number, walking: boolean)
 	owner.phase += dt * (if walking then 8.5 else 1.3)
 	local phase = owner.phase
@@ -354,8 +384,19 @@ function OwnerFactory.step(owner: Owner, dt: number, satisfaction: number, walki
 	end
 
 	if owner.joints.rootJoint ~= nil then
-		owner.joints.rootJoint.Transform = CFrame.new(0, math.sin(phase) * 0.03, 0)
+		-- Dururken agirlik bir ayaktan digerine geciyor; tas gibi duran
+		-- bir NPC cansiz gorunuyor.
+		local shift = if walking then 0 else math.sin(phase * 0.5) * 0.04
+		drive(
+			owner,
+			"rootJoint",
+			owner.joints.rootJoint,
+			CFrame.new(0, math.sin(phase) * 0.03, 0) * CFrame.Angles(0, 0, shift),
+			SMOOTH_BODY,
+			dt
+		)
 	end
+
 	if owner.joints.neck ~= nil then
 		local look = if walking then 0 else math.sin(phase * 0.4) * 0.35
 		local nod = math.sin(phase * 0.7) * 0.04
@@ -369,36 +410,64 @@ function OwnerFactory.step(owner: Owner, dt: number, satisfaction: number, walki
 			nod += gestureStrength * 0.34
 			look += math.sin(owner.gestureTime * 9) * gestureStrength * 0.4
 		end
-		owner.joints.neck.Transform = CFrame.Angles(nod, look, 0)
+
+		-- BAKIS: hayvanina ya da veterinere doner. Aci sinirli; govdesi
+		-- donmeden basini 180 derece cevirmiyor.
+		local target = owner.lookTarget
+		if target ~= nil then
+			local local3 = owner.root.CFrame:PointToObjectSpace(target)
+			local flat = math.sqrt(local3.X * local3.X + local3.Z * local3.Z)
+			if flat > 0.5 then
+				look += math.clamp(math.atan2(-local3.X, -local3.Z), -0.7, 0.7)
+				nod -= math.clamp(math.atan2(local3.Y, flat), -0.3, 0.4)
+			end
+		end
+
+		drive(owner, "neck", owner.joints.neck, CFrame.Angles(nod, look, 0), SMOOTH_BODY, dt)
 	end
 
 	for index = 1, 2 do
 		local side = if index == 1 then -1 else 1
 		local arm = owner.joints["arm" .. index]
 		if arm ~= nil then
+			local target
 			if gesture == "point" and index == 2 then
 				-- Sag kol one uzanip hayvani gosteriyor.
-				arm.Transform = CFrame.Angles(math.rad(-95 * gestureStrength), 0, math.rad(side * -18 * gestureStrength))
+				target = CFrame.Angles(math.rad(-95 * gestureStrength), 0, math.rad(side * -18 * gestureStrength))
 			elseif gesture == "relief" then
 				-- Iki kol da hafifce aciliyor: "cok sukur" durusu.
-				arm.Transform = CFrame.Angles(math.rad(-28 * gestureStrength), 0, math.rad(side * -46 * gestureStrength))
+				target = CFrame.Angles(math.rad(-28 * gestureStrength), 0, math.rad(side * -46 * gestureStrength))
 			elseif gesture == "worry" then
 				-- Eller yuze yakin: endise.
-				arm.Transform = CFrame.Angles(math.rad(-118 * gestureStrength), 0, math.rad(side * -26 * gestureStrength))
+				target = CFrame.Angles(math.rad(-118 * gestureStrength), 0, math.rad(side * -26 * gestureStrength))
 			elseif annoyed and not walking then
 				-- Kollari kavusturmus: gorsel olarak "bekliyorum" demek.
-				arm.Transform = CFrame.Angles(math.rad(-72), 0, math.rad(side * -34))
+				target = CFrame.Angles(math.rad(-72), 0, math.rad(side * -34))
 			elseif walking then
-				arm.Transform = CFrame.Angles(math.sin(phase + (if index == 1 then 0 else math.pi)) * 0.6, 0, 0)
+				target = CFrame.Angles(math.sin(phase + (if index == 1 then 0 else math.pi)) * 0.6, 0, 0)
 			else
-				arm.Transform = CFrame.Angles(math.sin(phase * 0.5) * 0.05, 0, 0)
+				target = CFrame.Angles(math.sin(phase * 0.5) * 0.05, 0, 0)
 			end
+			drive(owner, "arm" .. index, arm, target, SMOOTH_LIMB, dt)
 		end
+
 		local leg = owner.joints["leg" .. index]
 		if leg ~= nil then
-			leg.Transform = if walking
-				then CFrame.Angles(math.sin(phase + (if index == 1 then math.pi else 0)) * 0.55, 0, 0)
-				else CFrame.new()
+			local target = CFrame.identity
+			if walking then
+				-- Ayak yerde SABIT HIZLA geriye gidiyor (durus fazi),
+				-- sonra hizla one savruluyor (salinim fazi). Duz bir
+				-- sinus, ayagi yerde yavaslatip kaydiriyordu.
+				local p = ((phase / (math.pi * 2)) + (if index == 1 then 0.5 else 0)) % 1
+				local swing
+				if p < STANCE then
+					swing = -0.5 + (p / STANCE)
+				else
+					swing = 0.5 - ((p - STANCE) / (1 - STANCE))
+				end
+				target = CFrame.Angles(swing * 0.55, 0, 0)
+			end
+			drive(owner, "leg" .. index, leg, target, SMOOTH_LIMB, dt)
 		end
 	end
 end

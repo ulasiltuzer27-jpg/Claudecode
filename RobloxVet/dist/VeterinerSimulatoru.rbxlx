@@ -8513,6 +8513,43 @@ do
 		check((&quot;mini-oyun '%s' ipucu cevrili&quot;):format(kind), Loc.has(&quot;toolgame.&quot; .. kind .. &quot;.hint&quot;))
 	end
 
+	-- Animasyon iskeleti: her turun beklenen eklem ve parcalari olmali.
+	-- Eksik bir eklem, o hayvanin sessizce daha az hareket etmesi demek -
+	-- Studio acilmadan fark edilmezdi.
+	-- Gecici klasor: denetim biten rigleri tek seferde temizliyor ve
+	-- hicbiri sahnede unutulmuyor.
+	local scratch = Instance.new(&quot;Folder&quot;)
+	scratch.Name = &quot;SelfTestGecici&quot;
+	scratch.Parent = workspace
+
+	for _, animal in require(Data.animals).animals do
+		local rig = AnimalFactory.create(animal.id, CFrame.new(0, -500, 0), scratch)
+		check((&quot;tur '%s' kurulabildi&quot;):format(animal.id), rig ~= nil)
+		if rig == nil then
+			continue
+		end
+		check((&quot;tur '%s' cene eklemi var&quot;):format(animal.id), rig.joints.jaw ~= nil)
+		for index = 1, 2 do
+			check(
+				(&quot;tur '%s' %d. goz kapagi var&quot;):format(animal.id, index),
+				rig.parts[&quot;lid&quot; .. index] ~= nil
+			)
+		end
+		-- Bacakli turlerde her bacagin DIZI olmali: iki eklemli bacak
+		-- olmadan adim dongusu kurulamiyor ve ayak yerde kaymaya donuyor.
+		for index = 1, animal.legs.count do
+			check(
+				(&quot;tur '%s' %d. bacak kalca eklemi var&quot;):format(animal.id, index),
+				rig.joints[&quot;leg&quot; .. index] ~= nil
+			)
+			check(
+				(&quot;tur '%s' %d. bacak DIZ eklemi var&quot;):format(animal.id, index),
+				rig.joints[&quot;leg&quot; .. index .. &quot;Lower&quot;] ~= nil
+			)
+		end
+	end
+	scratch:Destroy()
+
 	-- Gunduz/gece: sokak lambalari bulunmus mu, carpanlar makul mu.
 	check(&quot;sokak lambalari gece dongusune baglandi&quot;, DayCycle.lampCount() &gt; 0)
 	check(&quot;saat 0-24 araliginda&quot;, DayCycle.clockTime() &gt;= 0 and DayCycle.clockTime() &lt; 24)
@@ -10701,6 +10738,40 @@ local function tickVitals(dt: number)
 		AnimalAnimator.setState(patient.rig, if patient.stress &gt;= 70 then &quot;distress&quot; else &quot;idle&quot;)
 		updateNameplate(patient)
 
+		-- BAKIS: masadaki hayvan veterinere, bekleyen hayvan sahibine
+		-- bakiyor. &quot;Bu hayvan beni goruyor&quot; hissini veren tek sey bu.
+		-- Yururken bakis birakiliyor: yuruyen bir hayvanin basi yola
+		-- donuk olmali.
+		if patient.state == &quot;walking&quot; or patient.state == &quot;arriving&quot; or patient.state == &quot;leaving&quot; then
+			AnimalAnimator.lookAt(patient.rig, nil)
+		else
+			local lookAt: Vector3? = nil
+			local vet = patient.vet
+			if vet ~= nil then
+				local character = vet.Character
+				local head = if character ~= nil then character:FindFirstChild(&quot;Head&quot;) else nil
+				if head ~= nil and head:IsA(&quot;BasePart&quot;) then
+					lookAt = head.Position
+				end
+			end
+			if lookAt == nil and patient.owner ~= nil then
+				lookAt = patient.owner.root.Position + Vector3.new(0, 4, 0)
+			end
+			-- Stresli hayvan bakisini kaciriyor: guclu stres agirligi
+			-- dusuruyor.
+			AnimalAnimator.lookAt(patient.rig, lookAt, 1 - patient.stress / 200)
+
+			-- Sahip de bakiyor: veteriner varsa ona, yoksa hayvanina.
+			-- Bekleme odasinda kimin kime ait oldugu boylece iyice
+			-- okunur hale geliyor.
+			if patient.owner ~= nil then
+				OwnerFactory.lookAt(
+					patient.owner,
+					if lookAt ~= nil then lookAt else patient.rig.root.Position
+				)
+			end
+		end
+
 		-- Sahibin sabri: bekledikce tukeniyor. Hastasi masaya alinmis
 		-- olsa bile isin uzamasi memnuniyeti dusuruyor.
 		if patient.owner ~= nil and patient.state ~= &quot;leaving&quot; then
@@ -12428,6 +12499,19 @@ type Entry = {
 	-- hareket. Bosken &quot;&quot; ve hicbir maliyeti yok.
 	reaction: string,
 	reactionTime: number,
+	-- Son uygulanan poz. Yumusatma bunun uzerinden gidiyor: hedefe
+	-- aninda atlamak yerine her kare biraz yaklasiyor.
+	pose: { [string]: CFrame },
+	-- Goz kirpma: kalan sure, suren kirpma, son yazilan saydamlik.
+	blinkIn: number,
+	blinkTime: number,
+	lidTransparency: number,
+	-- Ikincil hareket: gecen karedeki konum ve gecikmeli hiz.
+	lastPosition: Vector3,
+	lagVelocity: Vector3,
+	-- Bakis: nereye bakiyor ve ne kadar guclu.
+	lookTarget: Vector3?,
+	lookWeight: number,
 	waypoints: { Vector3 },
 	onArrive: (() -&gt; ())?,
 	facing: Vector3,
@@ -12452,6 +12536,14 @@ function Animator.register(rig: AnimalFactory.Rig)
 		coiled = false,
 		reaction = &quot;&quot;,
 		reactionTime = 0,
+		pose = {},
+		blinkIn = 1 + math.random() * 3,
+		blinkTime = -1,
+		lidTransparency = 1,
+		lastPosition = rig.root.Position,
+		lagVelocity = Vector3.zero,
+		lookTarget = nil,
+		lookWeight = 0,
 		waypoints = {},
 		onArrive = nil,
 		facing = rig.root.CFrame.LookVector,
@@ -12527,6 +12619,20 @@ function Animator.reactionKinds(): { string }
 	end
 	table.sort(kinds)
 	return kinds
+end
+
+--- Hayvanin basini bir noktaya cevirir. `nil` bakisi birakir.
+---
+--- Neden ayri bir katman? Muayene masasindaki hayvanin veterinere
+--- BAKMASI, oyuncunun &quot;bu hayvan beni goruyor&quot; hissini veren tek sey.
+--- Tepki katmani tek seferlik; bakis ise surekli ve yumusak.
+function Animator.lookAt(rig: AnimalFactory.Rig, target: Vector3?, weight: number?)
+	local entry = entryOf(rig)
+	if entry == nil then
+		return
+	end
+	entry.lookTarget = target
+	entry.lookWeight = math.clamp(weight or 1, 0, 1)
 end
 
 --- Topallama. `leg` 0 ise topallama yok; 1..4 bacak numarasi.
@@ -12643,7 +12749,110 @@ local function stepReaction(entry: Entry, dt: number): (string, number)
 	return entry.reaction, strength
 end
 
---- Animasyon: eklem Transform'larini surer.
+-- ── Poz motoru ────────────────────────────────────────────────────────
+--
+-- Poz DORT KATMANDAN olusuyor; her katman bir oncekinin uzerine biniyor:
+--
+--   1. TABAN      idle / walk / rest / distress — nefes, adim, kuyruk
+--   2. TEPKI      tek seferlik hareketler (irkilme, gevseme, kuyruk...)
+--   3. BAKIS      hayvanin basini veterinere/sahibine cevirmesi
+--   4. IKINCIL    kulak ve kuyrugun govdeyi GECIKMELI takip etmesi
+--
+-- Ustune bir de YUMUSATMA geliyor: hicbir eklem hedefine aninda
+-- atlamiyor, `drive()` uzerinden Lerp ile gidiyor. Eskiden durum
+-- degisince (yuruyusten durusa) poz tek karede ziplayordu.
+
+-- Yumusatma hizlari. Bacaklar hizli olmak zorunda: yavas yumusatma
+-- adimin salinim fazini ezip yuruyusu yeniden &quot;kayar&quot; hale getiriyor.
+local SMOOTH_BODY = 14
+local SMOOTH_LEG = 30
+local SMOOTH_HEAD = 10
+local SMOOTH_SECONDARY = 8
+
+-- Adim dongusunun DURUS fazi (ayagin yerde oldugu bolum). Gercek
+-- dortayaklilarda tirisya yakin bir yuruyuste bu oran ~0.6.
+local STANCE = 0.6
+
+--- Bir eklemi hedefe yumusatarak surer ve pozu hatirlar.
+local function drive(entry: Entry, name: string, joint: Motor6D, target: CFrame, rate: number, dt: number)
+	local previous = entry.pose[name]
+	local blended = if previous == nil
+		then target
+		else previous:Lerp(target, math.clamp(rate * dt, 0, 1))
+	entry.pose[name] = blended
+	joint.Transform = blended
+end
+
+--- Adim dongusu. `p` 0..1 arasi faz. Doner: kalca acisi, diz bukulmesi.
+---
+--- DURUS fazinda ayak yerde: kalca sabit hizla geriye doner, diz
+--- neredeyse duz. Govde ustunden gecerken ayak dunya uzayinda YERINDE
+--- duruyor - &quot;foot sliding&quot;i bitiren sey bu.
+---
+--- SALINIM fazinda kalca hizla one doner ve diz bukulup ayagi
+--- kaldirir; ayak havada oldugu icin kaymasi zaten gorunmez.
+local function gait(p: number, amplitude: number, knee: number): (number, number)
+	if p &lt; STANCE then
+		local k = p / STANCE
+		return -amplitude + 2 * amplitude * k, knee * 0.08
+	end
+	local k = (p - STANCE) / (1 - STANCE)
+	return amplitude - 2 * amplitude * k, knee * math.sin(k * math.pi)
+end
+
+--- Goz kirpma. Kapaklar eklemle degil SAYDAMLIKLA calisiyor
+--- (AnimalFactory'deki gerekce), bu yuzden deger yalnizca DEGISTIGINDE
+--- yaziliyor: her kare Transparency yazmak bosuna replikasyon olurdu.
+local function stepBlink(entry: Entry, dt: number, stress: number)
+	local rig = entry.rig
+	entry.blinkIn -= dt
+	if entry.blinkIn &lt;= 0 and entry.blinkTime &lt; 0 then
+		entry.blinkTime = 0
+		-- Stresli hayvan daha sik kirpiyor.
+		entry.blinkIn = (2.2 + math.random() * 3.4) * (1 - stress * 0.55)
+	end
+
+	local closed = 0
+	if entry.blinkTime &gt;= 0 then
+		entry.blinkTime += dt
+		local total = 0.14
+		if entry.blinkTime &gt;= total then
+			entry.blinkTime = -1
+		else
+			closed = math.sin(entry.blinkTime / total * math.pi)
+		end
+	end
+
+	-- Olmek uzere olan hayvanin gozleri yari kapali duruyor: saglik
+	-- cubuguna bakmadan once bunu goruyorsun.
+	closed = math.max(closed, if entry.state == &quot;distress&quot; then 0.45 else 0)
+
+	local transparency = 1 - closed
+	if math.abs(transparency - entry.lidTransparency) &lt; 0.03 then
+		return
+	end
+	entry.lidTransparency = transparency
+	for index = 1, 2 do
+		local lid = rig.parts[&quot;lid&quot; .. index]
+		if lid ~= nil then
+			lid.Transparency = transparency
+		end
+	end
+end
+
+--- Ikincil hareket: gövdenin IVMESI. Kulak ve kuyruk bunu gecikmeli
+--- takip ediyor, yani hayvan durunca kulaklari one savruluyor.
+local function stepSecondary(entry: Entry, dt: number): Vector3
+	local position = entry.rig.root.Position
+	local velocity = (position - entry.lastPosition) / math.max(dt, 1e-4)
+	entry.lastPosition = position
+	entry.lagVelocity = entry.lagVelocity:Lerp(velocity, math.clamp(6 * dt, 0, 1))
+	local swing = velocity - entry.lagVelocity
+	-- Govdenin kendi eksenine cevriliyor: saga donuste kulaklar sola
+	-- savrulsun.
+	return entry.rig.root.CFrame:VectorToObjectSpace(swing)
+end
+
 local function stepPose(entry: Entry, dt: number, movingSpeed: number)
 	local rig = entry.rig
 	local joints = rig.joints
@@ -12657,13 +12866,21 @@ local function stepPose(entry: Entry, dt: number, movingSpeed: number)
 	entry.phase += dt * (if walking then strideRate else breathRate)
 	local phase = entry.phase
 
-	-- Govde: nefes alip verme + yururken hafif salinim + TEPKI.
+	stepBlink(entry, dt, stress)
+	local secondary = stepSecondary(entry, dt)
+
+	-- ── 1. Govde ──────────────────────────────────────────────────────
 	if joints.rootJoint ~= nil then
 		local breath = math.sin(phase * (if walking then 0.5 else 1)) * (0.035 + stress * 0.03)
 		local sway = if walking then math.sin(phase * 2) * 0.03 else 0
 		local tilt = entry.limpStrength * math.sin(phase) * 0.05
 
-		-- Tepki katmani: govdenin yuksekligine ve egimine ekleniyor.
+		-- Agirlik kaydirma: dururken agirlik bir bacaktan digerine
+		-- geciyor. Tas gibi duran bir hayvan cansiz gorunuyor.
+		if not walking then
+			tilt += math.sin(phase * 0.42) * 0.045
+		end
+
 		local lift, pitch = 0, 0
 		if reaction == &quot;flinch&quot; then
 			lift = reactStrength * 0.32
@@ -12673,38 +12890,63 @@ local function stepPose(entry: Entry, dt: number, movingSpeed: number)
 		elseif reaction == &quot;wag&quot; then
 			lift = math.abs(math.sin(entry.reactionTime * 11)) * reactStrength * 0.16
 		elseif reaction == &quot;breathe&quot; then
-			-- Derin nefes: normal nefesin uzerine yavas ve genis bir dalga.
 			lift = math.sin(entry.reactionTime * 2.1) * reactStrength * 0.22
 		elseif reaction == &quot;shake&quot; then
 			sway += math.sin(entry.reactionTime * 26) * reactStrength * 0.08
 		end
 
-		joints.rootJoint.Transform = CFrame.new(0, breath + lift, 0)
-			* CFrame.Angles(sway + pitch, 0, tilt)
+		drive(
+			entry,
+			&quot;rootJoint&quot;,
+			joints.rootJoint,
+			CFrame.new(0, breath + lift, 0) * CFrame.Angles(sway + pitch, 0, tilt),
+			SMOOTH_BODY,
+			dt
+		)
 	end
 
-	-- Bacaklar: capraz yuruyus. Topallayan bacagin genligi dusuk ve
-	-- fazi kaymis - gozle &quot;aksiyor&quot; diye okunuyor.
-	local amplitude = if walking then 0.55 else 0.0
+	-- ── 2. Bacaklar: capraz adim dongusu ──────────────────────────────
+	-- Capraz cift: 1+4 birlikte, 2+3 birlikte (tiris). Topallayan
+	-- bacagin genligi dusuk, durus fazi kisa ve dizi yarim bukuk -
+	-- gozle &quot;aksiyor&quot; diye okunuyor.
+	local amplitude = if walking then 0.52 else 0
+	local kneeFlex = if walking then 0.85 else 0
 	for index = 1, 4 do
-		local joint = joints[&quot;leg&quot; .. index]
-		if joint ~= nil then
-			local offset = if index % 2 == 0 then math.pi else 0
-			if index &gt; 2 then
-				offset += math.pi
-			end
-			local legAmplitude = amplitude
-			local extra = 0
-			if index == entry.limpLeg then
-				legAmplitude *= (1 - entry.limpStrength * 0.75)
-				extra = entry.limpStrength * 0.22
-			end
-			local swing = math.sin(phase + offset) * legAmplitude + extra
-			joint.Transform = CFrame.Angles(swing, 0, 0)
+		local hipJoint = joints[&quot;leg&quot; .. index]
+		if hipJoint == nil then
+			continue
+		end
+		local shinJoint = joints[&quot;leg&quot; .. index .. &quot;Lower&quot;]
+
+		local offset = if index == 2 or index == 3 then 0.5 else 0
+		local legAmplitude = amplitude
+		local legKnee = kneeFlex
+		local injured = 0
+		if index == entry.limpLeg then
+			legAmplitude *= 1 - entry.limpStrength * 0.7
+			legKnee *= 1 - entry.limpStrength * 0.4
+			-- Sakat bacak yerde de yarim bukuk duruyor.
+			injured = entry.limpStrength * 0.3
+		end
+
+		local p = ((phase / (math.pi * 2)) + offset) % 1
+		local hip, knee = gait(p, legAmplitude, legKnee)
+
+		if not walking then
+			-- Dururken bacaklar duz; yalnizca nefesle cok hafif oynuyor.
+			hip = math.sin(phase * 0.5 + index) * 0.02
+			knee = injured
+		else
+			knee += injured
+		end
+
+		drive(entry, &quot;leg&quot; .. index, hipJoint, CFrame.Angles(hip, 0, 0), SMOOTH_LEG, dt)
+		if shinJoint ~= nil then
+			drive(entry, &quot;shin&quot; .. index, shinJoint, CFrame.Angles(knee, 0, 0), SMOOTH_LEG, dt)
 		end
 	end
 
-	-- Kafa: yururken hafif asagi/yukari, dururken merakli saga-sola.
+	-- ── 3. Kafa: nod + bakis ──────────────────────────────────────────
 	if joints.neck ~= nil then
 		local nod = if walking then math.sin(phase * 2) * 0.08 else math.sin(phase * 0.55) * 0.05
 		local turn = if walking then 0 else math.sin(phase * 0.32) * 0.22
@@ -12723,17 +12965,45 @@ local function stepPose(entry: Entry, dt: number, movingSpeed: number)
 			nod += reactStrength * 0.14
 		end
 
-		joints.neck.Transform = CFrame.Angles(nod - droop, turn, 0)
+		-- BAKIS katmani: hedefe donuyor. Aci sinirli - hayvan basini
+		-- 180 derece cevirmiyor, govdesiyle birlikte doner gibi
+		-- gorunmesi icin sinir dar tutuldu.
+		local target = entry.lookTarget
+		if target ~= nil then
+			local local3 = rig.root.CFrame:PointToObjectSpace(target)
+			local flat = math.sqrt(local3.X * local3.X + local3.Z * local3.Z)
+			if flat &gt; 0.5 then
+				local yaw = math.clamp(math.atan2(-local3.X, -local3.Z), -0.65, 0.65)
+				local pitch = math.clamp(math.atan2(local3.Y, flat), -0.35, 0.45)
+				turn += yaw * entry.lookWeight
+				nod -= pitch * entry.lookWeight
+			end
+		end
+
+		drive(entry, &quot;neck&quot;, joints.neck, CFrame.Angles(nod - droop, turn, 0), SMOOTH_HEAD, dt)
 	end
 
-	-- Kuyruk: rahatken genis sallanir, stresliyken kisilir ve asagi duser.
+	-- ── Cene: soluma ──────────────────────────────────────────────────
+	-- Stresli ve hasta hayvan agzi acik soluyor; sakin hayvanin agzi
+	-- kapali. Bu, saglik cubuguna bakmadan once fark edilen bir isaret.
+	if joints.jaw ~= nil then
+		local pantRate = 4 + stress * 7
+		local pantDepth = (0.02 + stress * 0.16) * (if entry.state == &quot;distress&quot; then 1.6 else 1)
+		local open = (math.sin(phase * pantRate) * 0.5 + 0.5) * pantDepth
+		if reaction == &quot;flinch&quot; then
+			open += reactStrength * 0.3
+		elseif reaction == &quot;breathe&quot; then
+			open += (math.sin(entry.reactionTime * 2.1) * 0.5 + 0.5) * reactStrength * 0.26
+		end
+		drive(entry, &quot;jaw&quot;, joints.jaw, CFrame.Angles(open, 0, 0), SMOOTH_HEAD, dt)
+	end
+
+	-- ── 4. Kuyruk: taban + tepki + IKINCIL ────────────────────────────
 	if joints.tail ~= nil then
 		local wagAmplitude = (0.45 - stress * 0.35) * (if walking then 1.3 else 1)
 		local wag = math.sin(phase * 2.4) * math.max(wagAmplitude, 0.05)
 		local lift = -stress * 0.5
 		if reaction == &quot;wag&quot; then
-			-- Dogru teshiste kuyruk HIZLI ve genis sallaniyor; oyuncunun
-			-- gordugu ilk &quot;dogru yaptin&quot; isareti bu.
 			wag = math.sin(entry.reactionTime * 16) * (0.5 + reactStrength * 0.7)
 			lift += reactStrength * 0.45
 		elseif reaction == &quot;flinch&quot; then
@@ -12742,58 +13012,75 @@ local function stepPose(entry: Entry, dt: number, movingSpeed: number)
 		elseif reaction == &quot;relax&quot; then
 			wag = math.sin(entry.reactionTime * 3) * 0.3 * reactStrength
 		end
-		joints.tail.Transform = CFrame.Angles(lift, wag, 0)
+		-- Ikincil: govde one atilinca kuyruk geride kaliyor.
+		lift += math.clamp(secondary.Z * 0.06, -0.4, 0.4)
+		wag += math.clamp(-secondary.X * 0.05, -0.3, 0.3)
+		drive(entry, &quot;tail&quot;, joints.tail, CFrame.Angles(lift, wag, 0), SMOOTH_SECONDARY, dt)
 	end
 
-	-- Kulaklar: stres arttikca geriye yatiyor, arada bir seyiriyor.
+	-- ── Kulaklar: stres + seyirme + IKINCIL ───────────────────────────
 	for index = 1, 2 do
 		local joint = joints[&quot;ear&quot; .. index]
-		if joint ~= nil then
-			local side = if index == 1 then -1 else 1
-			local twitch = math.sin(phase * 3.1 + index) * 0.05
-			local flatten = stress * 0.55
-			if reaction == &quot;flinch&quot; then
-				flatten += reactStrength * 0.5
-			elseif reaction == &quot;perk&quot; or reaction == &quot;wag&quot; then
-				flatten -= reactStrength * 0.45
-			elseif reaction == &quot;shake&quot; then
-				twitch += math.sin(entry.reactionTime * 22 + index) * reactStrength * 0.3
-			end
-			joint.Transform = CFrame.Angles(-flatten, 0, side * (twitch + stress * 0.25))
+		if joint == nil then
+			continue
 		end
+		local side = if index == 1 then -1 else 1
+		local twitch = math.sin(phase * 3.1 + index) * 0.05
+		local flatten = stress * 0.55
+		if reaction == &quot;flinch&quot; then
+			flatten += reactStrength * 0.5
+		elseif reaction == &quot;perk&quot; or reaction == &quot;wag&quot; then
+			flatten -= reactStrength * 0.45
+		elseif reaction == &quot;shake&quot; then
+			twitch += math.sin(entry.reactionTime * 22 + index) * reactStrength * 0.3
+		end
+		-- Ikincil: ani hizlanma ve donuste kulaklar savruluyor.
+		flatten -= math.clamp(secondary.Z * 0.05, -0.35, 0.35)
+		local sway = math.clamp(-secondary.X * 0.07, -0.4, 0.4)
+		drive(
+			entry,
+			&quot;ear&quot; .. index,
+			joint,
+			CFrame.Angles(-flatten, 0, side * (twitch + stress * 0.25) + sway),
+			SMOOTH_SECONDARY,
+			dt
+		)
 	end
 
-	-- Yilan: govde halkalari boyunca ilerleyen bir dalga. Faz kaymasi
-	-- halkadan halkaya sabit; dalga bastan kuyruga akiyor, yani hayvan
-	-- kendi uzerinde SURUNUYOR gibi gorunuyor. Dururken de kisik bir
-	-- genlikle devam ediyor: canli bir yilan tas gibi durmaz.
+	-- ── Yilan govdesi ─────────────────────────────────────────────────
+	-- Halkalar boyunca ilerleyen bir dalga: faz kaymasi halkadan halkaya
+	-- sabit, dalga bastan kuyruga akiyor - hayvan kendi uzerinde
+	-- SURUNUYOR gibi gorunuyor. Dururken de kisik bir genlikle devam
+	-- ediyor: canli bir yilan tas gibi durmaz.
 	do
 		local index = 2
-		local amplitude = if walking then 0.42 else 0.12
+		local waveAmplitude = if walking then 0.42 else 0.12
 		while true do
 			local joint = joints[&quot;segment&quot; .. index]
 			if joint == nil then
 				break
 			end
+			local target
 			if entry.coiled then
-				-- Her halka sabit bir aciyla donunce govde daireye
-				-- kapaniyor; ustune kucuk bir nefes dalgasi biniyor.
-				joint.Transform = CFrame.Angles(0, 0.62 + math.sin(phase * 0.8 - index * 0.4) * 0.04, 0)
+				target = CFrame.Angles(0, 0.62 + math.sin(phase * 0.8 - index * 0.4) * 0.04, 0)
 			else
 				local offset = (index - 1) * 0.7
-				joint.Transform = CFrame.Angles(0, math.sin(phase * 1.6 - offset) * amplitude, 0)
+				target = CFrame.Angles(0, math.sin(phase * 1.6 - offset) * waveAmplitude, 0)
 			end
+			drive(entry, &quot;segment&quot; .. index, joint, target, SMOOTH_BODY, dt)
 			index += 1
 		end
 	end
 
-	-- Kanatlar: yururken cirpinir, dururken govdeye yapisir.
+	-- ── Kanatlar ──────────────────────────────────────────────────────
 	for index = 1, 2 do
 		local joint = joints[&quot;wing&quot; .. index]
 		if joint ~= nil then
 			local side = if index == 1 then -1 else 1
 			local flap = if walking then math.abs(math.sin(phase * 3)) * 0.6 else math.sin(phase) * 0.06
-			joint.Transform = CFrame.Angles(0, 0, side * -flap)
+			-- Ikincil: kanat ucu govdenin ivmesini gecikmeli takip ediyor.
+			flap += math.clamp(secondary.Z * 0.04, -0.25, 0.25)
+			drive(entry, &quot;wing&quot; .. index, joint, CFrame.Angles(0, 0, side * -flap), SMOOTH_SECONDARY, dt)
 		end
 	end
 end
@@ -13124,6 +13411,58 @@ local function buildHead(
 			parent = model,
 		})
 		rigidWeld(skull, glint)
+
+		-- GOZ KAPAGI
+		--
+		-- Gozun ONUNDE duran ince bir levha; goz rengi degil GOVDE rengi,
+		-- yani opaklastiginda goz kapanmis gorunuyor.
+		--
+		-- Neden eklemle degil SAYDAMLIKLA?
+		-- Kapagi asagi kaydiran bir eklem, acikken kapagi kafanin disinda
+		-- birakiyordu: goz kuresi kafatasinin TAM YUZEYINDE durdugu icin
+		-- onun biraz ustu artik kafanin disi. Saydamlik hangi acidan
+		-- bakilirsa bakilsin bozulmuyor. AnimalAnimator degeri yalnizca
+		-- DEGISTIGINDE yaziyor, yani her kare replikasyon olmuyor.
+		local lidIndex = if side == -1 then 1 else 2
+		local lid = Build.part({
+			name = &quot;GozKapagi&quot; .. lidIndex,
+			size = Vector3.new(head.size * 0.26, head.size * 0.26, head.size * 0.1),
+			cf = CFrame.new(eyePos + Vector3.new(0, 0, head.size * 0.06)),
+			color = palette.body,
+			canCollide = false,
+			castShadow = false,
+			anchored = false,
+			parent = model,
+		})
+		lid.Transparency = 1
+		rigidWeld(skull, lid)
+		parts[&quot;lid&quot; .. lidIndex] = lid
+	end
+
+	-- CENE
+	--
+	-- Kafanin alt-on parcasi ayri: soluma, aci ve yem yeme bununla
+	-- gorunuyor. Mentese ARKADA (kafanin altinda); one dogru +X
+	-- donusu cenenin ucunu asagi indiriyor, yani agiz aciliyor.
+	do
+		local jawDepth = head.size * 0.5 + head.snoutLength
+		local hinge = headPos + Vector3.new(0, -head.size * 0.22, head.size * 0.05)
+		local jaw = Build.part({
+			name = &quot;Cene&quot;,
+			size = Vector3.new(head.size * 0.46, head.size * 0.16, jawDepth),
+			cf = CFrame.new(headPos + Vector3.new(
+				0,
+				-head.size * 0.3,
+				head.size * 0.05 + jawDepth * 0.4
+			)),
+			color = palette.belly,
+			canCollide = false,
+			castShadow = false,
+			anchored = false,
+			parent = model,
+		})
+		joints.jaw = rigJoint(&quot;Jaw&quot;, skull, jaw, hinge)
+		parts.jaw = jaw
 	end
 
 	-- Biyiklar: ince cubuklar. Kedi/kopek/hamsteri bir anda &quot;hayvan&quot;
@@ -13243,15 +13582,40 @@ local function buildLegs(
 		for _, side in { -1, 1 } do
 			index += 1
 			local hip = torso.Position + Vector3.new(side * legs.spreadX, -spec.body.height * 0.4, z)
+
+			-- IKI EKLEMLI BACAK
+			--
+			-- Tek eklemli bacak yururken duz bir sarkac gibi salliniyordu
+			-- ve ayak yerde DURMUYORDU (foot sliding). Gercek bir adim
+			-- dongusu - ayak yere basip govde ustunden gecerken sabit
+			-- kalmasi - ancak kalca + diz ile kurulabiliyor. Yeni parca
+			-- hayvanin dis olcusunu degistirmiyor: ust ve alt bacagin
+			-- toplami yine `legs.length`.
+			local upperLength = legs.length * 0.55
+			local lowerLength = legs.length - upperLength
+			local knee = hip - Vector3.new(0, upperLength, 0)
+
 			local leg = Build.part({
 				name = &quot;Bacak&quot; .. index,
-				size = Vector3.new(legs.thickness, legs.length, legs.thickness),
-				cf = CFrame.new(hip - Vector3.new(0, legs.length * 0.5, 0)),
+				size = Vector3.new(legs.thickness, upperLength, legs.thickness),
+				cf = CFrame.new(hip - Vector3.new(0, upperLength * 0.5, 0)),
 				color = palette.accent,
 				canCollide = false,
 				anchored = false,
 				parent = model,
 			})
+			local shin = Build.part({
+				name = &quot;AltBacak&quot; .. index,
+				-- Alt bacak biraz ince: bilekten ayaga dogru incelen bir
+				-- silüet, duz bir cubuktan cok daha canli duruyor.
+				size = Vector3.new(legs.thickness * 0.86, lowerLength, legs.thickness * 0.86),
+				cf = CFrame.new(knee - Vector3.new(0, lowerLength * 0.5, 0)),
+				color = palette.accent,
+				canCollide = false,
+				anchored = false,
+				parent = model,
+			})
+
 			-- Patiler: bacagin ucundaki kucuk kure, gozle fark ediliyor.
 			local paw = Build.ball({
 				name = &quot;Pati&quot; .. index,
@@ -13262,7 +13626,7 @@ local function buildLegs(
 				anchored = false,
 				parent = model,
 			})
-			rigidWeld(leg, paw)
+			rigidWeld(shin, paw)
 
 			-- Pati alti yastigi: hayvan masaya kondugunda gorunuyor.
 			local pawPad = Build.part({
@@ -13278,7 +13642,9 @@ local function buildLegs(
 			rigidWeld(paw, pawPad)
 
 			joints[&quot;leg&quot; .. index] = rigJoint(&quot;Leg&quot; .. index, torso, leg, hip)
+			joints[&quot;leg&quot; .. index .. &quot;Lower&quot;] = rigJoint(&quot;Leg&quot; .. index .. &quot;Lower&quot;, leg, shin, knee)
 			parts[&quot;leg&quot; .. index] = leg
+			parts[&quot;leg&quot; .. index .. &quot;Lower&quot;] = shin
 		end
 	end
 end
@@ -15598,6 +15964,10 @@ export type Owner = {
 	-- Jest katmani: tek seferlik kol/bas hareketi. Bosken &quot;&quot;.
 	gesture: string,
 	gestureTime: number,
+	-- Son uygulanan poz: yumusatma bunun uzerinden gidiyor.
+	pose: { [string]: CFrame },
+	-- Bakis hedefi (hayvani ya da veteriner).
+	lookTarget: Vector3?,
 }
 
 -- Sahipler rastgele gorunsun diye kucuk palet havuzlari. Oynanisi
@@ -15833,6 +16203,8 @@ function OwnerFactory.create(cframe: CFrame, hintKey: string, parent: Instance):
 		phase = math.random() * math.pi * 2,
 		gesture = &quot;&quot;,
 		gestureTime = 0,
+		pose = {},
+		lookTarget = nil,
 	}
 end
 
@@ -15888,6 +16260,30 @@ end
 
 --- Durusu gunceller. Sahip bekleme odasinda durup nefes aliyor, arada
 --- etrafina bakiyor; sinirliyse kollarini kavusturuyor.
+-- Yumusatma hizlari. Bacaklar hizli: yavas yumusatma adimin salinim
+-- fazini eziyor ve yuruyus yeniden &quot;kayar&quot; gorunuyor.
+local SMOOTH_BODY = 12
+local SMOOTH_LIMB = 26
+
+-- Adim dongusunun DURUS fazi. AnimalAnimator ile ayni oran: ayak yerde
+-- sabit hizla geriye gidiyor, govde ustunden geciyor.
+local STANCE = 0.62
+
+--- Bir eklemi hedefe yumusatarak surer.
+local function drive(owner: Owner, name: string, joint: Motor6D, target: CFrame, rate: number, dt: number)
+	local previous = owner.pose[name]
+	local blended = if previous == nil
+		then target
+		else previous:Lerp(target, math.clamp(rate * dt, 0, 1))
+	owner.pose[name] = blended
+	joint.Transform = blended
+end
+
+--- Sahibin basini bir noktaya cevirir. `nil` bakisi birakir.
+function OwnerFactory.lookAt(owner: Owner, target: Vector3?)
+	owner.lookTarget = target
+end
+
 function OwnerFactory.step(owner: Owner, dt: number, satisfaction: number, walking: boolean)
 	owner.phase += dt * (if walking then 8.5 else 1.3)
 	local phase = owner.phase
@@ -15913,8 +16309,19 @@ function OwnerFactory.step(owner: Owner, dt: number, satisfaction: number, walki
 	end
 
 	if owner.joints.rootJoint ~= nil then
-		owner.joints.rootJoint.Transform = CFrame.new(0, math.sin(phase) * 0.03, 0)
+		-- Dururken agirlik bir ayaktan digerine geciyor; tas gibi duran
+		-- bir NPC cansiz gorunuyor.
+		local shift = if walking then 0 else math.sin(phase * 0.5) * 0.04
+		drive(
+			owner,
+			&quot;rootJoint&quot;,
+			owner.joints.rootJoint,
+			CFrame.new(0, math.sin(phase) * 0.03, 0) * CFrame.Angles(0, 0, shift),
+			SMOOTH_BODY,
+			dt
+		)
 	end
+
 	if owner.joints.neck ~= nil then
 		local look = if walking then 0 else math.sin(phase * 0.4) * 0.35
 		local nod = math.sin(phase * 0.7) * 0.04
@@ -15928,36 +16335,64 @@ function OwnerFactory.step(owner: Owner, dt: number, satisfaction: number, walki
 			nod += gestureStrength * 0.34
 			look += math.sin(owner.gestureTime * 9) * gestureStrength * 0.4
 		end
-		owner.joints.neck.Transform = CFrame.Angles(nod, look, 0)
+
+		-- BAKIS: hayvanina ya da veterinere doner. Aci sinirli; govdesi
+		-- donmeden basini 180 derece cevirmiyor.
+		local target = owner.lookTarget
+		if target ~= nil then
+			local local3 = owner.root.CFrame:PointToObjectSpace(target)
+			local flat = math.sqrt(local3.X * local3.X + local3.Z * local3.Z)
+			if flat &gt; 0.5 then
+				look += math.clamp(math.atan2(-local3.X, -local3.Z), -0.7, 0.7)
+				nod -= math.clamp(math.atan2(local3.Y, flat), -0.3, 0.4)
+			end
+		end
+
+		drive(owner, &quot;neck&quot;, owner.joints.neck, CFrame.Angles(nod, look, 0), SMOOTH_BODY, dt)
 	end
 
 	for index = 1, 2 do
 		local side = if index == 1 then -1 else 1
 		local arm = owner.joints[&quot;arm&quot; .. index]
 		if arm ~= nil then
+			local target
 			if gesture == &quot;point&quot; and index == 2 then
 				-- Sag kol one uzanip hayvani gosteriyor.
-				arm.Transform = CFrame.Angles(math.rad(-95 * gestureStrength), 0, math.rad(side * -18 * gestureStrength))
+				target = CFrame.Angles(math.rad(-95 * gestureStrength), 0, math.rad(side * -18 * gestureStrength))
 			elseif gesture == &quot;relief&quot; then
 				-- Iki kol da hafifce aciliyor: &quot;cok sukur&quot; durusu.
-				arm.Transform = CFrame.Angles(math.rad(-28 * gestureStrength), 0, math.rad(side * -46 * gestureStrength))
+				target = CFrame.Angles(math.rad(-28 * gestureStrength), 0, math.rad(side * -46 * gestureStrength))
 			elseif gesture == &quot;worry&quot; then
 				-- Eller yuze yakin: endise.
-				arm.Transform = CFrame.Angles(math.rad(-118 * gestureStrength), 0, math.rad(side * -26 * gestureStrength))
+				target = CFrame.Angles(math.rad(-118 * gestureStrength), 0, math.rad(side * -26 * gestureStrength))
 			elseif annoyed and not walking then
 				-- Kollari kavusturmus: gorsel olarak &quot;bekliyorum&quot; demek.
-				arm.Transform = CFrame.Angles(math.rad(-72), 0, math.rad(side * -34))
+				target = CFrame.Angles(math.rad(-72), 0, math.rad(side * -34))
 			elseif walking then
-				arm.Transform = CFrame.Angles(math.sin(phase + (if index == 1 then 0 else math.pi)) * 0.6, 0, 0)
+				target = CFrame.Angles(math.sin(phase + (if index == 1 then 0 else math.pi)) * 0.6, 0, 0)
 			else
-				arm.Transform = CFrame.Angles(math.sin(phase * 0.5) * 0.05, 0, 0)
+				target = CFrame.Angles(math.sin(phase * 0.5) * 0.05, 0, 0)
 			end
+			drive(owner, &quot;arm&quot; .. index, arm, target, SMOOTH_LIMB, dt)
 		end
+
 		local leg = owner.joints[&quot;leg&quot; .. index]
 		if leg ~= nil then
-			leg.Transform = if walking
-				then CFrame.Angles(math.sin(phase + (if index == 1 then math.pi else 0)) * 0.55, 0, 0)
-				else CFrame.new()
+			local target = CFrame.identity
+			if walking then
+				-- Ayak yerde SABIT HIZLA geriye gidiyor (durus fazi),
+				-- sonra hizla one savruluyor (salinim fazi). Duz bir
+				-- sinus, ayagi yerde yavaslatip kaydiriyordu.
+				local p = ((phase / (math.pi * 2)) + (if index == 1 then 0.5 else 0)) % 1
+				local swing
+				if p &lt; STANCE then
+					swing = -0.5 + (p / STANCE)
+				else
+					swing = 0.5 - ((p - STANCE) / (1 - STANCE))
+				end
+				target = CFrame.Angles(swing * 0.55, 0, 0)
+			end
+			drive(owner, &quot;leg&quot; .. index, leg, target, SMOOTH_LIMB, dt)
 		end
 	end
 end

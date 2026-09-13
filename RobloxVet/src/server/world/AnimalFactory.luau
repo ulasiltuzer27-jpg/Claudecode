@@ -280,6 +280,58 @@ local function buildHead(
 			parent = model,
 		})
 		rigidWeld(skull, glint)
+
+		-- GOZ KAPAGI
+		--
+		-- Gozun ONUNDE duran ince bir levha; goz rengi degil GOVDE rengi,
+		-- yani opaklastiginda goz kapanmis gorunuyor.
+		--
+		-- Neden eklemle degil SAYDAMLIKLA?
+		-- Kapagi asagi kaydiran bir eklem, acikken kapagi kafanin disinda
+		-- birakiyordu: goz kuresi kafatasinin TAM YUZEYINDE durdugu icin
+		-- onun biraz ustu artik kafanin disi. Saydamlik hangi acidan
+		-- bakilirsa bakilsin bozulmuyor. AnimalAnimator degeri yalnizca
+		-- DEGISTIGINDE yaziyor, yani her kare replikasyon olmuyor.
+		local lidIndex = if side == -1 then 1 else 2
+		local lid = Build.part({
+			name = "GozKapagi" .. lidIndex,
+			size = Vector3.new(head.size * 0.26, head.size * 0.26, head.size * 0.1),
+			cf = CFrame.new(eyePos + Vector3.new(0, 0, head.size * 0.06)),
+			color = palette.body,
+			canCollide = false,
+			castShadow = false,
+			anchored = false,
+			parent = model,
+		})
+		lid.Transparency = 1
+		rigidWeld(skull, lid)
+		parts["lid" .. lidIndex] = lid
+	end
+
+	-- CENE
+	--
+	-- Kafanin alt-on parcasi ayri: soluma, aci ve yem yeme bununla
+	-- gorunuyor. Mentese ARKADA (kafanin altinda); one dogru +X
+	-- donusu cenenin ucunu asagi indiriyor, yani agiz aciliyor.
+	do
+		local jawDepth = head.size * 0.5 + head.snoutLength
+		local hinge = headPos + Vector3.new(0, -head.size * 0.22, head.size * 0.05)
+		local jaw = Build.part({
+			name = "Cene",
+			size = Vector3.new(head.size * 0.46, head.size * 0.16, jawDepth),
+			cf = CFrame.new(headPos + Vector3.new(
+				0,
+				-head.size * 0.3,
+				head.size * 0.05 + jawDepth * 0.4
+			)),
+			color = palette.belly,
+			canCollide = false,
+			castShadow = false,
+			anchored = false,
+			parent = model,
+		})
+		joints.jaw = rigJoint("Jaw", skull, jaw, hinge)
+		parts.jaw = jaw
 	end
 
 	-- Biyiklar: ince cubuklar. Kedi/kopek/hamsteri bir anda "hayvan"
@@ -399,15 +451,40 @@ local function buildLegs(
 		for _, side in { -1, 1 } do
 			index += 1
 			local hip = torso.Position + Vector3.new(side * legs.spreadX, -spec.body.height * 0.4, z)
+
+			-- IKI EKLEMLI BACAK
+			--
+			-- Tek eklemli bacak yururken duz bir sarkac gibi salliniyordu
+			-- ve ayak yerde DURMUYORDU (foot sliding). Gercek bir adim
+			-- dongusu - ayak yere basip govde ustunden gecerken sabit
+			-- kalmasi - ancak kalca + diz ile kurulabiliyor. Yeni parca
+			-- hayvanin dis olcusunu degistirmiyor: ust ve alt bacagin
+			-- toplami yine `legs.length`.
+			local upperLength = legs.length * 0.55
+			local lowerLength = legs.length - upperLength
+			local knee = hip - Vector3.new(0, upperLength, 0)
+
 			local leg = Build.part({
 				name = "Bacak" .. index,
-				size = Vector3.new(legs.thickness, legs.length, legs.thickness),
-				cf = CFrame.new(hip - Vector3.new(0, legs.length * 0.5, 0)),
+				size = Vector3.new(legs.thickness, upperLength, legs.thickness),
+				cf = CFrame.new(hip - Vector3.new(0, upperLength * 0.5, 0)),
 				color = palette.accent,
 				canCollide = false,
 				anchored = false,
 				parent = model,
 			})
+			local shin = Build.part({
+				name = "AltBacak" .. index,
+				-- Alt bacak biraz ince: bilekten ayaga dogru incelen bir
+				-- silüet, duz bir cubuktan cok daha canli duruyor.
+				size = Vector3.new(legs.thickness * 0.86, lowerLength, legs.thickness * 0.86),
+				cf = CFrame.new(knee - Vector3.new(0, lowerLength * 0.5, 0)),
+				color = palette.accent,
+				canCollide = false,
+				anchored = false,
+				parent = model,
+			})
+
 			-- Patiler: bacagin ucundaki kucuk kure, gozle fark ediliyor.
 			local paw = Build.ball({
 				name = "Pati" .. index,
@@ -418,7 +495,7 @@ local function buildLegs(
 				anchored = false,
 				parent = model,
 			})
-			rigidWeld(leg, paw)
+			rigidWeld(shin, paw)
 
 			-- Pati alti yastigi: hayvan masaya kondugunda gorunuyor.
 			local pawPad = Build.part({
@@ -434,7 +511,9 @@ local function buildLegs(
 			rigidWeld(paw, pawPad)
 
 			joints["leg" .. index] = rigJoint("Leg" .. index, torso, leg, hip)
+			joints["leg" .. index .. "Lower"] = rigJoint("Leg" .. index .. "Lower", leg, shin, knee)
 			parts["leg" .. index] = leg
+			parts["leg" .. index .. "Lower"] = shin
 		end
 	end
 end

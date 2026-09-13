@@ -1363,6 +1363,40 @@ local function tickVitals(dt: number)
 		AnimalAnimator.setState(patient.rig, if patient.stress >= 70 then "distress" else "idle")
 		updateNameplate(patient)
 
+		-- BAKIS: masadaki hayvan veterinere, bekleyen hayvan sahibine
+		-- bakiyor. "Bu hayvan beni goruyor" hissini veren tek sey bu.
+		-- Yururken bakis birakiliyor: yuruyen bir hayvanin basi yola
+		-- donuk olmali.
+		if patient.state == "walking" or patient.state == "arriving" or patient.state == "leaving" then
+			AnimalAnimator.lookAt(patient.rig, nil)
+		else
+			local lookAt: Vector3? = nil
+			local vet = patient.vet
+			if vet ~= nil then
+				local character = vet.Character
+				local head = if character ~= nil then character:FindFirstChild("Head") else nil
+				if head ~= nil and head:IsA("BasePart") then
+					lookAt = head.Position
+				end
+			end
+			if lookAt == nil and patient.owner ~= nil then
+				lookAt = patient.owner.root.Position + Vector3.new(0, 4, 0)
+			end
+			-- Stresli hayvan bakisini kaciriyor: guclu stres agirligi
+			-- dusuruyor.
+			AnimalAnimator.lookAt(patient.rig, lookAt, 1 - patient.stress / 200)
+
+			-- Sahip de bakiyor: veteriner varsa ona, yoksa hayvanina.
+			-- Bekleme odasinda kimin kime ait oldugu boylece iyice
+			-- okunur hale geliyor.
+			if patient.owner ~= nil then
+				OwnerFactory.lookAt(
+					patient.owner,
+					if lookAt ~= nil then lookAt else patient.rig.root.Position
+				)
+			end
+		end
+
 		-- Sahibin sabri: bekledikce tukeniyor. Hastasi masaya alinmis
 		-- olsa bile isin uzamasi memnuniyeti dusuruyor.
 		if patient.owner ~= nil and patient.state ~= "leaving" then
