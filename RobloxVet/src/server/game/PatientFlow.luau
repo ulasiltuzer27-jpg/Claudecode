@@ -38,6 +38,7 @@ local Leaderboard = require(script.Parent.Leaderboard)
 local Profile = require(script.Parent.Profile)
 local Surgery = require(script.Parent.Surgery)
 local Tasks = require(script.Parent.Tasks)
+local ToolGame = require(script.Parent.ToolGame)
 local Treatment = require(script.Parent.Treatment)
 local Upgrades = require(script.Parent.Upgrades)
 
@@ -831,6 +832,31 @@ function PatientFlow.callNext(player: Player)
 	pushStateAll()
 end
 
+--- Aletin bulduklarini aciyor ve istemciye bildiriyor. Mini-oyunlu
+--- aletlerde ancak mini-oyun KAZANILINCA cagriliyor; mini-oyunsuz
+--- aletlerde dogrudan.
+local function revealFindings(player: Player, patient: Patient, toolId: string)
+	local found = Diagnosis.revealWith(patient.revealed, patient.conditionId, toolId)
+	for _, symptomId in found do
+		patient.revealed[symptomId] = true
+	end
+	patient.toolsUsed[toolId] = true
+
+	-- Alet degdiginde hayvan basini kaldiriyor: muayenenin oyuncuya
+	-- donen tarafi.
+	AnimalAnimator.react(patient.rig, if #found > 0 then "perk" else "shake")
+
+	local names = {}
+	for _, symptomId in found do
+		local symptom = Diagnosis.symptom(symptomId)
+		table.insert(names, if symptom ~= nil then symptom.nameKey else symptomId)
+	end
+
+	Audio.play("tool" .. toolId:sub(1, 1):upper() .. toolId:sub(2), patient.rig.root)
+	Net.toPlayer("ToolResult", player, toolId, names)
+	pushChart(player)
+end
+
 function PatientFlow.useTool(player: Player, toolId: string)
 	local entry = Profile.get(player)
 	if entry == nil then
@@ -859,29 +885,53 @@ function PatientFlow.useTool(player: Player, toolId: string)
 	end
 	patient.busyUntil = os.clock() + tool.useSeconds
 
-	local found = Diagnosis.revealWith(patient.revealed, patient.conditionId, toolId)
-	for _, symptomId in found do
-		patient.revealed[symptomId] = true
-	end
-	patient.toolsUsed[toolId] = true
-
 	-- Her alet kullanimi hayvani biraz gerer: butun aletleri sirayla
-	-- denemek bedava degil.
+	-- denemek bedava degil. Mini-oyun kaybedilse bile bu bedel odendi -
+	-- aleti hayvana dokundurmak zaten gerdi.
 	patient.stress = math.clamp(patient.stress + economy.toolStress, 0, 100)
 	AnimalAnimator.setStress(patient.rig, patient.stress)
-	-- Alet degdiginde hayvan basini kaldiriyor: muayenenin oyuncuya
-	-- donen tarafi.
-	AnimalAnimator.react(patient.rig, if #found > 0 then "perk" else "shake")
 
-	local names = {}
-	for _, symptomId in found do
-		local symptom = Diagnosis.symptom(symptomId)
-		table.insert(names, if symptom ~= nil then symptom.nameKey else symptomId)
+	-- Mini-oyunlu alet: belirtiler ancak KAZANILINCA aciliyor.
+	-- Kaybetmek aleti kilitlemiyor; oyuncu tekrar deneyebiliyor (ve her
+	-- deneme hayvani yeniden geriyor).
+	local kind = ToolGame.kindOf(toolId)
+	if kind ~= "" then
+		if ToolGame.active(player) ~= nil then
+			return -- bir mini-oyun zaten acik
+		end
+		local patientId = patient.id
+		local payload = ToolGame.begin(player, patientId, toolId, kind, function(ok: boolean, reasonKey: string)
+			Net.toPlayer("ToolGameEnd", player, ok, reasonKey)
+			local current = patients[patientId]
+			if current == nil or current.vet ~= player then
+				return
+			end
+			if ok then
+				revealFindings(player, current, toolId)
+			else
+				notify(player, "warn", reasonKey)
+				pushChart(player)
+			end
+		end)
+		if payload ~= nil then
+			Audio.play("tool" .. toolId:sub(1, 1):upper() .. toolId:sub(2), patient.rig.root)
+			Net.toPlayer("ToolGameBegin", player, payload)
+			return
+		end
 	end
 
-	Audio.play("tool" .. toolId:sub(1, 1):upper() .. toolId:sub(2), patient.rig.root)
-	Net.toPlayer("ToolResult", player, toolId, names)
-	pushChart(player)
+	revealFindings(player, patient, toolId)
+end
+
+--- Ultrason probunun konumu: sunucu yalnizca "ne kadar yakinsin"
+--- sayisini donuyor.
+function PatientFlow.toolProbe(player: Player, x: number, y: number)
+	Net.toPlayer("ToolGameHint", player, ToolGame.probe(player, x, y))
+end
+
+--- Mini-oyun cevabi. Sonucu ToolGame.begin'in geri cagrisi isliyor.
+function PatientFlow.toolSubmit(player: Player, x: number, y: number)
+	ToolGame.submit(player, x, y)
 end
 
 function PatientFlow.submitDiagnosis(player: Player, conditionId: string)

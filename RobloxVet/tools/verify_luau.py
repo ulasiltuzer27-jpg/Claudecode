@@ -62,6 +62,11 @@ KEY_NAMESPACES = (
     "notify", "treat", "shop", "hud", "chart", "diagnosis", "treatment",
     "surgery", "prompt", "room", "prop", "animal", "tool", "symptom",
     "condition", "upgrade", "title", "clinic",
+    # Sonradan eklenen ad alanlari. Listede olmayan bir ad alani
+    # DENETLENMIYOR demek: eksik anahtar ekranda "[toolgame.spot]" diye
+    # gorunur ve ancak Studio'da fark edilirdi.
+    "toolgame", "decor", "set", "lobby", "stat", "progress", "hint",
+    "ach", "task", "fps", "board",
 )
 KEY_RE = re.compile(r'"((?:%s)\.[A-Za-z0-9_.]+)"' % "|".join(KEY_NAMESPACES))
 

@@ -34,6 +34,12 @@ Net.Schema = {
 	SurgeryEnd = { direction = "toClient", args = { "boolean", "number" } },
 	ProgressUpdate = { direction = "toClient", args = { "table" } },
 	LobbyState = { direction = "toClient", args = { "table" } },
+	-- Alet mini-oyunlari. `ToolGameHint` sicak/soguk geri bildirimi:
+	-- ultrasonun hedefi istemciye HIC gitmiyor, yalnizca "ne kadar
+	-- yakinsin" sayisi gidiyor.
+	ToolGameBegin = { direction = "toClient", args = { "table" } },
+	ToolGameHint = { direction = "toClient", args = { "number" } },
+	ToolGameEnd = { direction = "toClient", args = { "boolean", "string" } },
 
 	-- ── Istemci -> Sunucu ──────────────────────────────────────────────
 	CallNext = { direction = "toServer", args = {} },
@@ -50,6 +56,8 @@ Net.Schema = {
 	RequestProgress = { direction = "toServer", args = {} },
 	JoinQueue = { direction = "toServer", args = { "string" } },
 	LeaveQueue = { direction = "toServer", args = {} },
+	ToolGameProbe = { direction = "toServer", args = { "number", "number" } },
+	ToolGameSubmit = { direction = "toServer", args = { "number", "number" } },
 }
 
 -- Istemcinin saniyede kac kez gonderebilecegi. Dogrulama sunucuda
@@ -72,6 +80,10 @@ Net.RateLimit = {
 	RequestProgress = 3,
 	JoinQueue = 4,
 	LeaveQueue = 4,
+	-- Prob hareketi surekli: sicak/soguk geri bildirimi icin saniyede
+	-- 12 ornek yeterli ve istemci zaten bundan sik yollamıyor.
+	ToolGameProbe = 12,
+	ToolGameSubmit = 6,
 }
 
 local folderName = "VetRemotes"

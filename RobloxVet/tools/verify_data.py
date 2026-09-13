@@ -148,6 +148,32 @@ def main() -> int:
             and all(0 <= value <= 255 for value in view.get("tipColor", [])),
         )
 
+    # Alet mini-oyunlari: her `minigame` degeri tools.json'daki
+    # `minigames` tablosunda tanimli olmali, yoksa ToolGame.begin nil
+    # doner ve alet SESSIZCE hicbir sey yapmaz.
+    tools_file = load("tools.json")
+    minigames = tools_file.get("minigames", {})
+    check("tools.json minigames tablosu var", len(minigames) > 0)
+    for kind, settings in minigames.items():
+        check(f"mini-oyun '{kind}' suresi makul", 3 <= settings.get("seconds", 0) <= 60)
+        check(
+            f"mini-oyun '{kind}' metinleri tr.json'da var",
+            f"toolgame.{kind}" in strings and f"toolgame.{kind}.hint" in strings,
+        )
+    check("mini-oyun 'spot' yaricap bildiriyor", 0 < minigames.get("spot", {}).get("radius", 0) < 0.5)
+    check("mini-oyun 'probe' yaricap bildiriyor", 0 < minigames.get("probe", {}).get("radius", 0) < 0.5)
+    range_game = minigames.get("range", {})
+    check("mini-oyun 'range' pencere genisligi makul", 0.05 <= range_game.get("width", 0) <= 0.4)
+    check("mini-oyun 'range' tarama suresi pozitif", range_game.get("sweepSeconds", 0) > 0)
+    for tool in tools:
+        kind = tool.get("minigame", "")
+        check(
+            f"alet '{tool['id']}' mini-oyun turu taniniyor: '{kind}'",
+            kind == "" or kind in minigames,
+        )
+    for key in ("toolgame.success", "toolgame.failed", "toolgame.timeout", "toolgame.cancelled"):
+        check(f"mini-oyun sonuc metni tr.json'da var: {key}", key in strings)
+
     # Ayarlardaki viewModel bloku: ViewModel.luau bu alanlari DOGRUDAN
     # okuyor, eksigi calisma aninda "attempt to index nil" olur.
     settings_file = load("settings.json")

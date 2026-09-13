@@ -38,6 +38,7 @@ local Matchmaking = require(script.Parent.game.Matchmaking)
 local Economy = require(script.Parent.game.Economy)
 local Profile = require(script.Parent.game.Profile)
 local Tasks = require(script.Parent.game.Tasks)
+local ToolGame = require(script.Parent.game.ToolGame)
 local Treatment = require(script.Parent.game.Treatment)
 local Upgrades = require(script.Parent.game.Upgrades)
 
@@ -591,6 +592,29 @@ do
 	end
 	for _, treatment in Treatment.all() do
 		check(("tedavi '%s' icin efekt tanimli"):format(treatment.id), effectIds[treatment.id] == true)
+	end
+
+	-- Alet mini-oyunlari: tools.json'daki her `minigame` degeri ToolGame
+	-- tarafindan taninmali. Taninmayan tur, aletin sessizce hicbir sey
+	-- yapmamasi demek.
+	local gameKinds = {}
+	for _, kind in ToolGame.kinds() do
+		gameKinds[kind] = true
+	end
+	for _, tool in toolData.tools do
+		local kind = tool.minigame or ""
+		check(
+			("alet '%s' mini-oyun turu taniniyor ('%s')"):format(tool.id, kind),
+			kind == "" or gameKinds[kind] == true
+		)
+		check(
+			("alet '%s' icin ToolGame ayni turu soyluyor"):format(tool.id),
+			ToolGame.kindOf(tool.id) == kind
+		)
+	end
+	for kind in gameKinds do
+		check(("mini-oyun '%s' basligi cevrili"):format(kind), Loc.has("toolgame." .. kind))
+		check(("mini-oyun '%s' ipucu cevrili"):format(kind), Loc.has("toolgame." .. kind .. ".hint"))
 	end
 
 	-- Birinci sahis el modeli: her aletin viewModel bloku olmali.

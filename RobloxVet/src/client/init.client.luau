@@ -37,6 +37,7 @@ local ShopPanel = require(script.ShopPanel)
 local SurgeryPanel = require(script.SurgeryPanel)
 local Theme = require(script.Theme)
 local ToolBar = require(script.ToolBar)
+local ToolGamePanel = require(script.ToolGamePanel)
 local TreatmentPanel = require(script.TreatmentPanel)
 local ViewModel = require(script.ViewModel)
 
@@ -70,6 +71,7 @@ TreatmentPanel.create(screen)
 ToolBar.create(screen)
 ShopPanel.create(screen)
 SurgeryPanel.create(screen)
+ToolGamePanel.create(screen)
 ProgressPanel.create(screen)
 Fps.create(screen)
 SettingsPanel.create(screen)
@@ -199,6 +201,19 @@ Net.get("ToolResult").OnClientEvent:Connect(function(toolId: string, payload: { 
 	for _, nameKey in payload do
 		Notify.push("good", "notify.symptomFound", { nameKey })
 	end
+end)
+
+Net.get("ToolGameBegin").OnClientEvent:Connect(function(payload: any)
+	ToolGamePanel.begin(payload)
+end)
+
+Net.get("ToolGameHint").OnClientEvent:Connect(function(heat: number)
+	ToolGamePanel.hint(heat)
+end)
+
+Net.get("ToolGameEnd").OnClientEvent:Connect(function(ok: boolean, reasonKey: string)
+	ToolGamePanel.finish(ok, reasonKey)
+	Notify.push(if ok then "good" else "warn", reasonKey, {})
 end)
 
 Net.get("SurgeryBegin").OnClientEvent:Connect(function(schedule: any)

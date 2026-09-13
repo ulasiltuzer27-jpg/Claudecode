@@ -1071,6 +1071,12 @@ Net.Schema = {
 	SurgeryEnd = { direction = &quot;toClient&quot;, args = { &quot;boolean&quot;, &quot;number&quot; } },
 	ProgressUpdate = { direction = &quot;toClient&quot;, args = { &quot;table&quot; } },
 	LobbyState = { direction = &quot;toClient&quot;, args = { &quot;table&quot; } },
+	-- Alet mini-oyunlari. `ToolGameHint` sicak/soguk geri bildirimi:
+	-- ultrasonun hedefi istemciye HIC gitmiyor, yalnizca &quot;ne kadar
+	-- yakinsin&quot; sayisi gidiyor.
+	ToolGameBegin = { direction = &quot;toClient&quot;, args = { &quot;table&quot; } },
+	ToolGameHint = { direction = &quot;toClient&quot;, args = { &quot;number&quot; } },
+	ToolGameEnd = { direction = &quot;toClient&quot;, args = { &quot;boolean&quot;, &quot;string&quot; } },
 
 	-- ── Istemci -&gt; Sunucu ──────────────────────────────────────────────
 	CallNext = { direction = &quot;toServer&quot;, args = {} },
@@ -1087,6 +1093,8 @@ Net.Schema = {
 	RequestProgress = { direction = &quot;toServer&quot;, args = {} },
 	JoinQueue = { direction = &quot;toServer&quot;, args = { &quot;string&quot; } },
 	LeaveQueue = { direction = &quot;toServer&quot;, args = {} },
+	ToolGameProbe = { direction = &quot;toServer&quot;, args = { &quot;number&quot;, &quot;number&quot; } },
+	ToolGameSubmit = { direction = &quot;toServer&quot;, args = { &quot;number&quot;, &quot;number&quot; } },
 }
 
 -- Istemcinin saniyede kac kez gonderebilecegi. Dogrulama sunucuda
@@ -1109,6 +1117,10 @@ Net.RateLimit = {
 	RequestProgress = 3,
 	JoinQueue = 4,
 	LeaveQueue = 4,
+	-- Prob hareketi surekli: sicak/soguk geri bildirimi icin saniyede
+	-- 12 ornek yeterli ve istemci zaten bundan sik yollamıyor.
+	ToolGameProbe = 12,
+	ToolGameSubmit = 6,
 }
 
 local folderName = &quot;VetRemotes&quot;
@@ -5545,6 +5557,16 @@ return {
 		[&quot;surgery.perfect&quot;] = &quot;TAM İSABET&quot;,
 		[&quot;surgery.good&quot;] = &quot;İYİ&quot;,
 		[&quot;surgery.miss&quot;] = &quot;KAÇTI&quot;,
+		[&quot;toolgame.spot&quot;] = &quot;RÖNTGEN — KIRIĞI BUL&quot;,
+		[&quot;toolgame.spot.hint&quot;] = &quot;Görüntüdeki çatlağı bul ve üstüne tıkla.&quot;,
+		[&quot;toolgame.range&quot;] = &quot;KAN TESTİ — DEĞERİ YAKALA&quot;,
+		[&quot;toolgame.range.hint&quot;] = &quot;İbre yeşil aralıktayken Boşluk'a bas.&quot;,
+		[&quot;toolgame.probe&quot;] = &quot;ULTRASON — HEDEFİ TARA&quot;,
+		[&quot;toolgame.probe.hint&quot;] = &quot;Probu gezdir: kızardıkça yaklaşıyorsun. Emin olunca tıkla.&quot;,
+		[&quot;toolgame.success&quot;] = &quot;İşlem başarılı — bulgular çizelgede.&quot;,
+		[&quot;toolgame.failed&quot;] = &quot;İşlem tutmadı, aleti tekrar dene.&quot;,
+		[&quot;toolgame.timeout&quot;] = &quot;Süre doldu — aleti tekrar dene.&quot;,
+		[&quot;toolgame.cancelled&quot;] = &quot;İşlem yarıda kaldı.&quot;,
 		[&quot;shop.title&quot;] = &quot;MAĞAZA&quot;,
 		[&quot;shop.close&quot;] = &quot;Kapat (B)&quot;,
 		[&quot;shop.tools&quot;] = &quot;ALETLER&quot;,
@@ -6734,6 +6756,7 @@ return {
 				},
 				[&quot;motion&quot;] = &quot;point&quot;,
 			},
+			[&quot;minigame&quot;] = &quot;&quot;,
 		},
 		{
 			[&quot;id&quot;] = &quot;stethoscope&quot;,
@@ -6766,6 +6789,7 @@ return {
 				},
 				[&quot;motion&quot;] = &quot;press&quot;,
 			},
+			[&quot;minigame&quot;] = &quot;&quot;,
 		},
 		{
 			[&quot;id&quot;] = &quot;thermometer&quot;,
@@ -6798,6 +6822,7 @@ return {
 				},
 				[&quot;motion&quot;] = &quot;press&quot;,
 			},
+			[&quot;minigame&quot;] = &quot;&quot;,
 		},
 		{
 			[&quot;id&quot;] = &quot;otoscope&quot;,
@@ -6830,6 +6855,7 @@ return {
 				},
 				[&quot;motion&quot;] = &quot;reach&quot;,
 			},
+			[&quot;minigame&quot;] = &quot;&quot;,
 		},
 		{
 			[&quot;id&quot;] = &quot;xray&quot;,
@@ -6862,6 +6888,7 @@ return {
 				},
 				[&quot;motion&quot;] = &quot;sweep&quot;,
 			},
+			[&quot;minigame&quot;] = &quot;spot&quot;,
 		},
 		{
 			[&quot;id&quot;] = &quot;bloodtest&quot;,
@@ -6894,6 +6921,7 @@ return {
 				},
 				[&quot;motion&quot;] = &quot;press&quot;,
 			},
+			[&quot;minigame&quot;] = &quot;range&quot;,
 		},
 		{
 			[&quot;id&quot;] = &quot;urinalysis&quot;,
@@ -6926,6 +6954,7 @@ return {
 				},
 				[&quot;motion&quot;] = &quot;twist&quot;,
 			},
+			[&quot;minigame&quot;] = &quot;&quot;,
 		},
 		{
 			[&quot;id&quot;] = &quot;ultrasound&quot;,
@@ -6958,6 +6987,23 @@ return {
 				},
 				[&quot;motion&quot;] = &quot;sweep&quot;,
 			},
+			[&quot;minigame&quot;] = &quot;probe&quot;,
+		},
+	},
+	[&quot;minigames&quot;] = {
+		[&quot;spot&quot;] = {
+			[&quot;seconds&quot;] = 9,
+			[&quot;radius&quot;] = 0.12,
+			[&quot;decoys&quot;] = 5,
+		},
+		[&quot;range&quot;] = {
+			[&quot;seconds&quot;] = 12,
+			[&quot;sweepSeconds&quot;] = 2.2,
+			[&quot;width&quot;] = 0.18,
+		},
+		[&quot;probe&quot;] = {
+			[&quot;seconds&quot;] = 14,
+			[&quot;radius&quot;] = 0.12,
 		},
 	},
 }
@@ -7265,6 +7311,7 @@ local PatientFlow = require(script.game.PatientFlow)
 local Profile = require(script.game.Profile)
 local Surgery = require(script.game.Surgery)
 local Tasks = require(script.game.Tasks)
+local ToolGame = require(script.game.ToolGame)
 local Upgrades = require(script.game.Upgrades)
 
 local settingsData = require(Data.settings)
@@ -7496,6 +7543,7 @@ Players.PlayerAdded:Connect(onPlayerAdded)
 Players.PlayerRemoving:Connect(function(player: Player)
 	PatientFlow.playerLeft(player)
 	Surgery.cancel(player)
+	ToolGame.cancel(player)
 	Matchmaking.leave(player)
 	Validate.forget(player)
 	-- Cikan oyuncunun dekoru da kalkiyor; kalanlarinki duruyor.
@@ -7523,6 +7571,12 @@ bind(&quot;SubmitDiagnosis&quot;, function(player: Player, conditionId: string)
 end)
 bind(&quot;ApplyTreatment&quot;, function(player: Player, treatmentId: string)
 	PatientFlow.applyTreatment(player, treatmentId)
+end)
+bind(&quot;ToolGameProbe&quot;, function(player: Player, x: number, y: number)
+	PatientFlow.toolProbe(player, x, y)
+end)
+bind(&quot;ToolGameSubmit&quot;, function(player: Player, x: number, y: number)
+	PatientFlow.toolSubmit(player, x, y)
 end)
 bind(&quot;SurgeryInput&quot;, function(player: Player, step: number)
 	PatientFlow.surgeryInput(player, step)
@@ -7690,6 +7744,7 @@ local Matchmaking = require(script.Parent.game.Matchmaking)
 local Economy = require(script.Parent.game.Economy)
 local Profile = require(script.Parent.game.Profile)
 local Tasks = require(script.Parent.game.Tasks)
+local ToolGame = require(script.Parent.game.ToolGame)
 local Treatment = require(script.Parent.game.Treatment)
 local Upgrades = require(script.Parent.game.Upgrades)
 
@@ -8243,6 +8298,29 @@ do
 	end
 	for _, treatment in Treatment.all() do
 		check((&quot;tedavi '%s' icin efekt tanimli&quot;):format(treatment.id), effectIds[treatment.id] == true)
+	end
+
+	-- Alet mini-oyunlari: tools.json'daki her `minigame` degeri ToolGame
+	-- tarafindan taninmali. Taninmayan tur, aletin sessizce hicbir sey
+	-- yapmamasi demek.
+	local gameKinds = {}
+	for _, kind in ToolGame.kinds() do
+		gameKinds[kind] = true
+	end
+	for _, tool in toolData.tools do
+		local kind = tool.minigame or &quot;&quot;
+		check(
+			(&quot;alet '%s' mini-oyun turu taniniyor ('%s')&quot;):format(tool.id, kind),
+			kind == &quot;&quot; or gameKinds[kind] == true
+		)
+		check(
+			(&quot;alet '%s' icin ToolGame ayni turu soyluyor&quot;):format(tool.id),
+			ToolGame.kindOf(tool.id) == kind
+		)
+	end
+	for kind in gameKinds do
+		check((&quot;mini-oyun '%s' basligi cevrili&quot;):format(kind), Loc.has(&quot;toolgame.&quot; .. kind))
+		check((&quot;mini-oyun '%s' ipucu cevrili&quot;):format(kind), Loc.has(&quot;toolgame.&quot; .. kind .. &quot;.hint&quot;))
 	end
 
 	-- Birinci sahis el modeli: her aletin viewModel bloku olmali.
@@ -9042,6 +9120,7 @@ local Leaderboard = require(script.Parent.Leaderboard)
 local Profile = require(script.Parent.Profile)
 local Surgery = require(script.Parent.Surgery)
 local Tasks = require(script.Parent.Tasks)
+local ToolGame = require(script.Parent.ToolGame)
 local Treatment = require(script.Parent.Treatment)
 local Upgrades = require(script.Parent.Upgrades)
 
@@ -9835,6 +9914,31 @@ function PatientFlow.callNext(player: Player)
 	pushStateAll()
 end
 
+--- Aletin bulduklarini aciyor ve istemciye bildiriyor. Mini-oyunlu
+--- aletlerde ancak mini-oyun KAZANILINCA cagriliyor; mini-oyunsuz
+--- aletlerde dogrudan.
+local function revealFindings(player: Player, patient: Patient, toolId: string)
+	local found = Diagnosis.revealWith(patient.revealed, patient.conditionId, toolId)
+	for _, symptomId in found do
+		patient.revealed[symptomId] = true
+	end
+	patient.toolsUsed[toolId] = true
+
+	-- Alet degdiginde hayvan basini kaldiriyor: muayenenin oyuncuya
+	-- donen tarafi.
+	AnimalAnimator.react(patient.rig, if #found &gt; 0 then &quot;perk&quot; else &quot;shake&quot;)
+
+	local names = {}
+	for _, symptomId in found do
+		local symptom = Diagnosis.symptom(symptomId)
+		table.insert(names, if symptom ~= nil then symptom.nameKey else symptomId)
+	end
+
+	Audio.play(&quot;tool&quot; .. toolId:sub(1, 1):upper() .. toolId:sub(2), patient.rig.root)
+	Net.toPlayer(&quot;ToolResult&quot;, player, toolId, names)
+	pushChart(player)
+end
+
 function PatientFlow.useTool(player: Player, toolId: string)
 	local entry = Profile.get(player)
 	if entry == nil then
@@ -9863,29 +9967,53 @@ function PatientFlow.useTool(player: Player, toolId: string)
 	end
 	patient.busyUntil = os.clock() + tool.useSeconds
 
-	local found = Diagnosis.revealWith(patient.revealed, patient.conditionId, toolId)
-	for _, symptomId in found do
-		patient.revealed[symptomId] = true
-	end
-	patient.toolsUsed[toolId] = true
-
 	-- Her alet kullanimi hayvani biraz gerer: butun aletleri sirayla
-	-- denemek bedava degil.
+	-- denemek bedava degil. Mini-oyun kaybedilse bile bu bedel odendi -
+	-- aleti hayvana dokundurmak zaten gerdi.
 	patient.stress = math.clamp(patient.stress + economy.toolStress, 0, 100)
 	AnimalAnimator.setStress(patient.rig, patient.stress)
-	-- Alet degdiginde hayvan basini kaldiriyor: muayenenin oyuncuya
-	-- donen tarafi.
-	AnimalAnimator.react(patient.rig, if #found &gt; 0 then &quot;perk&quot; else &quot;shake&quot;)
 
-	local names = {}
-	for _, symptomId in found do
-		local symptom = Diagnosis.symptom(symptomId)
-		table.insert(names, if symptom ~= nil then symptom.nameKey else symptomId)
+	-- Mini-oyunlu alet: belirtiler ancak KAZANILINCA aciliyor.
+	-- Kaybetmek aleti kilitlemiyor; oyuncu tekrar deneyebiliyor (ve her
+	-- deneme hayvani yeniden geriyor).
+	local kind = ToolGame.kindOf(toolId)
+	if kind ~= &quot;&quot; then
+		if ToolGame.active(player) ~= nil then
+			return -- bir mini-oyun zaten acik
+		end
+		local patientId = patient.id
+		local payload = ToolGame.begin(player, patientId, toolId, kind, function(ok: boolean, reasonKey: string)
+			Net.toPlayer(&quot;ToolGameEnd&quot;, player, ok, reasonKey)
+			local current = patients[patientId]
+			if current == nil or current.vet ~= player then
+				return
+			end
+			if ok then
+				revealFindings(player, current, toolId)
+			else
+				notify(player, &quot;warn&quot;, reasonKey)
+				pushChart(player)
+			end
+		end)
+		if payload ~= nil then
+			Audio.play(&quot;tool&quot; .. toolId:sub(1, 1):upper() .. toolId:sub(2), patient.rig.root)
+			Net.toPlayer(&quot;ToolGameBegin&quot;, player, payload)
+			return
+		end
 	end
 
-	Audio.play(&quot;tool&quot; .. toolId:sub(1, 1):upper() .. toolId:sub(2), patient.rig.root)
-	Net.toPlayer(&quot;ToolResult&quot;, player, toolId, names)
-	pushChart(player)
+	revealFindings(player, patient, toolId)
+end
+
+--- Ultrason probunun konumu: sunucu yalnizca &quot;ne kadar yakinsin&quot;
+--- sayisini donuyor.
+function PatientFlow.toolProbe(player: Player, x: number, y: number)
+	Net.toPlayer(&quot;ToolGameHint&quot;, player, ToolGame.probe(player, x, y))
+end
+
+--- Mini-oyun cevabi. Sonucu ToolGame.begin'in geri cagrisi isliyor.
+function PatientFlow.toolSubmit(player: Player, x: number, y: number)
+	ToolGame.submit(player, x, y)
 end
 
 function PatientFlow.submitDiagnosis(player: Player, conditionId: string)
@@ -11264,6 +11392,266 @@ return Tasks
 				</Item>
 				<Item class="ModuleScript" referent="RBX44">
 					<Properties>
+						<string name="Name">ToolGame</string>
+						<ProtectedString name="Source">--!strict
+-- ToolGame.luau
+-- =============
+-- Alet mini-oyunlari: rontgende kirigi bulma, kan testinde ibreyi
+-- durdurma, ultrasonda hedefi tarama.
+--
+-- `Surgery.luau` ile AYNI KALIP: oturum sunucuda acilir, hedef sunucuda
+-- uretilir, sonuc sunucuda dogrulanir, istemci yalnizca cizer ve niyet
+-- yollar. Sure dolarsa oturum sunucuda kapanir - istemcinin &quot;bitti&quot;
+-- demesi beklenmiyor.
+--
+-- Neyi gizliyoruz, neyi gizlemiyoruz?
+-- -----------------------------------
+-- Hicbir mini-oyunda HASTALIGIN KIMLIGI istemciye gitmiyor; oyunun
+-- sirri budur ve korunuyor.
+--
+-- Rontgende kirigin EKRANDAKI YERI istemciye gidiyor, cunku istemcinin
+-- onu cizmesi gerekiyor: ekranda gorunmeyen bir seyi tiklatmak mumkun
+-- degil. Yetki kaybi degil, cizim gerekliligi - ve tiklamanin menzili
+-- ile suresi yine sunucuda olculuyor.
+--
+-- Kan testinde ibrenin yeri ZAMANDAN cikiyor (senkron sunucu saati),
+-- tipki ameliyattaki gibi: istemci &quot;su konumda durdurdum&quot; demiyor,
+-- sunucu tuşa BASILDIGI ANI kendi saatinde okuyor.
+--
+-- Ultrasonda hedef istemciye HIC gitmiyor: istemci prob konumunu
+-- yolluyor, sunucu yalnizca &quot;ne kadar yakinsin&quot; sayisini donuyor.
+
+local Workspace = game:GetService(&quot;Workspace&quot;)
+
+local ReplicatedStorage = game:GetService(&quot;ReplicatedStorage&quot;)
+local Data = ReplicatedStorage:WaitForChild(&quot;VetData&quot;)
+
+local toolData = require(Data.tools)
+
+local ToolGame = {}
+
+export type Session = {
+	player: Player,
+	patientId: number,
+	toolId: string,
+	kind: string,
+	targetX: number,
+	targetY: number,
+	rangeLow: number,
+	rangeHigh: number,
+	startTime: number,
+	deadline: number,
+	done: boolean,
+	onFinish: (ok: boolean, reasonKey: string) -&gt; (),
+}
+
+local sessions: { [Player]: Session } = {}
+
+local config = toolData.minigames
+
+--- Bu oyuncunun acik bir mini-oyunu var mi?
+function ToolGame.active(player: Player): Session?
+	local session = sessions[player]
+	if session ~= nil and not session.done then
+		return session
+	end
+	return nil
+end
+
+--- Bir aletin mini-oyun turu (&quot;&quot; ise yok).
+function ToolGame.kindOf(toolId: string): string
+	for _, tool in toolData.tools do
+		if tool.id == toolId then
+			return tool.minigame or &quot;&quot;
+		end
+	end
+	return &quot;&quot;
+end
+
+--- Bilinen mini-oyun turleri (SelfTest ve verify_data icin).
+function ToolGame.kinds(): { string }
+	local kinds = {}
+	for kind in config do
+		table.insert(kinds, kind)
+	end
+	table.sort(kinds)
+	return kinds
+end
+
+local function finish(session: Session, ok: boolean, reasonKey: string)
+	if session.done then
+		return
+	end
+	session.done = true
+	if sessions[session.player] == session then
+		sessions[session.player] = nil
+	end
+	session.onFinish(ok, reasonKey)
+end
+
+--- Kan testi ibresinin o andaki konumu (0..1). Ucgen dalga: saga gidip
+--- sola donuyor, yani ibre ekranda ileri geri suzuluyor.
+local function needleAt(session: Session, now: number): number
+	local sweep = config.range.sweepSeconds
+	local cycle = ((now - session.startTime) % (sweep * 2)) / sweep
+	return if cycle &lt;= 1 then cycle else 2 - cycle
+end
+
+--- Mini-oyunu baslatir; istemciye yollanacak tabloyu doner.
+--- `onFinish(ok, reasonKey)` basari, basarisizlik ya da sure dolunca
+--- TAM BIR KEZ cagriliyor.
+function ToolGame.begin(
+	player: Player,
+	patientId: number,
+	toolId: string,
+	kind: string,
+	onFinish: (ok: boolean, reasonKey: string) -&gt; ()
+): any?
+	local settings = config[kind]
+	if settings == nil then
+		return nil
+	end
+	ToolGame.cancel(player)
+
+	local now = Workspace:GetServerTimeNow()
+	local session: Session = {
+		player = player,
+		patientId = patientId,
+		toolId = toolId,
+		kind = kind,
+		-- Hedef kenarlardan uzak duruyor: kosede beliren bir hedef,
+		-- beceriden cok sansa donuyordu.
+		targetX = 0.18 + math.random() * 0.64,
+		targetY = 0.18 + math.random() * 0.64,
+		rangeLow = 0,
+		rangeHigh = 0,
+		startTime = now + 0.6, -- istemcinin paneli kurmasi icin pay
+		deadline = now + 0.6 + settings.seconds,
+		done = false,
+		onFinish = onFinish,
+	}
+
+	if kind == &quot;range&quot; then
+		local width = config.range.width
+		session.rangeLow = 0.08 + math.random() * (0.84 - width)
+		session.rangeHigh = session.rangeLow + width
+	end
+
+	sessions[player] = session
+
+	-- Sure dolunca oturum SUNUCUDA kapaniyor: istemcinin &quot;bitti&quot;
+	-- demesini beklemek, hic bitirmeyen bir istemciye sonsuz sure
+	-- vermek olurdu.
+	task.spawn(function()
+		while Workspace:GetServerTimeNow() &lt; session.deadline do
+			if session.done or sessions[player] ~= session then
+				return
+			end
+			task.wait(0.15)
+		end
+		finish(session, false, &quot;toolgame.timeout&quot;)
+	end)
+
+	local payload: any = {
+		toolId = toolId,
+		kind = kind,
+		seconds = settings.seconds,
+		startTime = session.startTime,
+	}
+	if kind == &quot;spot&quot; then
+		-- Kirigin yeri istemciye gidiyor: cizilmesi gerekiyor.
+		-- Sahte isaretler de sunucuda uretiliyor ki her oyuncuda ayni
+		-- goruntu cikmasin.
+		payload.targetX = session.targetX
+		payload.targetY = session.targetY
+		payload.radius = settings.radius
+		local decoys = {}
+		for _ = 1, settings.decoys do
+			table.insert(decoys, { math.random(), math.random() })
+		end
+		payload.decoys = decoys
+	elseif kind == &quot;range&quot; then
+		payload.low = session.rangeLow
+		payload.high = session.rangeHigh
+		payload.sweepSeconds = config.range.sweepSeconds
+	elseif kind == &quot;probe&quot; then
+		payload.radius = settings.radius
+	end
+	return payload
+end
+
+--- Ultrason probu: &quot;ne kadar yakinsin&quot; (0 = uzak, 1 = tam ustunde).
+--- Hedefin kendisi DONMUYOR.
+function ToolGame.probe(player: Player, x: number, y: number): number
+	local session = ToolGame.active(player)
+	if session == nil or session.kind ~= &quot;probe&quot; then
+		return 0
+	end
+	if x ~= x or y ~= y then
+		return 0 -- NaN
+	end
+	local dx = math.clamp(x, 0, 1) - session.targetX
+	local dy = math.clamp(y, 0, 1) - session.targetY
+	local distance = math.sqrt(dx * dx + dy * dy)
+	-- 0,55 stud'luk normalize mesafe &quot;tamamen soguk&quot; sayiliyor: daha
+	-- genis bir olcek her yerde ilik gosterip aramayi anlamsiz kiliyor.
+	return math.clamp(1 - distance / 0.55, 0, 1)
+end
+
+--- Oyuncunun cevabi. Her mini-oyun kendi olcutuyle dogrulaniyor.
+function ToolGame.submit(player: Player, x: number, y: number): boolean
+	local session = ToolGame.active(player)
+	if session == nil then
+		return false
+	end
+	if x ~= x or y ~= y then
+		finish(session, false, &quot;toolgame.failed&quot;)
+		return false
+	end
+
+	local now = Workspace:GetServerTimeNow()
+	if now &gt; session.deadline then
+		finish(session, false, &quot;toolgame.timeout&quot;)
+		return false
+	end
+	if now &lt; session.startTime then
+		return false -- panel daha acilmadi; erken gelen giris yok sayiliyor
+	end
+
+	local settings = config[session.kind]
+	if session.kind == &quot;range&quot; then
+		-- Ibrenin yeri ZAMANDAN cikiyor; istemcinin bildirdigi konum
+		-- kullanilmiyor.
+		local position = needleAt(session, now)
+		local ok = position &gt;= session.rangeLow and position &lt;= session.rangeHigh
+		finish(session, ok, if ok then &quot;toolgame.success&quot; else &quot;toolgame.failed&quot;)
+		return ok
+	end
+
+	local dx = math.clamp(x, 0, 1) - session.targetX
+	local dy = math.clamp(y, 0, 1) - session.targetY
+	local ok = math.sqrt(dx * dx + dy * dy) &lt;= settings.radius
+	finish(session, ok, if ok then &quot;toolgame.success&quot; else &quot;toolgame.failed&quot;)
+	return ok
+end
+
+--- Oturumu iptal eder (oyuncu ayrildi, hasta kayboldu, yeni alet).
+--- `onFinish` BASARISIZLIKLA cagriliyor: cagrilmadan birakmak,
+--- PatientFlow'da aleti sonsuza kadar mesgul birakirdi.
+function ToolGame.cancel(player: Player)
+	local session = sessions[player]
+	if session ~= nil and not session.done then
+		finish(session, false, &quot;toolgame.cancelled&quot;)
+	end
+	sessions[player] = nil
+end
+
+return ToolGame
+</ProtectedString>
+					</Properties>
+				</Item>
+				<Item class="ModuleScript" referent="RBX45">
+					<Properties>
 						<string name="Name">Treatment</string>
 						<ProtectedString name="Source">--!strict
 -- Treatment.luau
@@ -11422,7 +11810,7 @@ return Treatment
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX45">
+				<Item class="ModuleScript" referent="RBX46">
 					<Properties>
 						<string name="Name">Upgrades</string>
 						<ProtectedString name="Source">--!strict
@@ -11699,11 +12087,11 @@ return Upgrades
 					</Properties>
 				</Item>
 			</Item>
-			<Item class="Folder" referent="RBX46">
+			<Item class="Folder" referent="RBX47">
 				<Properties>
 					<string name="Name">world</string>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX47">
+				<Item class="ModuleScript" referent="RBX48">
 					<Properties>
 						<string name="Name">AnimalAnimator</string>
 						<ProtectedString name="Source">--!strict
@@ -12154,7 +12542,7 @@ return Animator
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX48">
+				<Item class="ModuleScript" referent="RBX49">
 					<Properties>
 						<string name="Name">AnimalFactory</string>
 						<ProtectedString name="Source">--!strict
@@ -13102,7 +13490,7 @@ return AnimalFactory
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX49">
+				<Item class="ModuleScript" referent="RBX50">
 					<Properties>
 						<string name="Name">Clinic</string>
 						<ProtectedString name="Source">--!strict
@@ -13612,7 +14000,7 @@ return Clinic
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX50">
+				<Item class="ModuleScript" referent="RBX51">
 					<Properties>
 						<string name="Name">Decor</string>
 						<ProtectedString name="Source">--!strict
@@ -13853,7 +14241,7 @@ return Decor
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX51">
+				<Item class="ModuleScript" referent="RBX52">
 					<Properties>
 						<string name="Name">Doors</string>
 						<ProtectedString name="Source">--!strict
@@ -14099,7 +14487,7 @@ return Doors
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX52">
+				<Item class="ModuleScript" referent="RBX53">
 					<Properties>
 						<string name="Name">Effects</string>
 						<ProtectedString name="Source">--!strict
@@ -14283,7 +14671,7 @@ return Effects
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX53">
+				<Item class="ModuleScript" referent="RBX54">
 					<Properties>
 						<string name="Name">Lighting</string>
 						<ProtectedString name="Source">--!strict
@@ -14406,7 +14794,7 @@ return Sky
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX54">
+				<Item class="ModuleScript" referent="RBX55">
 					<Properties>
 						<string name="Name">Lobby</string>
 						<ProtectedString name="Source">--!strict
@@ -14665,7 +15053,7 @@ return Lobby
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX55">
+				<Item class="ModuleScript" referent="RBX56">
 					<Properties>
 						<string name="Name">OwnerFactory</string>
 						<ProtectedString name="Source">--!strict
@@ -15196,7 +15584,7 @@ return OwnerFactory
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX56">
+				<Item class="ModuleScript" referent="RBX57">
 					<Properties>
 						<string name="Name">Props</string>
 						<ProtectedString name="Source">--!strict
@@ -16297,15 +16685,15 @@ return Props
 			</Item>
 		</Item>
 	</Item>
-	<Item class="StarterPlayer" referent="RBX57">
+	<Item class="StarterPlayer" referent="RBX58">
 		<Properties>
 			<string name="Name">StarterPlayer</string>
 		</Properties>
-		<Item class="StarterPlayerScripts" referent="RBX58">
+		<Item class="StarterPlayerScripts" referent="RBX59">
 			<Properties>
 				<string name="Name">StarterPlayerScripts</string>
 			</Properties>
-			<Item class="LocalScript" referent="RBX59">
+			<Item class="LocalScript" referent="RBX60">
 				<Properties>
 					<string name="Name">VetClient</string>
 					<ProtectedString name="Source">--!strict
@@ -16347,6 +16735,7 @@ local ShopPanel = require(script.ShopPanel)
 local SurgeryPanel = require(script.SurgeryPanel)
 local Theme = require(script.Theme)
 local ToolBar = require(script.ToolBar)
+local ToolGamePanel = require(script.ToolGamePanel)
 local TreatmentPanel = require(script.TreatmentPanel)
 local ViewModel = require(script.ViewModel)
 
@@ -16380,6 +16769,7 @@ TreatmentPanel.create(screen)
 ToolBar.create(screen)
 ShopPanel.create(screen)
 SurgeryPanel.create(screen)
+ToolGamePanel.create(screen)
 ProgressPanel.create(screen)
 Fps.create(screen)
 SettingsPanel.create(screen)
@@ -16511,6 +16901,19 @@ Net.get(&quot;ToolResult&quot;).OnClientEvent:Connect(function(toolId: string, p
 	end
 end)
 
+Net.get(&quot;ToolGameBegin&quot;).OnClientEvent:Connect(function(payload: any)
+	ToolGamePanel.begin(payload)
+end)
+
+Net.get(&quot;ToolGameHint&quot;).OnClientEvent:Connect(function(heat: number)
+	ToolGamePanel.hint(heat)
+end)
+
+Net.get(&quot;ToolGameEnd&quot;).OnClientEvent:Connect(function(ok: boolean, reasonKey: string)
+	ToolGamePanel.finish(ok, reasonKey)
+	Notify.push(if ok then &quot;good&quot; else &quot;warn&quot;, reasonKey, {})
+end)
+
 Net.get(&quot;SurgeryBegin&quot;).OnClientEvent:Connect(function(schedule: any)
 	SurgeryPanel.begin(schedule)
 end)
@@ -16540,7 +16943,7 @@ end)
 print(&quot;[Veteriner] istemci hazir.&quot;)
 </ProtectedString>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX60">
+				<Item class="ModuleScript" referent="RBX61">
 					<Properties>
 						<string name="Name">Camera</string>
 						<ProtectedString name="Source">--!strict
@@ -16791,7 +17194,7 @@ return Camera
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX61">
+				<Item class="ModuleScript" referent="RBX62">
 					<Properties>
 						<string name="Name">Chart</string>
 						<ProtectedString name="Source">--!strict
@@ -17172,7 +17575,7 @@ return Chart
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX62">
+				<Item class="ModuleScript" referent="RBX63">
 					<Properties>
 						<string name="Name">Crosshair</string>
 						<ProtectedString name="Source">--!strict
@@ -17320,7 +17723,7 @@ return Crosshair
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX63">
+				<Item class="ModuleScript" referent="RBX64">
 					<Properties>
 						<string name="Name">DiagnosisPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -17510,7 +17913,7 @@ return DiagnosisPanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX64">
+				<Item class="ModuleScript" referent="RBX65">
 					<Properties>
 						<string name="Name">Fps</string>
 						<ProtectedString name="Source">--!strict
@@ -17626,7 +18029,7 @@ return Fps
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX65">
+				<Item class="ModuleScript" referent="RBX66">
 					<Properties>
 						<string name="Name">Hud</string>
 						<ProtectedString name="Source">--!strict
@@ -18036,7 +18439,7 @@ return Hud
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX66">
+				<Item class="ModuleScript" referent="RBX67">
 					<Properties>
 						<string name="Name">LobbyPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -18326,7 +18729,7 @@ return LobbyPanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX67">
+				<Item class="ModuleScript" referent="RBX68">
 					<Properties>
 						<string name="Name">Notify</string>
 						<ProtectedString name="Source">--!strict
@@ -18512,7 +18915,7 @@ return Notify
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX68">
+				<Item class="ModuleScript" referent="RBX69">
 					<Properties>
 						<string name="Name">ProgressPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -18795,7 +19198,7 @@ return ProgressPanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX69">
+				<Item class="ModuleScript" referent="RBX70">
 					<Properties>
 						<string name="Name">SettingsPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -19068,7 +19471,7 @@ return SettingsPanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX70">
+				<Item class="ModuleScript" referent="RBX71">
 					<Properties>
 						<string name="Name">ShopPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -19451,7 +19854,7 @@ return ShopPanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX71">
+				<Item class="ModuleScript" referent="RBX72">
 					<Properties>
 						<string name="Name">SurgeryPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -19812,7 +20215,7 @@ return SurgeryPanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX72">
+				<Item class="ModuleScript" referent="RBX73">
 					<Properties>
 						<string name="Name">Theme</string>
 						<ProtectedString name="Source">--!strict
@@ -20796,7 +21199,7 @@ return Theme
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX73">
+				<Item class="ModuleScript" referent="RBX74">
 					<Properties>
 						<string name="Name">ToolBar</string>
 						<ProtectedString name="Source">--!strict
@@ -21037,7 +21440,458 @@ return ToolBar
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX74">
+				<Item class="ModuleScript" referent="RBX75">
+					<Properties>
+						<string name="Name">ToolGamePanel</string>
+						<ProtectedString name="Source">--!strict
+-- ToolGamePanel.luau
+-- ==================
+-- Alet mini-oyunlarinin arayuzu. YALNIZCA CIZER: hedef de, sonuc da
+-- sunucuda (src/server/game/ToolGame.luau).
+--
+-- Uc mini-oyun, tek panel
+-- -----------------------
+-- Uc ayri panel kurmak uc ayri acilis/kapanis/geri sayim koduna mal
+-- olurdu. Cerceve, baslik, sure cubugu ve kapanis ortak; yalnizca
+-- ortadaki &quot;sahne&quot; degisiyor.
+--
+-- Neyi biliyoruz?
+-- ---------------
+-- Rontgende kirigin YERI geliyor (cizmek icin gerekli), kan testinde
+-- hedef ARALIK geliyor (cizmek icin gerekli) ama ibrenin yeri ZAMANDAN
+-- cikiyor ve sunucu kendi saatinde olcuyor. Ultrasonda hedef HIC
+-- gelmiyor: yalnizca &quot;ne kadar yakinsin&quot; sayisi.
+
+local RunService = game:GetService(&quot;RunService&quot;)
+local UserInputService = game:GetService(&quot;UserInputService&quot;)
+local Workspace = game:GetService(&quot;Workspace&quot;)
+
+local ReplicatedStorage = game:GetService(&quot;ReplicatedStorage&quot;)
+local Shared = ReplicatedStorage:WaitForChild(&quot;VetShared&quot;)
+local Audio = require(Shared.Audio)
+local Loc = require(Shared.Loc)
+local Net = require(Shared.Net)
+
+local Theme = require(script.Parent.Theme)
+
+local ToolGamePanel = {}
+
+local widgets: any = nil
+local session: any = nil
+local connection: RBXScriptConnection? = nil
+local lastProbe = 0
+
+local STAGE = Vector2.new(420, 260)
+local PROBE_INTERVAL = 1 / 10
+
+--- Sahnedeki normalize (0..1) konumu piksel konumuna cevirir.
+local function toPixels(x: number, y: number): UDim2
+	return UDim2.fromOffset(x * STAGE.X, y * STAGE.Y)
+end
+
+local function clearStage()
+	if widgets == nil then
+		return
+	end
+	widgets.stage:ClearAllChildren()
+	widgets.marks = {}
+end
+
+local function stop()
+	if connection ~= nil then
+		connection:Disconnect()
+		connection = nil
+	end
+	session = nil
+	if widgets ~= nil and widgets.panel.Visible then
+		Theme.close(widgets.panel)
+	end
+end
+
+--- Tiklanan noktanin sahne icindeki normalize konumu.
+local function normalizedFromMouse(): (number, number)
+	local position = UserInputService:GetMouseLocation()
+	local origin = widgets.stage.AbsolutePosition
+	local size = widgets.stage.AbsoluteSize
+	if size.X &lt;= 0 or size.Y &lt;= 0 then
+		return -1, -1
+	end
+	return (position.X - origin.X) / size.X, (position.Y - origin.Y) / size.Y
+end
+
+function ToolGamePanel.create(parent: ScreenGui)
+	local panel = Theme.card({
+		name = &quot;AletOyunu&quot;,
+		size = UDim2.fromOffset(STAGE.X + 48, STAGE.Y + 124),
+		position = UDim2.new(0.5, 0, 0.5, 0),
+		anchor = Vector2.new(0.5, 0.5),
+		parent = parent,
+		visible = false,
+	}, Theme.color.accent)
+
+	local icon = Theme.icon({
+		name = &quot;xray&quot;,
+		size = 18,
+		color = Theme.color.accentGlow,
+		position = UDim2.fromOffset(Theme.space.lg, 14),
+		parent = panel,
+		zIndex = 2,
+	})
+
+	local title = Theme.label({
+		name = &quot;Baslik&quot;,
+		text = &quot;&quot;,
+		size = UDim2.new(1, -Theme.space.lg * 2 - 26, 0, 24),
+		position = UDim2.fromOffset(Theme.space.lg + 26, 12),
+		textSize = Theme.size.title,
+		bold = true,
+		parent = panel,
+		zIndex = 2,
+	})
+
+	local hint = Theme.label({
+		name = &quot;Ipucu&quot;,
+		text = &quot;&quot;,
+		size = UDim2.new(1, -Theme.space.lg * 2, 0, 18),
+		position = UDim2.fromOffset(Theme.space.lg, 38),
+		textSize = Theme.size.micro,
+		color = Theme.color.textDim,
+		parent = panel,
+		zIndex = 2,
+	})
+
+	local stage = Theme.frame({
+		name = &quot;Sahne&quot;,
+		size = UDim2.fromOffset(STAGE.X, STAGE.Y),
+		position = UDim2.new(0.5, 0, 0, 62),
+		anchor = Vector2.new(0.5, 0),
+		color = Theme.color.panelDeep,
+		transparency = 0,
+		radius = Theme.radius.sm,
+		parent = panel,
+		zIndex = 2,
+	})
+	stage.ClipsDescendants = true
+	Theme.stroke(stage, Theme.color.strokeSoft, 1)
+
+	local timer = Theme.bar(
+		panel,
+		UDim2.new(1, -Theme.space.lg * 2, 0, 8),
+		UDim2.new(0, Theme.space.lg, 1, -30),
+		Theme.color.accent
+	)
+	timer.track.ZIndex = 2
+	timer.fill.ZIndex = 3
+
+	-- Sahnenin tamami tiklanabilir; &quot;tikla&quot; ve &quot;durdur&quot; ayni dugmeyi
+	-- kullaniyor, cunku ikisi de tek bir &quot;simdi&quot; niyeti.
+	local hit = Instance.new(&quot;TextButton&quot;)
+	hit.Name = &quot;Tik&quot;
+	hit.Text = &quot;&quot;
+	hit.Size = UDim2.fromScale(1, 1)
+	hit.BackgroundTransparency = 1
+	hit.BorderSizePixel = 0
+	hit.ZIndex = 20
+	hit.Parent = stage
+	hit.Activated:Connect(function()
+		ToolGamePanel.submit()
+	end)
+
+	widgets = {
+		panel = panel,
+		icon = icon,
+		title = title,
+		hint = hint,
+		stage = stage,
+		timer = timer,
+		marks = {},
+	}
+
+	UserInputService.InputBegan:Connect(function(input: InputObject, processed: boolean)
+		if processed or session == nil then
+			return
+		end
+		if input.KeyCode == Enum.KeyCode.Space then
+			ToolGamePanel.submit()
+		end
+	end)
+end
+
+--- Rontgen sahnesi: kaburga izlenimi veren cizgiler, sahte isaretler ve
+--- hedefteki kirik. Hicbiri doku degil - hepsi Frame.
+local function buildSpot(payload: any)
+	for index = 1, 7 do
+		Theme.frame({
+			name = &quot;Kaburga&quot; .. index,
+			size = UDim2.fromOffset(STAGE.X * 0.52, 5),
+			position = UDim2.fromOffset(STAGE.X * 0.24, 34 + index * 26),
+			color = Theme.color.text,
+			transparency = 0.78,
+			radius = 3,
+			parent = widgets.stage,
+			zIndex = 3,
+		})
+	end
+	Theme.frame({
+		name = &quot;Omurga&quot;,
+		size = UDim2.fromOffset(9, STAGE.Y * 0.78),
+		position = UDim2.new(0.5, -4, 0, 26),
+		color = Theme.color.text,
+		transparency = 0.7,
+		radius = 4,
+		parent = widgets.stage,
+		zIndex = 3,
+	})
+
+	-- Sahte isaretler: kirigi ilk bakista ele vermesin.
+	for index, spot in payload.decoys do
+		Theme.frame({
+			name = &quot;Sahte&quot; .. index,
+			size = UDim2.fromOffset(10, 10),
+			position = toPixels(spot[1], spot[2]),
+			anchor = Vector2.new(0.5, 0.5),
+			color = Theme.color.text,
+			transparency = 0.55,
+			radius = 5,
+			parent = widgets.stage,
+			zIndex = 4,
+		})
+	end
+
+	-- Kirik: kesisen iki kisa cizgi. Cevresinde halka YOK - halka
+	-- koymak &quot;iste burada&quot; demek olurdu.
+	local crack = Theme.frame({
+		name = &quot;Kirik&quot;,
+		size = UDim2.fromOffset(26, 26),
+		position = toPixels(payload.targetX, payload.targetY),
+		anchor = Vector2.new(0.5, 0.5),
+		transparency = 1,
+		radius = 0,
+		parent = widgets.stage,
+		zIndex = 5,
+	})
+	for _, rotation in { 28, -34 } do
+		local shard = Theme.frame({
+			name = &quot;Catlak&quot;,
+			size = UDim2.fromOffset(22, 3),
+			position = UDim2.fromScale(0.5, 0.5),
+			anchor = Vector2.new(0.5, 0.5),
+			color = Theme.color.panelDeep,
+			transparency = 0,
+			radius = 2,
+			parent = crack,
+			zIndex = 6,
+		})
+		shard.Rotation = rotation
+	end
+end
+
+--- Kan testi sahnesi: yatay olcek, hedef aralik ve suzulen ibre.
+local function buildRange(payload: any)
+	Theme.frame({
+		name = &quot;Olcek&quot;,
+		size = UDim2.fromOffset(STAGE.X - 40, 28),
+		position = UDim2.new(0.5, 0, 0.5, 0),
+		anchor = Vector2.new(0.5, 0.5),
+		color = Theme.color.panel,
+		transparency = 0,
+		radius = Theme.radius.sm,
+		parent = widgets.stage,
+		zIndex = 3,
+	})
+
+	local width = STAGE.X - 40
+	local left = (STAGE.X - width) * 0.5
+
+	Theme.frame({
+		name = &quot;Hedef&quot;,
+		size = UDim2.fromOffset(width * (payload.high - payload.low), 28),
+		position = UDim2.fromOffset(left + width * payload.low, STAGE.Y * 0.5 - 14),
+		color = Theme.color.good,
+		transparency = 0.25,
+		radius = Theme.radius.sm,
+		parent = widgets.stage,
+		zIndex = 4,
+	})
+
+	for index = 1, 9 do
+		Theme.frame({
+			name = &quot;Tik&quot; .. index,
+			size = UDim2.fromOffset(1, 12),
+			position = UDim2.fromOffset(left + width * index / 10, STAGE.Y * 0.5 + 20),
+			color = Theme.color.strokeSoft,
+			transparency = 0.3,
+			radius = 0,
+			parent = widgets.stage,
+			zIndex = 5,
+		})
+	end
+
+	widgets.marks.needle = Theme.frame({
+		name = &quot;Ibre&quot;,
+		size = UDim2.fromOffset(5, 48),
+		position = UDim2.fromOffset(left, STAGE.Y * 0.5 - 24),
+		color = Theme.color.text,
+		transparency = 0,
+		radius = 3,
+		parent = widgets.stage,
+		zIndex = 6,
+	})
+	widgets.marks.rangeLeft = left
+	widgets.marks.rangeWidth = width
+end
+
+--- Ultrason sahnesi: karanlik bir alan ve prob. Hedef CIZILMIYOR -
+--- sunucu nerede oldugunu soylemiyor. Oyuncunun tek bilgisi probun
+--- rengi ve halkasi (sicak/soguk).
+local function buildProbe()
+	for index = 1, 6 do
+		Theme.frame({
+			name = &quot;Doku&quot; .. index,
+			size = UDim2.fromOffset(STAGE.X * 0.9, 2),
+			position = UDim2.fromOffset(STAGE.X * 0.05, index * (STAGE.Y / 7)),
+			color = Theme.color.text,
+			transparency = 0.88,
+			radius = 1,
+			parent = widgets.stage,
+			zIndex = 3,
+		})
+	end
+
+	local probe = Theme.frame({
+		name = &quot;Prob&quot;,
+		size = UDim2.fromOffset(34, 34),
+		position = UDim2.fromScale(0.5, 0.5),
+		anchor = Vector2.new(0.5, 0.5),
+		color = Theme.color.accent,
+		transparency = 0.4,
+		radius = 17,
+		parent = widgets.stage,
+		zIndex = 6,
+	})
+	local stroke = Theme.stroke(probe, Theme.color.accentGlow, 2)
+
+	widgets.marks.probe = probe
+	widgets.marks.probeStroke = stroke
+	widgets.marks.heat = 0
+end
+
+--- Sunucu mini-oyunu baslatti.
+function ToolGamePanel.begin(payload: any)
+	if widgets == nil or payload == nil then
+		return
+	end
+	stop()
+	session = payload
+	clearStage()
+
+	widgets.title.Text = Loc.get(&quot;toolgame.&quot; .. payload.kind)
+	widgets.hint.Text = Loc.get(&quot;toolgame.&quot; .. payload.kind .. &quot;.hint&quot;)
+	widgets.icon:Destroy()
+	widgets.icon = Theme.icon({
+		name = payload.toolId,
+		size = 18,
+		color = Theme.color.accentGlow,
+		position = UDim2.fromOffset(Theme.space.lg, 14),
+		parent = widgets.panel,
+		zIndex = 2,
+	})
+
+	if payload.kind == &quot;spot&quot; then
+		buildSpot(payload)
+	elseif payload.kind == &quot;range&quot; then
+		buildRange(payload)
+	else
+		buildProbe()
+	end
+
+	Theme.open(widgets.panel)
+	Audio.play(&quot;uiOpen&quot;)
+
+	connection = RunService.RenderStepped:Connect(function()
+		if session == nil then
+			return
+		end
+		local now = Workspace:GetServerTimeNow()
+		local left = math.max(0, session.startTime + session.seconds - now)
+		Theme.setBar(widgets.timer, left / session.seconds, true)
+		Theme.setBarColor(widgets.timer, Theme.statusColor(left / session.seconds))
+
+		if session.kind == &quot;range&quot; and widgets.marks.needle ~= nil then
+			-- Ibrenin yeri sunucudakiyle AYNI formulden cikiyor: ucgen
+			-- dalga, senkron sunucu saati. Kendi saatimizi kullansak
+			-- ekranda gordugumuz yer ile sunucunun olctugu yer ayrilirdi.
+			local sweep = session.sweepSeconds
+			local cycle = ((now - session.startTime) % (sweep * 2)) / sweep
+			local position = if cycle &lt;= 1 then cycle else 2 - cycle
+			widgets.marks.needle.Position = UDim2.fromOffset(
+				widgets.marks.rangeLeft + widgets.marks.rangeWidth * position - 2,
+				STAGE.Y * 0.5 - 24
+			)
+			widgets.marks.needle.BackgroundColor3 = if position &gt;= session.low and position &lt;= session.high
+				then Theme.color.good
+				else Theme.color.text
+		elseif session.kind == &quot;probe&quot; and widgets.marks.probe ~= nil then
+			local x, y = normalizedFromMouse()
+			if x &gt;= 0 and x &lt;= 1 and y &gt;= 0 and y &lt;= 1 then
+				widgets.marks.probe.Position = toPixels(x, y)
+				if now - lastProbe &gt;= PROBE_INTERVAL then
+					lastProbe = now
+					Net.toServer(&quot;ToolGameProbe&quot;, x, y)
+				end
+			end
+		end
+	end)
+end
+
+--- Sunucudan gelen sicak/soguk geri bildirimi.
+function ToolGamePanel.hint(heat: number)
+	if widgets == nil or session == nil or widgets.marks.probe == nil then
+		return
+	end
+	widgets.marks.heat = heat
+	-- Soguk = mavi ve kucuk, sicak = kirmizi ve buyuk. Iki kanal
+	-- (renk + boyut) birden kullaniyoruz: renk korlugunde de okunsun.
+	local color = Theme.color.xp:Lerp(Theme.color.bad, heat)
+	Theme.tween(widgets.marks.probe, {
+		BackgroundColor3 = color,
+		Size = UDim2.fromOffset(34 + heat * 26, 34 + heat * 26),
+		BackgroundTransparency = 0.55 - heat * 0.35,
+	}, Theme.motion.quick)
+	Theme.tween(widgets.marks.probeStroke, { Color = color }, Theme.motion.quick)
+end
+
+--- Oyuncunun cevabi. Konum sunucuda dogrulaniyor; kan testinde konum
+--- yok sayilip sunucunun kendi saati kullaniliyor.
+function ToolGamePanel.submit()
+	if session == nil or widgets == nil then
+		return
+	end
+	local x, y = normalizedFromMouse()
+	if session.kind == &quot;range&quot; then
+		x, y = 0, 0
+	elseif x &lt; 0 or x &gt; 1 or y &lt; 0 or y &gt; 1 then
+		return
+	end
+	Audio.play(&quot;uiClick&quot;)
+	Net.toServer(&quot;ToolGameSubmit&quot;, x, y)
+end
+
+--- Sunucu mini-oyunu bitirdi.
+function ToolGamePanel.finish(ok: boolean, _reasonKey: string)
+	Audio.play(if ok then &quot;diagnosisCorrect&quot; else &quot;uiDeny&quot;)
+	stop()
+end
+
+function ToolGamePanel.isOpen(): boolean
+	return session ~= nil
+end
+
+return ToolGamePanel
+</ProtectedString>
+					</Properties>
+				</Item>
+				<Item class="ModuleScript" referent="RBX76">
 					<Properties>
 						<string name="Name">TreatmentPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -21276,7 +22130,7 @@ return TreatmentPanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX75">
+				<Item class="ModuleScript" referent="RBX77">
 					<Properties>
 						<string name="Name">ViewModel</string>
 						<ProtectedString name="Source">--!strict
@@ -21656,19 +22510,19 @@ return ViewModel
 			</Item>
 		</Item>
 	</Item>
-	<Item class="StarterGui" referent="RBX76">
+	<Item class="StarterGui" referent="RBX78">
 		<Properties>
 			<string name="Name">StarterGui</string>
 			<bool name="ResetPlayerGuiOnSpawn">false</bool>
 		</Properties>
 	</Item>
-	<Item class="Players" referent="RBX77">
+	<Item class="Players" referent="RBX79">
 		<Properties>
 			<string name="Name">Players</string>
 			<bool name="CharacterAutoLoads">false</bool>
 		</Properties>
 	</Item>
-	<Item class="SoundService" referent="RBX78">
+	<Item class="SoundService" referent="RBX80">
 		<Properties>
 			<string name="Name">SoundService</string>
 		</Properties>
