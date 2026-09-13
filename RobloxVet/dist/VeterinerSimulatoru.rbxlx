@@ -578,12 +578,20 @@ end
 --- Parlaklik/menzil VERIDEN geliyor (data/lighting.json). Kod icine
 --- gomulu bir &quot;1.6&quot; degeri, sahne fazla parlayinca kullanicinin
 --- bulamayacagi bir sayi olurdu.
-export type LampConfig = { brightness: number, range: number, color: Color3, angle: number? }
+export type LampConfig = {
+	brightness: number,
+	range: number,
+	color: Color3,
+	angle: number?,
+	shadows: boolean?,
+}
 
 function Build.ceilingLight(position: Vector3, parent: Instance, lamp: LampConfig): Part
+	-- Lineer armatur: az sayida ama UZUN lamba, cok sayida kucuk lambadan
+	-- hem daha duzgun gorunuyor hem sahneyi yikamiyor.
 	local housing = Build.part({
 		name = &quot;LambaKasasi&quot;,
-		size = Vector3.new(6.4, 0.5, 2.6),
+		size = Vector3.new(13, 0.55, 2.8),
 		cf = CFrame.new(position),
 		color = Color3.fromRGB(214, 220, 228),
 		material = Enum.Material.Metal,
@@ -595,7 +603,7 @@ function Build.ceilingLight(position: Vector3, parent: Instance, lamp: LampConfi
 	-- Difuzor: gercekten isik yayan yuzey oldugu icin Neon burada hakli.
 	local diffuser = Build.part({
 		name = &quot;Difuzor&quot;,
-		size = Vector3.new(5.8, 0.18, 2.1),
+		size = Vector3.new(12.4, 0.2, 2.3),
 		cf = CFrame.new(position - Vector3.new(0, 0.3, 0)),
 		color = lamp.color,
 		material = Enum.Material.Neon,
@@ -608,7 +616,9 @@ function Build.ceilingLight(position: Vector3, parent: Instance, lamp: LampConfi
 	light.Brightness = lamp.brightness
 	light.Range = lamp.range
 	light.Color = lamp.color
-	light.Shadows = true
+	-- Golge VERIDEN: 25 golge ureten tavan lambasi hem sahneyi yikiyor
+	-- hem kareyi dusuruyordu.
+	light.Shadows = if lamp.shadows == nil then false else lamp.shadows
 	light.Parent = diffuser
 	return housing
 end
@@ -1072,6 +1082,7 @@ Net.Schema = {
 	Discharge = { direction = &quot;toServer&quot;, args = {} },
 	BuyTool = { direction = &quot;toServer&quot;, args = { &quot;string&quot; } },
 	BuyUpgrade = { direction = &quot;toServer&quot;, args = { &quot;string&quot; } },
+	BuyDecor = { direction = &quot;toServer&quot;, args = { &quot;string&quot; } },
 	SaveSettings = { direction = &quot;toServer&quot;, args = { &quot;table&quot; } },
 	RequestProgress = { direction = &quot;toServer&quot;, args = {} },
 	JoinQueue = { direction = &quot;toServer&quot;, args = { &quot;string&quot; } },
@@ -1090,6 +1101,7 @@ Net.RateLimit = {
 	Discharge = 4,
 	BuyTool = 4,
 	BuyUpgrade = 4,
+	BuyDecor = 4,
 	-- Ayar kaydetme seyrek olmali: her kaydirici hareketinde DataStore'a
 	-- yazmak hem gereksiz hem de kota yakar. Istemci de kendi tarafinda
 	-- bekletiyor (SettingsPanel).
@@ -2794,54 +2806,38 @@ return {
 			[&quot;floorMaterial&quot;] = &quot;WoodPlanks&quot;,
 			[&quot;lights&quot;] = {
 				{
-					-28,
-					-22,
+					-26,
+					-17,
 				},
 				{
-					-10,
-					-22,
-				},
-				{
-					-28,
-					-10,
-				},
-				{
-					-10,
-					-10,
+					-4,
+					-17,
 				},
 			},
 			[&quot;queuePoints&quot;] = {
 				{
 					-32,
-					-20,
+					-26,
 				},
 				{
-					-27,
-					-20,
+					-25,
+					-26,
 				},
 				{
-					-22,
-					-20,
-				},
-				{
-					-17,
-					-20,
+					-18,
+					-26,
 				},
 				{
 					-32,
-					-13,
+					-14,
 				},
 				{
-					-27,
-					-13,
+					-25,
+					-14,
 				},
 				{
-					-22,
-					-13,
-				},
-				{
-					-17,
-					-13,
+					-18,
+					-14,
 				},
 			},
 			[&quot;props&quot;] = {
@@ -2871,14 +2867,6 @@ return {
 					[&quot;rot&quot;] = 90,
 				},
 				{
-					[&quot;id&quot;] = &quot;waitingBench&quot;,
-					[&quot;at&quot;] = {
-						-12,
-						-24,
-					},
-					[&quot;rot&quot;] = 270,
-				},
-				{
 					[&quot;id&quot;] = &quot;poster&quot;,
 					[&quot;at&quot;] = {
 						-20,
@@ -2905,7 +2893,7 @@ return {
 				{
 					[&quot;id&quot;] = &quot;plant&quot;,
 					[&quot;at&quot;] = {
-						-20,
+						-37.5,
 						-6.5,
 					},
 					[&quot;rot&quot;] = 0,
@@ -2921,8 +2909,8 @@ return {
 				{
 					[&quot;id&quot;] = &quot;trashBin&quot;,
 					[&quot;at&quot;] = {
-						-16.5,
-						-6,
+						-15,
+						-8,
 					},
 					[&quot;rot&quot;] = 0,
 				},
@@ -2932,6 +2920,32 @@ return {
 				210,
 				200,
 				186,
+			},
+			[&quot;ownerPoints&quot;] = {
+				{
+					-32,
+					-19.5,
+				},
+				{
+					-25,
+					-19.5,
+				},
+				{
+					-18,
+					-19.5,
+				},
+				{
+					-32,
+					-8,
+				},
+				{
+					-25,
+					-8,
+				},
+				{
+					-18,
+					-8,
+				},
 			},
 		},
 		{
@@ -2953,16 +2967,8 @@ return {
 			[&quot;floorMaterial&quot;] = &quot;SmoothPlastic&quot;,
 			[&quot;lights&quot;] = {
 				{
-					18,
-					-22,
-				},
-				{
-					32,
-					-22,
-				},
-				{
 					25,
-					-9,
+					-17,
 				},
 			},
 			[&quot;props&quot;] = {
@@ -3058,20 +3064,8 @@ return {
 			[&quot;floorMaterial&quot;] = &quot;SmoothPlastic&quot;,
 			[&quot;lights&quot;] = {
 				{
-					-30,
-					2,
-				},
-				{
-					-18,
-					2,
-				},
-				{
-					-30,
-					13,
-				},
-				{
-					-18,
-					13,
+					-26,
+					7,
 				},
 			},
 			[&quot;props&quot;] = {
@@ -3167,20 +3161,8 @@ return {
 			[&quot;floorMaterial&quot;] = &quot;SmoothPlastic&quot;,
 			[&quot;lights&quot;] = {
 				{
-					-4,
 					2,
-				},
-				{
-					10,
-					2,
-				},
-				{
-					-4,
-					13,
-				},
-				{
-					10,
-					13,
+					7,
 				},
 			},
 			[&quot;props&quot;] = {
@@ -3269,20 +3251,8 @@ return {
 			[&quot;floorMaterial&quot;] = &quot;SmoothPlastic&quot;,
 			[&quot;lights&quot;] = {
 				{
-					22,
-					2,
-				},
-				{
-					34,
-					2,
-				},
-				{
-					22,
-					14,
-				},
-				{
-					34,
-					14,
+					28,
+					7,
 				},
 			},
 			[&quot;props&quot;] = {
@@ -3370,34 +3340,8 @@ return {
 			[&quot;floorMaterial&quot;] = &quot;Concrete&quot;,
 			[&quot;lights&quot;] = {
 				{
-					-30,
+					-20,
 					24,
-				},
-				{
-					-18,
-					24,
-				},
-				{
-					-6,
-					24,
-				},
-			},
-			[&quot;restPoints&quot;] = {
-				{
-					-36,
-					22,
-				},
-				{
-					-29,
-					22,
-				},
-				{
-					-22,
-					22,
-				},
-				{
-					-15,
-					22,
 				},
 			},
 			[&quot;props&quot;] = {
@@ -3477,15 +3421,7 @@ return {
 			[&quot;floorMaterial&quot;] = &quot;Concrete&quot;,
 			[&quot;lights&quot;] = {
 				{
-					10,
-					24,
-				},
-				{
-					22,
-					24,
-				},
-				{
-					34,
+					20,
 					24,
 				},
 			},
@@ -4752,6 +4688,210 @@ return {
 			</Item>
 			<Item class="ModuleScript" referent="RBX18">
 				<Properties>
+					<string name="Name">decor</string>
+					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
+-- Kaynak: data/decor.json
+-- Uretici: tools/jsontolua.py  (python3 build.py)
+-- (VERI) Klinik dekorasyonu: duvar/zemin temalari ve sus esyalari. Oyuncu magazanin DEKORASYON sekmesinden aliyor.
+return {
+	[&quot;themes&quot;] = {
+		{
+			[&quot;id&quot;] = &quot;themeClassic&quot;,
+			[&quot;nameKey&quot;] = &quot;decor.themeClassic&quot;,
+			[&quot;descKey&quot;] = &quot;decor.themeClassic.desc&quot;,
+			[&quot;cost&quot;] = 0,
+			[&quot;unlockLevel&quot;] = 1,
+			[&quot;order&quot;] = 0,
+			[&quot;wall&quot;] = {
+				232,
+				236,
+				240,
+			},
+			[&quot;wallTrim&quot;] = {
+				206,
+				212,
+				220,
+			},
+			[&quot;floor&quot;] = {
+				226,
+				218,
+				206,
+			},
+			[&quot;floorTile&quot;] = {
+				210,
+				200,
+				186,
+			},
+			[&quot;accent&quot;] = {
+				72,
+				176,
+				176,
+			},
+		},
+		{
+			[&quot;id&quot;] = &quot;themeWarm&quot;,
+			[&quot;nameKey&quot;] = &quot;decor.themeWarm&quot;,
+			[&quot;descKey&quot;] = &quot;decor.themeWarm.desc&quot;,
+			[&quot;cost&quot;] = 1200,
+			[&quot;unlockLevel&quot;] = 3,
+			[&quot;order&quot;] = 1,
+			[&quot;wall&quot;] = {
+				240,
+				228,
+				210,
+			},
+			[&quot;wallTrim&quot;] = {
+				214,
+				190,
+				158,
+			},
+			[&quot;floor&quot;] = {
+				212,
+				186,
+				152,
+			},
+			[&quot;floorTile&quot;] = {
+				196,
+				168,
+				132,
+			},
+			[&quot;accent&quot;] = {
+				214,
+				148,
+				72,
+			},
+		},
+		{
+			[&quot;id&quot;] = &quot;themeForest&quot;,
+			[&quot;nameKey&quot;] = &quot;decor.themeForest&quot;,
+			[&quot;descKey&quot;] = &quot;decor.themeForest.desc&quot;,
+			[&quot;cost&quot;] = 2200,
+			[&quot;unlockLevel&quot;] = 5,
+			[&quot;order&quot;] = 2,
+			[&quot;wall&quot;] = {
+				222,
+				234,
+				224,
+			},
+			[&quot;wallTrim&quot;] = {
+				176,
+				200,
+				178,
+			},
+			[&quot;floor&quot;] = {
+				206,
+				214,
+				200,
+			},
+			[&quot;floorTile&quot;] = {
+				186,
+				198,
+				180,
+			},
+			[&quot;accent&quot;] = {
+				96,
+				172,
+				118,
+			},
+		},
+		{
+			[&quot;id&quot;] = &quot;themeNight&quot;,
+			[&quot;nameKey&quot;] = &quot;decor.themeNight&quot;,
+			[&quot;descKey&quot;] = &quot;decor.themeNight.desc&quot;,
+			[&quot;cost&quot;] = 3600,
+			[&quot;unlockLevel&quot;] = 7,
+			[&quot;order&quot;] = 3,
+			[&quot;wall&quot;] = {
+				206,
+				214,
+				228,
+			},
+			[&quot;wallTrim&quot;] = {
+				156,
+				168,
+				190,
+			},
+			[&quot;floor&quot;] = {
+				188,
+				196,
+				210,
+			},
+			[&quot;floorTile&quot;] = {
+				170,
+				180,
+				198,
+			},
+			[&quot;accent&quot;] = {
+				110,
+				150,
+				232,
+			},
+		},
+	},
+	[&quot;props&quot;] = {
+		{
+			[&quot;id&quot;] = &quot;aquarium&quot;,
+			[&quot;nameKey&quot;] = &quot;decor.aquarium&quot;,
+			[&quot;descKey&quot;] = &quot;decor.aquarium.desc&quot;,
+			[&quot;cost&quot;] = 1500,
+			[&quot;unlockLevel&quot;] = 4,
+			[&quot;prop&quot;] = &quot;aquarium&quot;,
+			[&quot;room&quot;] = &quot;reception&quot;,
+			[&quot;at&quot;] = {
+				-6,
+				-16,
+			},
+			[&quot;rot&quot;] = 0,
+		},
+		{
+			[&quot;id&quot;] = &quot;wallClock&quot;,
+			[&quot;nameKey&quot;] = &quot;decor.wallClock&quot;,
+			[&quot;descKey&quot;] = &quot;decor.wallClock.desc&quot;,
+			[&quot;cost&quot;] = 450,
+			[&quot;unlockLevel&quot;] = 2,
+			[&quot;prop&quot;] = &quot;wallClock&quot;,
+			[&quot;room&quot;] = &quot;exam1&quot;,
+			[&quot;at&quot;] = {
+				-17,
+				-3.1,
+			},
+			[&quot;rot&quot;] = 0,
+		},
+		{
+			[&quot;id&quot;] = &quot;certificate&quot;,
+			[&quot;nameKey&quot;] = &quot;decor.certificate&quot;,
+			[&quot;descKey&quot;] = &quot;decor.certificate.desc&quot;,
+			[&quot;cost&quot;] = 700,
+			[&quot;unlockLevel&quot;] = 3,
+			[&quot;prop&quot;] = &quot;certificate&quot;,
+			[&quot;room&quot;] = &quot;exam2&quot;,
+			[&quot;at&quot;] = {
+				10,
+				-3.1,
+			},
+			[&quot;rot&quot;] = 0,
+		},
+		{
+			[&quot;id&quot;] = &quot;flowerPot&quot;,
+			[&quot;nameKey&quot;] = &quot;decor.flowerPot&quot;,
+			[&quot;descKey&quot;] = &quot;decor.flowerPot.desc&quot;,
+			[&quot;cost&quot;] = 300,
+			[&quot;unlockLevel&quot;] = 2,
+			[&quot;prop&quot;] = &quot;flowerPot&quot;,
+			[&quot;room&quot;] = &quot;reception&quot;,
+			[&quot;at&quot;] = {
+				-6,
+				-22,
+			},
+			[&quot;rot&quot;] = 0,
+		},
+	},
+}
+</ProtectedString>
+				</Properties>
+			</Item>
+			<Item class="ModuleScript" referent="RBX19">
+				<Properties>
 					<string name="Name">economy</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
 -- Kaynak: data/economy.json
@@ -4902,7 +5042,7 @@ return {
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX19">
+			<Item class="ModuleScript" referent="RBX20">
 				<Properties>
 					<string name="Name">lighting</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -4981,8 +5121,8 @@ return {
 	},
 	[&quot;lights&quot;] = {
 		[&quot;ceiling&quot;] = {
-			[&quot;brightness&quot;] = 0.75,
-			[&quot;range&quot;] = 20,
+			[&quot;brightness&quot;] = 0.95,
+			[&quot;range&quot;] = 30,
 			[&quot;color&quot;] = {
 				255,
 				248,
@@ -5027,11 +5167,13 @@ return {
 			},
 		},
 	},
+	[&quot;maxDynamicLights&quot;] = 16,
+	[&quot;ceilingShadows&quot;] = false,
 }
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX20">
+			<Item class="ModuleScript" referent="RBX21">
 				<Properties>
 					<string name="Name">lobby</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -5241,11 +5383,11 @@ return {
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="Folder" referent="RBX21">
+			<Item class="Folder" referent="RBX22">
 				<Properties>
 					<string name="Name">locale</string>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX22">
+				<Item class="ModuleScript" referent="RBX23">
 					<Properties>
 						<string name="Name">tr</string>
 						<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -5265,7 +5407,18 @@ return {
 		[&quot;hud.queue&quot;] = &quot;Bekleyen hasta: {1}/{2}&quot;,
 		[&quot;hud.hints&quot;] = &quot;E ile hastayı masaya al&quot;,
 		[&quot;hud.keys&quot;] = &quot;E hastayı al · 1-8 alet · T taburcu · B mağaza · G ilerleme · O ayarlar · Shift koş&quot;,
-		[&quot;hud.transient&quot;] = &quot;⚠ Kayıt kapalı — ilerleme saklanmıyor&quot;,
+		[&quot;hud.transient&quot;] = &quot;Kayıt kapalı — ilerleme saklanmıyor&quot;,
+		[&quot;hud.capMoney&quot;] = &quot;Kasa&quot;,
+		[&quot;hud.capLevel&quot;] = &quot;Seviye&quot;,
+		[&quot;hud.capReputation&quot;] = &quot;İtibar&quot;,
+		[&quot;hud.gainMoney&quot;] = &quot;+{1} TL&quot;,
+		[&quot;hud.gainXp&quot;] = &quot;+{1} XP&quot;,
+		[&quot;hud.objective.callNext&quot;] = &quot;Sıradaki hastayı masaya al  (E)&quot;,
+		[&quot;hud.objective.examine&quot;] = &quot;Belirtileri bul — aletlerini kullan  (1-8)&quot;,
+		[&quot;hud.objective.diagnose&quot;] = &quot;Belirtiler yeterli — teşhis koy&quot;,
+		[&quot;hud.objective.treat&quot;] = &quot;Tedaviyi tamamla&quot;,
+		[&quot;hud.objective.discharge&quot;] = &quot;Hastayı taburcu et  (T)&quot;,
+		[&quot;hud.objective.emergency&quot;] = &quot;ACİL VAKA — zaman doluyor!&quot;,
 		[&quot;room.reception&quot;] = &quot;RESEPSİYON&quot;,
 		[&quot;room.pharmacy&quot;] = &quot;ECZANE&quot;,
 		[&quot;room.exam1&quot;] = &quot;MUAYENE 1&quot;,
@@ -5385,6 +5538,7 @@ return {
 		[&quot;diagnosis.title&quot;] = &quot;TEŞHİS KOY&quot;,
 		[&quot;diagnosis.hint&quot;] = &quot;Belirtilere bakıp hastalığı seç. Yanlış teşhis itibarını düşürür ve hayvanı gerer.&quot;,
 		[&quot;treatment.title&quot;] = &quot;TEDAVİ UYGULA&quot;,
+		[&quot;treatment.cost&quot;] = &quot;{1} TL&quot;,
 		[&quot;surgery.title&quot;] = &quot;AMELİYAT&quot;,
 		[&quot;surgery.hint&quot;] = &quot;İşaretçi yeşil alandayken Boşluk'a bas&quot;,
 		[&quot;surgery.step&quot;] = &quot;Adım {1}/{2}&quot;,
@@ -5395,6 +5549,26 @@ return {
 		[&quot;shop.close&quot;] = &quot;Kapat (B)&quot;,
 		[&quot;shop.tools&quot;] = &quot;ALETLER&quot;,
 		[&quot;shop.upgrades&quot;] = &quot;KLİNİK YÜKSELTMELERİ&quot;,
+		[&quot;shop.decor&quot;] = &quot;DEKORASYON&quot;,
+		[&quot;shop.price&quot;] = &quot;{1} TL&quot;,
+		[&quot;shop.emptyTab&quot;] = &quot;Bu sekmede henüz bir şey yok.&quot;,
+		[&quot;decor.themeClassic&quot;] = &quot;Klasik Beyaz&quot;,
+		[&quot;decor.themeClassic.desc&quot;] = &quot;Kliniğin standart duvar ve zemin rengi.&quot;,
+		[&quot;decor.themeWarm&quot;] = &quot;Sıcak Ahşap&quot;,
+		[&quot;decor.themeWarm.desc&quot;] = &quot;Krem duvarlar, bal rengi zemin — daha samimi bir bekleme alanı.&quot;,
+		[&quot;decor.themeForest&quot;] = &quot;Orman Yeşili&quot;,
+		[&quot;decor.themeForest.desc&quot;] = &quot;Yumuşak yeşil tonlar; gergin hayvanları sakinleştiren bir palet.&quot;,
+		[&quot;decor.themeNight&quot;] = &quot;Gece Mavisi&quot;,
+		[&quot;decor.themeNight.desc&quot;] = &quot;Serin mavi duvarlar, gece nöbetine yakışan bir klinik.&quot;,
+		[&quot;decor.aquarium&quot;] = &quot;Akvaryum&quot;,
+		[&quot;decor.aquarium.desc&quot;] = &quot;Resepsiyona konan cam akvaryum — bekleyenlerin gözü onda.&quot;,
+		[&quot;decor.wallClock&quot;] = &quot;Duvar Saati&quot;,
+		[&quot;decor.wallClock.desc&quot;] = &quot;Muayene 1'in duvarına asılan ahşap kasalı saat.&quot;,
+		[&quot;decor.certificate&quot;] = &quot;Diploma Çerçevesi&quot;,
+		[&quot;decor.certificate.desc&quot;] = &quot;Muayene 2'nin duvarına asılan çerçeveli veterinerlik diploması.&quot;,
+		[&quot;decor.certificate.text&quot;] = &quot;VETERİNER\nHEKİMLİK\nDİPLOMASI&quot;,
+		[&quot;decor.flowerPot&quot;] = &quot;Çiçek Saksısı&quot;,
+		[&quot;decor.flowerPot.desc&quot;] = &quot;Resepsiyonun ortasına konan renkli çiçek saksısı.&quot;,
 		[&quot;shop.owned&quot;] = &quot;SAHİPSİN&quot;,
 		[&quot;shop.locked&quot;] = &quot;Seviye {1}&quot;,
 		[&quot;shop.bought&quot;] = &quot;Satın alındı.&quot;,
@@ -5559,6 +5733,9 @@ return {
 		[&quot;task.earn5000&quot;] = &quot;Bugün 5.000 TL kazan&quot;,
 		[&quot;task.species4&quot;] = &quot;Bugün 4 farklı türe bak&quot;,
 		[&quot;chart.satisfaction&quot;] = &quot;Sahibinin memnuniyeti {1}/100&quot;,
+		[&quot;chart.healthShort&quot;] = &quot;Sağlık&quot;,
+		[&quot;chart.stressShort&quot;] = &quot;Stres&quot;,
+		[&quot;chart.satisfactionShort&quot;] = &quot;Sahibinin memnuniyeti&quot;,
 		[&quot;chart.emergency&quot;] = &quot;ACİL VAKA — {1}:{2} kaldı&quot;,
 		[&quot;fps.rate&quot;] = &quot;{1} FPS&quot;,
 		[&quot;fps.detail&quot;] = &quot;en düşük {1} · gecikme {2} ms&quot;,
@@ -5629,7 +5806,7 @@ return {
 					</Properties>
 				</Item>
 			</Item>
-			<Item class="ModuleScript" referent="RBX23">
+			<Item class="ModuleScript" referent="RBX24">
 				<Properties>
 					<string name="Name">props</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -6017,12 +6194,68 @@ return {
 			[&quot;base&quot;] = 0,
 			[&quot;againstWall&quot;] = false,
 		},
+		{
+			[&quot;id&quot;] = &quot;aquarium&quot;,
+			[&quot;size&quot;] = {
+				5.4,
+				1.8,
+				5,
+			},
+			[&quot;offset&quot;] = {
+				0,
+				0,
+			},
+			[&quot;base&quot;] = 0,
+			[&quot;againstWall&quot;] = false,
+		},
+		{
+			[&quot;id&quot;] = &quot;wallClock&quot;,
+			[&quot;size&quot;] = {
+				2.8,
+				0.5,
+				2.8,
+			},
+			[&quot;offset&quot;] = {
+				0,
+				0,
+			},
+			[&quot;base&quot;] = 6,
+			[&quot;againstWall&quot;] = true,
+		},
+		{
+			[&quot;id&quot;] = &quot;certificate&quot;,
+			[&quot;size&quot;] = {
+				2.4,
+				0.4,
+				3,
+			},
+			[&quot;offset&quot;] = {
+				0,
+				0,
+			},
+			[&quot;base&quot;] = 5.6,
+			[&quot;againstWall&quot;] = true,
+		},
+		{
+			[&quot;id&quot;] = &quot;flowerPot&quot;,
+			[&quot;size&quot;] = {
+				2.6,
+				2.6,
+				4.2,
+			},
+			[&quot;offset&quot;] = {
+				0,
+				0,
+			},
+			[&quot;base&quot;] = 0,
+			[&quot;againstWall&quot;] = false,
+		},
 	},
 }
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX24">
+			<Item class="ModuleScript" referent="RBX25">
 				<Properties>
 					<string name="Name">settings</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -6088,7 +6321,7 @@ return {
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX25">
+			<Item class="ModuleScript" referent="RBX26">
 				<Properties>
 					<string name="Name">symptoms</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -6300,7 +6533,7 @@ return {
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX26">
+			<Item class="ModuleScript" referent="RBX27">
 				<Properties>
 					<string name="Name">tasks</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -6424,7 +6657,7 @@ return {
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX27">
+			<Item class="ModuleScript" referent="RBX28">
 				<Properties>
 					<string name="Name">tools</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -6550,7 +6783,7 @@ return {
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX28">
+			<Item class="ModuleScript" referent="RBX29">
 				<Properties>
 					<string name="Name">treatments</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -6669,7 +6902,7 @@ return {
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX29">
+			<Item class="ModuleScript" referent="RBX30">
 				<Properties>
 					<string name="Name">upgrades</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -6740,7 +6973,7 @@ return {
 			[&quot;cost&quot;] = 4500,
 			[&quot;unlockLevel&quot;] = 4,
 			[&quot;effect&quot;] = {
-				[&quot;queueSlots&quot;] = 3,
+				[&quot;queueSlots&quot;] = 1,
 			},
 		},
 		{
@@ -6794,11 +7027,11 @@ return {
 			</Item>
 		</Item>
 	</Item>
-	<Item class="ServerScriptService" referent="RBX30">
+	<Item class="ServerScriptService" referent="RBX31">
 		<Properties>
 			<string name="Name">ServerScriptService</string>
 		</Properties>
-		<Item class="Script" referent="RBX31">
+		<Item class="Script" referent="RBX32">
 			<Properties>
 				<string name="Name">VetServer</string>
 				<ProtectedString name="Source">--!strict
@@ -6839,6 +7072,7 @@ local Validate = require(Shared.Validate)
 
 local AnimalAnimator = require(script.world.AnimalAnimator)
 local Clinic = require(script.world.Clinic)
+local Decor = require(script.world.Decor)
 local Lobby = require(script.world.Lobby)
 local OwnerFactory = require(script.world.OwnerFactory)
 local SkyLighting = require(script.world.Lighting)
@@ -7042,6 +7276,23 @@ end
 
 -- ── Oyuncu yasam dongusu ──────────────────────────────────────────────
 
+--- Klinigin dekorunu online oyunculara gore tazeler. Bina ORTAK
+--- oldugu icin tek bir oyuncunun degil, o an iceride olan herkesin
+--- sahip oldugu dekor birlestiriliyor (Decor.refresh kurali).
+local function refreshDecor()
+	if mode ~= &quot;clinic&quot; or clinicBuilt == nil then
+		return
+	end
+	local bags = {}
+	for _, player in Players:GetPlayers() do
+		local entry = Profile.get(player)
+		if entry ~= nil then
+			table.insert(bags, entry.data.decor)
+		end
+	end
+	Decor.refresh(bags)
+end
+
 local function onPlayerAdded(player: Player)
 	local entry = Profile.load(player)
 	Leaderboard.attach(player)
@@ -7050,6 +7301,8 @@ local function onPlayerAdded(player: Player)
 	task.defer(function()
 		if mode == &quot;clinic&quot; then
 			PatientFlow.pushState(player)
+			-- Giren oyuncunun dekoru de klinige isliyor.
+			refreshDecor()
 		else
 			pushLobby(player)
 		end
@@ -7062,6 +7315,8 @@ Players.PlayerRemoving:Connect(function(player: Player)
 	Surgery.cancel(player)
 	Matchmaking.leave(player)
 	Validate.forget(player)
+	-- Cikan oyuncunun dekoru da kalkiyor; kalanlarinki duruyor.
+	task.defer(refreshDecor)
 end)
 
 for _, player in Players:GetPlayers() do
@@ -7113,6 +7368,22 @@ bind(&quot;BuyUpgrade&quot;, function(player: Player, upgradeId: string)
 	Net.toPlayer(&quot;Notify&quot;, player, if result.ok then &quot;good&quot; else &quot;warn&quot;, result.reasonKey, result.args)
 	if result.ok then
 		Profile.markDirty(player)
+	end
+	PatientFlow.pushState(player)
+end)
+bind(&quot;BuyDecor&quot;, function(player: Player, decorId: string)
+	local entry = Profile.get(player)
+	if entry == nil then
+		return
+	end
+	local result = Upgrades.buyDecor(entry.data, decorId)
+	Net.toPlayer(&quot;Notify&quot;, player, if result.ok then &quot;good&quot; else &quot;warn&quot;, result.reasonKey, result.args)
+	if result.ok then
+		Profile.markDirty(player)
+		-- Dekorasyon KLINIGE isliyor: satin alan kisi degil, binanin
+		-- kendisi degisiyor. Bu yuzden herkesin gozunde ayni anda
+		-- guncelleniyor.
+		refreshDecor()
 	end
 	PatientFlow.pushState(player)
 end)
@@ -7190,7 +7461,7 @@ end
 print((&quot;[Veteriner] sunucu hazir — mod: %s&quot;):format(mode))
 </ProtectedString>
 			</Properties>
-			<Item class="Script" referent="RBX32">
+			<Item class="Script" referent="RBX33">
 				<Properties>
 					<string name="Name">SelfTest</string>
 					<ProtectedString name="Source">--!strict
@@ -7739,11 +8010,11 @@ end
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="Folder" referent="RBX33">
+			<Item class="Folder" referent="RBX34">
 				<Properties>
 					<string name="Name">game</string>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX34">
+				<Item class="ModuleScript" referent="RBX35">
 					<Properties>
 						<string name="Name">Achievements</string>
 						<ProtectedString name="Source">--!strict
@@ -7903,7 +8174,7 @@ return Achievements
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX35">
+				<Item class="ModuleScript" referent="RBX36">
 					<Properties>
 						<string name="Name">Diagnosis</string>
 						<ProtectedString name="Source">--!strict
@@ -8038,7 +8309,7 @@ return Diagnosis
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX36">
+				<Item class="ModuleScript" referent="RBX37">
 					<Properties>
 						<string name="Name">Economy</string>
 						<ProtectedString name="Source">--!strict
@@ -8155,7 +8426,7 @@ return Economy
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX37">
+				<Item class="ModuleScript" referent="RBX38">
 					<Properties>
 						<string name="Name">Leaderboard</string>
 						<ProtectedString name="Source">--!strict
@@ -8231,7 +8502,7 @@ return Leaderboard
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX38">
+				<Item class="ModuleScript" referent="RBX39">
 					<Properties>
 						<string name="Name">Matchmaking</string>
 						<ProtectedString name="Source">--!strict
@@ -8407,6 +8678,9 @@ function Matchmaking.snapshot(): any
 			waiting = #queue,
 			-- Yedek sayacin kalan suresi: arayuzde geri sayim.
 			fallbackIn = math.max(0, plan.soloFallbackSeconds - waited),
+			-- Toplam sure de gidiyor: arayuzdeki geri sayim halkasi
+			-- oranı buradan hesapliyor, veriyi istemciye kopyalamiyor.
+			fallbackTotal = plan.soloFallbackSeconds,
 		})
 	end
 	return { modes = list, players = #Players:GetPlayers() }
@@ -8466,7 +8740,7 @@ return Matchmaking
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX39">
+				<Item class="ModuleScript" referent="RBX40">
 					<Properties>
 						<string name="Name">PatientFlow</string>
 						<ProtectedString name="Source">--!strict
@@ -8487,6 +8761,7 @@ return Matchmaking
 -- oyunculu oturumda iki veteriner ayni hastayi cekistirmez.
 
 local Players = game:GetService(&quot;Players&quot;)
+local TweenService = game:GetService(&quot;TweenService&quot;)
 
 local ReplicatedStorage = game:GetService(&quot;ReplicatedStorage&quot;)
 local Shared = ReplicatedStorage:WaitForChild(&quot;VetShared&quot;)
@@ -8694,10 +8969,47 @@ local function chartSnapshot(patient: Patient?, viewer: Player): any
 	local level = if entry ~= nil then entry.data.level else 1
 
 	-- Teshis adaylari: bu turun, bu seviyede gorulebilecek hastaliklari.
+	--
+	-- Her adayin yaninda ESLESME ORANI da gidiyor: bulunan belirtilerin
+	-- kaci bu hastalikta da var. Bunu istemciye HESAPLATMAK, hastalik
+	-- tablosunun tamamini istemciye yollamak demekti; burada hesaplanan
+	-- oran ise zaten oyuncunun elindeki bilgiden (bulunmus belirtiler)
+	-- cikiyor, yani yeni bir sey sizdirmiyor. Hangi adayin dogru oldugu
+	-- hala yalnizca sunucuda.
+	local revealedCount = 0
+	for _ in patient.revealed do
+		revealedCount += 1
+	end
+
 	local candidates = {}
 	for _, condition in Diagnosis.conditionsFor(patient.animalId, level) do
-		table.insert(candidates, { id = condition.id, nameKey = condition.nameKey })
+		local hits = 0
+		for _, symptomId in condition.symptoms do
+			if patient.revealed[symptomId] == true then
+				hits += 1
+			end
+		end
+		table.insert(candidates, {
+			id = condition.id,
+			nameKey = condition.nameKey,
+			hits = hits,
+			-- Bulunan belirtilerin kaci bu hastaligi destekliyor.
+			match = if revealedCount == 0 then 0 else hits / revealedCount,
+			-- Bu hastaligin belirtilerinin kaci bulundu (kapsam).
+			coverage = if #condition.symptoms == 0 then 0 else hits / #condition.symptoms,
+		})
 	end
+	-- Once eslesme, esitlikte kapsam, yine esitlikte ad: sira her
+	-- guncellemede ayni kalsin diye kararli bir olcut zinciri.
+	table.sort(candidates, function(a, b)
+		if a.match ~= b.match then
+			return a.match &gt; b.match
+		end
+		if a.coverage ~= b.coverage then
+			return a.coverage &gt; b.coverage
+		end
+		return a.id &lt; b.id
+	end)
 
 	local required = {}
 	local done = {}
@@ -9001,13 +9313,20 @@ local function spawnPatient()
 
 	if emergency then
 		-- Acil vaka gorsel olarak bagirsin: kirmizi donen isik.
+		-- Acil feneri NABIZ gibi: sabit yanan bir isik hem dikkat
+		-- cekmiyor hem sahneye surekli isik ekliyor.
 		local lamp = SkyLighting.lamp(&quot;emergency&quot;)
 		local beacon = Instance.new(&quot;PointLight&quot;)
 		beacon.Name = &quot;AcilIsigi&quot;
 		beacon.Color = lamp.color
-		beacon.Brightness = lamp.brightness
+		beacon.Brightness = 0
 		beacon.Range = lamp.range
+		beacon.Shadows = false
 		beacon.Parent = rig.root
+		task.spawn(function()
+			local info = TweenInfo.new(0.6, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true)
+			TweenService:Create(beacon, info, { Brightness = lamp.brightness }):Play()
+		end)
 		Audio.ambience(&quot;emergencySiren&quot;, rig.root)
 		OwnerFactory.say(owner, &quot;hint.emergency&quot;)
 	end
@@ -9779,7 +10098,7 @@ return PatientFlow
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX40">
+				<Item class="ModuleScript" referent="RBX41">
 					<Properties>
 						<string name="Name">Profile</string>
 						<ProtectedString name="Source">--!strict
@@ -9809,15 +10128,16 @@ local RunService = game:GetService(&quot;RunService&quot;)
 local ReplicatedStorage = game:GetService(&quot;ReplicatedStorage&quot;)
 local Data = ReplicatedStorage:WaitForChild(&quot;VetData&quot;)
 
+local decorData = require(Data.decor)
 local economy = require(Data.economy)
 local settingsData = require(Data.settings)
 local toolData = require(Data.tools)
 
 local Profile = {}
 
-local SCHEMA_VERSION = 2
+local SCHEMA_VERSION = 3
 local STORE_NAME = &quot;VetProfile_v1&quot;
--- STORE_NAME degismiyor: sema surumu 2'ye ciksa da ESKI KAYITLAR OKUNMAYA
+-- STORE_NAME degismiyor: sema surumu 3'e ciksa da ESKI KAYITLAR OKUNMAYA
 -- devam etsin. migrate() eksik alanlari varsayilanla dolduruyor; store'u
 -- degistirmek herkesin ilerlemesini silmek demek olurdu.
 local KEY_PREFIX = &quot;player_&quot;
@@ -9870,6 +10190,9 @@ export type Data = {
 	reputation: number,
 	tools: { [string]: boolean },
 	upgrades: { [string]: boolean },
+	-- Satin alinmis dekorasyon (tema + sus esyasi). Sema 3 ile geldi;
+	-- eski kayitlarda bulunmuyor, migrate() bos tabloyla dolduruyor.
+	decor: { [string]: boolean },
 	stats: Stats,
 	species: { [string]: boolean },
 	achievements: { [string]: boolean },
@@ -9898,6 +10221,19 @@ local function starterTools(): { [string]: boolean }
 		end
 	end
 	return tools
+end
+
+--- Bastan acik dekorasyon: bedava temalar. starterTools ile ayni
+--- gerekce - kodda ikinci bir liste tutmak veri degisince sessizce
+--- tutarsiz kalirdi.
+local function starterDecor(): { [string]: boolean }
+	local owned = {}
+	for _, theme in decorData.themes do
+		if theme.cost == 0 and theme.unlockLevel &lt;= 1 then
+			owned[theme.id] = true
+		end
+	end
+	return owned
 end
 
 local function defaultStats(): Stats
@@ -9942,6 +10278,7 @@ local function defaultData(): Data
 		reputation = economy.startingReputation,
 		tools = starterTools(),
 		upgrades = {},
+		decor = starterDecor(),
 		stats = defaultStats(),
 		species = {},
 		achievements = {},
@@ -9976,6 +10313,13 @@ local function migrate(raw: any): Data
 		for id, owned in raw.upgrades do
 			if owned == true then
 				result.upgrades[id] = true
+			end
+		end
+	end
+	if type(raw.decor) == &quot;table&quot; then
+		for id, owned in raw.decor do
+			if owned == true then
+				result.decor[id] = true
 			end
 		end
 	end
@@ -10265,7 +10609,7 @@ return Profile
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX41">
+				<Item class="ModuleScript" referent="RBX42">
 					<Properties>
 						<string name="Name">Surgery</string>
 						<ProtectedString name="Source">--!strict
@@ -10422,7 +10766,7 @@ return Surgery
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX42">
+				<Item class="ModuleScript" referent="RBX43">
 					<Properties>
 						<string name="Name">Tasks</string>
 						<ProtectedString name="Source">--!strict
@@ -10602,7 +10946,7 @@ return Tasks
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX43">
+				<Item class="ModuleScript" referent="RBX44">
 					<Properties>
 						<string name="Name">Treatment</string>
 						<ProtectedString name="Source">--!strict
@@ -10762,7 +11106,7 @@ return Treatment
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX44">
+				<Item class="ModuleScript" referent="RBX45">
 					<Properties>
 						<string name="Name">Upgrades</string>
 						<ProtectedString name="Source">--!strict
@@ -10785,6 +11129,7 @@ local Data = ReplicatedStorage:WaitForChild(&quot;VetData&quot;)
 local Economy = require(script.Parent.Economy)
 local Profile = require(script.Parent.Profile)
 
+local decorData = require(Data.decor)
 local toolData = require(Data.tools)
 local upgradeData = require(Data.upgrades)
 
@@ -10806,6 +11151,36 @@ end
 local upgradeById: { [string]: any } = {}
 for _, upgrade in upgradeData.upgrades do
 	upgradeById[upgrade.id] = upgrade
+end
+
+-- Dekorasyon tek listede toplaniyor: tema ve sus esyasi ayni magaza
+-- sekmesinde, ayni satin alma yolundan geciyor. Ayri iki satin alma
+-- yolu, rezerv ve seviye kurallarinin ikiye bolunmesi demek olurdu.
+local decorById: { [string]: any } = {}
+local decorOrder: { any } = {}
+for _, theme in decorData.themes do
+	local entry = {
+		id = theme.id,
+		nameKey = theme.nameKey,
+		descKey = theme.descKey,
+		cost = theme.cost,
+		unlockLevel = theme.unlockLevel,
+		kind = &quot;theme&quot;,
+	}
+	decorById[theme.id] = entry
+	table.insert(decorOrder, entry)
+end
+for _, item in decorData.props do
+	local entry = {
+		id = item.id,
+		nameKey = item.nameKey,
+		descKey = item.descKey,
+		cost = item.cost,
+		unlockLevel = item.unlockLevel,
+		kind = &quot;prop&quot;,
+	}
+	decorById[item.id] = entry
+	table.insert(decorOrder, entry)
 end
 
 function Upgrades.tool(id: string): any?
@@ -10932,6 +11307,16 @@ function Upgrades.buyUpgrade(data: Profile.Data, id: string): BuyResult
 	return purchase(data, data.upgrades, upgradeById[id], id)
 end
 
+--- Dekorasyon satin alir. Tema da sus esyasi da ayni yoldan geciyor.
+function Upgrades.buyDecor(data: Profile.Data, id: string): BuyResult
+	return purchase(data, data.decor, decorById[id], id)
+end
+
+--- Dekorasyon kimligi taniniyor mu? (SelfTest ve verify_data icin.)
+function Upgrades.knownDecor(id: string): boolean
+	return decorById[id] ~= nil
+end
+
 --- Seviye atlayinca fiyati 0 olan aletler kendiliginden aciliyor:
 --- oyuncuyu bedava bir seyi &quot;satin al&quot; diye magazaya yollamak anlamsiz.
 function Upgrades.grantFreeTools(data: Profile.Data): { string }
@@ -10977,7 +11362,20 @@ function Upgrades.shopSnapshot(data: Profile.Data): any
 		})
 	end
 
-	return { tools = tools, upgrades = upgrades, maxLevel = Economy.MAX_LEVEL }
+	local decor = {}
+	for _, item in decorOrder do
+		table.insert(decor, {
+			id = item.id,
+			nameKey = item.nameKey,
+			descKey = item.descKey,
+			price = item.cost,
+			unlockLevel = item.unlockLevel,
+			owned = data.decor[item.id] == true,
+			locked = data.level &lt; item.unlockLevel,
+		})
+	end
+
+	return { tools = tools, upgrades = upgrades, decor = decor, maxLevel = Economy.MAX_LEVEL }
 end
 
 return Upgrades
@@ -10985,11 +11383,11 @@ return Upgrades
 					</Properties>
 				</Item>
 			</Item>
-			<Item class="Folder" referent="RBX45">
+			<Item class="Folder" referent="RBX46">
 				<Properties>
 					<string name="Name">world</string>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX46">
+				<Item class="ModuleScript" referent="RBX47">
 					<Properties>
 						<string name="Name">AnimalAnimator</string>
 						<ProtectedString name="Source">--!strict
@@ -11115,7 +11513,9 @@ function Animator.walkPath(rig: AnimalFactory.Rig, points: { Vector3 }, onArrive
 	entry.waypoints = table.clone(points)
 	entry.onArrive = onArrive
 	entry.state = if #entry.waypoints &gt; 0 then &quot;walk&quot; else &quot;idle&quot;
-	-- Yurumeye baslayan yilan kivrilmasini cozer.
+	-- Yurumeye baslayan yilan kivrilmasini cozer; durunca yeniden
+	-- kiviriliyor (asagidaki dongu). Beklerken duz uzanan bir yilan hem
+	-- gercekci degil hem de 7,2 stud'luk govdesiyle komsusuna giriyordu.
 	entry.coiled = false
 end
 
@@ -11294,6 +11694,11 @@ function Animator.start()
 				continue
 			end
 			local speed = stepMovement(entry, step)
+			-- Duran serpentine rig kendiliginden kiviriliyor: bekleme
+			-- ayak izi 7,2 degil ~3 stud oluyor (data: tableFootprint).
+			if entry.rig.spec.rig == &quot;serpentine&quot; and #entry.waypoints == 0 then
+				entry.coiled = true
+			end
 			stepPose(entry, step, speed)
 		end
 	end)
@@ -11312,7 +11717,7 @@ return Animator
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX47">
+				<Item class="ModuleScript" referent="RBX48">
 					<Properties>
 						<string name="Name">AnimalFactory</string>
 						<ProtectedString name="Source">--!strict
@@ -12260,7 +12665,7 @@ return AnimalFactory
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX48">
+				<Item class="ModuleScript" referent="RBX49">
 					<Properties>
 						<string name="Name">Clinic</string>
 						<ProtectedString name="Source">--!strict
@@ -12283,6 +12688,7 @@ local Build = require(Shared.Build)
 local Detail = require(Shared.Detail)
 local Loc = require(Shared.Loc)
 local Props = require(script.Parent.Props)
+local Decor = require(script.Parent.Decor)
 local SkyLighting = require(script.Parent.Lighting)
 
 local plan = require(Data.clinic)
@@ -12298,7 +12704,7 @@ export type Built = {
 	model: Model,
 	stations: Stations,
 	queuePoints: { CFrame },
-	restPoints: { CFrame },
+	ownerPoints: { CFrame },
 	entranceOutside: Vector3,
 	entranceInside: Vector3,
 	roomOf: { [string]: { min: { number }, max: { number } } },
@@ -12326,6 +12732,9 @@ local function materialOf(name: string?): Enum.Material
 end
 
 --- Tek bir duvar parcasi. `horizontal` ise eksen X, degilse Z.
+--- `name` yalnizca gorunum icin degil: dekorasyon temasi parcalari
+--- ADINA gore buluyor (Decor.luau). Duvar govdesi ile supurgelik ayni
+--- adi tasirsa tema ikisini ayni renge boyardi.
 local function wallSegment(
 	parent: Instance,
 	horizontal: boolean,
@@ -12334,7 +12743,8 @@ local function wallSegment(
 	axisTo: number,
 	yFrom: number,
 	yTo: number,
-	color: Color3
+	color: Color3,
+	name: string?
 )
 	local length = axisTo - axisFrom
 	if length &lt;= EPSILON then
@@ -12359,7 +12769,7 @@ local function wallSegment(
 	end
 
 	Build.part({
-		name = &quot;Duvar&quot;,
+		name = name or &quot;Duvar&quot;,
 		size = size,
 		cf = CFrame.new(position),
 		color = color,
@@ -12510,9 +12920,9 @@ local function buildWall(parent: Instance, wall: any, color: Color3, trim: Color
 
 	-- Supurgelik: duvarin dibinde ince bir serit. Tek renkli duvarlari
 	-- kirar, mekan daha bitmis gorunur.
-	wallSegment(parent, horizontal, fixed, axisFrom, axisTo, 0, 0.6, trim)
+	wallSegment(parent, horizontal, fixed, axisFrom, axisTo, 0, 0.6, trim, &quot;Supurgelik&quot;)
 	-- Tavan kornisi: ust kenarda ikinci serit.
-	wallSegment(parent, horizontal, fixed, axisFrom, axisTo, plan.wallHeight - 0.7, plan.wallHeight, trim)
+	wallSegment(parent, horizontal, fixed, axisFrom, axisTo, plan.wallHeight - 0.7, plan.wallHeight, trim, &quot;TavanKornisi&quot;)
 end
 
 --- Bahce, yol ve disarisi.
@@ -12624,7 +13034,7 @@ function Clinic.build(parent: Instance): Built
 
 	local stations: Stations = {}
 	local queuePoints: { CFrame } = {}
-	local restPoints: { CFrame } = {}
+	local ownerPoints: { CFrame } = {}
 	local roomOf = {}
 
 	for _, room in plan.rooms do
@@ -12700,8 +13110,10 @@ function Clinic.build(parent: Instance): Built
 		for _, point in room.queuePoints or {} do
 			table.insert(queuePoints, CFrame.new(point[1], plan.floorY, point[2]))
 		end
-		for _, point in room.restPoints or {} do
-			table.insert(restPoints, CFrame.new(point[1], plan.floorY, point[2]))
+		-- Sahipler hayvanlarinin ARKASINDA bekliyor; yerleri veride ayri
+		-- duruyor cunku 6,4 stud'luk hayvanlarin arasinda NPC'ye yer yok.
+		for _, point in room.ownerPoints or {} do
+			table.insert(ownerPoints, CFrame.new(point[1], plan.floorY, point[2]))
 		end
 
 		for _, spec in room.props do
@@ -12738,11 +13150,15 @@ function Clinic.build(parent: Instance): Built
 
 	buildSpawn(root)
 
+	-- Dekorasyon en sonda baglaniyor: boyanacak parcalar ve sus
+	-- esyalarinin yerleri ancak yapi bittikten sonra belli.
+	Decor.attach(structure, furniture, Props.build)
+
 	return {
 		model = root,
 		stations = stations,
 		queuePoints = queuePoints,
-		restPoints = restPoints,
+		ownerPoints = ownerPoints,
 		entranceOutside = Vector3.new(plan.entrance.outside[1], plan.floorY, plan.entrance.outside[2]),
 		entranceInside = Vector3.new(plan.entrance.inside[1], plan.floorY, plan.entrance.inside[2]),
 		roomOf = roomOf,
@@ -12753,7 +13169,248 @@ return Clinic
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX49">
+				<Item class="ModuleScript" referent="RBX50">
+					<Properties>
+						<string name="Name">Decor</string>
+						<ProtectedString name="Source">--!strict
+-- Decor.luau
+-- ==========
+-- Klinik dekorasyonu: duvar/zemin temasi ve sus esyalari.
+--
+-- Klinik ORTAK
+-- ------------
+-- Bina tek ve paylasili; &quot;kimin temasi uygulanacak&quot; sorusunun bir cevabi
+-- olmak zorunda. Kural, yukseltmelerdeki CLINIC_WIDE kuralinin aynisi:
+-- ONLINE oyunculardan en iyisi kazaniyor - temada `order` en buyuk olan,
+-- sus esyasinda ise &quot;birinin sahip olmasi yeter&quot;.
+--
+-- Sus esyalari KURULUSTA insa ediliyor
+-- ------------------------------------
+-- Satin alininca yeni parca yaratmak, yerlesim denetiminden
+-- (tools/verify_layout.py) kacan bir model demek olurdu: o esya hicbir
+-- cakisma kontrolunden gecmezdi. Bunun yerine hepsi bastan kuruluyor ve
+-- yalnizca GORUNURLUGU aciliyor. Bedeli birkac yuz gorunmez parca;
+-- kazanci, dekorun de butun denetimlerden gecmesi.
+
+local ReplicatedStorage = game:GetService(&quot;ReplicatedStorage&quot;)
+local Shared = ReplicatedStorage:WaitForChild(&quot;VetShared&quot;)
+local Data = ReplicatedStorage:WaitForChild(&quot;VetData&quot;)
+
+local Build = require(Shared.Build)
+
+local decorData = require(Data.decor)
+local plan = require(Data.clinic)
+
+local Decor = {}
+
+-- Parca adi -&gt; temanin hangi rengi. Clinic.luau parcalari bu adlarla
+-- kuruyor; ad degisirse tema sessizce uygulanmaz, bu yuzden
+-- SelfTest boyanan parca sayisini olcuyor.
+local ROLE_BY_NAME: { [string]: string } = {
+	Duvar = &quot;wall&quot;,
+	Supurgelik = &quot;wallTrim&quot;,
+	TavanKornisi = &quot;wallTrim&quot;,
+	KapiCercevesi = &quot;accent&quot;,
+	Karo = &quot;floorTile&quot;,
+}
+
+local themeById: { [string]: any } = {}
+for _, theme in decorData.themes do
+	themeById[theme.id] = theme
+end
+
+local propById: { [string]: any } = {}
+for _, item in decorData.props do
+	propById[item.id] = item
+end
+
+-- Kuruluşta toplanan tutamaklar.
+local painted: { [string]: { BasePart } } = {}
+local propModels: { [string]: Model } = {}
+local currentTheme = &quot;&quot;
+
+--- Varsayilan tema: `order` degeri en kucuk olan (bedava olan).
+local function defaultTheme(): any
+	local best = nil
+	for _, theme in decorData.themes do
+		if best == nil or theme.order &lt; best.order then
+			best = theme
+		end
+	end
+	return best
+end
+
+--- Bir parcanin rolunu adindan cikarir. Doseme adlari oda kimligini
+--- tasidigi icin ayrica ele aliniyor.
+local function roleOf(part: BasePart): string?
+	local role = ROLE_BY_NAME[part.Name]
+	if role ~= nil then
+		return role
+	end
+	if string.match(part.Name, &quot;^Doseme_&quot;) ~= nil then
+		return &quot;floor&quot;
+	end
+	return nil
+end
+
+--- Klinik kurulduktan sonra cagriliyor: boyanacak parcalari toplar ve
+--- sus esyalarini gorunmez olarak kurar.
+function Decor.attach(structure: Instance, furniture: Instance, buildProp: (string, CFrame, Instance) -&gt; Model?)
+	painted = {}
+	propModels = {}
+	currentTheme = &quot;&quot;
+
+	for _, descendant in structure:GetDescendants() do
+		if not descendant:IsA(&quot;BasePart&quot;) then
+			continue
+		end
+		local role = roleOf(descendant)
+		if role == nil then
+			continue
+		end
+		local list = painted[role]
+		if list == nil then
+			list = {}
+			painted[role] = list
+		end
+		table.insert(list, descendant)
+	end
+
+	local roomOf: { [string]: any } = {}
+	for _, room in plan.rooms do
+		roomOf[room.id] = room
+	end
+
+	for _, item in decorData.props do
+		local room = roomOf[item.room]
+		if room == nil then
+			warn((&quot;[Decor] '%s' bilinmeyen odaya konuyor: %s&quot;):format(item.id, item.room))
+			continue
+		end
+		local origin = CFrame.new(item.at[1], plan.floorY, item.at[2])
+			* CFrame.Angles(0, math.rad(item.rot or 0), 0)
+		local model = buildProp(item.prop, origin, furniture)
+		if model == nil then
+			continue
+		end
+		model.Name = &quot;Dekor_&quot; .. item.id
+		propModels[item.id] = model
+		-- Bastan gorunmez: sahip olunmayan sus ortada durmamali.
+		for _, part in model:GetDescendants() do
+			if part:IsA(&quot;BasePart&quot;) then
+				part.Transparency = 1
+				part.CanCollide = false
+			end
+		end
+	end
+
+	-- Varsayilan tema hemen uygulaniyor; oyuncu girmeden once de klinik
+	-- tutarli gorunsun.
+	local fallback = defaultTheme()
+	if fallback ~= nil then
+		Decor.applyTheme(fallback.id)
+	end
+end
+
+--- Temanin renklerini boyanmis parcalara uygular.
+function Decor.applyTheme(themeId: string): boolean
+	local theme = themeById[themeId]
+	if theme == nil or themeId == currentTheme then
+		return false
+	end
+	currentTheme = themeId
+
+	local colors = {
+		wall = Build.color(theme.wall),
+		wallTrim = Build.color(theme.wallTrim),
+		floor = Build.color(theme.floor),
+		floorTile = Build.color(theme.floorTile),
+		accent = Build.color(theme.accent),
+	}
+	for role, parts in painted do
+		local color = colors[role]
+		if color == nil then
+			continue
+		end
+		for _, part in parts do
+			part.Color = color
+		end
+	end
+	return true
+end
+
+--- Sahip olunan sus esyalarini gorunur, digerlerini gorunmez yapar.
+function Decor.applyProps(owned: { [string]: boolean })
+	for id, model in propModels do
+		local show = owned[id] == true
+		for _, part in model:GetDescendants() do
+			if part:IsA(&quot;BasePart&quot;) then
+				-- Cam govde zaten yari saydamdi; gorunur yapinca onu
+				-- tamamen opaklastirmamak icin ad denetimi.
+				part.Transparency = if show then (if part.Name == &quot;Cam&quot; then 0.65 else 0) else 1
+				part.CanCollide = show and part.Name ~= &quot;Cam&quot;
+			end
+		end
+	end
+end
+
+--- Online oyuncularin sahip oldugu dekora gore klinigi tazeler.
+--- `profiles` her oyuncunun `decor` tablosu.
+function Decor.refresh(profiles: { { [string]: boolean } })
+	local best = defaultTheme()
+	local owned: { [string]: boolean } = {}
+
+	for _, bag in profiles do
+		for id, has in bag do
+			if has ~= true then
+				continue
+			end
+			local theme = themeById[id]
+			if theme ~= nil then
+				if best == nil or theme.order &gt; best.order then
+					best = theme
+				end
+			elseif propById[id] ~= nil then
+				owned[id] = true
+			end
+		end
+	end
+
+	if best ~= nil then
+		Decor.applyTheme(best.id)
+	end
+	Decor.applyProps(owned)
+end
+
+--- Su an uygulanan tema (SelfTest ve hata ayiklama icin).
+function Decor.activeTheme(): string
+	return currentTheme
+end
+
+--- Boyanan parca sayisi (SelfTest bunu olcuyor: sifirsa ad eslesmesi
+--- bozulmus demektir).
+function Decor.paintedCount(): number
+	local total = 0
+	for _, parts in painted do
+		total += #parts
+	end
+	return total
+end
+
+--- Kurulmus sus esyasi sayisi.
+function Decor.propCount(): number
+	local total = 0
+	for _ in propModels do
+		total += 1
+	end
+	return total
+end
+
+return Decor
+</ProtectedString>
+					</Properties>
+				</Item>
+				<Item class="ModuleScript" referent="RBX51">
 					<Properties>
 						<string name="Name">Lighting</string>
 						<ProtectedString name="Source">--!strict
@@ -12807,17 +13464,19 @@ local function replace(className: string, name: string): Instance
 end
 
 --- Bir lamba ayarini veriden getirir. Bilinmeyen ad sessizce yutulmaz.
-function Sky.lamp(name: string): { brightness: number, range: number, color: Color3, angle: number? }
+function Sky.lamp(name: string): Build.LampConfig
 	local entry = config.lights[name]
 	if entry == nil then
 		warn((&quot;[Lighting] bilinmeyen lamba ayari: '%s' (data/lighting.json)&quot;):format(name))
-		return { brightness = 1, range = 16, color = Color3.new(1, 1, 1) }
+		return { brightness = 1, range = 16, color = Color3.new(1, 1, 1), shadows = false }
 	end
 	return {
 		brightness = entry.brightness,
 		range = entry.range,
 		color = Build.color(entry.color),
 		angle = entry.angle,
+		-- Yalnizca ameliyat lambasi ve sokak lambalari golge uretiyor.
+		shadows = if name == &quot;ceiling&quot; then config.ceilingShadows else true,
 	}
 end
 
@@ -12874,7 +13533,7 @@ return Sky
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX50">
+				<Item class="ModuleScript" referent="RBX52">
 					<Properties>
 						<string name="Name">Lobby</string>
 						<ProtectedString name="Source">--!strict
@@ -13067,7 +13726,8 @@ function Lobby.build(parent: Instance): Built
 
 	-- Tavan lambalari
 	local lamp = SkyLighting.lamp(&quot;ceiling&quot;)
-	for _, position in { { -20, -12 }, { 20, -12 }, { -20, 8 }, { 20, 8 }, { 0, -2 } } do
+	-- Az sayida, genis menzilli armatur: cok lamba sahneyi yikiyor.
+	for _, position in { { -22, -10 }, { 22, -10 }, { 0, 10 } } do
 		Build.ceilingLight(Vector3.new(position[1], plan.wallHeight - 0.9, position[2]), root, lamp)
 	end
 
@@ -13132,7 +13792,7 @@ return Lobby
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX51">
+				<Item class="ModuleScript" referent="RBX53">
 					<Properties>
 						<string name="Name">OwnerFactory</string>
 						<ProtectedString name="Source">--!strict
@@ -13588,7 +14248,7 @@ return OwnerFactory
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX52">
+				<Item class="ModuleScript" referent="RBX54">
 					<Properties>
 						<string name="Name">Props</string>
 						<ProtectedString name="Source">--!strict
@@ -13664,6 +14324,10 @@ local C = {
 	towel = Color3.fromRGB(238, 228, 210),
 	black = Color3.fromRGB(40, 44, 50),
 	rubber = Color3.fromRGB(58, 62, 68),
+	-- Dekorasyon renkleri (data/decor.json'daki sus esyalari icin)
+	sand = Color3.fromRGB(226, 208, 168),
+	gold = Color3.fromRGB(214, 176, 92),
+	blossom = Color3.fromRGB(232, 148, 176),
 }
 
 type Builder = (model: Model, origin: CFrame) -&gt; ()
@@ -14440,6 +15104,181 @@ builders.plant = function(model, origin)
 	end
 end
 
+-- ── Dekorasyon esyalari ───────────────────────────────────────────────
+-- Bunlar magazadan satin alinip aciliyor (data/decor.json). Kurulusta
+-- hepsi INSA EDILIYOR ama gorunmez; boylece hepsi verify_layout'un
+-- cakisma denetiminden geciyor ve calisma aninda hicbir yeni parca
+-- yaratilmiyor.
+
+builders.aquarium = function(model, origin)
+	local d = makerDecor(model, origin)
+	-- Dolap
+	Build.part({
+		name = &quot;Dolap&quot;, size = Vector3.new(5.2, 1.9, 1.7),
+		cf = origin * CFrame.new(0, 0.95, 0), color = C.darkWood,
+		material = Enum.Material.Wood, parent = model,
+	})
+	d(&quot;DolapAlin&quot;, Vector3.new(5.4, 0.22, 1.9), Vector3.new(0, 1.95, 0), C.midWood, Enum.Material.Wood)
+	for index = 1, 4 do
+		Detail.leg(model, origin * CFrame.new(
+			if index &lt;= 2 then -2.2 else 2.2,
+			0.1,
+			if index % 2 == 0 then -0.6 else 0.6
+		), 0.2, C.darkSteel)
+	end
+	-- Cam govde
+	local tank = Build.part({
+		name = &quot;Cam&quot;, size = Vector3.new(5.0, 2.7, 1.5),
+		cf = origin * CFrame.new(0, 3.45, 0), color = C.glass,
+		material = Enum.Material.Glass, parent = model,
+	})
+	tank.Transparency = 0.65
+	d(&quot;Su&quot;, Vector3.new(4.8, 2.3, 1.3), Vector3.new(0, 3.3, 0), C.water, Enum.Material.Glass)
+	d(&quot;Kapak&quot;, Vector3.new(5.2, 0.22, 1.7), Vector3.new(0, 4.9, 0), C.darkSteel)
+	d(&quot;Kum&quot;, Vector3.new(4.8, 0.3, 1.3), Vector3.new(0, 2.25, 0), C.sand, Enum.Material.Sand)
+	-- Bitkiler ve tasla dolu bir dip
+	for index = 1, 4 do
+		local x = -1.8 + (index - 1) * 1.2
+		d(
+			&quot;Yosun&quot; .. index,
+			Vector3.new(0.22, 1.1 + (index % 3) * 0.35, 0.22),
+			Vector3.new(x, 2.95 + (index % 3) * 0.18, 0),
+			if index % 2 == 0 then C.leaf else C.darkLeaf,
+			Enum.Material.Grass
+		)
+	end
+	for index = 1, 3 do
+		Build.ball({
+			name = &quot;Tas&quot; .. index,
+			size = Vector3.new(0.55, 0.4, 0.45),
+			cf = origin * CFrame.new(-1.2 + index * 1.1, 2.5, 0),
+			color = C.darkSteel,
+			material = Enum.Material.Slate,
+			canCollide = false, castShadow = false, parent = model,
+		})
+	end
+	-- Balıklar: hareket AnimalAnimator'da degil, burada da yok; bunlar
+	-- sabit sus. Hareketli olmalari icin bir Motor6D gerekirdi ve bir
+	-- sus esyasi ugruna rig kurmak, kare butcesini bosa harcamak olurdu.
+	local fish = { C.accent, C.teal, C.towel }
+	for index, color in fish do
+		Build.ball({
+			name = &quot;Balik&quot; .. index,
+			size = Vector3.new(0.5, 0.3, 0.24),
+			cf = origin * CFrame.new(-1.4 + index * 1.3, 3.4 + (index % 2) * 0.5, 0),
+			color = color,
+			canCollide = false, castShadow = false, parent = model,
+		})
+	end
+	d(&quot;Aydinlatma&quot;, Vector3.new(4.6, 0.1, 0.5), Vector3.new(0, 4.72, 0), C.paleTeal)
+end
+
+builders.wallClock = function(model, origin)
+	local d = makerDecor(model, origin)
+	Build.pillar({
+		name = &quot;Kasa&quot;, size = Vector3.new(2.7, 0.34, 2.7),
+		cf = origin * CFrame.new(0, 7.4, 0) * CFrame.Angles(math.pi / 2, 0, 0),
+		color = C.darkWood, material = Enum.Material.Wood,
+		canCollide = false, castShadow = false, parent = model,
+	})
+	Build.pillar({
+		name = &quot;Kadran&quot;, size = Vector3.new(2.3, 0.12, 2.3),
+		cf = origin * CFrame.new(0, 7.4, -0.2) * CFrame.Angles(math.pi / 2, 0, 0),
+		color = C.white,
+		canCollide = false, castShadow = false, parent = model,
+	})
+	-- Saat isaretleri: 12 kucuk cizgi, cember uzerinde.
+	for index = 1, 12 do
+		local angle = index / 12 * math.pi * 2
+		d(
+			&quot;Isaret&quot; .. index,
+			Vector3.new(0.1, if index % 3 == 0 then 0.34 else 0.2, 0.06),
+			Vector3.new(math.sin(angle) * 0.92, 7.4 + math.cos(angle) * 0.92, -0.3),
+			C.navy,
+			nil,
+			CFrame.Angles(0, 0, -angle)
+		)
+	end
+	d(&quot;Akrep&quot;, Vector3.new(0.12, 0.62, 0.06), Vector3.new(0.16, 7.68, -0.32), C.navy, nil, CFrame.Angles(0, 0, math.rad(-25)))
+	d(&quot;Yelkovan&quot;, Vector3.new(0.09, 0.92, 0.06), Vector3.new(-0.28, 7.28, -0.32), C.navy, nil, CFrame.Angles(0, 0, math.rad(70)))
+	d(&quot;Merkez&quot;, Vector3.new(0.18, 0.18, 0.08), Vector3.new(0, 7.4, -0.34), C.accent)
+end
+
+builders.certificate = function(model, origin)
+	local d = makerDecor(model, origin)
+	Detail.plate(
+		model,
+		origin * CFrame.new(0, 7.1, -0.16),
+		2.0,
+		2.6,
+		C.darkWood,
+		C.gold,
+		Loc.get(&quot;decor.certificate.text&quot;)
+	)
+	d(&quot;Cerceve&quot;, Vector3.new(2.4, 3.0, 0.16), Vector3.new(0, 7.1, 0), C.darkWood, Enum.Material.Wood)
+	d(&quot;Pasepartu&quot;, Vector3.new(2.0, 2.6, 0.06), Vector3.new(0, 7.1, -0.1), C.white)
+	d(&quot;Muhur&quot;, Vector3.new(0.42, 0.42, 0.06), Vector3.new(0.6, 6.2, -0.2), C.accent)
+	d(&quot;Kurdele1&quot;, Vector3.new(0.12, 0.5, 0.05), Vector3.new(0.52, 5.9, -0.2), C.teal, nil, CFrame.Angles(0, 0, math.rad(12)))
+	d(&quot;Kurdele2&quot;, Vector3.new(0.12, 0.5, 0.05), Vector3.new(0.68, 5.9, -0.2), C.teal, nil, CFrame.Angles(0, 0, math.rad(-12)))
+	d(&quot;Cizgi1&quot;, Vector3.new(1.3, 0.07, 0.05), Vector3.new(0, 7.3, -0.2), C.shadowWhite)
+	d(&quot;Cizgi2&quot;, Vector3.new(1.0, 0.07, 0.05), Vector3.new(0, 7.05, -0.2), C.shadowWhite)
+	d(&quot;Cizgi3&quot;, Vector3.new(1.15, 0.07, 0.05), Vector3.new(0, 6.8, -0.2), C.shadowWhite)
+end
+
+builders.flowerPot = function(model, origin)
+	local d = makerDecor(model, origin)
+	Build.pillar({
+		name = &quot;Saksi&quot;, size = Vector3.new(2.4, 1.9, 2.4),
+		cf = origin * CFrame.new(0, 0.95, 0), color = C.terracotta,
+		material = Enum.Material.Slate, parent = model,
+	})
+	Build.pillar({
+		name = &quot;SaksiAgzi&quot;, size = Vector3.new(2.6, 0.3, 2.6),
+		cf = origin * CFrame.new(0, 1.95, 0), color = C.terracotta,
+		material = Enum.Material.Slate, canCollide = false, castShadow = false, parent = model,
+	})
+	Build.pillar({
+		name = &quot;Toprak&quot;, size = Vector3.new(2.2, 0.22, 2.2),
+		cf = origin * CFrame.new(0, 1.9, 0), color = C.soil,
+		material = Enum.Material.Ground, canCollide = false, castShadow = false, parent = model,
+	})
+	-- Cicek sapları ve tomurcuklar: saksi bitkisinden farki, renkli
+	-- ciceklerin olmasi - klinigi &quot;yasayan&quot; gosteren sey bu.
+	local blooms = {
+		{ Vector3.new(0.7, 1.6, 0), C.accent },
+		{ Vector3.new(-0.62, 1.35, 0.4), C.towel },
+		{ Vector3.new(0.1, 1.8, -0.55), C.teal },
+		{ Vector3.new(-0.2, 1.5, -0.15), C.blossom },
+	}
+	for index, bloom in blooms do
+		local offset = bloom[1] :: Vector3
+		d(
+			&quot;Sap&quot; .. index,
+			Vector3.new(0.14, offset.Y, 0.14),
+			Vector3.new(offset.X, 2.0 + offset.Y * 0.5, offset.Z),
+			C.darkLeaf,
+			Enum.Material.Grass
+		)
+		Build.ball({
+			name = &quot;Cicek&quot; .. index,
+			size = Vector3.new(0.72, 0.62, 0.72),
+			cf = origin * CFrame.new(offset.X, 2.05 + offset.Y, offset.Z),
+			color = bloom[2] :: Color3,
+			canCollide = false, castShadow = false, parent = model,
+		})
+	end
+	for index = 1, 3 do
+		Build.ball({
+			name = &quot;Yaprak&quot; .. index,
+			size = Vector3.new(1.05, 0.7, 1.05),
+			cf = origin * CFrame.new(-0.7 + index * 0.55, 2.35, 0.45),
+			color = if index % 2 == 0 then C.leaf else C.midLeaf,
+			material = Enum.Material.Grass,
+			canCollide = false, castShadow = false, parent = model,
+		})
+	end
+end
+
 --- Bir esyayi kurar. Bilinmeyen id sessizce yutulmaz.
 function Props.build(id: string, origin: CFrame, parent: Instance): Model?
 	local builder = builders[id]
@@ -14510,15 +15349,15 @@ return Props
 			</Item>
 		</Item>
 	</Item>
-	<Item class="StarterPlayer" referent="RBX53">
+	<Item class="StarterPlayer" referent="RBX55">
 		<Properties>
 			<string name="Name">StarterPlayer</string>
 		</Properties>
-		<Item class="StarterPlayerScripts" referent="RBX54">
+		<Item class="StarterPlayerScripts" referent="RBX56">
 			<Properties>
 				<string name="Name">StarterPlayerScripts</string>
 			</Properties>
-			<Item class="LocalScript" referent="RBX55">
+			<Item class="LocalScript" referent="RBX57">
 				<Properties>
 					<string name="Name">VetClient</string>
 					<ProtectedString name="Source">--!strict
@@ -14622,9 +15461,34 @@ hints.TextStrokeTransparency = 0.6
 
 local lastState: any = nil
 local lastChart: any = nil
+local lastMoney: number? = nil
+
+--- Oyuncunun &quot;simdi ne yapmaliyim?&quot; sorusunun cevabi. Sunucudan gelen
+--- durumun okunmasindan ibaret: burada hicbir oyun karari verilmiyor,
+--- yalnizca mevcut duruma bir cumle karsilik geliyor.
+local function objectiveKey(chart: any): string
+	if chart == nil or chart.present ~= true then
+		return &quot;hud.objective.callNext&quot;
+	end
+	if chart.emergency == true and chart.secondsLeft &gt;= 0 and chart.secondsLeft &lt; 20 then
+		return &quot;hud.objective.emergency&quot;
+	end
+	if chart.diagnosed ~= true then
+		if #chart.revealed == 0 then
+			return &quot;hud.objective.examine&quot;
+		end
+		return &quot;hud.objective.diagnose&quot;
+	end
+	if chart.complete ~= true then
+		return &quot;hud.objective.treat&quot;
+	end
+	return &quot;hud.objective.discharge&quot;
+end
 
 local function redraw()
 	Hud.update(lastState)
+	Hud.setObjective(objectiveKey(lastChart))
+	Hud.setStress(if lastChart ~= nil and lastChart.present == true then lastChart.stress / 100 else 0)
 	ToolBar.update(lastState)
 	ShopPanel.update(lastState)
 	Chart.update(lastChart)
@@ -14643,6 +15507,16 @@ Net.get(&quot;StateUpdate&quot;).OnClientEvent:Connect(function(state: any)
 	-- Ilk oyun durumu geldi: lobi bitti, klinik basladi.
 	lobbyScreen.Enabled = false
 	screen.Enabled = true
+	-- Kazanc yazisi: paranin ARTTIGI durumda ekranda yukselen bir yazi.
+	-- Azalma (alisveris) icin gosterilmiyor; magaza zaten kendi
+	-- geri bildirimini veriyor.
+	if state ~= nil and state.ready == true then
+		if lastMoney ~= nil and state.money &gt; lastMoney then
+			Hud.gain(state.money - lastMoney)
+		end
+		lastMoney = state.money
+	end
+
 	lastState = state
 	-- Kayitli kamera ayarlari durumla birlikte geliyor.
 	if state ~= nil and state.settings ~= nil then
@@ -14712,7 +15586,7 @@ end)
 print(&quot;[Veteriner] istemci hazir.&quot;)
 </ProtectedString>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX56">
+				<Item class="ModuleScript" referent="RBX58">
 					<Properties>
 						<string name="Name">Camera</string>
 						<ProtectedString name="Source">--!strict
@@ -14941,7 +15815,7 @@ return Camera
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX57">
+				<Item class="ModuleScript" referent="RBX59">
 					<Properties>
 						<string name="Name">Chart</string>
 						<ProtectedString name="Source">--!strict
@@ -14958,6 +15832,13 @@ return Camera
 -- NPC'nin basindaki balon uzaktan okunmuyor ve oyuncu masaya egildiginde
 -- kayboluyor. Ayni cumle kartta da duruyor: ipucu, isin yapildigi yerde
 -- goz onunde olmali.
+--
+-- Vitaller neden BOLMELI?
+-- -----------------------
+-- Duz bir cubugun %62 mi %71 mi oldugu okunmuyor; on bolmeli cubukta
+-- &quot;yedi bolme dolu&quot; bir bakista goruluyor. Renk de esige gore degisiyor
+-- (Theme.statusColor), yani dusen saglik once sariya sonra kirmiziya
+-- donuyor - sayiyi okumaya gerek kalmadan.
 
 local ReplicatedStorage = game:GetService(&quot;ReplicatedStorage&quot;)
 local Shared = ReplicatedStorage:WaitForChild(&quot;VetShared&quot;)
@@ -14969,6 +15850,7 @@ local Theme = require(script.Parent.Theme)
 local Chart = {}
 
 local widgets: any = nil
+local emergencyPulse: Theme.Pulse? = nil
 
 local SEVERITY_COLOR = {
 	[1] = Theme.color.textDim,
@@ -14976,109 +15858,184 @@ local SEVERITY_COLOR = {
 	[3] = Theme.color.bad,
 }
 
+--- Tek bir vital satiri: ad + sayi + bolmeli cubuk.
+local function meter(parent: Instance, name: string, y: number, color: Color3): any
+	local caption = Theme.label({
+		name = name .. &quot;Ad&quot;,
+		text = &quot;&quot;,
+		size = UDim2.new(0.6, 0, 0, 14),
+		position = UDim2.fromOffset(Theme.space.md, y),
+		textSize = Theme.size.micro,
+		color = Theme.color.textDim,
+		parent = parent,
+		zIndex = 2,
+	})
+	local value = Theme.label({
+		name = name .. &quot;Deger&quot;,
+		text = &quot;&quot;,
+		size = UDim2.new(0.4, -Theme.space.md, 0, 14),
+		position = UDim2.new(0.6, 0, 0, y),
+		textSize = Theme.size.micro,
+		bold = true,
+		align = Enum.TextXAlignment.Right,
+		color = color,
+		parent = parent,
+		zIndex = 2,
+	})
+	local bar = Theme.bar(
+		parent,
+		UDim2.new(1, -Theme.space.md * 2, 0, 9),
+		UDim2.fromOffset(Theme.space.md, y + 16),
+		color,
+		{ segments = 10 }
+	)
+	bar.track.ZIndex = 2
+	bar.fill.ZIndex = 3
+	return { caption = caption, value = value, bar = bar }
+end
+
 function Chart.create(parent: ScreenGui)
-	-- Acil vaka bandi ekranin ORTASINDA ve ustte: geri sayim, oyuncunun
-	-- gozunun kacinilmaz olarak dustugu yerde olmali.
-	local banner = Theme.frame({
+	-- Acil vaka bandi ekranin ORTASINDA ve ustte, hedef bandinin hemen
+	-- altinda: geri sayim, gozun kacinilmaz olarak dustugu yerde olmali.
+	local banner = Theme.card({
 		name = &quot;AcilBandi&quot;,
-		size = UDim2.fromOffset(380, 44),
-		position = UDim2.new(0.5, 0, 0, 14),
+		size = UDim2.fromOffset(300, 56),
+		position = UDim2.new(0.5, 0, 0, 58),
 		anchor = Vector2.new(0.5, 0),
-		color = Color3.fromRGB(92, 26, 26),
-		transparency = 0.05,
+		color = Color3.fromRGB(74, 22, 24),
 		parent = parent,
 		visible = false,
-	})
-	Theme.stroke(banner, Theme.color.bad, 2)
+	}, Theme.color.bad)
+
+	local ring = Theme.ring(banner, 40, UDim2.new(0, 34, 0.5, 0), Theme.color.bad, 20)
+	ring.root.ZIndex = 3
+	for _, dot in ring.dots do
+		dot.ZIndex = 3
+	end
+
 	local bannerText = Theme.label({
 		name = &quot;Metin&quot;,
 		text = &quot;&quot;,
-		size = UDim2.new(1, -20, 1, 0),
-		position = UDim2.fromOffset(10, 0),
-		textSize = 17,
+		size = UDim2.new(1, -72, 1, 0),
+		position = UDim2.fromOffset(62, 0),
+		textSize = Theme.size.title,
 		bold = true,
-		align = Enum.TextXAlignment.Center,
+		align = Enum.TextXAlignment.Left,
+		color = Theme.color.text,
 		parent = banner,
+		zIndex = 2,
 	})
 
-	local panel = Theme.frame({
+	-- ── Hasta karti ───────────────────────────────────────────────────
+	local panel = Theme.card({
 		name = &quot;HastaKarti&quot;,
-		size = UDim2.fromOffset(330, 316),
-		position = UDim2.new(1, -16, 0, 82),
+		size = UDim2.fromOffset(330, 372),
+		position = UDim2.new(1, -Theme.space.lg, 0, 92),
 		anchor = Vector2.new(1, 0),
 		parent = parent,
 	})
-	Theme.stroke(panel)
+
+	Theme.icon({
+		name = &quot;paw&quot;,
+		size = 18,
+		color = Theme.color.accent,
+		position = UDim2.fromOffset(Theme.space.md, Theme.space.md),
+		parent = panel,
+		zIndex = 2,
+	})
 
 	local title = Theme.label({
 		name = &quot;Baslik&quot;,
 		text = Loc.get(&quot;chart.empty&quot;),
-		size = UDim2.new(1, -24, 0, 24),
-		position = UDim2.fromOffset(12, 8),
-		textSize = 18,
+		size = UDim2.new(1, -Theme.space.md * 2 - 26, 0, 24),
+		position = UDim2.fromOffset(Theme.space.md + 26, Theme.space.sm + 2),
+		textSize = Theme.size.title,
 		bold = true,
 		parent = panel,
+		zIndex = 2,
 	})
 
 	local condition = Theme.label({
 		name = &quot;Hastalik&quot;,
 		text = &quot;&quot;,
-		size = UDim2.new(1, -24, 0, 18),
-		position = UDim2.fromOffset(12, 32),
-		textSize = 13,
+		size = UDim2.new(1, -Theme.space.md * 2, 0, 18),
+		position = UDim2.fromOffset(Theme.space.md, 36),
+		textSize = Theme.size.small,
+		bold = true,
 		color = Theme.color.good,
 		parent = panel,
+		zIndex = 2,
 	})
 
+	-- Sahibin sikayeti ALINTI BALONU icinde: kartin geri kalani olcum,
+	-- bu ise bir insanin soyledigi sey. Gorsel olarak ayrilmasi, oyuncunun
+	-- onu &quot;veri&quot; degil &quot;ipucu&quot; diye okumasini sagliyor.
+	local quote = Theme.frame({
+		name = &quot;SikayetBalonu&quot;,
+		size = UDim2.new(1, -Theme.space.md * 2, 0, 44),
+		position = UDim2.fromOffset(Theme.space.md, 58),
+		color = Theme.color.panelDeep,
+		transparency = 0.25,
+		radius = Theme.radius.sm,
+		parent = panel,
+	})
+	quote.ZIndex = 2
+	Theme.frame({
+		name = &quot;Serit&quot;,
+		size = UDim2.new(0, 3, 1, -10),
+		position = UDim2.fromOffset(6, 5),
+		color = Theme.color.accent,
+		transparency = 0.2,
+		radius = 2,
+		parent = quote,
+		zIndex = 3,
+	})
 	local hint = Theme.label({
 		name = &quot;Sikayet&quot;,
 		text = &quot;&quot;,
-		size = UDim2.new(1, -24, 0, 30),
-		position = UDim2.fromOffset(12, 52),
-		textSize = 11,
+		size = UDim2.new(1, -22, 1, -6),
+		position = UDim2.fromOffset(16, 3),
+		textSize = Theme.size.micro,
 		color = Theme.color.textDim,
 		wrapped = true,
-		parent = panel,
+		parent = quote,
+		zIndex = 3,
 	})
 
-	local function meter(labelName: string, y: number, color: Color3)
-		local label = Theme.label({
-			name = labelName,
-			text = &quot;&quot;,
-			size = UDim2.new(1, -24, 0, 14),
-			position = UDim2.fromOffset(12, y),
-			textSize = 11,
-			color = Theme.color.textDim,
-			parent = panel,
-		})
-		local bar = Theme.bar(panel, UDim2.new(1, -24, 0, 9), UDim2.fromOffset(12, y + 16), color)
-		return label, bar
-	end
+	local health = meter(panel, &quot;Saglik&quot;, 114, Theme.color.health)
+	local stress = meter(panel, &quot;Stres&quot;, 150, Theme.color.stress)
+	local satisfaction = meter(panel, &quot;Memnuniyet&quot;, 186, Theme.color.accent)
 
-	local healthLabel, healthBar = meter(&quot;SaglikYazi&quot;, 84, Theme.color.health)
-	local stressLabel, stressBar = meter(&quot;StresYazi&quot;, 114, Theme.color.stress)
-	local satisfactionLabel, satisfactionBar = meter(&quot;MemnuniyetYazi&quot;, 144, Theme.color.accent)
+	Theme.divider(panel, 0).Position = UDim2.new(0, Theme.space.md, 0, 220)
 
 	Theme.label({
 		name = &quot;SemptomBaslik&quot;,
 		text = Loc.get(&quot;chart.symptoms&quot;),
-		size = UDim2.new(1, -24, 0, 16),
-		position = UDim2.fromOffset(12, 176),
-		textSize = 12,
+		size = UDim2.new(1, -Theme.space.md * 2, 0, 16),
+		position = UDim2.fromOffset(Theme.space.md, 228),
+		textSize = Theme.size.micro,
 		bold = true,
-		color = Theme.color.textDim,
+		color = Theme.color.textFaint,
 		parent = panel,
+		zIndex = 2,
 	})
 
-	local list = Theme.scroller(panel, UDim2.new(1, -24, 0, 80), UDim2.fromOffset(12, 194))
-	Theme.list(list, 3)
+	local list = Theme.scroller(
+		panel,
+		UDim2.new(1, -Theme.space.md * 2, 0, 92),
+		UDim2.fromOffset(Theme.space.md, 248)
+	)
+	list.ZIndex = 2
+	Theme.list(list, Theme.space.xs)
 
 	local discharge = Theme.button({
 		name = &quot;Taburcu&quot;,
 		text = Loc.get(&quot;chart.discharge&quot;),
-		size = UDim2.new(1, -24, 0, 28),
-		position = UDim2.new(0, 12, 1, -36),
+		size = UDim2.new(1, -Theme.space.md * 2, 0, 32),
+		position = UDim2.new(0, Theme.space.md, 1, -42),
 		color = Theme.color.accentDark,
+		textSize = Theme.size.small,
+		zIndex = 2,
 		parent = panel,
 		onClick = function()
 			Net.toServer(&quot;Discharge&quot;)
@@ -15089,18 +16046,29 @@ function Chart.create(parent: ScreenGui)
 		panel = panel,
 		banner = banner,
 		bannerText = bannerText,
+		ring = ring,
 		title = title,
 		condition = condition,
 		hint = hint,
-		healthLabel = healthLabel,
-		healthBar = healthBar,
-		stressLabel = stressLabel,
-		stressBar = stressBar,
-		satisfactionLabel = satisfactionLabel,
-		satisfactionBar = satisfactionBar,
+		quote = quote,
+		health = health,
+		stress = stress,
+		satisfaction = satisfaction,
 		list = list,
 		discharge = discharge,
+		symptomCount = -1,
 	}
+end
+
+--- Bir vital satirini gunceller; rengi esige gore degistiriyor.
+local function setMeter(entry: any, key: string, value: number, risky: boolean)
+	local ratio = value / 100
+	local color = if risky then Theme.riskColor(ratio) else Theme.statusColor(ratio)
+	entry.caption.Text = Loc.get(key)
+	entry.value.Text = string.format(&quot;%d&quot;, value)
+	entry.value.TextColor3 = color
+	Theme.setBar(entry.bar, ratio)
+	Theme.setBarColor(entry.bar, color)
 end
 
 function Chart.update(chart: any)
@@ -15112,16 +16080,21 @@ function Chart.update(chart: any)
 		widgets.title.Text = Loc.get(&quot;chart.empty&quot;)
 		widgets.condition.Text = &quot;&quot;
 		widgets.hint.Text = &quot;&quot;
-		widgets.healthLabel.Text = &quot;&quot;
-		widgets.stressLabel.Text = &quot;&quot;
-		widgets.satisfactionLabel.Text = &quot;&quot;
-		Theme.setBar(widgets.healthBar, 0)
-		Theme.setBar(widgets.stressBar, 0)
-		Theme.setBar(widgets.satisfactionBar, 0)
+		widgets.quote.Visible = false
+		for _, entry in { widgets.health, widgets.stress, widgets.satisfaction } do
+			entry.caption.Text = &quot;&quot;
+			entry.value.Text = &quot;&quot;
+			Theme.setBar(entry.bar, 0)
+		end
 		widgets.list:ClearAllChildren()
-		Theme.list(widgets.list, 3)
+		Theme.list(widgets.list, Theme.space.xs)
+		widgets.symptomCount = -1
 		widgets.discharge.Visible = false
 		widgets.banner.Visible = false
+		if emergencyPulse ~= nil then
+			emergencyPulse.stop()
+			emergencyPulse = nil
+		end
 		return
 	end
 
@@ -15131,45 +16104,88 @@ function Chart.update(chart: any)
 		else Loc.get(&quot;chart.undiagnosed&quot;)
 	widgets.condition.TextColor3 = if chart.diagnosed then Theme.color.good else Theme.color.warn
 
-	widgets.hint.Text = if chart.hintKey ~= nil then &quot;\u{201C}&quot; .. Loc.get(chart.hintKey) .. &quot;\u{201D}&quot; else &quot;&quot;
+	widgets.quote.Visible = chart.hintKey ~= nil
+	widgets.hint.Text = if chart.hintKey ~= nil
+		then &quot;\u{201C}&quot; .. Loc.get(chart.hintKey) .. &quot;\u{201D}&quot;
+		else &quot;&quot;
 
-	widgets.healthLabel.Text = Loc.get(&quot;chart.health&quot;, chart.health)
-	Theme.setBar(widgets.healthBar, chart.health / 100)
-	widgets.stressLabel.Text = Loc.get(&quot;chart.stress&quot;, chart.stress)
-	Theme.setBar(widgets.stressBar, chart.stress / 100)
-	widgets.satisfactionLabel.Text = Loc.get(&quot;chart.satisfaction&quot;, chart.satisfaction)
-	Theme.setBar(widgets.satisfactionBar, chart.satisfaction / 100)
+	setMeter(widgets.health, &quot;chart.healthShort&quot;, chart.health, false)
+	setMeter(widgets.stress, &quot;chart.stressShort&quot;, chart.stress, true)
+	setMeter(widgets.satisfaction, &quot;chart.satisfactionShort&quot;, chart.satisfaction, false)
 
 	-- Acil vaka geri sayimi. secondsLeft negatifse acil degil.
 	if chart.emergency == true and chart.secondsLeft &gt;= 0 then
 		local seconds = math.floor(chart.secondsLeft)
 		widgets.banner.Visible = true
 		widgets.bannerText.Text = Loc.get(&quot;chart.emergency&quot;, math.floor(seconds / 60), seconds % 60)
+		-- Halka kalan sureyi gosteriyor; 90 saniye tam tur kabul ediliyor.
+		Theme.setRing(widgets.ring, math.clamp(chart.secondsLeft / 90, 0, 1))
+		local critical = chart.secondsLeft &lt; 20
+		Theme.setRingColor(widgets.ring, if critical then Theme.color.bad else Theme.color.warn)
+		if critical and emergencyPulse == nil then
+			emergencyPulse = Theme.pulse(widgets.banner, &quot;BackgroundTransparency&quot;, 0.5, 0.45)
+		elseif not critical and emergencyPulse ~= nil then
+			emergencyPulse.stop()
+			emergencyPulse = nil
+		end
 	else
 		widgets.banner.Visible = false
+		if emergencyPulse ~= nil then
+			emergencyPulse.stop()
+			emergencyPulse = nil
+		end
 	end
 
-	widgets.list:ClearAllChildren()
-	Theme.list(widgets.list, 3)
+	-- Belirti listesi her karede yeniden kurulmuyor: sayi degismediyse
+	-- dokunulmuyor. (Aksi halde kaydirma cubugu her guncellemede basa
+	-- donerdi ve liste titrerdi.)
+	if widgets.symptomCount ~= #chart.revealed then
+		widgets.symptomCount = #chart.revealed
+		widgets.list:ClearAllChildren()
+		Theme.list(widgets.list, Theme.space.xs)
 
-	if #chart.revealed == 0 then
-		Theme.label({
-			text = Loc.get(&quot;chart.noSymptoms&quot;),
-			size = UDim2.new(1, -8, 0, 18),
-			textSize = 12,
-			color = Theme.color.textDim,
-			parent = widgets.list,
-		})
-	else
-		for index, symptom in chart.revealed do
+		if #chart.revealed == 0 then
 			Theme.label({
-				text = &quot;• &quot; .. Loc.get(symptom.nameKey),
-				size = UDim2.new(1, -8, 0, 18),
-				textSize = 13,
-				color = SEVERITY_COLOR[symptom.severity] or Theme.color.text,
-				layoutOrder = index,
+				text = Loc.get(&quot;chart.noSymptoms&quot;),
+				size = UDim2.new(1, -Theme.space.sm, 0, 20),
+				textSize = Theme.size.micro,
+				color = Theme.color.textFaint,
 				parent = widgets.list,
+				zIndex = 2,
 			})
+		else
+			for index, symptom in chart.revealed do
+				local color = SEVERITY_COLOR[symptom.severity] or Theme.color.text
+				local row = Theme.frame({
+					name = &quot;Belirti&quot;,
+					size = UDim2.new(1, -Theme.space.sm, 0, 24),
+					color = Theme.color.panelLight,
+					transparency = 0.35,
+					radius = Theme.radius.sm,
+					parent = widgets.list,
+					layoutOrder = index,
+					zIndex = 2,
+				})
+				Theme.frame({
+					name = &quot;Siddet&quot;,
+					size = UDim2.fromOffset(6, 6),
+					position = UDim2.new(0, Theme.space.sm, 0.5, -3),
+					color = color,
+					transparency = 0,
+					radius = 3,
+					parent = row,
+					zIndex = 3,
+				})
+				Theme.label({
+					text = Loc.get(symptom.nameKey),
+					size = UDim2.new(1, -26, 1, 0),
+					position = UDim2.fromOffset(22, 0),
+					textSize = Theme.size.small,
+					color = color,
+					parent = row,
+					zIndex = 3,
+				})
+			end
 		end
 	end
 
@@ -15180,7 +16196,7 @@ return Chart
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX58">
+				<Item class="ModuleScript" referent="RBX60">
 					<Properties>
 						<string name="Name">DiagnosisPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -15194,6 +16210,15 @@ return Chart
 -- Oyuncuya &quot;hangi hastaliklar olabilir&quot; listesini vermek bulmacayi
 -- kolaylastirmiyor; semptom-&gt;hastalik eslesmesini kurmak hala oyuncunun
 -- isi. Listeyi gizlemek yalnizca oyuncuyu ezberlemeye zorlardi.
+--
+-- Eslesme yuzdesi neden var?
+-- --------------------------
+-- 31 hastalik arasindan ada bakarak secmek, bir sure sonra ezber
+-- oluyordu. Her adayin yaninda &quot;bulunan belirtilerin yuzde kaci bu
+-- hastaligi destekliyor&quot; yaziyor ve liste ona gore siralaniyor.
+-- Bu oran SUNUCUDA hesaplaniyor (PatientFlow.chartSnapshot) ve zaten
+-- oyuncunun elindeki bilgiden cikiyor; dogru cevabi soylemiyor -
+-- iki hastalik ayni yuzdeyi rahatlikla paylasabiliyor.
 
 local ReplicatedStorage = game:GetService(&quot;ReplicatedStorage&quot;)
 local Shared = ReplicatedStorage:WaitForChild(&quot;VetShared&quot;)
@@ -15208,38 +16233,113 @@ local widgets: any = nil
 local lastSignature = &quot;&quot;
 
 function DiagnosisPanel.create(parent: ScreenGui)
-	local panel = Theme.frame({
+	local panel = Theme.card({
 		name = &quot;TeshisPaneli&quot;,
-		size = UDim2.fromOffset(330, 250),
-		position = UDim2.new(1, -16, 0, 406),
+		size = UDim2.fromOffset(330, 262),
+		position = UDim2.new(1, -Theme.space.lg, 0, 476),
 		anchor = Vector2.new(1, 0),
 		parent = parent,
 		visible = false,
 	})
-	Theme.stroke(panel)
 
+	Theme.icon({
+		name = &quot;info&quot;,
+		size = 14,
+		color = Theme.color.accent,
+		position = UDim2.fromOffset(Theme.space.md, 12),
+		parent = panel,
+		zIndex = 2,
+	})
 	Theme.label({
 		text = Loc.get(&quot;diagnosis.title&quot;),
-		size = UDim2.new(1, -24, 0, 22),
-		position = UDim2.fromOffset(12, 8),
-		textSize = 16,
+		size = UDim2.new(1, -Theme.space.md * 2 - 22, 0, 22),
+		position = UDim2.fromOffset(Theme.space.md + 22, Theme.space.sm),
+		textSize = Theme.size.body,
 		bold = true,
 		parent = panel,
+		zIndex = 2,
 	})
 	Theme.label({
 		text = Loc.get(&quot;diagnosis.hint&quot;),
-		size = UDim2.new(1, -24, 0, 26),
-		position = UDim2.fromOffset(12, 28),
-		textSize = 11,
-		color = Theme.color.textDim,
+		size = UDim2.new(1, -Theme.space.md * 2, 0, 28),
+		position = UDim2.fromOffset(Theme.space.md, 32),
+		textSize = Theme.size.micro,
+		color = Theme.color.textFaint,
 		wrapped = true,
 		parent = panel,
+		zIndex = 2,
 	})
 
-	local list = Theme.scroller(panel, UDim2.new(1, -24, 1, -66), UDim2.fromOffset(12, 56))
-	Theme.list(list, 4)
+	local list = Theme.scroller(
+		panel,
+		UDim2.new(1, -Theme.space.md * 2, 1, -72),
+		UDim2.fromOffset(Theme.space.md, 64)
+	)
+	list.ZIndex = 2
+	Theme.list(list, Theme.space.xs)
 
 	widgets = { panel = panel, list = list }
+end
+
+--- Bir aday satiri: ad + eslesme cubugu + yuzde rozeti.
+local function candidateRow(parent: Instance, candidate: any, index: number): TextButton
+	local ratio = candidate.match or 0
+	local color = if ratio &gt;= 0.999
+		then Theme.color.good
+		elseif ratio &gt;= 0.5 then Theme.color.warn
+		else Theme.color.textFaint
+
+	local button = Theme.button({
+		name = candidate.id,
+		text = &quot;&quot;,
+		size = UDim2.new(1, -Theme.space.sm, 0, 34),
+		textSize = Theme.size.small,
+		layoutOrder = index,
+		parent = parent,
+		zIndex = 2,
+		onClick = function()
+			Net.toServer(&quot;SubmitDiagnosis&quot;, candidate.id)
+		end,
+	})
+
+	Theme.label({
+		name = &quot;Ad&quot;,
+		text = Loc.get(candidate.nameKey),
+		size = UDim2.new(1, -76, 0, 18),
+		position = UDim2.fromOffset(Theme.space.sm, 3),
+		textSize = Theme.size.small,
+		bold = true,
+		color = Theme.color.text,
+		parent = button,
+		zIndex = 3,
+	})
+
+	Theme.label({
+		name = &quot;Yuzde&quot;,
+		text = string.format(&quot;%d%%&quot;, math.floor(ratio * 100 + 0.5)),
+		size = UDim2.fromOffset(52, 18),
+		position = UDim2.new(1, -Theme.space.sm - 52, 0, 3),
+		textSize = Theme.size.micro,
+		bold = true,
+		align = Enum.TextXAlignment.Right,
+		color = color,
+		parent = button,
+		zIndex = 3,
+	})
+
+	local bar = Theme.bar(
+		button,
+		UDim2.new(1, -Theme.space.sm * 2, 0, 5),
+		UDim2.fromOffset(Theme.space.sm, 23),
+		color,
+		{ radius = 3 }
+	)
+	bar.track.ZIndex = 3
+	bar.ghost.ZIndex = 3
+	bar.fill.ZIndex = 4
+	Theme.setBar(bar, ratio)
+
+	return button
 end
 
 function DiagnosisPanel.update(chart: any)
@@ -15248,7 +16348,13 @@ function DiagnosisPanel.update(chart: any)
 	end
 
 	local show = chart ~= nil and chart.present == true and chart.diagnosed ~= true
-	widgets.panel.Visible = show
+	if show ~= widgets.panel.Visible then
+		if show then
+			Theme.open(widgets.panel)
+		else
+			Theme.close(widgets.panel)
+		end
+	end
 	if not show then
 		lastSignature = &quot;&quot;
 		return
@@ -15256,28 +16362,23 @@ function DiagnosisPanel.update(chart: any)
 
 	-- Liste yalnizca degistiyse yeniden kuruluyor: her vitals tikinda
 	-- dugmeleri silip yeniden yaratmak imleci dugmeden dusururdu.
-	local signature = chart.animalId .. &quot;|&quot; .. tostring(#chart.candidates)
+	-- Imza artik eslesme oranlarini da iceriyor, cunku yeni bir belirti
+	-- bulundugunda siralamanin degismesi GEREKIYOR.
+	local parts = { chart.animalId }
+	for _, candidate in chart.candidates do
+		table.insert(parts, candidate.id .. &quot;:&quot; .. tostring(candidate.hits or 0))
+	end
+	local signature = table.concat(parts, &quot;|&quot;)
 	if signature == lastSignature then
 		return
 	end
 	lastSignature = signature
 
 	widgets.list:ClearAllChildren()
-	Theme.list(widgets.list, 4)
+	Theme.list(widgets.list, Theme.space.xs)
 
 	for index, candidate in chart.candidates do
-		local id = candidate.id
-		Theme.button({
-			name = id,
-			text = Loc.get(candidate.nameKey),
-			size = UDim2.new(1, -8, 0, 28),
-			textSize = 13,
-			layoutOrder = index,
-			parent = widgets.list,
-			onClick = function()
-				Net.toServer(&quot;SubmitDiagnosis&quot;, id)
-			end,
-		})
+		candidateRow(widgets.list, candidate, index)
 	end
 end
 
@@ -15285,7 +16386,7 @@ return DiagnosisPanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX59">
+				<Item class="ModuleScript" referent="RBX61">
 					<Properties>
 						<string name="Name">Fps</string>
 						<ProtectedString name="Source">--!strict
@@ -15401,13 +16502,25 @@ return Fps
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX60">
+				<Item class="ModuleScript" referent="RBX62">
 					<Properties>
 						<string name="Name">Hud</string>
 						<ProtectedString name="Source">--!strict
 -- Hud.luau
 -- ========
--- Sol ustte para/seviye/itibar, sag ustte kuyruk ve kisayol ipuclari.
+-- Ust bilgi katmani: para/seviye/itibar kartlari, XP cubugu, kuyruk,
+-- HEDEF BANDI, kazanc yazilari ve stres vinyeti.
+--
+-- Neden kart?
+-- -----------
+-- Eskiden uc sayi alt alta duz yazidi; oyuncu hangisinin ne oldugunu
+-- okumak zorundaydi. Ikonlu ayri kartlar, bakis bir yere dustugunde
+-- okumadan taniniyor.
+--
+-- Sayilar SAYARAK artiyor (`Theme.counter`): para 1200'den 1320'ye
+-- ziplarsa oyuncu kazandigini fark etmiyor; 0.45 saniyede sayarsa
+-- fark ediyor. Ayni sebeple kazanc ayrica ekranda yukselen bir yazi
+-- olarak da gosteriliyor.
 
 local ReplicatedStorage = game:GetService(&quot;ReplicatedStorage&quot;)
 local Shared = ReplicatedStorage:WaitForChild(&quot;VetShared&quot;)
@@ -15418,121 +16531,274 @@ local Theme = require(script.Parent.Theme)
 local Hud = {}
 
 local widgets: any = nil
+local firstDraw = true
+local objectiveKey = &quot;&quot;
+local stressPulse: Theme.Pulse? = nil
+
+--- Bir istatistik karti: ikon + sayan sayi + altinda kucuk aciklama.
+local function statCard(parent: Instance, order: number, iconName: string, color: Color3, width: number): any
+	local card = Theme.card({
+		name = &quot;Kart_&quot; .. iconName,
+		size = UDim2.new(0, width, 1, 0),
+		color = Theme.color.panelLight,
+		radius = Theme.radius.md,
+		parent = parent,
+		layoutOrder = order,
+	}, color:Lerp(Theme.color.strokeSoft, 0.55))
+
+	Theme.icon({
+		name = iconName,
+		size = 16,
+		color = color,
+		position = UDim2.fromOffset(Theme.space.sm, Theme.space.sm),
+		parent = card,
+		zIndex = 2,
+	})
+
+	local value = Theme.label({
+		name = &quot;Deger&quot;,
+		text = &quot;&quot;,
+		size = UDim2.new(1, -Theme.space.sm * 2, 0, 24),
+		position = UDim2.fromOffset(Theme.space.sm, Theme.space.sm + 16),
+		textSize = Theme.size.big,
+		bold = true,
+		color = color,
+		parent = card,
+		zIndex = 2,
+	})
+
+	local caption = Theme.label({
+		name = &quot;Aciklama&quot;,
+		text = &quot;&quot;,
+		size = UDim2.new(1, -Theme.space.sm * 2, 0, 14),
+		position = UDim2.new(0, Theme.space.sm, 1, -18),
+		textSize = Theme.size.micro,
+		color = Theme.color.textFaint,
+		parent = card,
+		zIndex = 2,
+	})
+
+	return { root = card, value = value, caption = caption }
+end
+
+--- Ekran kenarindaki turuncu vinyet. Dokusuz: dort kenara birer serit
+--- koyup her birinin UIGradient saydamligini kenardan ice dogru
+--- acikliyoruz. Stres arttikca seritler belirginlesiyor.
+local function buildVignette(parent: ScreenGui): { Frame }
+	local strips: { Frame } = {}
+	local specs = {
+		{ UDim2.new(1, 0, 0, 120), UDim2.fromScale(0, 0), Vector2.new(0, 0), 90 },
+		{ UDim2.new(1, 0, 0, 140), UDim2.fromScale(0, 1), Vector2.new(0, 1), 270 },
+		{ UDim2.new(0, 140, 1, 0), UDim2.fromScale(0, 0), Vector2.new(0, 0), 0 },
+		{ UDim2.new(0, 140, 1, 0), UDim2.fromScale(1, 0), Vector2.new(1, 0), 180 },
+	}
+	for index, spec in specs do
+		local strip = Theme.frame({
+			name = &quot;Vinyet&quot; .. index,
+			size = spec[1] :: UDim2,
+			position = spec[2] :: UDim2,
+			anchor = spec[3] :: Vector2,
+			color = Theme.color.stress,
+			transparency = 1,
+			radius = 0,
+			parent = parent,
+			zIndex = 0,
+		})
+		local gradient = Instance.new(&quot;UIGradient&quot;)
+		gradient.Rotation = spec[4] :: number
+		gradient.Transparency = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 0),
+			NumberSequenceKeypoint.new(1, 1),
+		})
+		gradient.Parent = strip
+		table.insert(strips, strip)
+	end
+	return strips
+end
 
 function Hud.create(parent: ScreenGui)
-	local panel = Theme.frame({
-		name = &quot;Hud&quot;,
-		size = UDim2.fromOffset(256, 132),
-		position = UDim2.fromOffset(16, 16),
+	local vignette = buildVignette(parent)
+
+	-- ── Sol ust: istatistik kartlari ──────────────────────────────────
+	local stats = Theme.frame({
+		name = &quot;Istatistikler&quot;,
+		size = UDim2.fromOffset(306, 64),
+		position = UDim2.fromOffset(Theme.space.lg, Theme.space.lg),
+		transparency = 1,
+		radius = 0,
 		parent = parent,
 	})
-	Theme.stroke(panel)
+	local row = Theme.list(stats, Theme.space.sm, Enum.FillDirection.Horizontal)
+	row.VerticalAlignment = Enum.VerticalAlignment.Top
 
-	local money = Theme.label({
-		name = &quot;Para&quot;,
-		text = &quot;&quot;,
-		size = UDim2.new(1, -24, 0, 26),
-		position = UDim2.fromOffset(12, 8),
-		textSize = 22,
-		bold = true,
-		color = Theme.color.money,
-		parent = panel,
+	local money = statCard(stats, 1, &quot;money&quot;, Theme.color.money, 128)
+	local level = statCard(stats, 2, &quot;level&quot;, Theme.color.accentGlow, 84)
+	local rep = statCard(stats, 3, &quot;reputation&quot;, Theme.color.rep, 78)
+
+	-- ── XP cubugu ─────────────────────────────────────────────────────
+	local xpCard = Theme.card({
+		name = &quot;XpKart&quot;,
+		size = UDim2.fromOffset(306, 42),
+		position = UDim2.fromOffset(Theme.space.lg, Theme.space.lg + 72),
+		parent = parent,
 	})
-
-	local title = Theme.label({
-		name = &quot;Unvan&quot;,
-		text = &quot;&quot;,
-		size = UDim2.new(1, -24, 0, 18),
-		position = UDim2.fromOffset(12, 38),
-		textSize = 13,
-		color = Theme.color.textDim,
-		parent = panel,
-	})
-
-	local xpBar = Theme.bar(
-		panel,
-		UDim2.new(1, -24, 0, 10),
-		UDim2.fromOffset(12, 60),
-		Theme.color.xp
-	)
 	local xpText = Theme.label({
-		name = &quot;Xp&quot;,
+		name = &quot;XpYazi&quot;,
 		text = &quot;&quot;,
-		size = UDim2.new(1, -24, 0, 14),
-		position = UDim2.fromOffset(12, 72),
-		textSize = 11,
+		size = UDim2.new(1, -Theme.space.md * 2, 0, 14),
+		position = UDim2.fromOffset(Theme.space.md, 5),
+		textSize = Theme.size.micro,
 		color = Theme.color.textDim,
-		parent = panel,
+		parent = xpCard,
+		zIndex = 2,
 	})
-
-	local repBar = Theme.bar(
-		panel,
-		UDim2.new(1, -24, 0, 10),
-		UDim2.fromOffset(12, 92),
-		Theme.color.accent
+	local xpBar = Theme.bar(
+		xpCard,
+		UDim2.new(1, -Theme.space.md * 2, 0, 10),
+		UDim2.fromOffset(Theme.space.md, 22),
+		Theme.color.xp,
+		{ segments = 10 }
 	)
-	local repText = Theme.label({
-		name = &quot;Itibar&quot;,
-		text = &quot;&quot;,
-		size = UDim2.new(1, -24, 0, 14),
-		position = UDim2.fromOffset(12, 104),
-		textSize = 11,
-		color = Theme.color.textDim,
-		parent = panel,
-	})
+	xpBar.track.ZIndex = 2
+	xpBar.fill.ZIndex = 3
 
 	-- Kalici kayit kapaliysa bunu SOYLE. Sessizce bellekte oynatmak,
 	-- oyuncunun ilerlemesini kaybettiginde sebebini bilememesi demek.
-	local warning = Theme.label({
-		name = &quot;Uyari&quot;,
+	local warning = Theme.card({
+		name = &quot;KayitUyarisi&quot;,
+		size = UDim2.fromOffset(306, 26),
+		position = UDim2.fromOffset(Theme.space.lg, Theme.space.lg + 122),
+		color = Theme.color.panel,
+		parent = parent,
+		visible = false,
+	}, Theme.color.warn)
+	Theme.icon({
+		name = &quot;alert&quot;,
+		size = 12,
+		color = Theme.color.warn,
+		position = UDim2.fromOffset(Theme.space.sm, 7),
+		parent = warning,
+		zIndex = 2,
+	})
+	Theme.label({
+		name = &quot;Yazi&quot;,
 		text = Loc.get(&quot;hud.transient&quot;),
-		size = UDim2.new(1, -24, 0, 16),
-		position = UDim2.fromOffset(12, 122),
-		textSize = 11,
+		size = UDim2.new(1, -28, 1, 0),
+		position = UDim2.fromOffset(26, 0),
+		textSize = Theme.size.micro,
 		bold = true,
 		color = Theme.color.warn,
-		parent = panel,
+		parent = warning,
+		zIndex = 2,
 	})
-	warning.Visible = false
 
-	local queue = Theme.frame({
+	-- ── Sag ust: kuyruk ───────────────────────────────────────────────
+	local queue = Theme.card({
 		name = &quot;Kuyruk&quot;,
-		size = UDim2.fromOffset(210, 54),
-		position = UDim2.new(1, -16, 0, 16),
+		size = UDim2.fromOffset(228, 64),
+		position = UDim2.new(1, -Theme.space.lg, 0, Theme.space.lg),
 		anchor = Vector2.new(1, 0),
 		parent = parent,
 	})
-	Theme.stroke(queue)
+	Theme.icon({
+		name = &quot;queue&quot;,
+		size = 16,
+		color = Theme.color.accent,
+		position = UDim2.fromOffset(Theme.space.md, Theme.space.md),
+		parent = queue,
+		zIndex = 2,
+	})
 	local queueText = Theme.label({
 		name = &quot;Sayac&quot;,
 		text = &quot;&quot;,
-		size = UDim2.new(1, -24, 0, 22),
-		position = UDim2.fromOffset(12, 8),
-		textSize = 17,
+		size = UDim2.new(1, -Theme.space.md * 2 - 24, 0, 20),
+		position = UDim2.fromOffset(Theme.space.md + 24, Theme.space.sm + 2),
+		textSize = Theme.size.title,
 		bold = true,
 		parent = queue,
+		zIndex = 2,
 	})
-	local hintText = Theme.label({
+	Theme.label({
 		name = &quot;Ipucu&quot;,
 		text = Loc.get(&quot;hud.hints&quot;),
-		size = UDim2.new(1, -24, 0, 16),
-		position = UDim2.fromOffset(12, 32),
-		textSize = 11,
-		color = Theme.color.textDim,
+		size = UDim2.new(1, -Theme.space.md * 2, 0, 16),
+		position = UDim2.new(0, Theme.space.md, 1, -22),
+		textSize = Theme.size.micro,
+		color = Theme.color.textFaint,
 		parent = queue,
+		zIndex = 2,
+	})
+
+	-- ── Ust orta: hedef bandi ─────────────────────────────────────────
+	-- Oyuncu &quot;simdi ne yapmaliyim?&quot; sorusunu bir daha sormasin diye
+	-- sunucunun durumu tek cumleye cevriliyor.
+	local objective = Theme.card({
+		name = &quot;HedefBandi&quot;,
+		size = UDim2.fromOffset(336, 34),
+		position = UDim2.new(0.5, 0, 0, Theme.space.lg),
+		anchor = Vector2.new(0.5, 0),
+		color = Theme.color.panel,
+		parent = parent,
+	}, Theme.color.accentDark)
+	local objectiveIcon = Theme.icon({
+		name = &quot;check&quot;,
+		size = 14,
+		color = Theme.color.accentGlow,
+		position = UDim2.fromOffset(Theme.space.md, 10),
+		parent = objective,
+		zIndex = 2,
+	})
+	local objectiveText = Theme.label({
+		name = &quot;Yazi&quot;,
+		text = &quot;&quot;,
+		size = UDim2.new(1, -Theme.space.md * 2 - 20, 1, 0),
+		position = UDim2.fromOffset(Theme.space.md + 20, 0),
+		textSize = Theme.size.small,
+		bold = true,
+		color = Theme.color.text,
+		parent = objective,
+		zIndex = 2,
+	})
+
+	-- ── Kazanc yazilari ───────────────────────────────────────────────
+	local floaters = Theme.frame({
+		name = &quot;Kazanclar&quot;,
+		size = UDim2.fromOffset(180, 160),
+		position = UDim2.fromOffset(Theme.space.lg + 132, Theme.space.lg + 70),
+		transparency = 1,
+		radius = 0,
+		parent = parent,
 	})
 
 	widgets = {
-		money = money,
-		title = title,
+		money = Theme.counter(money.value, function(value: number): string
+			return Loc.get(&quot;hud.money&quot;, string.format(&quot;%d&quot;, math.floor(value + 0.5)))
+		end),
+		moneyCaption = money.caption,
+		level = Theme.counter(level.value, function(value: number): string
+			return string.format(&quot;%d&quot;, math.floor(value + 0.5))
+		end),
+		levelCaption = level.caption,
+		rep = Theme.counter(rep.value, function(value: number): string
+			return string.format(&quot;%d&quot;, math.floor(value + 0.5))
+		end),
+		repCaption = rep.caption,
+		repRoot = rep.root,
 		xpBar = xpBar,
 		xpText = xpText,
-		repBar = repBar,
-		repText = repText,
 		warning = warning,
 		queueText = queueText,
-		hintText = hintText,
+		objective = objective,
+		objectiveIcon = objectiveIcon,
+		objectiveText = objectiveText,
+		floaters = floaters,
+		vignette = vignette,
 	}
+
+	widgets.moneyCaption.Text = Loc.get(&quot;hud.capMoney&quot;)
+	widgets.levelCaption.Text = Loc.get(&quot;hud.capLevel&quot;)
+	widgets.repCaption.Text = Loc.get(&quot;hud.capReputation&quot;)
+	objective.Visible = false
 end
 
 function Hud.update(state: any)
@@ -15540,27 +16806,113 @@ function Hud.update(state: any)
 		return
 	end
 
-	widgets.money.Text = Loc.get(&quot;hud.money&quot;, state.money)
-	widgets.title.Text = Loc.get(&quot;hud.level&quot;, state.level, Loc.get(state.titleKey))
-	Theme.setBar(widgets.xpBar, state.progress)
+	widgets.money.set(state.money, firstDraw)
+	widgets.level.set(state.level, firstDraw)
+	widgets.rep.set(state.reputation, firstDraw)
+	widgets.levelCaption.Text = Loc.get(state.titleKey)
+
+	Theme.setBar(widgets.xpBar, state.progress, firstDraw)
 	if state.level &gt;= state.maxLevel then
 		widgets.xpText.Text = Loc.get(&quot;hud.xpMax&quot;, state.xp)
 	else
 		widgets.xpText.Text = Loc.get(&quot;hud.xp&quot;, state.xp)
 	end
 
-	Theme.setBar(widgets.repBar, state.reputation / 100)
-	widgets.repText.Text = Loc.get(&quot;hud.reputation&quot;, math.floor(state.reputation + 0.5))
+	-- Itibar dususte kirmiziya donuyor ve 25'in altinda nabiz atiyor:
+	-- oyuncu itibarini kaybettigini fark etmezse duzeltemez.
+	local ratio = state.reputation / 100
+	widgets.rep.label.TextColor3 = Theme.statusColor(ratio)
+	if ratio &lt; 0.25 and stressPulse == nil then
+		stressPulse = Theme.pulse(widgets.repRoot, &quot;BackgroundTransparency&quot;, 0.45)
+	elseif ratio &gt;= 0.25 and stressPulse ~= nil then
+		stressPulse.stop()
+		stressPulse = nil
+	end
 
 	widgets.warning.Visible = state.transient == true
 	widgets.queueText.Text = Loc.get(&quot;hud.queue&quot;, state.queueWaiting, state.queueSlots)
+	firstDraw = false
+end
+
+--- Hedef bandini gunceller. Ayni hedef tekrar gelirse animasyon
+--- tekrarlanmiyor - yanip sonen bir bant dikkat dagitir.
+function Hud.setObjective(key: string?)
+	if widgets == nil then
+		return
+	end
+	if key == nil or key == &quot;&quot; then
+		if objectiveKey ~= &quot;&quot; then
+			objectiveKey = &quot;&quot;
+			Theme.close(widgets.objective)
+		end
+		return
+	end
+	if key == objectiveKey then
+		return
+	end
+	objectiveKey = key
+	widgets.objectiveText.Text = Loc.get(key)
+	if widgets.objective.Visible then
+		Theme.tween(widgets.objectiveIcon, { Rotation = widgets.objectiveIcon.Rotation + 180 }, Theme.motion.slow)
+	else
+		Theme.open(widgets.objective)
+	end
+end
+
+--- &quot;+120 TL&quot; yazisi: ekranda yukselip soluyor.
+function Hud.gain(amount: number, kind: string?)
+	if widgets == nil or amount == 0 then
+		return
+	end
+	local color = if kind == &quot;xp&quot; then Theme.color.xp else Theme.color.money
+	local text = if kind == &quot;xp&quot;
+		then Loc.get(&quot;hud.gainXp&quot;, amount)
+		else Loc.get(&quot;hud.gainMoney&quot;, amount)
+
+	local label = Theme.label({
+		name = &quot;Kazanc&quot;,
+		text = text,
+		size = UDim2.new(1, 0, 0, 22),
+		position = UDim2.fromOffset(0, 40),
+		textSize = Theme.size.title,
+		bold = true,
+		color = color,
+		parent = widgets.floaters,
+	})
+	label.TextStrokeTransparency = 0.5
+	label.TextTransparency = 1
+
+	Theme.tween(label, { TextTransparency = 0 }, Theme.motion.quick)
+	Theme.tween(label, { Position = UDim2.fromOffset(0, -12) }, 1.1, Enum.EasingStyle.Quint)
+	task.delay(0.55, function()
+		if label.Parent == nil then
+			return
+		end
+		local fade = Theme.tween(label, { TextTransparency = 1, TextStrokeTransparency = 1 }, 0.55)
+		fade.Completed:Once(function()
+			label:Destroy()
+		end)
+	end)
+end
+
+--- Stres vinyeti. 0.5'in altinda hic gorunmuyor: her hastada turuncu
+--- bir cerceve, uyari olmaktan cikip arka plana donerdi.
+function Hud.setStress(ratio: number)
+	if widgets == nil then
+		return
+	end
+	local strength = math.clamp((ratio - 0.5) / 0.5, 0, 1)
+	local transparency = 1 - strength * 0.55
+	for _, strip in widgets.vignette do
+		Theme.tween(strip, { BackgroundTransparency = transparency }, Theme.motion.slow)
+	end
 end
 
 return Hud
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX61">
+				<Item class="ModuleScript" referent="RBX63">
 					<Properties>
 						<string name="Name">LobbyPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -15570,6 +16922,12 @@ return Hud
 --
 -- Secim SUNUCUDA tutuluyor; burasi yalnizca ciziyor ve niyet yolluyor.
 -- Ayni moda ikinci kez basmak siradan cikmak demek.
+--
+-- Kapasite NOKTALARI
+-- ------------------
+-- &quot;2 / 4&quot; yazisi okunuyor ama hissedilmiyordu. Dort nokta, ikisi dolu:
+-- kadroya kac kisi kaldigi bir bakista belli. Geri sayim da sayidan
+-- once HALKA olarak gorunuyor.
 
 local ReplicatedStorage = game:GetService(&quot;ReplicatedStorage&quot;)
 local Shared = ReplicatedStorage:WaitForChild(&quot;VetShared&quot;)
@@ -15587,116 +16945,174 @@ local cards: { [string]: any } = {}
 local mine: string? = nil
 
 function LobbyPanel.create(parent: ScreenGui)
-	local panel = Theme.frame({
-		name = &quot;Lobi&quot;,
-		size = UDim2.fromOffset(720, 320),
-		position = UDim2.new(0.5, 0, 1, -28),
-		anchor = Vector2.new(0.5, 1),
-		transparency = 0.04,
+	-- Lobinin arkasi tamamen koyu bir zemin: klinik arayuzunun hicbir
+	-- parcasi lobide gorunmesin diye ayri bir ScreenGui zaten var;
+	-- buradaki zemin yalnizca kartlari one cikariyor.
+	local backdrop = Theme.frame({
+		name = &quot;Zemin&quot;,
+		size = UDim2.fromScale(1, 1),
+		color = Theme.color.panelDeep,
+		transparency = 0.35,
+		radius = 0,
 		parent = parent,
+		zIndex = 0,
 	})
-	Theme.stroke(panel, Theme.color.accent, 2)
+	backdrop.Visible = true
+
+	local panel = Theme.card({
+		name = &quot;Lobi&quot;,
+		size = UDim2.fromOffset(760, 360),
+		position = UDim2.new(0.5, 0, 1, -32),
+		anchor = Vector2.new(0.5, 1),
+		parent = parent,
+	}, Theme.color.accent)
 
 	Theme.label({
 		text = Loc.get(&quot;lobby.title&quot;),
-		size = UDim2.new(1, -32, 0, 30),
-		position = UDim2.fromOffset(16, 12),
-		textSize = 22,
+		size = UDim2.new(1, -Theme.space.xl * 2, 0, 32),
+		position = UDim2.fromOffset(Theme.space.xl, 14),
+		textSize = Theme.size.hero - 8,
 		bold = true,
 		align = Enum.TextXAlignment.Center,
 		parent = panel,
+		zIndex = 2,
 	})
 	local subtitle = Theme.label({
 		name = &quot;AltBaslik&quot;,
 		text = Loc.get(&quot;lobby.hint&quot;),
-		size = UDim2.new(1, -32, 0, 20),
-		position = UDim2.fromOffset(16, 42),
-		textSize = 13,
+		size = UDim2.new(1, -Theme.space.xl * 2, 0, 20),
+		position = UDim2.fromOffset(Theme.space.xl, 48),
+		textSize = Theme.size.small,
 		align = Enum.TextXAlignment.Center,
 		color = Theme.color.textDim,
 		parent = panel,
+		zIndex = 2,
 	})
 
 	local row = Theme.frame({
 		name = &quot;Modlar&quot;,
-		size = UDim2.new(1, -32, 0, 200),
-		position = UDim2.fromOffset(16, 72),
+		size = UDim2.new(1, -Theme.space.xl * 2, 0, 232),
+		position = UDim2.fromOffset(Theme.space.xl, 78),
 		transparency = 1,
 		radius = 0,
 		parent = panel,
+		zIndex = 2,
 	})
-	local layout = Theme.list(row, 10, Enum.FillDirection.Horizontal)
+	local layout = Theme.list(row, Theme.space.md, Enum.FillDirection.Horizontal)
 	layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 
 	local status = Theme.label({
 		name = &quot;Durum&quot;,
 		text = &quot;&quot;,
-		size = UDim2.new(1, -32, 0, 20),
-		position = UDim2.new(0, 16, 1, -26),
-		textSize = 13,
+		size = UDim2.new(1, -Theme.space.xl * 2, 0, 22),
+		position = UDim2.new(0, Theme.space.xl, 1, -30),
+		textSize = Theme.size.small,
 		bold = true,
 		align = Enum.TextXAlignment.Center,
-		color = Theme.color.accent,
+		color = Theme.color.accentGlow,
 		parent = panel,
+		zIndex = 2,
 	})
 
-	widgets = { panel = panel, row = row, status = status, subtitle = subtitle }
+	widgets = { panel = panel, row = row, status = status, subtitle = subtitle, backdrop = backdrop }
 end
 
 local function buildCard(mode: any, index: number)
-	local card = Theme.frame({
+	local card = Theme.card({
 		name = mode.id,
-		size = UDim2.fromOffset(162, 200),
+		size = UDim2.fromOffset(172, 232),
 		color = Theme.color.panelLight,
-		transparency = 0.1,
-		radius = 10,
+		radius = Theme.radius.lg,
 		layoutOrder = index,
 		parent = widgets.row,
+		zIndex = 3,
 	})
-	local stroke = Theme.stroke(card, Theme.color.stroke, 2)
+	local stroke = card:FindFirstChildOfClass(&quot;UIStroke&quot;) :: UIStroke
+	stroke.Thickness = 2
 
 	Theme.label({
 		name = &quot;Ad&quot;,
 		text = Loc.get(mode.nameKey),
-		size = UDim2.new(1, -16, 0, 26),
-		position = UDim2.fromOffset(8, 10),
-		textSize = 18,
+		size = UDim2.new(1, -Theme.space.md * 2, 0, 24),
+		position = UDim2.fromOffset(Theme.space.md, 12),
+		textSize = Theme.size.title,
 		bold = true,
 		align = Enum.TextXAlignment.Center,
 		parent = card,
+		zIndex = 4,
 	})
+
+	-- Kapasite noktalari: kac kisi girdi, kac kisi kaldi.
+	local dots = Theme.frame({
+		name = &quot;Kapasite&quot;,
+		size = UDim2.new(1, -Theme.space.md * 2, 0, 14),
+		position = UDim2.fromOffset(Theme.space.md, 42),
+		transparency = 1,
+		radius = 0,
+		parent = card,
+		zIndex = 4,
+	})
+	local dotLayout = Theme.list(dots, Theme.space.xs, Enum.FillDirection.Horizontal)
+	dotLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+	local dotList: { Frame } = {}
+	for slot = 1, mode.capacity do
+		table.insert(dotList, Theme.frame({
+			name = &quot;Yuva&quot; .. slot,
+			size = UDim2.fromOffset(12, 12),
+			color = Theme.color.strokeSoft,
+			transparency = 0.3,
+			radius = 6,
+			parent = dots,
+			layoutOrder = slot,
+			zIndex = 5,
+		}))
+	end
+
 	local count = Theme.label({
 		name = &quot;Sayac&quot;,
 		text = &quot;&quot;,
-		size = UDim2.new(1, -16, 0, 46),
-		position = UDim2.fromOffset(8, 40),
-		textSize = 34,
+		size = UDim2.new(1, -Theme.space.md * 2, 0, 42),
+		position = UDim2.fromOffset(Theme.space.md, 62),
+		textSize = Theme.size.hero,
 		bold = true,
 		align = Enum.TextXAlignment.Center,
-		color = Theme.color.accent,
+		color = Theme.color.accentGlow,
 		parent = card,
+		zIndex = 4,
 	})
+
+	-- Geri sayim halkasi sayacin arkasinda degil, altinda: ustune
+	-- binmesi rakami okunmaz kilardi.
+	local ring = Theme.ring(card, 54, UDim2.new(0.5, 0, 0, 136), Theme.color.accent, 18)
+	ring.root.ZIndex = 4
+	for _, dot in ring.dots do
+		dot.ZIndex = 5
+	end
+
 	local waitText = Theme.label({
 		name = &quot;Bekleme&quot;,
 		text = &quot;&quot;,
-		size = UDim2.new(1, -16, 0, 32),
-		position = UDim2.fromOffset(8, 90),
-		textSize = 11,
+		size = UDim2.new(1, -Theme.space.sm * 2, 0, 26),
+		position = UDim2.fromOffset(Theme.space.sm, 162),
+		textSize = Theme.size.micro,
 		align = Enum.TextXAlignment.Center,
 		color = Theme.color.textDim,
 		wrapped = true,
 		parent = card,
+		zIndex = 4,
 	})
-	local bar = Theme.bar(card, UDim2.new(1, -24, 0, 8), UDim2.fromOffset(12, 126), Theme.color.accent)
+
 	-- Siradaysa ayrilma, degilse katilma. Iki ayri remote: &quot;ayni dugmeye
 	-- ikinci kez basinca ne oluyor&quot; belirsizligini birakmamak icin.
 	local button = Theme.button({
 		name = &quot;Katil&quot;,
 		text = Loc.get(&quot;lobby.join&quot;),
-		size = UDim2.new(1, -24, 0, 32),
-		position = UDim2.new(0, 12, 1, -44),
+		size = UDim2.new(1, -Theme.space.md * 2, 0, 34),
+		position = UDim2.new(0, Theme.space.md, 1, -44),
 		color = Theme.color.accentDark,
+		textSize = Theme.size.small,
 		parent = card,
+		zIndex = 4,
 		onClick = function()
 			if mine == mode.id then
 				Net.toServer(&quot;LeaveQueue&quot;)
@@ -15706,7 +17122,15 @@ local function buildCard(mode: any, index: number)
 		end,
 	})
 
-	cards[mode.id] = { card = card, stroke = stroke, count = count, wait = waitText, bar = bar, button = button }
+	cards[mode.id] = {
+		card = card,
+		stroke = stroke,
+		count = count,
+		wait = waitText,
+		ring = ring,
+		dots = dotList,
+		button = button,
+	}
 end
 
 function LobbyPanel.update(state: any)
@@ -15720,19 +17144,39 @@ function LobbyPanel.update(state: any)
 		end
 		local card = cards[mode.id]
 		card.count.Text = (&quot;%d / %d&quot;):format(mode.waiting, mode.capacity)
-		Theme.setBar(card.bar, mode.waiting / math.max(mode.capacity, 1))
+
+		for slot, dot in card.dots do
+			local filled = slot &lt;= mode.waiting
+			Theme.tween(dot, {
+				BackgroundColor3 = if filled then Theme.color.accentGlow else Theme.color.strokeSoft,
+				BackgroundTransparency = if filled then 0 else 0.3,
+			}, Theme.motion.quick)
+		end
 
 		local isMine = state.mine == mode.id
-		card.stroke.Color = if isMine then Theme.color.accent else Theme.color.stroke
+		Theme.tween(card.stroke, {
+			Color = if isMine then Theme.color.accentGlow else Theme.color.strokeSoft,
+		}, Theme.motion.quick)
+		Theme.tween(card.card, {
+			BackgroundColor3 = if isMine then Theme.color.accentDark else Theme.color.panelLight,
+		}, Theme.motion.quick)
 		card.button.Text = Loc.get(if isMine then &quot;lobby.leave&quot; else &quot;lobby.join&quot;)
 		card.button.BackgroundColor3 = if isMine then Theme.color.bad else Theme.color.accentDark
 
 		if mode.waiting == 0 then
 			card.wait.Text = Loc.get(&quot;lobby.empty&quot;)
+			Theme.setRing(card.ring, 0)
 		elseif mode.waiting &gt;= mode.capacity then
 			card.wait.Text = Loc.get(&quot;lobby.starting&quot;)
+			Theme.setRing(card.ring, 1)
+			Theme.setRingColor(card.ring, Theme.color.good)
 		else
-			card.wait.Text = Loc.get(&quot;lobby.waiting&quot;, math.ceil(mode.fallbackIn))
+			local seconds = math.ceil(mode.fallbackIn)
+			card.wait.Text = Loc.get(&quot;lobby.waiting&quot;, seconds)
+			-- Halka DOLARAK degil, BOSALARAK gidiyor: kalan sure azaldikca
+			-- yanan nokta sayisi da azaliyor.
+			Theme.setRing(card.ring, math.clamp(mode.fallbackIn / math.max(mode.fallbackTotal or 30, 1), 0, 1))
+			Theme.setRingColor(card.ring, if seconds &lt;= 5 then Theme.color.warn else Theme.color.accent)
 		end
 	end
 
@@ -15750,6 +17194,7 @@ end
 function LobbyPanel.setVisible(visible: boolean)
 	if widgets ~= nil then
 		widgets.panel.Visible = visible
+		widgets.backdrop.Visible = visible
 	end
 end
 
@@ -15757,7 +17202,7 @@ return LobbyPanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX62">
+				<Item class="ModuleScript" referent="RBX64">
 					<Properties>
 						<string name="Name">Notify</string>
 						<ProtectedString name="Source">--!strict
@@ -15787,17 +17232,26 @@ local MAX_VISIBLE = 5
 function Notify.create(parent: ScreenGui)
 	local frame = Theme.frame({
 		name = &quot;Bildirimler&quot;,
-		size = UDim2.new(0, 330, 0, 240),
-		position = UDim2.new(0, 16, 0, 158),
+		size = UDim2.new(0, 340, 0, 260),
+		position = UDim2.new(0, Theme.space.lg, 0, 186),
 		anchor = Vector2.new(0, 0),
 		transparency = 1,
 		radius = 0,
 		parent = parent,
 	})
-	local layout = Theme.list(frame, 6)
+	local layout = Theme.list(frame, Theme.space.sm)
 	layout.HorizontalAlignment = Enum.HorizontalAlignment.Left
 	container = frame
 end
+
+-- Bildirim turu -&gt; ikon. Ikonlar `Theme.icon` ile Frame'lerden
+-- kuruluyor; hicbiri bir dokuya ya da yazi tipine bagli degil.
+local ICON_FOR_KIND = {
+	good = &quot;check&quot;,
+	bad = &quot;cross&quot;,
+	warn = &quot;alert&quot;,
+	info = &quot;info&quot;,
+}
 
 --- Bir bildirim gosterir. `args` icindeki `xxx.yyy` bicimindeki
 --- dizeler de ceviri anahtari sayilip cevriliyor: sunucu tur/hastalik
@@ -15840,36 +17294,64 @@ function Notify.push(kind: string, messageKey: string, args: { any })
 
 	local text = Loc.get(messageKey, table.unpack(translated, 1, #args))
 
-	local card = Theme.frame({
-		name = &quot;Bildirim&quot;,
-		size = UDim2.new(1, 0, 0, 34),
-		color = Theme.color.panel,
-		transparency = 0.1,
-		radius = 8,
+	local color = Theme.kindColor(kind)
+	-- Yuva UIListLayout'un yonettigi ogedir; kart onun ICINDE kayiyor.
+	-- (Layout'un konumunu tweenlemek ise yaramaz: layout her karede
+	-- konumu geri yaziyor.)
+	local slot = Theme.frame({
+		name = &quot;Yuva&quot;,
+		size = UDim2.new(1, 0, 0, 38),
+		transparency = 1,
+		radius = 0,
 		parent = container,
 	})
-	Theme.stroke(card, Theme.kindColor(kind), 1.5)
+	slot.ClipsDescendants = false
+
+	local card = Theme.card({
+		name = &quot;Bildirim&quot;,
+		size = UDim2.fromScale(1, 1),
+		color = Theme.color.panel,
+		radius = Theme.radius.sm,
+		parent = slot,
+	}, color)
 
 	local accent = Theme.frame({
 		name = &quot;Serit&quot;,
-		size = UDim2.new(0, 4, 1, -10),
-		position = UDim2.fromOffset(6, 5),
-		color = Theme.kindColor(kind),
+		size = UDim2.new(0, 4, 1, -12),
+		position = UDim2.fromOffset(5, 6),
+		color = color,
 		transparency = 0,
 		radius = 2,
 		parent = card,
+		zIndex = 2,
 	})
 	accent.ZIndex = 2
 
+	Theme.icon({
+		name = ICON_FOR_KIND[kind] or &quot;info&quot;,
+		size = 14,
+		color = color,
+		position = UDim2.fromOffset(16, 12),
+		parent = card,
+		zIndex = 2,
+	})
+
 	Theme.label({
 		text = text,
-		size = UDim2.new(1, -24, 1, 0),
-		position = UDim2.fromOffset(18, 0),
-		textSize = 14,
+		size = UDim2.new(1, -46, 1, 0),
+		position = UDim2.fromOffset(38, 0),
+		textSize = Theme.size.small,
 		bold = true,
 		color = Theme.color.text,
+		wrapped = true,
 		parent = card,
+		zIndex = 2,
 	})
+
+	-- Kayarak giriyor: soldan ice. Aniden beliren bir kart, goz onu
+	-- yakalayamadan yerine oturuyor.
+	card.Position = UDim2.fromOffset(-40, 0)
+	Theme.tween(card, { Position = UDim2.fromOffset(0, 0) }, Theme.motion.normal, Enum.EasingStyle.Back)
 
 	-- Ekrani doldurmasin: en eskiyi at.
 	local cards = {}
@@ -15883,13 +17365,21 @@ function Notify.push(kind: string, messageKey: string, args: { any })
 	end
 
 	task.delay(4.5, function()
-		if card.Parent == nil then
+		if slot.Parent == nil then
 			return
 		end
-		local tween = TweenService:Create(card, TweenInfo.new(0.35), { BackgroundTransparency = 1 })
+		-- Cikarken de kayiyor: geldigi yone geri. Yalnizca solmak,
+		-- ustuste binen bildirimlerde hangi kartin gittigini
+		-- belirsiz birakiyordu.
+		Theme.tween(card, { Position = UDim2.fromOffset(-30, 0) }, 0.35)
+		local tween = TweenService:Create(
+			card,
+			TweenInfo.new(0.35),
+			{ BackgroundTransparency = 1 }
+		)
 		tween:Play()
 		tween.Completed:Once(function()
-			card:Destroy()
+			slot:Destroy()
 		end)
 	end)
 end
@@ -15898,7 +17388,7 @@ return Notify
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX63">
+				<Item class="ModuleScript" referent="RBX65">
 					<Properties>
 						<string name="Name">ProgressPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -16179,7 +17669,7 @@ return ProgressPanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX64">
+				<Item class="ModuleScript" referent="RBX66">
 					<Properties>
 						<string name="Name">SettingsPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -16445,17 +17935,24 @@ return SettingsPanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX65">
+				<Item class="ModuleScript" referent="RBX67">
 					<Properties>
 						<string name="Name">ShopPanel</string>
 						<ProtectedString name="Source">--!strict
 -- ShopPanel.luau
 -- ==============
--- Magaza: aletler ve klinik yukseltmeleri. B tusu ile aciliyor.
+-- Magaza: aletler, klinik yukseltmeleri ve dekorasyon. B tusu ile aciliyor.
 --
 -- Fiyat/seviye denetimi burada YAPILMIYOR, yalnizca gosteriliyor.
 -- Satin almanin gecerliligine sunucu karar veriyor (Upgrades.luau);
 -- buradaki &quot;kilitli&quot; gorunum bir kolaylik, bir guvenlik onlemi degil.
+--
+-- Neden sekme?
+-- ------------
+-- Iki sutun yan yana dururken listeler kisaydi. Kategori sayisi ucе
+-- ciktiginda yan yana sutun okunmaz hale geliyordu; sekme her kategoriye
+-- panelin tamamini veriyor ve dorduncu kategori eklendiginde tasarim
+-- degismek zorunda kalmiyor.
 
 local ReplicatedStorage = game:GetService(&quot;ReplicatedStorage&quot;)
 local Shared = ReplicatedStorage:WaitForChild(&quot;VetShared&quot;)
@@ -16470,145 +17967,248 @@ local ShopPanel = {}
 local widgets: any = nil
 local open = false
 local lastSignature = &quot;&quot;
+local activeTab = &quot;tools&quot;
 
-local function entryCard(
-	parent: Instance,
-	order: number,
+type Entry = {
+	id: string,
 	nameKey: string,
 	descKey: string?,
 	price: number,
 	owned: boolean,
 	locked: boolean,
 	unlockLevel: number,
-	onBuy: () -&gt; ()
-)
-	local card = Theme.frame({
-		name = nameKey,
-		size = UDim2.new(1, -8, 0, if descKey ~= nil then 62 else 46),
+	icon: string,
+	onBuy: () -&gt; (),
+}
+
+--- Tek bir magaza satiri: ikon, ad, aciklama, durum/fiyat.
+local function entryCard(parent: Instance, order: number, entry: Entry)
+	local dim = entry.locked or entry.owned
+	local card = Theme.card({
+		name = entry.id,
+		size = UDim2.new(1, -Theme.space.sm, 0, if entry.descKey ~= nil then 68 else 52),
 		color = Theme.color.panelLight,
-		transparency = 0.15,
-		radius = 8,
+		radius = Theme.radius.sm,
 		layoutOrder = order,
 		parent = parent,
+		zIndex = 2,
+	}, if entry.owned then Theme.color.good else Theme.color.strokeSoft)
+
+	Theme.icon({
+		name = entry.icon,
+		size = 20,
+		color = if dim then Theme.color.textFaint else Theme.color.accentGlow,
+		position = UDim2.fromOffset(Theme.space.md, if entry.descKey ~= nil then 24 else 16),
+		parent = card,
+		zIndex = 3,
 	})
 
 	Theme.label({
-		text = Loc.get(nameKey),
-		size = UDim2.new(1, -110, 0, 20),
-		position = UDim2.fromOffset(10, 6),
-		textSize = 14,
+		text = Loc.get(entry.nameKey),
+		size = UDim2.new(1, -152, 0, 20),
+		position = UDim2.fromOffset(44, Theme.space.sm),
+		textSize = Theme.size.small,
 		bold = true,
-		color = if locked then Theme.color.textDim else Theme.color.text,
+		color = if entry.locked then Theme.color.textDim else Theme.color.text,
 		parent = card,
+		zIndex = 3,
 	})
 
-	if descKey ~= nil then
+	if entry.descKey ~= nil then
 		Theme.label({
-			text = Loc.get(descKey),
-			size = UDim2.new(1, -110, 0, 30),
-			position = UDim2.fromOffset(10, 26),
-			textSize = 11,
-			color = Theme.color.textDim,
+			text = Loc.get(entry.descKey),
+			size = UDim2.new(1, -152, 0, 32),
+			position = UDim2.fromOffset(44, 28),
+			textSize = Theme.size.micro,
+			color = Theme.color.textFaint,
 			wrapped = true,
 			parent = card,
+			zIndex = 3,
 		})
 	end
 
-	if owned then
-		Theme.label({
-			text = Loc.get(&quot;shop.owned&quot;),
-			size = UDim2.fromOffset(92, 26),
-			position = UDim2.new(1, -100, 0.5, 0),
-			anchor = Vector2.new(0, 0.5),
-			textSize = 13,
-			bold = true,
-			align = Enum.TextXAlignment.Center,
-			color = Theme.color.good,
+	if entry.owned then
+		local badge = Theme.badge(card, Loc.get(&quot;shop.owned&quot;), Theme.color.good)
+		badge.Position = UDim2.new(1, -Theme.space.md, 0.5, -10)
+		badge.AnchorPoint = Vector2.new(1, 0)
+		badge.ZIndex = 3
+	elseif entry.locked then
+		local badge = Theme.badge(card, Loc.get(&quot;shop.locked&quot;, entry.unlockLevel), Theme.color.textDim)
+		badge.Position = UDim2.new(1, -Theme.space.md, 0.5, -10)
+		badge.AnchorPoint = Vector2.new(1, 0)
+		badge.ZIndex = 3
+		Theme.icon({
+			name = &quot;lock&quot;,
+			size = 12,
+			color = Theme.color.textFaint,
+			position = UDim2.new(1, -Theme.space.md - 96, 0.5, -6),
 			parent = card,
-		})
-	elseif locked then
-		Theme.label({
-			text = Loc.get(&quot;shop.locked&quot;, unlockLevel),
-			size = UDim2.fromOffset(92, 26),
-			position = UDim2.new(1, -100, 0.5, 0),
-			anchor = Vector2.new(0, 0.5),
-			textSize = 12,
-			bold = true,
-			align = Enum.TextXAlignment.Center,
-			color = Theme.color.textDim,
-			parent = card,
+			zIndex = 3,
 		})
 	else
 		Theme.button({
-			text = (&quot;%d TL&quot;):format(price),
-			size = UDim2.fromOffset(92, 26),
-			position = UDim2.new(1, -100, 0.5, 0),
-			anchor = Vector2.new(0, 0.5),
-			textSize = 13,
+			name = &quot;SatinAl&quot;,
+			text = Loc.get(&quot;shop.price&quot;, entry.price),
+			size = UDim2.fromOffset(104, 30),
+			position = UDim2.new(1, -Theme.space.md, 0.5, 0),
+			anchor = Vector2.new(1, 0.5),
+			textSize = Theme.size.small,
 			color = Theme.color.accentDark,
 			parent = card,
-			onClick = onBuy,
+			zIndex = 3,
+			onClick = entry.onBuy,
 		})
 	end
 end
 
+--- Sekme dugmesi. Secili sekme dolgulu, digerleri saydam.
+local function tabButton(parent: Instance, id: string, labelKey: string, iconName: string, order: number): any
+	local button = Theme.button({
+		name = id,
+		text = &quot;&quot;,
+		size = UDim2.fromOffset(168, 34),
+		color = Theme.color.panelLight,
+		layoutOrder = order,
+		parent = parent,
+		zIndex = 2,
+		onClick = function()
+			ShopPanel.setTab(id)
+		end,
+	})
+	local icon = Theme.icon({
+		name = iconName,
+		size = 14,
+		color = Theme.color.textDim,
+		position = UDim2.fromOffset(Theme.space.md, 10),
+		parent = button,
+		zIndex = 3,
+	})
+	local label = Theme.label({
+		text = Loc.get(labelKey),
+		size = UDim2.new(1, -40, 1, 0),
+		position = UDim2.fromOffset(36, 0),
+		textSize = Theme.size.small,
+		bold = true,
+		color = Theme.color.textDim,
+		parent = button,
+		zIndex = 3,
+	})
+	return { button = button, icon = icon, label = label }
+end
+
 function ShopPanel.create(parent: ScreenGui)
-	local panel = Theme.frame({
+	local panel = Theme.card({
 		name = &quot;Magaza&quot;,
-		size = UDim2.fromOffset(720, 440),
+		size = UDim2.fromOffset(600, 470),
 		position = UDim2.new(0.5, 0, 0.5, 0),
 		anchor = Vector2.new(0.5, 0.5),
-		transparency = 0.03,
 		parent = parent,
 		visible = false,
-	})
-	Theme.stroke(panel, Theme.color.accent, 2)
+	}, Theme.color.accent)
 
+	Theme.icon({
+		name = &quot;shop&quot;,
+		size = 20,
+		color = Theme.color.accentGlow,
+		position = UDim2.fromOffset(Theme.space.lg, 14),
+		parent = panel,
+		zIndex = 2,
+	})
 	Theme.label({
 		text = Loc.get(&quot;shop.title&quot;),
-		size = UDim2.new(1, -24, 0, 26),
-		position = UDim2.fromOffset(16, 10),
-		textSize = 20,
+		size = UDim2.new(1, -220, 0, 26),
+		position = UDim2.fromOffset(Theme.space.lg + 28, 12),
+		textSize = Theme.size.big,
 		bold = true,
 		parent = panel,
+		zIndex = 2,
 	})
 	Theme.button({
 		name = &quot;Kapat&quot;,
 		text = Loc.get(&quot;shop.close&quot;),
-		size = UDim2.fromOffset(86, 26),
-		position = UDim2.new(1, -102, 0, 10),
+		size = UDim2.fromOffset(96, 28),
+		position = UDim2.new(1, -Theme.space.lg, 0, 12),
+		anchor = Vector2.new(1, 0),
 		color = Theme.color.panelLight,
 		parent = panel,
+		zIndex = 2,
 		onClick = function()
 			ShopPanel.setOpen(false)
 		end,
 	})
 
-	Theme.label({
-		text = Loc.get(&quot;shop.tools&quot;),
-		size = UDim2.fromOffset(320, 20),
-		position = UDim2.fromOffset(16, 44),
-		textSize = 14,
-		bold = true,
-		color = Theme.color.accent,
+	local tabRow = Theme.frame({
+		name = &quot;Sekmeler&quot;,
+		size = UDim2.new(1, -Theme.space.lg * 2, 0, 34),
+		position = UDim2.fromOffset(Theme.space.lg, 50),
+		transparency = 1,
+		radius = 0,
 		parent = panel,
+		zIndex = 2,
 	})
-	Theme.label({
-		text = Loc.get(&quot;shop.upgrades&quot;),
-		size = UDim2.fromOffset(320, 20),
-		position = UDim2.fromOffset(376, 44),
-		textSize = 14,
-		bold = true,
-		color = Theme.color.accent,
+	local tabLayout = Theme.list(tabRow, Theme.space.sm, Enum.FillDirection.Horizontal)
+	tabLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+
+	local tabs = {
+		tools = tabButton(tabRow, &quot;tools&quot;, &quot;shop.tools&quot;, &quot;tool&quot;, 1),
+		upgrades = tabButton(tabRow, &quot;upgrades&quot;, &quot;shop.upgrades&quot;, &quot;shop&quot;, 2),
+		decor = tabButton(tabRow, &quot;decor&quot;, &quot;shop.decor&quot;, &quot;decor&quot;, 3),
+	}
+
+	Theme.divider(panel, 0).Position = UDim2.new(0, Theme.space.lg, 0, 92)
+
+	local list = Theme.scroller(
+		panel,
+		UDim2.new(1, -Theme.space.lg * 2, 1, -112),
+		UDim2.fromOffset(Theme.space.lg, 100)
+	)
+	list.ZIndex = 2
+	Theme.list(list, Theme.space.sm)
+
+	local empty = Theme.label({
+		name = &quot;Bos&quot;,
+		text = Loc.get(&quot;shop.emptyTab&quot;),
+		size = UDim2.new(1, -Theme.space.lg * 2, 0, 24),
+		position = UDim2.fromOffset(Theme.space.lg, 130),
+		textSize = Theme.size.small,
+		align = Enum.TextXAlignment.Center,
+		color = Theme.color.textFaint,
 		parent = panel,
+		visible = false,
+		zIndex = 3,
 	})
 
-	local tools = Theme.scroller(panel, UDim2.fromOffset(340, 366), UDim2.fromOffset(16, 66))
-	Theme.list(tools, 6)
-	local upgrades = Theme.scroller(panel, UDim2.fromOffset(340, 366), UDim2.fromOffset(368, 66))
-	Theme.list(upgrades, 6)
+	widgets = { panel = panel, list = list, tabs = tabs, empty = empty }
+	ShopPanel.setTab(&quot;tools&quot;)
+end
 
-	widgets = { panel = panel, tools = tools, upgrades = upgrades }
+--- Sekmeyi degistirir ve listeyi yeniden kurdurur.
+function ShopPanel.setTab(id: string)
+	if widgets == nil then
+		return
+	end
+	activeTab = id
+	for tabId, tab in widgets.tabs do
+		local active = tabId == id
+		Theme.tween(tab.button, {
+			BackgroundColor3 = if active then Theme.color.accentDark else Theme.color.panelLight,
+		}, Theme.motion.quick)
+		tab.label.TextColor3 = if active then Theme.color.text else Theme.color.textDim
+		tab.icon:Destroy()
+	end
+	-- Ikonun rengi Frame'lerin icinde; yeniden kurmak en ucuz yol.
+	for tabId, tab in widgets.tabs do
+		local active = tabId == id
+		tab.icon = Theme.icon({
+			name = if tabId == &quot;tools&quot; then &quot;tool&quot; elseif tabId == &quot;upgrades&quot; then &quot;shop&quot; else &quot;decor&quot;,
+			size = 14,
+			color = if active then Theme.color.accentGlow else Theme.color.textFaint,
+			position = UDim2.fromOffset(Theme.space.md, 10),
+			parent = tab.button,
+			zIndex = 3,
+		})
+	end
+	lastSignature = &quot;&quot;
 end
 
 function ShopPanel.setOpen(value: boolean)
@@ -16616,7 +18216,11 @@ function ShopPanel.setOpen(value: boolean)
 		return
 	end
 	open = value
-	widgets.panel.Visible = value
+	if value then
+		Theme.open(widgets.panel)
+	else
+		Theme.close(widgets.panel)
+	end
 	Audio.play(if value then &quot;uiOpen&quot; else &quot;uiClose&quot;)
 end
 
@@ -16632,52 +18236,89 @@ function ShopPanel.update(state: any)
 	-- Liste yalnizca degistiyse yeniden kuruluyor: para her taburcuda
 	-- degisiyor ve her seferinde dugmeleri yeniden yaratmak, oyuncunun
 	-- tiklamaya calistigi dugmeyi altindan cekerdi.
-	local signature = tostring(state.level) .. &quot;|&quot; .. tostring(state.money &gt;= 0)
+	local signature = activeTab .. &quot;|&quot; .. tostring(state.level)
 	for _, tool in state.shop.tools do
 		signature ..= tool.id .. (if tool.owned then &quot;1&quot; else &quot;0&quot;) .. (if tool.locked then &quot;L&quot; else &quot;-&quot;)
 	end
 	for _, upgrade in state.shop.upgrades do
 		signature ..= upgrade.id .. (if upgrade.owned then &quot;1&quot; else &quot;0&quot;) .. (if upgrade.locked then &quot;L&quot; else &quot;-&quot;)
 	end
+	for _, item in state.shop.decor or {} do
+		signature ..= item.id .. (if item.owned then &quot;1&quot; else &quot;0&quot;) .. (if item.locked then &quot;L&quot; else &quot;-&quot;)
+	end
 	if signature == lastSignature then
 		return
 	end
 	lastSignature = signature
 
-	widgets.tools:ClearAllChildren()
-	Theme.list(widgets.tools, 6)
-	for index, tool in state.shop.tools do
-		local id = tool.id
-		entryCard(widgets.tools, index, tool.nameKey, nil, tool.price, tool.owned, tool.locked, tool.unlockLevel, function()
-			Net.toServer(&quot;BuyTool&quot;, id)
-		end)
+	widgets.list:ClearAllChildren()
+	Theme.list(widgets.list, Theme.space.sm)
+
+	local count = 0
+	if activeTab == &quot;tools&quot; then
+		for index, tool in state.shop.tools do
+			local id = tool.id
+			count += 1
+			entryCard(widgets.list, index, {
+				id = id,
+				nameKey = tool.nameKey,
+				descKey = nil,
+				price = tool.price,
+				owned = tool.owned,
+				locked = tool.locked,
+				unlockLevel = tool.unlockLevel,
+				icon = id,
+				onBuy = function()
+					Net.toServer(&quot;BuyTool&quot;, id)
+				end,
+			})
+		end
+	elseif activeTab == &quot;upgrades&quot; then
+		for index, upgrade in state.shop.upgrades do
+			local id = upgrade.id
+			count += 1
+			entryCard(widgets.list, index, {
+				id = id,
+				nameKey = upgrade.nameKey,
+				descKey = upgrade.descKey,
+				price = upgrade.price,
+				owned = upgrade.owned,
+				locked = upgrade.locked,
+				unlockLevel = upgrade.unlockLevel,
+				icon = &quot;shop&quot;,
+				onBuy = function()
+					Net.toServer(&quot;BuyUpgrade&quot;, id)
+				end,
+			})
+		end
+	else
+		for index, item in state.shop.decor or {} do
+			local id = item.id
+			count += 1
+			entryCard(widgets.list, index, {
+				id = id,
+				nameKey = item.nameKey,
+				descKey = item.descKey,
+				price = item.price,
+				owned = item.owned,
+				locked = item.locked,
+				unlockLevel = item.unlockLevel,
+				icon = &quot;decor&quot;,
+				onBuy = function()
+					Net.toServer(&quot;BuyDecor&quot;, id)
+				end,
+			})
+		end
 	end
 
-	widgets.upgrades:ClearAllChildren()
-	Theme.list(widgets.upgrades, 6)
-	for index, upgrade in state.shop.upgrades do
-		local id = upgrade.id
-		entryCard(
-			widgets.upgrades,
-			index,
-			upgrade.nameKey,
-			upgrade.descKey,
-			upgrade.price,
-			upgrade.owned,
-			upgrade.locked,
-			upgrade.unlockLevel,
-			function()
-				Net.toServer(&quot;BuyUpgrade&quot;, id)
-			end
-		)
-	end
+	widgets.empty.Visible = count == 0
 end
 
 return ShopPanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX66">
+				<Item class="ModuleScript" referent="RBX68">
 					<Properties>
 						<string name="Name">SurgeryPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -16710,6 +18351,10 @@ local widgets: any = nil
 local schedule: any = nil
 local connection: RBXScriptConnection? = nil
 local sentSteps: { [number]: boolean } = {}
+-- Sunucunun notu hangi adima ait oldugunu soylemiyor (tek bir dize
+-- geliyor); en son gonderilen adimi burada tutup noktayi ona gore
+-- boyuyoruz. Adimlar sirayla gittigi icin bu esleme guvenli.
+local lastPressed = 0
 
 local TRACK_WIDTH = 440
 
@@ -16727,9 +18372,10 @@ local function stop()
 		connection = nil
 	end
 	schedule = nil
+	lastPressed = 0
 	table.clear(sentSteps)
-	if widgets ~= nil then
-		widgets.panel.Visible = false
+	if widgets ~= nil and widgets.panel.Visible then
+		Theme.close(widgets.panel)
 	end
 end
 
@@ -16742,105 +18388,158 @@ local function press()
 		return
 	end
 	sentSteps[step] = true
+	lastPressed = step
 	Net.toServer(&quot;SurgeryInput&quot;, step)
 end
 
 function SurgeryPanel.create(parent: ScreenGui)
-	local panel = Theme.frame({
+	local panel = Theme.card({
 		name = &quot;AmeliyatPaneli&quot;,
-		size = UDim2.fromOffset(TRACK_WIDTH + 48, 168),
+		size = UDim2.fromOffset(TRACK_WIDTH + 56, 196),
 		position = UDim2.new(0.5, 0, 0.5, 0),
 		anchor = Vector2.new(0.5, 0.5),
-		transparency = 0.04,
 		parent = parent,
 		visible = false,
-	})
-	Theme.stroke(panel, Theme.color.accent, 2)
+	}, Theme.color.accent)
 
+	Theme.icon({
+		name = &quot;surgery&quot;,
+		size = 18,
+		color = Theme.color.accentGlow,
+		position = UDim2.new(0.5, -78, 0, 12),
+		parent = panel,
+		zIndex = 2,
+	})
 	Theme.label({
 		text = Loc.get(&quot;surgery.title&quot;),
-		size = UDim2.new(1, -24, 0, 24),
-		position = UDim2.fromOffset(12, 10),
-		textSize = 18,
+		size = UDim2.new(1, -Theme.space.lg * 2, 0, 24),
+		position = UDim2.fromOffset(Theme.space.lg, 10),
+		textSize = Theme.size.title,
 		bold = true,
 		align = Enum.TextXAlignment.Center,
 		parent = panel,
+		zIndex = 2,
 	})
 	local hint = Theme.label({
 		name = &quot;Ipucu&quot;,
 		text = Loc.get(&quot;surgery.hint&quot;),
-		size = UDim2.new(1, -24, 0, 18),
-		position = UDim2.fromOffset(12, 34),
-		textSize = 12,
+		size = UDim2.new(1, -Theme.space.lg * 2, 0, 18),
+		position = UDim2.fromOffset(Theme.space.lg, 36),
+		textSize = Theme.size.micro,
 		color = Theme.color.textDim,
 		align = Enum.TextXAlignment.Center,
 		parent = panel,
+		zIndex = 2,
 	})
 
 	local track = Theme.frame({
 		name = &quot;Ray&quot;,
-		size = UDim2.fromOffset(TRACK_WIDTH, 34),
-		position = UDim2.new(0.5, 0, 0, 66),
+		size = UDim2.fromOffset(TRACK_WIDTH, 38),
+		position = UDim2.new(0.5, 0, 0, 68),
 		anchor = Vector2.new(0.5, 0),
-		color = Theme.color.panelLight,
+		color = Theme.color.panelDeep,
 		transparency = 0,
-		radius = 8,
+		radius = Theme.radius.sm,
 		parent = panel,
+		zIndex = 2,
 	})
+	Theme.stroke(track, Theme.color.strokeSoft, 1)
+
+	-- TIK ISARETLERI: ray boyunca esit arayla ince cizgiler. Isaretcinin
+	-- ne kadar hizli gittigini ve merkeze ne kadar kaldigini bunlar
+	-- okunur kiliyor; bos bir ray uzerinde hiz algilanmiyor.
+	for index = 1, 9 do
+		local major = index == 5
+		Theme.frame({
+			name = &quot;Tik&quot; .. index,
+			size = UDim2.new(0, if major then 2 else 1, 0, if major then 38 else 12),
+			position = UDim2.new(index / 10, 0, if major then 0 else 0.5, if major then 0 else -6),
+			color = Theme.color.strokeSoft,
+			transparency = if major then 0.1 else 0.45,
+			radius = 0,
+			parent = track,
+			zIndex = 3,
+		})
+	end
 
 	local goodZone = Theme.frame({
 		name = &quot;IyiBolge&quot;,
-		size = UDim2.fromOffset(40, 34),
+		size = UDim2.fromOffset(40, 38),
 		position = UDim2.new(0.5, 0, 0, 0),
 		anchor = Vector2.new(0.5, 0),
 		color = Theme.color.accentDark,
-		transparency = 0.25,
-		radius = 6,
+		transparency = 0.3,
+		radius = Theme.radius.sm,
 		parent = track,
+		zIndex = 4,
 	})
 	local perfectZone = Theme.frame({
 		name = &quot;TamBolge&quot;,
-		size = UDim2.fromOffset(20, 34),
+		size = UDim2.fromOffset(20, 38),
 		position = UDim2.new(0.5, 0, 0, 0),
 		anchor = Vector2.new(0.5, 0),
 		color = Theme.color.good,
-		transparency = 0.25,
-		radius = 6,
+		transparency = 0.2,
+		radius = Theme.radius.sm,
 		parent = track,
+		zIndex = 5,
 	})
+	-- Mukemmel bolge nabiz atiyor: ray uzerinde nereye basilacagi
+	-- bir bakista belli olsun.
+	Theme.pulse(perfectZone, &quot;BackgroundTransparency&quot;, 0.5, 0.9)
 
 	local marker = Theme.frame({
 		name = &quot;Isaretci&quot;,
-		size = UDim2.fromOffset(6, 44),
+		size = UDim2.fromOffset(6, 50),
 		position = UDim2.new(0, 0, 0.5, 0),
 		anchor = Vector2.new(0.5, 0.5),
 		color = Theme.color.text,
 		transparency = 0,
 		radius = 3,
 		parent = track,
+		zIndex = 6,
 	})
-	marker.ZIndex = 3
+	marker.ZIndex = 6
+
+	-- Adim noktalari: kac adim var, kacinci adimdayiz. Sayidan once
+	-- goz bunu okuyor.
+	local pipRow = Theme.frame({
+		name = &quot;AdimNoktalari&quot;,
+		size = UDim2.new(1, -Theme.space.lg * 2, 0, 10),
+		position = UDim2.fromOffset(Theme.space.lg, 116),
+		transparency = 1,
+		radius = 0,
+		parent = panel,
+		zIndex = 2,
+	})
+	local pipLayout = Theme.list(pipRow, Theme.space.xs, Enum.FillDirection.Horizontal)
+	pipLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 
 	local steps = Theme.label({
 		name = &quot;Adim&quot;,
 		text = &quot;&quot;,
-		size = UDim2.new(1, -24, 0, 20),
-		position = UDim2.fromOffset(12, 112),
-		textSize = 14,
+		size = UDim2.new(1, -Theme.space.lg * 2, 0, 20),
+		position = UDim2.fromOffset(Theme.space.lg, 132),
+		textSize = Theme.size.small,
 		bold = true,
 		align = Enum.TextXAlignment.Center,
+		color = Theme.color.textDim,
 		parent = panel,
+		zIndex = 2,
 	})
 	local grade = Theme.label({
 		name = &quot;Not&quot;,
 		text = &quot;&quot;,
-		size = UDim2.new(1, -24, 0, 20),
-		position = UDim2.fromOffset(12, 134),
-		textSize = 14,
+		size = UDim2.new(1, -Theme.space.lg * 2, 0, 26),
+		position = UDim2.fromOffset(Theme.space.lg, 156),
+		textSize = Theme.size.title,
 		bold = true,
 		align = Enum.TextXAlignment.Center,
 		parent = panel,
+		zIndex = 2,
 	})
+	local gradeScale = Instance.new(&quot;UIScale&quot;)
+	gradeScale.Parent = grade
 
 	local button = Theme.button({
 		name = &quot;Kes&quot;,
@@ -16859,8 +18558,11 @@ function SurgeryPanel.create(parent: ScreenGui)
 		marker = marker,
 		goodZone = goodZone,
 		perfectZone = perfectZone,
+		pipRow = pipRow,
+		pips = {},
 		steps = steps,
 		grade = grade,
+		gradeScale = gradeScale,
 		hint = hint,
 	}
 
@@ -16882,8 +18584,27 @@ function SurgeryPanel.begin(incoming: any)
 	schedule = incoming
 	table.clear(sentSteps)
 
-	widgets.panel.Visible = true
+	Theme.open(widgets.panel)
 	widgets.grade.Text = &quot;&quot;
+
+	-- Adim noktalari her ameliyatta yeniden kuruluyor: adim sayisi
+	-- yukseltmelerle degisebiliyor.
+	widgets.pipRow:ClearAllChildren()
+	local pipLayout = Theme.list(widgets.pipRow, Theme.space.xs, Enum.FillDirection.Horizontal)
+	pipLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+	widgets.pips = {}
+	for index = 1, incoming.steps do
+		table.insert(widgets.pips, Theme.frame({
+			name = &quot;Nokta&quot; .. index,
+			size = UDim2.fromOffset(10, 10),
+			color = Theme.color.strokeSoft,
+			transparency = 0.3,
+			radius = 5,
+			parent = widgets.pipRow,
+			layoutOrder = index,
+			zIndex = 3,
+		}))
+	end
 	widgets.goodZone.Size = UDim2.fromOffset(
 		math.max(8, TRACK_WIDTH * (incoming.goodWindow * 2 / incoming.stepSeconds)),
 		34
@@ -16906,6 +18627,14 @@ function SurgeryPanel.begin(incoming: any)
 		local ratio = math.clamp(0.5 + (now - target) / schedule.stepSeconds, 0, 1)
 
 		widgets.marker.Position = UDim2.new(ratio, 0, 0.5, 0)
+		-- Isaretci mukemmel bolgedeyken beyazdan yesile donuyor:
+		-- basma anini yalnizca konumdan degil, renkten de okuyabilmek
+		-- gecikmeli oynayan oyuncuya yardim ediyor.
+		local distance = math.abs(ratio - 0.5) * schedule.stepSeconds
+		widgets.marker.BackgroundColor3 = if distance &lt;= schedule.perfectWindow
+			then Theme.color.good
+			elseif distance &lt;= schedule.goodWindow then Theme.color.accentGlow
+			else Theme.color.text
 		widgets.steps.Text = Loc.get(&quot;surgery.step&quot;, step, schedule.steps)
 	end)
 end
@@ -16915,18 +18644,30 @@ function SurgeryPanel.grade(grade: string)
 	if widgets == nil then
 		return
 	end
+	local color = Theme.color.bad
 	if grade == &quot;perfect&quot; then
 		widgets.grade.Text = Loc.get(&quot;surgery.perfect&quot;)
-		widgets.grade.TextColor3 = Theme.color.good
+		color = Theme.color.good
 		Audio.play(&quot;surgeryPerfect&quot;)
 	elseif grade == &quot;good&quot; then
 		widgets.grade.Text = Loc.get(&quot;surgery.good&quot;)
-		widgets.grade.TextColor3 = Theme.color.accent
+		color = Theme.color.accentGlow
 		Audio.play(&quot;surgeryGood&quot;)
 	else
 		widgets.grade.Text = Loc.get(&quot;surgery.miss&quot;)
-		widgets.grade.TextColor3 = Theme.color.bad
 		Audio.play(&quot;surgeryMiss&quot;)
+	end
+	widgets.grade.TextColor3 = color
+
+	-- Not yazisi ZIPLAYARAK giriyor: ayni yazi ust uste iki kez
+	-- cikarsa bile ikincisinin geldigi anlasiliyor.
+	widgets.gradeScale.Scale = 1.35
+	Theme.tween(widgets.gradeScale, { Scale = 1 }, Theme.motion.normal, Enum.EasingStyle.Back)
+
+	local pip = widgets.pips[lastPressed]
+	if pip ~= nil then
+		pip.BackgroundColor3 = color
+		Theme.tween(pip, { BackgroundTransparency = 0 }, Theme.motion.quick)
 	end
 end
 
@@ -16938,17 +18679,34 @@ return SurgeryPanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX67">
+				<Item class="ModuleScript" referent="RBX69">
 					<Properties>
 						<string name="Name">Theme</string>
 						<ProtectedString name="Source">--!strict
 -- Theme.luau
 -- ==========
--- Arayuzun ortak gorunumu ve kucuk yapi yardimcilari.
+-- Arayuzun TASARIM SISTEMI: olcekler, koyu cam yuzey, ikonlar, animasyon.
 --
--- Tek yerde toplanmasinin sebebi: paneller ayri ayri kurulursa her
--- birinde farkli bir gri, farkli bir kose yaricapi olusuyor ve arayuz
--- derme catma gorunuyor. Renk ve olcu kararlari burada, bir kez.
+-- Neden tek dosya?
+-- ----------------
+-- Paneller ayri ayri kurulursa her birinde farkli bir gri, farkli bir kose
+-- yaricapi, farkli bir yazi boyu olusuyor ve arayuz derme catma gorunuyor.
+-- Renk, olcu ve HAREKET kararlari burada, bir kez veriliyor.
+--
+-- Gorsel asset YOK
+-- ----------------
+-- Bu depoyu ureten ortamda Roblox'a erisim yoktu; bir ikon dokusu (Image)
+-- yuklemek mumkun degil, yuklense de dogrulanamazdi. Bu yuzden butun
+-- ikonlar `Frame`'lerden (dikdortgen + daire + dondurme) kuruluyor. Hicbir
+-- ikon yazi tipine ya da dokuya bagli degil: ne yazarsak ekranda o cikiyor.
+--
+-- Animasyon tek noktadan
+-- ----------------------
+-- Her panel kendi TweenInfo'sunu yazarsa biri 0.1 sn digeri 0.6 sn suren
+-- gecisler olusur ve arayuz tutarsiz hissettirir. Butun gecisler
+-- `Theme.tween` uzerinden, `Theme.motion` suresleriyle gidiyor.
+
+local TweenService = game:GetService(&quot;TweenService&quot;)
 
 local ReplicatedStorage = game:GetService(&quot;ReplicatedStorage&quot;)
 local Shared = ReplicatedStorage:WaitForChild(&quot;VetShared&quot;)
@@ -16956,15 +18714,20 @@ local Audio = require(Shared.Audio)
 
 local Theme = {}
 
+-- ── Renkler ───────────────────────────────────────────────────────────
 Theme.color = {
-	panel = Color3.fromRGB(24, 28, 38),
-	panelLight = Color3.fromRGB(34, 40, 52),
+	panel = Color3.fromRGB(20, 24, 33),
+	panelLight = Color3.fromRGB(32, 38, 50),
 	panelHover = Color3.fromRGB(44, 52, 66),
+	panelDeep = Color3.fromRGB(13, 16, 23),
 	stroke = Color3.fromRGB(62, 72, 90),
+	strokeSoft = Color3.fromRGB(46, 54, 70),
 	text = Color3.fromRGB(236, 242, 248),
 	textDim = Color3.fromRGB(158, 170, 188),
+	textFaint = Color3.fromRGB(110, 122, 140),
 	accent = Color3.fromRGB(72, 176, 176),
 	accentDark = Color3.fromRGB(44, 124, 128),
+	accentGlow = Color3.fromRGB(120, 226, 224),
 	good = Color3.fromRGB(96, 196, 120),
 	warn = Color3.fromRGB(232, 176, 72),
 	bad = Color3.fromRGB(228, 96, 92),
@@ -16972,11 +18735,70 @@ Theme.color = {
 	health = Color3.fromRGB(96, 196, 120),
 	stress = Color3.fromRGB(226, 148, 76),
 	xp = Color3.fromRGB(110, 168, 240),
+	rep = Color3.fromRGB(168, 140, 232),
+	shadow = Color3.fromRGB(0, 0, 0),
 }
+
+-- ── Olcekler ──────────────────────────────────────────────────────────
+-- Panellerin hepsi ayni ritmi kullansin diye boslugun ve yaricapin
+-- serbest sayi olmasi yasak: yalnizca bu degerler.
+Theme.space = { xs = 4, sm = 8, md = 12, lg = 16, xl = 24 }
+Theme.radius = { sm = 6, md = 10, lg = 14 }
+Theme.size = { micro = 11, small = 13, body = 15, title = 18, big = 22, hero = 34 }
 
 Theme.font = Enum.Font.GothamMedium
 Theme.fontBold = Enum.Font.GothamBold
 
+-- ── Hareket ───────────────────────────────────────────────────────────
+Theme.motion = { quick = 0.12, normal = 0.22, slow = 0.4, count = 0.45 }
+
+local EASE_OUT = TweenInfo.new(Theme.motion.normal, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+
+--- TEK animasyon noktasi. Suresi verilmezse standart gecis kullanilir.
+function Theme.tween(target: Instance, properties: { [string]: any }, duration: number?, style: Enum.EasingStyle?): Tween
+	local info = if duration == nil and style == nil
+		then EASE_OUT
+		else TweenInfo.new(
+			duration or Theme.motion.normal,
+			style or Enum.EasingStyle.Quint,
+			Enum.EasingDirection.Out
+		)
+	local tween = TweenService:Create(target, info, properties)
+	tween:Play()
+	return tween
+end
+
+export type Pulse = { stop: () -&gt; () }
+
+--- Kritik durumda nabiz atan deger (ileri-geri suren tween).
+--- Donen tutamactan `stop()` cagrilinca ozellik baslangic degerine doner.
+function Theme.pulse(target: Instance, property: string, to: any, period: number?): Pulse
+	local original = (target :: any)[property]
+	local info = TweenInfo.new(
+		period or 0.55,
+		Enum.EasingStyle.Sine,
+		Enum.EasingDirection.InOut,
+		-1,
+		true
+	)
+	local tween = TweenService:Create(target, info, { [property] = to })
+	tween:Play()
+	local stopped = false
+	return {
+		stop = function()
+			if stopped then
+				return
+			end
+			stopped = true
+			tween:Cancel()
+			if (target :: any).Parent ~= nil then
+				(target :: any)[property] = original
+			end
+		end,
+	}
+end
+
+-- ── Kucuk yapi yardimcilari ───────────────────────────────────────────
 function Theme.corner(parent: Instance, radius: number): UICorner
 	local corner = Instance.new(&quot;UICorner&quot;)
 	corner.CornerRadius = UDim.new(0, radius)
@@ -16993,12 +18815,12 @@ function Theme.stroke(parent: Instance, color: Color3?, thickness: number?): UIS
 	return stroke
 end
 
-function Theme.padding(parent: Instance, amount: number): UIPadding
+function Theme.padding(parent: Instance, amount: number, horizontal: number?): UIPadding
 	local padding = Instance.new(&quot;UIPadding&quot;)
 	padding.PaddingTop = UDim.new(0, amount)
 	padding.PaddingBottom = UDim.new(0, amount)
-	padding.PaddingLeft = UDim.new(0, amount)
-	padding.PaddingRight = UDim.new(0, amount)
+	padding.PaddingLeft = UDim.new(0, horizontal or amount)
+	padding.PaddingRight = UDim.new(0, horizontal or amount)
 	padding.Parent = parent
 	return padding
 end
@@ -17012,6 +18834,29 @@ function Theme.list(parent: Instance, spacing: number, direction: Enum.FillDirec
 	return layout
 end
 
+function Theme.grid(parent: Instance, cell: UDim2, spacing: UDim2): UIGridLayout
+	local layout = Instance.new(&quot;UIGridLayout&quot;)
+	layout.CellSize = cell
+	layout.CellPadding = spacing
+	layout.SortOrder = Enum.SortOrder.LayoutOrder
+	layout.Parent = parent
+	return layout
+end
+
+--- Dikey renk gecisi. Koyu cam hissi bundan geliyor: ustte biraz acik,
+--- altta koyu. Tek renk duz bir dikdortgen &quot;plastik&quot; duruyor.
+function Theme.gradient(parent: Instance, top: Color3, bottom: Color3, rotation: number?): UIGradient
+	local gradient = Instance.new(&quot;UIGradient&quot;)
+	gradient.Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0, top),
+		ColorSequenceKeypoint.new(1, bottom),
+	})
+	gradient.Rotation = rotation or 90
+	gradient.Parent = parent
+	return gradient
+end
+
+-- ── Yuzey ─────────────────────────────────────────────────────────────
 export type FrameSpec = {
 	name: string?,
 	size: UDim2,
@@ -17023,6 +18868,7 @@ export type FrameSpec = {
 	parent: Instance?,
 	layoutOrder: number?,
 	visible: boolean?,
+	zIndex: number?,
 }
 
 function Theme.frame(spec: FrameSpec): Frame
@@ -17035,14 +18881,54 @@ function Theme.frame(spec: FrameSpec): Frame
 	frame.BackgroundTransparency = spec.transparency or 0.08
 	frame.BorderSizePixel = 0
 	frame.LayoutOrder = spec.layoutOrder or 0
+	frame.ZIndex = spec.zIndex or 1
 	frame.Visible = if spec.visible == nil then true else spec.visible
 	frame.Parent = spec.parent
-	if (spec.radius or 10) &gt; 0 then
-		Theme.corner(frame, spec.radius or 10)
+	if (spec.radius or Theme.radius.md) &gt; 0 then
+		Theme.corner(frame, spec.radius or Theme.radius.md)
 	end
 	return frame
 end
 
+--- Koyu CAM yuzey: gecisli zemin, 1px kenar, ustte ince isik cizgisi,
+--- altta koyu rim. Dordu birlikte yukseklik hissi veriyor; tek basina
+--- hicbiri vermiyor.
+function Theme.glass(frame: Frame, accent: Color3?): Frame
+	frame.BackgroundColor3 = Theme.color.panel
+	frame.BackgroundTransparency = 0.06
+	Theme.gradient(frame, Theme.color.panelLight, Theme.color.panelDeep)
+	Theme.stroke(frame, accent or Theme.color.strokeSoft, 1)
+
+	local highlight = Instance.new(&quot;Frame&quot;)
+	highlight.Name = &quot;UstCizgi&quot;
+	highlight.Size = UDim2.new(1, -Theme.space.lg, 0, 1)
+	highlight.Position = UDim2.new(0, Theme.space.sm, 0, 1)
+	highlight.BackgroundColor3 = accent or Theme.color.text
+	highlight.BackgroundTransparency = 0.82
+	highlight.BorderSizePixel = 0
+	highlight.ZIndex = frame.ZIndex
+	highlight.Parent = frame
+
+	local rim = Instance.new(&quot;Frame&quot;)
+	rim.Name = &quot;AltRim&quot;
+	rim.Size = UDim2.new(1, 0, 0, 3)
+	rim.Position = UDim2.new(0, 0, 1, -3)
+	rim.BackgroundColor3 = Theme.color.shadow
+	rim.BackgroundTransparency = 0.55
+	rim.BorderSizePixel = 0
+	rim.ZIndex = frame.ZIndex
+	rim.Parent = frame
+	Theme.corner(rim, Theme.radius.sm)
+
+	return frame
+end
+
+--- Cam yuzeyli kart. `Theme.frame` + `Theme.glass`, tek cagri.
+function Theme.card(spec: FrameSpec, accent: Color3?): Frame
+	return Theme.glass(Theme.frame(spec), accent)
+end
+
+-- ── Yazi ──────────────────────────────────────────────────────────────
 export type LabelSpec = {
 	name: string?,
 	text: string,
@@ -17053,9 +18939,11 @@ export type LabelSpec = {
 	textSize: number?,
 	bold: boolean?,
 	align: Enum.TextXAlignment?,
+	verticalAlign: Enum.TextYAlignment?,
 	parent: Instance?,
 	layoutOrder: number?,
 	wrapped: boolean?,
+	zIndex: number?,
 }
 
 function Theme.label(spec: LabelSpec): TextLabel
@@ -17067,15 +18955,283 @@ function Theme.label(spec: LabelSpec): TextLabel
 	label.AnchorPoint = spec.anchor or Vector2.new(0, 0)
 	label.BackgroundTransparency = 1
 	label.TextColor3 = spec.color or Theme.color.text
-	label.TextSize = spec.textSize or 14
+	label.TextSize = spec.textSize or Theme.size.body
 	label.Font = if spec.bold then Theme.fontBold else Theme.font
 	label.TextXAlignment = spec.align or Enum.TextXAlignment.Left
+	label.TextYAlignment = spec.verticalAlign or Enum.TextYAlignment.Center
 	label.TextWrapped = spec.wrapped == true
 	label.LayoutOrder = spec.layoutOrder or 0
+	label.ZIndex = spec.zIndex or 1
 	label.Parent = spec.parent
 	return label
 end
 
+-- ── Ikonlar ───────────────────────────────────────────────────────────
+-- Her ikon 0..1 birim karede tanimli sekillerden kuruluyor.
+-- `k` = kare, `d` = daire (tam yuvarlak kose).
+-- Alanlar: sekil, x, y, genislik, yukseklik, dondurme, saydamlik.
+type Shape = { string, number, number, number, number, number?, number? }
+
+local ICONS: { [string]: { Shape } } = {
+	-- Para: dis daire + ic halka izlenimi veren kucuk daire
+	money = {
+		{ &quot;d&quot;, 0.08, 0.08, 0.84, 0.84 },
+		{ &quot;d&quot;, 0.26, 0.26, 0.48, 0.48, 0, 0.75 },
+		{ &quot;k&quot;, 0.46, 0.18, 0.08, 0.64 },
+	},
+	-- Seviye: elmas (45 derece dondurulmus kare)
+	level = {
+		{ &quot;k&quot;, 0.22, 0.22, 0.56, 0.56, 45 },
+	},
+	-- Itibar: yildizi taklit eden ic ice iki elmas
+	reputation = {
+		{ &quot;k&quot;, 0.18, 0.18, 0.64, 0.64, 45 },
+		{ &quot;k&quot;, 0.32, 0.32, 0.36, 0.36, 0, 0.6 },
+	},
+	-- Kuyruk: ust uste uc cizgi
+	queue = {
+		{ &quot;k&quot;, 0.1, 0.18, 0.8, 0.14 },
+		{ &quot;k&quot;, 0.1, 0.43, 0.8, 0.14 },
+		{ &quot;k&quot;, 0.1, 0.68, 0.8, 0.14 },
+	},
+	-- Saglik: arti
+	health = {
+		{ &quot;k&quot;, 0.4, 0.08, 0.2, 0.84 },
+		{ &quot;k&quot;, 0.08, 0.4, 0.84, 0.2 },
+	},
+	-- Stres: yukari bakan ucgen hissi (dondurulmus kare + taban)
+	stress = {
+		{ &quot;k&quot;, 0.28, 0.12, 0.44, 0.44, 45 },
+		{ &quot;k&quot;, 0.44, 0.52, 0.12, 0.36 },
+	},
+	-- XP: yukari ok (iki egik cubuk)
+	xp = {
+		{ &quot;k&quot;, 0.2, 0.42, 0.46, 0.14, -45 },
+		{ &quot;k&quot;, 0.34, 0.42, 0.46, 0.14, 45 },
+		{ &quot;k&quot;, 0.43, 0.3, 0.14, 0.6 },
+	},
+	-- Onay: iki egik cubuk
+	check = {
+		{ &quot;k&quot;, 0.14, 0.52, 0.32, 0.14, -45 },
+		{ &quot;k&quot;, 0.36, 0.24, 0.52, 0.14, 45 },
+	},
+	-- Ret: carpi
+	cross = {
+		{ &quot;k&quot;, 0.12, 0.43, 0.76, 0.14, 45 },
+		{ &quot;k&quot;, 0.12, 0.43, 0.76, 0.14, -45 },
+	},
+	-- Kilit: govde + kemer
+	lock = {
+		{ &quot;k&quot;, 0.18, 0.44, 0.64, 0.44 },
+		{ &quot;k&quot;, 0.3, 0.14, 0.4, 0.34, 0, 0.5 },
+		{ &quot;k&quot;, 0.44, 0.56, 0.12, 0.2, 0, 0.4 },
+	},
+	-- Saat: daire + iki ibre
+	clock = {
+		{ &quot;d&quot;, 0.06, 0.06, 0.88, 0.88, 0, 0.55 },
+		{ &quot;k&quot;, 0.46, 0.2, 0.08, 0.34 },
+		{ &quot;k&quot;, 0.46, 0.46, 0.3, 0.08 },
+	},
+	-- Pati: bir avuc + uc parmak
+	paw = {
+		{ &quot;d&quot;, 0.22, 0.42, 0.56, 0.46 },
+		{ &quot;d&quot;, 0.12, 0.2, 0.22, 0.26 },
+		{ &quot;d&quot;, 0.39, 0.08, 0.22, 0.26 },
+		{ &quot;d&quot;, 0.66, 0.2, 0.22, 0.26 },
+	},
+	-- Alet: sap + uc
+	tool = {
+		{ &quot;k&quot;, 0.44, 0.32, 0.12, 0.6 },
+		{ &quot;k&quot;, 0.26, 0.1, 0.48, 0.24 },
+	},
+	-- Uyari: unlem
+	alert = {
+		{ &quot;k&quot;, 0.43, 0.1, 0.14, 0.5 },
+		{ &quot;k&quot;, 0.43, 0.7, 0.14, 0.16 },
+	},
+	-- Bilgi: nokta + cubuk
+	info = {
+		{ &quot;k&quot;, 0.43, 0.12, 0.14, 0.16 },
+		{ &quot;k&quot;, 0.43, 0.36, 0.14, 0.5 },
+	},
+	-- Magaza: tezgah + tente
+	shop = {
+		{ &quot;k&quot;, 0.12, 0.4, 0.76, 0.48 },
+		{ &quot;k&quot;, 0.06, 0.16, 0.88, 0.2 },
+	},
+	-- Dekor: saksi + govde
+	decor = {
+		{ &quot;d&quot;, 0.3, 0.08, 0.4, 0.4 },
+		{ &quot;k&quot;, 0.44, 0.38, 0.12, 0.26 },
+		{ &quot;k&quot;, 0.24, 0.6, 0.52, 0.3 },
+	},
+	-- Gece: ay hissi (daire + ustune binen ikinci daire)
+	night = {
+		{ &quot;d&quot;, 0.1, 0.1, 0.7, 0.7 },
+		{ &quot;d&quot;, 0.34, 0.02, 0.62, 0.62, 0, 1 },
+	},
+	-- ── Alet ikonlari (adlari alet kimlikleriyle ayni) ────────────────
+	-- Gozle muayene: goz (dis oval + bebek)
+	visual = {
+		{ &quot;d&quot;, 0.04, 0.28, 0.92, 0.44, 0, 0.5 },
+		{ &quot;d&quot;, 0.34, 0.32, 0.32, 0.36 },
+	},
+	-- Steteskop: kulaklik kollari + gogus parcasi
+	stethoscope = {
+		{ &quot;k&quot;, 0.2, 0.1, 0.1, 0.4 },
+		{ &quot;k&quot;, 0.7, 0.1, 0.1, 0.4 },
+		{ &quot;k&quot;, 0.2, 0.46, 0.6, 0.1 },
+		{ &quot;d&quot;, 0.36, 0.58, 0.3, 0.3 },
+	},
+	-- Termometre: govde + hazne
+	thermometer = {
+		{ &quot;k&quot;, 0.42, 0.06, 0.16, 0.6 },
+		{ &quot;d&quot;, 0.32, 0.58, 0.36, 0.36 },
+	},
+	-- Otoskop: koni uc + sap
+	otoscope = {
+		{ &quot;k&quot;, 0.3, 0.08, 0.4, 0.24 },
+		{ &quot;k&quot;, 0.42, 0.3, 0.16, 0.6, -20 },
+	},
+	-- Rontgen: cerceve + icinde kemik izlenimi
+	xray = {
+		{ &quot;k&quot;, 0.08, 0.1, 0.84, 0.8, 0, 0.65 },
+		{ &quot;k&quot;, 0.44, 0.24, 0.12, 0.52 },
+		{ &quot;d&quot;, 0.32, 0.16, 0.16, 0.16 },
+		{ &quot;d&quot;, 0.52, 0.68, 0.16, 0.16 },
+	},
+	-- Kan testi: tup + icindeki seviye
+	bloodtest = {
+		{ &quot;k&quot;, 0.34, 0.06, 0.32, 0.86, 0, 0.6 },
+		{ &quot;k&quot;, 0.34, 0.46, 0.32, 0.46 },
+	},
+	-- Idrar tahlili: kap + kapak
+	urinalysis = {
+		{ &quot;k&quot;, 0.28, 0.26, 0.44, 0.64 },
+		{ &quot;k&quot;, 0.22, 0.1, 0.56, 0.16 },
+	},
+	-- Ultrason: prob + dalgalar
+	ultrasound = {
+		{ &quot;k&quot;, 0.1, 0.42, 0.3, 0.16, -20 },
+		{ &quot;d&quot;, 0.46, 0.16, 0.5, 0.5, 0, 0.6 },
+		{ &quot;d&quot;, 0.56, 0.34, 0.3, 0.3, 0, 0.35 },
+	},
+	-- ── Tedavi ikonlari (adlari tedavi kimlikleriyle ayni) ────────────
+	-- Igne: govde + piston + ince uc
+	injection = {
+		{ &quot;k&quot;, 0.3, 0.34, 0.4, 0.32, -45 },
+		{ &quot;k&quot;, 0.12, 0.12, 0.26, 0.12, -45 },
+		{ &quot;k&quot;, 0.62, 0.62, 0.3, 0.08, -45 },
+	},
+	-- Ilac: kapsul (iki yariya bolunmus yuvarlak dikdortgen)
+	pill = {
+		{ &quot;d&quot;, 0.1, 0.34, 0.8, 0.32, -35 },
+		{ &quot;k&quot;, 0.46, 0.28, 0.08, 0.44, -35, 0.45 },
+	},
+	-- Sargi: capraz bant + iki dugum
+	bandage = {
+		{ &quot;k&quot;, 0.1, 0.42, 0.8, 0.16, -30 },
+		{ &quot;k&quot;, 0.42, 0.42, 0.16, 0.16, 0, 0.4 },
+	},
+	-- Damla: damla govdesi + ucu
+	drops = {
+		{ &quot;d&quot;, 0.28, 0.4, 0.44, 0.44 },
+		{ &quot;k&quot;, 0.38, 0.12, 0.24, 0.34, 0, 0.15 },
+	},
+	-- Yikama: kuvet + kopukler
+	wash = {
+		{ &quot;k&quot;, 0.1, 0.5, 0.8, 0.34 },
+		{ &quot;d&quot;, 0.2, 0.22, 0.2, 0.2, 0, 0.35 },
+		{ &quot;d&quot;, 0.44, 0.12, 0.24, 0.24, 0, 0.2 },
+		{ &quot;d&quot;, 0.68, 0.26, 0.16, 0.16, 0, 0.45 },
+	},
+	-- Besleme: mama kabi + taneler
+	feed = {
+		{ &quot;k&quot;, 0.12, 0.52, 0.76, 0.3 },
+		{ &quot;d&quot;, 0.26, 0.34, 0.18, 0.18 },
+		{ &quot;d&quot;, 0.46, 0.28, 0.18, 0.18 },
+		{ &quot;d&quot;, 0.62, 0.4, 0.16, 0.16 },
+	},
+	-- Su: damla + dalga
+	water = {
+		{ &quot;d&quot;, 0.3, 0.34, 0.4, 0.4 },
+		{ &quot;k&quot;, 0.4, 0.1, 0.2, 0.3, 0, 0.15 },
+		{ &quot;k&quot;, 0.12, 0.82, 0.76, 0.1, 0, 0.4 },
+	},
+	-- Ameliyat: nester (sap + agiz)
+	surgery = {
+		{ &quot;k&quot;, 0.14, 0.62, 0.42, 0.14, -35 },
+		{ &quot;k&quot;, 0.48, 0.2, 0.34, 0.26, -35 },
+	},
+	-- Gunduz: gunes
+	day = {
+		{ &quot;d&quot;, 0.26, 0.26, 0.48, 0.48 },
+		{ &quot;k&quot;, 0.45, 0.02, 0.1, 0.16 },
+		{ &quot;k&quot;, 0.45, 0.82, 0.1, 0.16 },
+		{ &quot;k&quot;, 0.02, 0.45, 0.16, 0.1 },
+		{ &quot;k&quot;, 0.82, 0.45, 0.16, 0.1 },
+	},
+}
+
+export type IconSpec = {
+	name: string,
+	size: number,
+	color: Color3?,
+	position: UDim2?,
+	anchor: Vector2?,
+	parent: Instance?,
+	layoutOrder: number?,
+	zIndex: number?,
+}
+
+--- Dokusuz ikon. Bilinmeyen ad icin bos kare doner (sessizce kaybolmaz,
+--- ekranda kenarlikli bir kutu goruntuler - eksigi fark edilebilir olsun).
+function Theme.icon(spec: IconSpec): Frame
+	local holder = Instance.new(&quot;Frame&quot;)
+	holder.Name = &quot;Ikon_&quot; .. spec.name
+	holder.Size = UDim2.fromOffset(spec.size, spec.size)
+	holder.Position = spec.position or UDim2.fromOffset(0, 0)
+	holder.AnchorPoint = spec.anchor or Vector2.new(0, 0)
+	holder.BackgroundTransparency = 1
+	holder.BorderSizePixel = 0
+	holder.LayoutOrder = spec.layoutOrder or 0
+	holder.ZIndex = spec.zIndex or 1
+	holder.Parent = spec.parent
+
+	local color = spec.color or Theme.color.text
+	local shapes = ICONS[spec.name]
+	if shapes == nil then
+		local missing = Instance.new(&quot;Frame&quot;)
+		missing.Size = UDim2.fromScale(1, 1)
+		missing.BackgroundTransparency = 1
+		missing.ZIndex = holder.ZIndex
+		missing.Parent = holder
+		Theme.stroke(missing, color, 1)
+		Theme.corner(missing, 3)
+		return holder
+	end
+
+	for index, shape in shapes do
+		local part = Instance.new(&quot;Frame&quot;)
+		part.Name = &quot;P&quot; .. index
+		part.Size = UDim2.fromScale(shape[4], shape[5])
+		part.Position = UDim2.fromScale(shape[2], shape[3])
+		part.BackgroundColor3 = color
+		part.BackgroundTransparency = shape[7] or 0
+		part.BorderSizePixel = 0
+		part.Rotation = shape[6] or 0
+		part.ZIndex = holder.ZIndex
+		part.Parent = holder
+		if shape[1] == &quot;d&quot; then
+			Theme.corner(part, math.max(2, math.floor(spec.size * 0.5)))
+		else
+			Theme.corner(part, 2)
+		end
+	end
+	return holder
+end
+
+-- ── Dugme ─────────────────────────────────────────────────────────────
 export type ButtonSpec = {
 	name: string?,
 	text: string,
@@ -17087,6 +19243,9 @@ export type ButtonSpec = {
 	textSize: number?,
 	parent: Instance?,
 	layoutOrder: number?,
+	radius: number?,
+	bold: boolean?,
+	zIndex: number?,
 	onClick: (() -&gt; ())?,
 }
 
@@ -17101,20 +19260,36 @@ function Theme.button(spec: ButtonSpec): TextButton
 	button.BackgroundTransparency = 0
 	button.BorderSizePixel = 0
 	button.TextColor3 = spec.textColor or Theme.color.text
-	button.TextSize = spec.textSize or 14
-	button.Font = Theme.fontBold
+	button.TextSize = spec.textSize or Theme.size.small
+	button.Font = if spec.bold == false then Theme.font else Theme.fontBold
 	button.AutoButtonColor = false
 	button.LayoutOrder = spec.layoutOrder or 0
+	button.ZIndex = spec.zIndex or 1
 	button.Parent = spec.parent
-	Theme.corner(button, 8)
+	Theme.corner(button, spec.radius or Theme.radius.sm)
+	Theme.stroke(button, Theme.color.strokeSoft, 1)
 
 	local base = button.BackgroundColor3
+	-- Uzerine gelince renk ve olcek birlikte degisiyor: yalniz renk
+	-- degisimi dokunmatikte ve hizli fare hareketinde fark edilmiyor.
+	local scale = Instance.new(&quot;UIScale&quot;)
+	scale.Parent = button
+
 	button.MouseEnter:Connect(function()
-		button.BackgroundColor3 = base:Lerp(Color3.new(1, 1, 1), 0.14)
+		Theme.tween(button, { BackgroundColor3 = base:Lerp(Color3.new(1, 1, 1), 0.16) }, Theme.motion.quick)
+		Theme.tween(scale, { Scale = 1.03 }, Theme.motion.quick)
 	end)
 	button.MouseLeave:Connect(function()
-		button.BackgroundColor3 = base
+		Theme.tween(button, { BackgroundColor3 = base }, Theme.motion.quick)
+		Theme.tween(scale, { Scale = 1 }, Theme.motion.quick)
 	end)
+	button.MouseButton1Down:Connect(function()
+		Theme.tween(scale, { Scale = 0.97 }, Theme.motion.quick)
+	end)
+	button.MouseButton1Up:Connect(function()
+		Theme.tween(scale, { Scale = 1.03 }, Theme.motion.quick)
+	end)
+
 	-- Tik sesi TEK YERDE: butun dugmeler Theme.button'dan geciyor, o
 	-- yuzden her panele ayri ayri ses baglamak gerekmiyor.
 	if spec.onClick ~= nil then
@@ -17126,49 +19301,316 @@ function Theme.button(spec: ButtonSpec): TextButton
 	return button
 end
 
-export type Bar = { track: Frame, fill: Frame }
+--- Kucuk bilgi rozeti (fiyat, &quot;SAHIP&quot;, &quot;KILITLI&quot; gibi).
+function Theme.badge(parent: Instance, text: string, color: Color3, order: number?): Frame
+	local badge = Theme.frame({
+		name = &quot;Rozet&quot;,
+		size = UDim2.fromOffset(0, 20),
+		color = color,
+		transparency = 0.78,
+		radius = Theme.radius.sm,
+		parent = parent,
+		layoutOrder = order or 0,
+	})
+	badge.AutomaticSize = Enum.AutomaticSize.X
+	Theme.padding(badge, 0, Theme.space.sm)
+	Theme.stroke(badge, color, 1)
+	local label = Theme.label({
+		text = text,
+		size = UDim2.fromOffset(0, 20),
+		textSize = Theme.size.micro,
+		bold = true,
+		color = color,
+		parent = badge,
+	})
+	label.AutomaticSize = Enum.AutomaticSize.X
+	return badge
+end
 
---- Ilerleme/saglik cubugu. `set(ratio)` ile guncelleniyor.
-function Theme.bar(parent: Instance, size: UDim2, position: UDim2, color: Color3): Bar
+--- Panelleri bolen ince cizgi.
+function Theme.divider(parent: Instance, order: number?): Frame
+	return Theme.frame({
+		name = &quot;Ayirac&quot;,
+		size = UDim2.new(1, 0, 0, 1),
+		color = Theme.color.strokeSoft,
+		transparency = 0.4,
+		radius = 0,
+		parent = parent,
+		layoutOrder = order or 0,
+	})
+end
+
+-- ── Cubuklar ──────────────────────────────────────────────────────────
+export type Bar = {
+	track: Frame,
+	fill: Frame,
+	ghost: Frame,
+	color: Color3,
+	ratio: number,
+}
+
+export type BarOptions = {
+	segments: number?,
+	radius: number?,
+	ghost: boolean?,
+}
+
+--- Ilerleme/saglik cubugu. `Theme.setBar` ile guncelleniyor.
+--- `segments` verilirse cubuk bolmeli cizilir (goz bir bolmeyi bir
+--- yuzdeden daha hizli okuyor).
+function Theme.bar(parent: Instance, size: UDim2, position: UDim2, color: Color3, options: BarOptions?): Bar
+	local radius = (options and options.radius) or Theme.radius.sm
 	local track = Theme.frame({
 		name = &quot;Track&quot;,
 		size = size,
 		position = position,
-		color = Theme.color.panelLight,
-		transparency = 0,
-		radius = 6,
+		color = Theme.color.panelDeep,
+		transparency = 0.15,
+		radius = radius,
 		parent = parent,
 	})
+	Theme.stroke(track, Theme.color.strokeSoft, 1)
+
+	-- Hayalet dolgu: gercek dolgunun ARKASINDA yavasca peslinden geliyor,
+	-- boylece dusen degerin ne kadar dustugu bir an gorunuyor.
+	local ghost = Theme.frame({
+		name = &quot;Ghost&quot;,
+		size = UDim2.fromScale(0, 1),
+		color = color:Lerp(Theme.color.shadow, 0.45),
+		transparency = 0.25,
+		radius = radius,
+		parent = track,
+	})
+
 	local fill = Theme.frame({
 		name = &quot;Fill&quot;,
 		size = UDim2.fromScale(0, 1),
 		color = color,
 		transparency = 0,
-		radius = 6,
+		radius = radius,
 		parent = track,
 	})
-	return { track = track, fill = fill }
+	fill.ZIndex = 2
+	Theme.gradient(fill, color:Lerp(Color3.new(1, 1, 1), 0.25), color)
+
+	local segments = (options and options.segments) or 0
+	if segments &gt; 1 then
+		local holder = Theme.frame({
+			name = &quot;Bolmeler&quot;,
+			size = UDim2.fromScale(1, 1),
+			transparency = 1,
+			radius = 0,
+			parent = track,
+		})
+		holder.ZIndex = 3
+		for index = 1, segments - 1 do
+			Theme.frame({
+				name = &quot;Bolme&quot;,
+				size = UDim2.new(0, 1, 1, 0),
+				position = UDim2.fromScale(index / segments, 0),
+				color = Theme.color.panelDeep,
+				transparency = 0.25,
+				radius = 0,
+				parent = holder,
+			})
+		end
+	end
+
+	return { track = track, fill = fill, ghost = ghost, color = color, ratio = 0 }
 end
 
-function Theme.setBar(bar: Bar, ratio: number)
-	bar.fill.Size = UDim2.fromScale(math.clamp(ratio, 0, 1), 1)
+--- Cubugu AKARAK doldurur. `instant` ilk cizimde kullaniliyor: acilista
+--- her cubugun sifirdan akmasi gosterisli degil, yavas hissettiriyor.
+function Theme.setBar(bar: Bar, ratio: number, instant: boolean?)
+	local clamped = math.clamp(ratio, 0, 1)
+	bar.ratio = clamped
+	if instant == true then
+		bar.fill.Size = UDim2.fromScale(clamped, 1)
+		bar.ghost.Size = UDim2.fromScale(clamped, 1)
+		return
+	end
+	Theme.tween(bar.fill, { Size = UDim2.fromScale(clamped, 1) }, Theme.motion.normal)
+	Theme.tween(bar.ghost, { Size = UDim2.fromScale(clamped, 1) }, Theme.motion.slow)
 end
 
---- Kaydirilabilir liste. Panellerin hepsi ayni davranssin diye.
-function Theme.scroller(parent: Instance, size: UDim2, position: UDim2): ScrollingFrame
-	local scroller = Instance.new(&quot;ScrollingFrame&quot;)
-	scroller.Size = size
-	scroller.Position = position
-	scroller.BackgroundTransparency = 1
-	scroller.BorderSizePixel = 0
-	scroller.ScrollBarThickness = 4
-	scroller.ScrollBarImageColor3 = Theme.color.stroke
-	scroller.AutomaticCanvasSize = Enum.AutomaticSize.Y
-	scroller.CanvasSize = UDim2.fromOffset(0, 0)
-	scroller.Parent = parent
-	return scroller
+--- Cubugun rengini durum rengine cevirir (saglik dusunce kirmiziya).
+function Theme.setBarColor(bar: Bar, color: Color3)
+	if bar.color == color then
+		return
+	end
+	bar.color = color
+	Theme.tween(bar.fill, { BackgroundColor3 = color }, Theme.motion.normal)
+	Theme.tween(bar.ghost, { BackgroundColor3 = color:Lerp(Theme.color.shadow, 0.45) }, Theme.motion.normal)
 end
 
+-- ── Geri sayim halkasi ────────────────────────────────────────────────
+export type Ring = { root: Frame, dots: { Frame }, color: Color3 }
+
+--- Dokusuz halka: cember uzerine dizilmis noktalar. `Theme.setRing`
+--- orani kadarini yakiyor. (Image kullanan bir halka bu ortamda
+--- dogrulanamazdi; nokta dizisi ayni bilgiyi asset'siz veriyor.)
+function Theme.ring(parent: Instance, diameter: number, position: UDim2, color: Color3, count: number?): Ring
+	local total = count or 24
+	local root = Theme.frame({
+		name = &quot;Halka&quot;,
+		size = UDim2.fromOffset(diameter, diameter),
+		position = position,
+		anchor = Vector2.new(0.5, 0.5),
+		transparency = 1,
+		radius = 0,
+		parent = parent,
+	})
+
+	local dots: { Frame } = {}
+	local dotSize = math.max(3, math.floor(diameter * 0.09))
+	for index = 1, total do
+		local angle = (index - 1) / total * math.pi * 2 - math.pi / 2
+		local dot = Theme.frame({
+			name = &quot;Nokta&quot; .. index,
+			size = UDim2.fromOffset(dotSize, dotSize),
+			position = UDim2.new(
+				0.5,
+				math.cos(angle) * diameter * 0.42,
+				0.5,
+				math.sin(angle) * diameter * 0.42
+			),
+			anchor = Vector2.new(0.5, 0.5),
+			color = color,
+			transparency = 0.8,
+			radius = dotSize,
+			parent = root,
+		})
+		table.insert(dots, dot)
+	end
+	return { root = root, dots = dots, color = color }
+end
+
+function Theme.setRing(ring: Ring, ratio: number)
+	local lit = math.floor(math.clamp(ratio, 0, 1) * #ring.dots + 0.5)
+	for index, dot in ring.dots do
+		dot.BackgroundTransparency = if index &lt;= lit then 0 else 0.82
+	end
+end
+
+function Theme.setRingColor(ring: Ring, color: Color3)
+	if ring.color == color then
+		return
+	end
+	ring.color = color
+	for _, dot in ring.dots do
+		dot.BackgroundColor3 = color
+	end
+end
+
+-- ── Sayan sayilar ─────────────────────────────────────────────────────
+export type Counter = { label: TextLabel, set: (number, boolean?) -&gt; (), value: () -&gt; number }
+
+--- Para/XP gibi sayilar anlik ziplamak yerine SAYARAK artiyor.
+--- Ara degerleri tween'e NumberValue uzerinden yaptiriyoruz: kendi
+--- dongumuzu yazmak hem kare bagimli olurdu hem de iptal edilemezdi.
+function Theme.counter(label: TextLabel, format: (number) -&gt; string): Counter
+	local holder = Instance.new(&quot;NumberValue&quot;)
+	holder.Name = &quot;Sayac&quot;
+	holder.Value = 0
+	holder.Parent = label
+
+	local current: Tween? = nil
+	holder.Changed:Connect(function(value: number)
+		label.Text = format(value)
+	end)
+
+	local counter = {}
+	counter.label = label
+	counter.value = function(): number
+		return holder.Value
+	end
+	counter.set = function(target: number, instant: boolean?)
+		if current ~= nil then
+			current:Cancel()
+			current = nil
+		end
+		if instant == true or math.abs(target - holder.Value) &lt; 1 then
+			holder.Value = target
+			label.Text = format(target)
+			return
+		end
+		current = Theme.tween(holder, { Value = target }, Theme.motion.count, Enum.EasingStyle.Quad)
+	end
+	counter.set(0, true)
+	return counter
+end
+
+-- ── Panel acilis/kapanis ──────────────────────────────────────────────
+local FADE_CLASSES = {
+	Frame = { &quot;BackgroundTransparency&quot; },
+	TextLabel = { &quot;BackgroundTransparency&quot;, &quot;TextTransparency&quot; },
+	TextButton = { &quot;BackgroundTransparency&quot;, &quot;TextTransparency&quot; },
+	ScrollingFrame = { &quot;BackgroundTransparency&quot; },
+	UIStroke = { &quot;Transparency&quot; },
+}
+
+local function scaleOf(root: GuiObject): UIScale
+	local existing = root:FindFirstChildOfClass(&quot;UIScale&quot;)
+	if existing ~= nil then
+		return existing
+	end
+	local scale = Instance.new(&quot;UIScale&quot;)
+	scale.Parent = root
+	return scale
+end
+
+--- Paneli OLCEK + SAYDAMLIK ile actirir. Anlik gorunen panel, oyuncunun
+--- gozunun nereye bakacagini bilmemesine sebep oluyor; 0.22 saniyelik
+--- bir giris bakisi panele cekiyor.
+function Theme.open(root: GuiObject)
+	root.Visible = true
+	local scale = scaleOf(root)
+	scale.Scale = 0.94
+
+	-- Her ogenin KENDI hedef saydamligi var; hepsini 0'a cekmek yanlis
+	-- olurdu (arka plani saydam olan etiketler gorunur kutuya donerdi).
+	for _, item in root:GetDescendants() do
+		local properties = FADE_CLASSES[item.ClassName]
+		if properties == nil then
+			continue
+		end
+		for _, property in properties do
+			local target = (item :: any)[property]
+			if target &gt;= 1 then
+				continue
+			end
+			;(item :: any)[property] = 1
+			Theme.tween(item, { [property] = target }, Theme.motion.normal)
+		end
+	end
+
+	local target = root.BackgroundTransparency
+	root.BackgroundTransparency = math.min(1, target + 0.35)
+	Theme.tween(root, { BackgroundTransparency = target }, Theme.motion.normal)
+	Theme.tween(scale, { Scale = 1 }, Theme.motion.normal, Enum.EasingStyle.Back)
+end
+
+function Theme.close(root: GuiObject)
+	local scale = scaleOf(root)
+	local tween = Theme.tween(scale, { Scale = 0.94 }, Theme.motion.quick)
+	tween.Completed:Once(function()
+		root.Visible = false
+		scale.Scale = 1
+	end)
+end
+
+--- Panel gorunurlugunu tek satirda cevirir; hangi yone gidecegine
+--- kendisi karar veriyor.
+function Theme.toggle(root: GuiObject): boolean
+	if root.Visible then
+		Theme.close(root)
+		return false
+	end
+	Theme.open(root)
+	return true
+end
+
+-- ── Durum renkleri ────────────────────────────────────────────────────
 --- Bildirim/durum rengi.
 function Theme.kindColor(kind: string): Color3
 	if kind == &quot;good&quot; then
@@ -17181,24 +19623,73 @@ function Theme.kindColor(kind: string): Color3
 	return Theme.color.accent
 end
 
+--- Yuksek = iyi olan degerler (saglik, memnuniyet).
+function Theme.statusColor(ratio: number): Color3
+	if ratio &gt;= 0.6 then
+		return Theme.color.good
+	elseif ratio &gt;= 0.3 then
+		return Theme.color.warn
+	end
+	return Theme.color.bad
+end
+
+--- Yuksek = kotu olan degerler (stres, agri).
+function Theme.riskColor(ratio: number): Color3
+	if ratio &gt;= 0.7 then
+		return Theme.color.bad
+	elseif ratio &gt;= 0.4 then
+		return Theme.color.warn
+	end
+	return Theme.color.good
+end
+
+-- ── Kaydirilabilir liste ──────────────────────────────────────────────
+function Theme.scroller(parent: Instance, size: UDim2, position: UDim2): ScrollingFrame
+	local scroller = Instance.new(&quot;ScrollingFrame&quot;)
+	scroller.Size = size
+	scroller.Position = position
+	scroller.BackgroundTransparency = 1
+	scroller.BorderSizePixel = 0
+	scroller.ScrollBarThickness = 4
+	scroller.ScrollBarImageColor3 = Theme.color.stroke
+	scroller.ScrollBarImageTransparency = 0.3
+	scroller.AutomaticCanvasSize = Enum.AutomaticSize.Y
+	scroller.CanvasSize = UDim2.fromOffset(0, 0)
+	scroller.Parent = parent
+	return scroller
+end
+
 return Theme
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX68">
+				<Item class="ModuleScript" referent="RBX70">
 					<Properties>
 						<string name="Name">ToolBar</string>
 						<ProtectedString name="Source">--!strict
 -- ToolBar.luau
 -- ============
--- Ekranin altindaki alet cubugu. Tiklamak ya da 1-6 tuslari aleti
+-- Ekranin altindaki alet cubugu. Tiklamak ya da 1-8 tuslari aleti
 -- DOGRUDAN kullanir; ayrica bir &quot;sec sonra uygula&quot; adimi yok, cunku
 -- muayenede her tiklama bir islem.
+--
+-- Tus kapagi gorunumu
+-- -------------------
+-- Her alet bir klavye tusu gibi duruyor: ustte tus numarasi, ortada
+-- ikon, altta ad. Secili alet bir tik yukari kalkiyor ve kenari
+-- parliyor - hangi aletin elde oldugu bakmadan biliniyor.
+--
+-- Bekleme suresi supurmesi
+-- ------------------------
+-- Alet kullanildiginda karenin ustunden soldan saga bir golge geciyor
+-- (`useSeconds` kadar). Sunucu zaten bu surede ikinci kullanimi
+-- reddediyor; supurme, reddi ONCEDEN gorunur kiliyor.
 
 local UserInputService = game:GetService(&quot;UserInputService&quot;)
 
 local ReplicatedStorage = game:GetService(&quot;ReplicatedStorage&quot;)
 local Shared = ReplicatedStorage:WaitForChild(&quot;VetShared&quot;)
+local Audio = require(Shared.Audio)
 local Loc = require(Shared.Loc)
 local Net = require(Shared.Net)
 
@@ -17207,7 +19698,7 @@ local Theme = require(script.Parent.Theme)
 local ToolBar = {}
 
 local container: Frame? = nil
-local buttons: { TextButton } = {}
+local cells: { any } = {}
 local toolIds: { string } = {}
 local selected = 1
 
@@ -17223,11 +19714,26 @@ local KEYS = {
 }
 
 local function highlight()
-	for index, button in buttons do
+	for index, cell in cells do
 		local active = index == selected
-		button.BackgroundColor3 = if active then Theme.color.accentDark else Theme.color.panelLight
-		button.TextColor3 = if active then Theme.color.text else Theme.color.textDim
+		Theme.tween(cell.root, {
+			Position = UDim2.fromOffset(0, if active then -6 else 0),
+			BackgroundColor3 = if active then Theme.color.accentDark else Theme.color.panelLight,
+		}, Theme.motion.quick)
+		Theme.tween(cell.stroke, {
+			Color = if active then Theme.color.accentGlow else Theme.color.strokeSoft,
+			Thickness = if active then 2 else 1,
+		}, Theme.motion.quick)
+		cell.key.TextColor3 = if active then Theme.color.accentGlow else Theme.color.textFaint
+		cell.name.TextColor3 = if active then Theme.color.text else Theme.color.textDim
 	end
+end
+
+--- Bekleme supurmesi: sag kenardan basliyor, sifira iniyor.
+local function sweep(cell: any)
+	cell.cooldown.Size = UDim2.fromScale(1, 1)
+	cell.cooldown.BackgroundTransparency = 0.45
+	Theme.tween(cell.cooldown, { Size = UDim2.fromScale(0, 1) }, cell.seconds, Enum.EasingStyle.Linear)
 end
 
 local function use(index: number)
@@ -17237,22 +19743,24 @@ local function use(index: number)
 	end
 	selected = index
 	highlight()
+	sweep(cells[index])
+	Audio.play(&quot;uiClick&quot;)
 	Net.toServer(&quot;SelectTool&quot;, toolId)
 	Net.toServer(&quot;UseTool&quot;, toolId)
 end
 
 function ToolBar.create(parent: ScreenGui)
-	local frame = Theme.frame({
+	local frame = Theme.card({
 		name = &quot;AletCubugu&quot;,
-		size = UDim2.fromOffset(730, 66),
-		position = UDim2.new(0.5, 0, 1, -16),
+		size = UDim2.fromOffset(760, 84),
+		position = UDim2.new(0.5, 0, 1, -Theme.space.lg),
 		anchor = Vector2.new(0.5, 1),
 		parent = parent,
 	})
-	Theme.stroke(frame)
-	Theme.padding(frame, 8)
-	local layout = Theme.list(frame, 8, Enum.FillDirection.Horizontal)
+	Theme.padding(frame, Theme.space.sm, Theme.space.md)
+	local layout = Theme.list(frame, Theme.space.sm, Enum.FillDirection.Horizontal)
 	layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+	layout.VerticalAlignment = Enum.VerticalAlignment.Center
 	container = frame
 
 	UserInputService.InputBegan:Connect(function(input: InputObject, processed: boolean)
@@ -17264,6 +19772,90 @@ function ToolBar.create(parent: ScreenGui)
 			use(index)
 		end
 	end)
+end
+
+--- Tek bir alet kapagini kurar.
+local function toolCell(parent: Instance, tool: any, index: number): any
+	local root = Theme.frame({
+		name = tool.id,
+		size = UDim2.fromOffset(84, 62),
+		color = Theme.color.panelLight,
+		transparency = 0,
+		radius = Theme.radius.sm,
+		parent = parent,
+		layoutOrder = index,
+		zIndex = 2,
+	})
+	local stroke = Theme.stroke(root, Theme.color.strokeSoft, 1)
+
+	local cooldown = Theme.frame({
+		name = &quot;Bekleme&quot;,
+		size = UDim2.fromScale(0, 1),
+		color = Theme.color.shadow,
+		transparency = 1,
+		radius = Theme.radius.sm,
+		parent = root,
+		zIndex = 4,
+	})
+
+	local key = Theme.label({
+		name = &quot;Tus&quot;,
+		text = tostring(index),
+		size = UDim2.fromOffset(14, 12),
+		position = UDim2.fromOffset(6, 4),
+		textSize = Theme.size.micro,
+		bold = true,
+		color = Theme.color.textFaint,
+		parent = root,
+		zIndex = 3,
+	})
+
+	Theme.icon({
+		name = tool.id,
+		size = 20,
+		color = Theme.color.text,
+		position = UDim2.new(0.5, 0, 0, 14),
+		anchor = Vector2.new(0.5, 0),
+		parent = root,
+		zIndex = 3,
+	})
+
+	local name = Theme.label({
+		name = &quot;Ad&quot;,
+		text = Loc.get(tool.nameKey),
+		size = UDim2.new(1, -6, 0, 22),
+		position = UDim2.new(0, 3, 1, -24),
+		textSize = Theme.size.micro,
+		bold = true,
+		align = Enum.TextXAlignment.Center,
+		color = Theme.color.textDim,
+		wrapped = true,
+		parent = root,
+		zIndex = 3,
+	})
+
+	-- Kare tiklanabilir olmali; goruntuyu bozmayan saydam bir dugme
+	-- ustune biniyor (Theme.button'un kendi zemini bu tasarimi ezerdi).
+	local hit = Instance.new(&quot;TextButton&quot;)
+	hit.Name = &quot;Tik&quot;
+	hit.Text = &quot;&quot;
+	hit.Size = UDim2.fromScale(1, 1)
+	hit.BackgroundTransparency = 1
+	hit.BorderSizePixel = 0
+	hit.ZIndex = 5
+	hit.Parent = root
+	hit.Activated:Connect(function()
+		use(index)
+	end)
+
+	return {
+		root = root,
+		stroke = stroke,
+		key = key,
+		name = name,
+		cooldown = cooldown,
+		seconds = tool.useSeconds or 1.5,
+	}
 end
 
 --- Alet listesini sunucudan gelen duruma gore yeniden kurar.
@@ -17285,30 +19877,18 @@ function ToolBar.update(state: any)
 		return -- degismedi; her karede arayuzu yeniden kurmanin anlami yok
 	end
 
-	for _, button in buttons do
-		button:Destroy()
+	for _, cell in cells do
+		cell.root:Destroy()
 	end
-	buttons = {}
+	cells = {}
 	toolIds = {}
 
 	for index, tool in state.tools do
 		table.insert(toolIds, tool.id)
-		local button = Theme.button({
-			name = tool.id,
-			text = (&quot;%d  %s&quot;):format(index, Loc.get(tool.nameKey)),
-			size = UDim2.fromOffset(84, 50),
-			layoutOrder = index,
-			parent = container,
-			onClick = function()
-				use(index)
-			end,
-		})
-		button.TextWrapped = true
-		button.TextSize = 12
-		table.insert(buttons, button)
+		table.insert(cells, toolCell(container, tool, index))
 	end
 
-	selected = math.clamp(selected, 1, math.max(#buttons, 1))
+	selected = math.clamp(selected, 1, math.max(#cells, 1))
 	highlight()
 end
 
@@ -17316,7 +19896,7 @@ return ToolBar
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX69">
+				<Item class="ModuleScript" referent="RBX71">
 					<Properties>
 						<string name="Name">TreatmentPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -17324,10 +19904,17 @@ return ToolBar
 -- ===================
 -- Tedavi paneli. Teshis konduktan SONRA aciliyor.
 --
--- Gereken tedaviler ustte isaretli listede; alttaki dugmeler oyuncunun
--- acabildigi butun tedaviler. Yanlis tedavi uygulamak serbest (ve
--- cezali): listeyi yalnizca dogru tedavilerle doldurmak bulmacayi
+-- Gereken tedaviler ustte isaretli listede; alttaki ikon izgarasi
+-- oyuncunun acabildigi butun tedaviler. Yanlis tedavi uygulamak serbest
+-- (ve cezali): izgarayi yalnizca dogru tedavilerle doldurmak bulmacayi
 -- ortadan kaldirirdi.
+--
+-- Neden ikon izgarasi?
+-- --------------------
+-- Sekiz tedavi alt alta yazi olarak durdugunda oyuncu her seferinde
+-- okuyordu. Ikon + ad + fiyat rozeti olan kareler, ucuncu hastadan sonra
+-- okunmadan taniniyor. Uygulanan tedavinin karesi HALKA DOLUMUYLA
+-- isaretleniyor: onay tiki bir anda beliriyor, dolum ise &quot;oldu&quot; diyor.
 
 local ReplicatedStorage = game:GetService(&quot;ReplicatedStorage&quot;)
 local Shared = ReplicatedStorage:WaitForChild(&quot;VetShared&quot;)
@@ -17340,47 +19927,122 @@ local TreatmentPanel = {}
 
 local widgets: any = nil
 local builtSignature = &quot;&quot;
+local cells: { [string]: any } = {}
+
+local CELL = UDim2.fromOffset(96, 64)
 
 function TreatmentPanel.create(parent: ScreenGui)
-	local panel = Theme.frame({
+	local panel = Theme.card({
 		name = &quot;TedaviPaneli&quot;,
-		size = UDim2.fromOffset(330, 250),
-		position = UDim2.new(1, -16, 0, 406),
+		size = UDim2.fromOffset(330, 292),
+		position = UDim2.new(1, -Theme.space.lg, 0, 476),
 		anchor = Vector2.new(1, 0),
 		parent = parent,
 		visible = false,
 	})
-	Theme.stroke(panel)
 
+	Theme.icon({
+		name = &quot;health&quot;,
+		size = 14,
+		color = Theme.color.good,
+		position = UDim2.fromOffset(Theme.space.md, 12),
+		parent = panel,
+		zIndex = 2,
+	})
 	Theme.label({
 		text = Loc.get(&quot;treatment.title&quot;),
-		size = UDim2.new(1, -24, 0, 22),
-		position = UDim2.fromOffset(12, 8),
-		textSize = 16,
+		size = UDim2.new(1, -Theme.space.md * 2 - 22, 0, 22),
+		position = UDim2.fromOffset(Theme.space.md + 22, Theme.space.sm),
+		textSize = Theme.size.body,
 		bold = true,
 		parent = panel,
+		zIndex = 2,
 	})
 
 	local required = Theme.frame({
 		name = &quot;Gereken&quot;,
-		size = UDim2.new(1, -24, 0, 62),
-		position = UDim2.fromOffset(12, 32),
-		color = Theme.color.panelLight,
-		transparency = 0.2,
-		radius = 8,
+		size = UDim2.new(1, -Theme.space.md * 2, 0, 66),
+		position = UDim2.fromOffset(Theme.space.md, 34),
+		color = Theme.color.panelDeep,
+		transparency = 0.25,
+		radius = Theme.radius.sm,
 		parent = panel,
+		zIndex = 2,
 	})
-	Theme.padding(required, 6)
-	Theme.list(required, 2)
+	Theme.padding(required, Theme.space.sm)
+	Theme.list(required, Theme.space.xs)
 
-	local buttons = Theme.scroller(panel, UDim2.new(1, -24, 1, -106), UDim2.fromOffset(12, 100))
-	local grid = Instance.new(&quot;UIGridLayout&quot;)
-	grid.CellSize = UDim2.fromOffset(96, 32)
-	grid.CellPadding = UDim2.fromOffset(6, 6)
-	grid.SortOrder = Enum.SortOrder.LayoutOrder
-	grid.Parent = buttons
+	local buttons = Theme.scroller(
+		panel,
+		UDim2.new(1, -Theme.space.md * 2, 1, -114),
+		UDim2.fromOffset(Theme.space.md, 108)
+	)
+	buttons.ZIndex = 2
+	Theme.grid(buttons, CELL, UDim2.fromOffset(Theme.space.sm, Theme.space.sm))
 
 	widgets = { panel = panel, required = required, buttons = buttons }
+end
+
+--- Bir tedavi karesi: ikon, ad, fiyat rozeti ve uygulanma halkasi.
+local function treatmentCell(parent: Instance, treatment: any, index: number): any
+	local button = Theme.button({
+		name = treatment.id,
+		text = &quot;&quot;,
+		size = CELL,
+		layoutOrder = index,
+		parent = parent,
+		zIndex = 2,
+		onClick = function()
+			Net.toServer(&quot;ApplyTreatment&quot;, treatment.id)
+		end,
+	})
+
+	local icon = Theme.icon({
+		name = treatment.id,
+		size = 20,
+		color = Theme.color.accentGlow,
+		position = UDim2.new(0.5, 0, 0, 8),
+		anchor = Vector2.new(0.5, 0),
+		parent = button,
+		zIndex = 3,
+	})
+
+	Theme.label({
+		name = &quot;Ad&quot;,
+		text = Loc.get(treatment.nameKey),
+		size = UDim2.new(1, -Theme.space.sm, 0, 14),
+		position = UDim2.fromOffset(Theme.space.xs, 32),
+		textSize = Theme.size.micro,
+		bold = true,
+		align = Enum.TextXAlignment.Center,
+		parent = button,
+		zIndex = 3,
+	})
+
+	local cost = Theme.label({
+		name = &quot;Fiyat&quot;,
+		text = Loc.get(&quot;treatment.cost&quot;, treatment.cost),
+		size = UDim2.new(1, -Theme.space.sm, 0, 14),
+		position = UDim2.fromOffset(Theme.space.xs, 46),
+		textSize = Theme.size.micro,
+		align = Enum.TextXAlignment.Center,
+		color = Theme.color.money,
+		parent = button,
+		zIndex = 3,
+	})
+
+	-- Uygulandiginda karenin ustunu kaplayan dolum; basta bos.
+	local done = Theme.frame({
+		name = &quot;Uygulandi&quot;,
+		size = UDim2.fromScale(0, 1),
+		color = Theme.color.good,
+		transparency = 0.78,
+		radius = Theme.radius.sm,
+		parent = button,
+		zIndex = 2,
+	})
+
+	return { button = button, icon = icon, cost = cost, done = done, applied = false }
 end
 
 function TreatmentPanel.update(chart: any, state: any)
@@ -17389,7 +20051,13 @@ function TreatmentPanel.update(chart: any, state: any)
 	end
 
 	local show = chart ~= nil and chart.present == true and chart.diagnosed == true
-	widgets.panel.Visible = show
+	if show ~= widgets.panel.Visible then
+		if show then
+			Theme.open(widgets.panel)
+		else
+			Theme.close(widgets.panel)
+		end
+	end
 	if not show then
 		builtSignature = &quot;&quot;
 		return
@@ -17397,21 +20065,39 @@ function TreatmentPanel.update(chart: any, state: any)
 
 	-- Gereken tedaviler: her guncellemede yenileniyor (isaretler degisiyor).
 	widgets.required:ClearAllChildren()
-	Theme.padding(widgets.required, 6)
-	Theme.list(widgets.required, 2)
+	Theme.padding(widgets.required, Theme.space.sm)
+	Theme.list(widgets.required, Theme.space.xs)
 	for index, item in chart.required do
+		local row = Theme.frame({
+			name = &quot;Gerek&quot;,
+			size = UDim2.new(1, 0, 0, 18),
+			transparency = 1,
+			radius = 0,
+			parent = widgets.required,
+			layoutOrder = index,
+			zIndex = 3,
+		})
+		Theme.icon({
+			name = if item.applied then &quot;check&quot; else &quot;info&quot;,
+			size = 12,
+			color = if item.applied then Theme.color.good else Theme.color.textFaint,
+			position = UDim2.fromOffset(0, 3),
+			parent = row,
+			zIndex = 4,
+		})
 		Theme.label({
-			text = (if item.applied then &quot;✓ &quot; else &quot;○ &quot;) .. Loc.get(item.nameKey),
-			size = UDim2.new(1, 0, 0, 16),
-			textSize = 12,
+			text = Loc.get(item.nameKey),
+			size = UDim2.new(1, -20, 1, 0),
+			position = UDim2.fromOffset(18, 0),
+			textSize = Theme.size.micro,
 			bold = item.applied,
 			color = if item.applied then Theme.color.good else Theme.color.textDim,
-			layoutOrder = index,
-			parent = widgets.required,
+			parent = row,
+			zIndex = 4,
 		})
 	end
 
-	-- Dugmeler yalnizca acilan tedavi kumesi degistiginde kuruluyor.
+	-- Izgara yalnizca acilan tedavi kumesi degistiginde kuruluyor.
 	if state == nil or state.ready ~= true then
 		return
 	end
@@ -17419,32 +20105,29 @@ function TreatmentPanel.update(chart: any, state: any)
 	for _, treatment in state.treatments do
 		signature ..= treatment.id .. &quot;:&quot; .. tostring(treatment.cost) .. &quot;;&quot;
 	end
-	if signature == builtSignature then
-		return
+	if signature ~= builtSignature then
+		builtSignature = signature
+		cells = {}
+		widgets.buttons:ClearAllChildren()
+		Theme.grid(widgets.buttons, CELL, UDim2.fromOffset(Theme.space.sm, Theme.space.sm))
+		for index, treatment in state.treatments do
+			cells[treatment.id] = treatmentCell(widgets.buttons, treatment, index)
+		end
 	end
-	builtSignature = signature
 
-	widgets.buttons:ClearAllChildren()
-	local grid = Instance.new(&quot;UIGridLayout&quot;)
-	grid.CellSize = UDim2.fromOffset(96, 32)
-	grid.CellPadding = UDim2.fromOffset(6, 6)
-	grid.SortOrder = Enum.SortOrder.LayoutOrder
-	grid.Parent = widgets.buttons
-
-	for index, treatment in state.treatments do
-		local id = treatment.id
-		local button = Theme.button({
-			name = id,
-			text = (&quot;%s\n%d TL&quot;):format(Loc.get(treatment.nameKey), treatment.cost),
-			size = UDim2.fromOffset(96, 32),
-			textSize = 11,
-			layoutOrder = index,
-			parent = widgets.buttons,
-			onClick = function()
-				Net.toServer(&quot;ApplyTreatment&quot;, id)
-			end,
-		})
-		button.TextWrapped = true
+	-- Uygulanmis tedavilerin karesi doluyor. Dolum bir kez oynasin diye
+	-- durum kareye kaydediliyor; her guncellemede tekrar tweenlenmiyor.
+	local applied: { [string]: boolean } = {}
+	for _, treatmentId in chart.done do
+		applied[treatmentId] = true
+	end
+	for id, cell in cells do
+		local isDone = applied[id] == true
+		if isDone ~= cell.applied then
+			cell.applied = isDone
+			Theme.tween(cell.done, { Size = UDim2.fromScale(if isDone then 1 else 0, 1) }, Theme.motion.slow)
+			Theme.tween(cell.icon, { Rotation = if isDone then 360 else 0 }, Theme.motion.slow)
+		end
 	end
 end
 
@@ -17455,19 +20138,19 @@ return TreatmentPanel
 			</Item>
 		</Item>
 	</Item>
-	<Item class="StarterGui" referent="RBX70">
+	<Item class="StarterGui" referent="RBX72">
 		<Properties>
 			<string name="Name">StarterGui</string>
 			<bool name="ResetPlayerGuiOnSpawn">false</bool>
 		</Properties>
 	</Item>
-	<Item class="Players" referent="RBX71">
+	<Item class="Players" referent="RBX73">
 		<Properties>
 			<string name="Name">Players</string>
 			<bool name="CharacterAutoLoads">false</bool>
 		</Properties>
 	</Item>
-	<Item class="SoundService" referent="RBX72">
+	<Item class="SoundService" referent="RBX74">
 		<Properties>
 			<string name="Name">SoundService</string>
 		</Properties>

@@ -18,6 +18,7 @@ local Build = require(Shared.Build)
 local Detail = require(Shared.Detail)
 local Loc = require(Shared.Loc)
 local Props = require(script.Parent.Props)
+local Decor = require(script.Parent.Decor)
 local SkyLighting = require(script.Parent.Lighting)
 
 local plan = require(Data.clinic)
@@ -33,7 +34,7 @@ export type Built = {
 	model: Model,
 	stations: Stations,
 	queuePoints: { CFrame },
-	restPoints: { CFrame },
+	ownerPoints: { CFrame },
 	entranceOutside: Vector3,
 	entranceInside: Vector3,
 	roomOf: { [string]: { min: { number }, max: { number } } },
@@ -61,6 +62,9 @@ local function materialOf(name: string?): Enum.Material
 end
 
 --- Tek bir duvar parcasi. `horizontal` ise eksen X, degilse Z.
+--- `name` yalnizca gorunum icin degil: dekorasyon temasi parcalari
+--- ADINA gore buluyor (Decor.luau). Duvar govdesi ile supurgelik ayni
+--- adi tasirsa tema ikisini ayni renge boyardi.
 local function wallSegment(
 	parent: Instance,
 	horizontal: boolean,
@@ -69,7 +73,8 @@ local function wallSegment(
 	axisTo: number,
 	yFrom: number,
 	yTo: number,
-	color: Color3
+	color: Color3,
+	name: string?
 )
 	local length = axisTo - axisFrom
 	if length <= EPSILON then
@@ -94,7 +99,7 @@ local function wallSegment(
 	end
 
 	Build.part({
-		name = "Duvar",
+		name = name or "Duvar",
 		size = size,
 		cf = CFrame.new(position),
 		color = color,
@@ -245,9 +250,9 @@ local function buildWall(parent: Instance, wall: any, color: Color3, trim: Color
 
 	-- Supurgelik: duvarin dibinde ince bir serit. Tek renkli duvarlari
 	-- kirar, mekan daha bitmis gorunur.
-	wallSegment(parent, horizontal, fixed, axisFrom, axisTo, 0, 0.6, trim)
+	wallSegment(parent, horizontal, fixed, axisFrom, axisTo, 0, 0.6, trim, "Supurgelik")
 	-- Tavan kornisi: ust kenarda ikinci serit.
-	wallSegment(parent, horizontal, fixed, axisFrom, axisTo, plan.wallHeight - 0.7, plan.wallHeight, trim)
+	wallSegment(parent, horizontal, fixed, axisFrom, axisTo, plan.wallHeight - 0.7, plan.wallHeight, trim, "TavanKornisi")
 end
 
 --- Bahce, yol ve disarisi.
@@ -359,7 +364,7 @@ function Clinic.build(parent: Instance): Built
 
 	local stations: Stations = {}
 	local queuePoints: { CFrame } = {}
-	local restPoints: { CFrame } = {}
+	local ownerPoints: { CFrame } = {}
 	local roomOf = {}
 
 	for _, room in plan.rooms do
@@ -435,8 +440,10 @@ function Clinic.build(parent: Instance): Built
 		for _, point in room.queuePoints or {} do
 			table.insert(queuePoints, CFrame.new(point[1], plan.floorY, point[2]))
 		end
-		for _, point in room.restPoints or {} do
-			table.insert(restPoints, CFrame.new(point[1], plan.floorY, point[2]))
+		-- Sahipler hayvanlarinin ARKASINDA bekliyor; yerleri veride ayri
+		-- duruyor cunku 6,4 stud'luk hayvanlarin arasinda NPC'ye yer yok.
+		for _, point in room.ownerPoints or {} do
+			table.insert(ownerPoints, CFrame.new(point[1], plan.floorY, point[2]))
 		end
 
 		for _, spec in room.props do
@@ -473,11 +480,15 @@ function Clinic.build(parent: Instance): Built
 
 	buildSpawn(root)
 
+	-- Dekorasyon en sonda baglaniyor: boyanacak parcalar ve sus
+	-- esyalarinin yerleri ancak yapi bittikten sonra belli.
+	Decor.attach(structure, furniture, Props.build)
+
 	return {
 		model = root,
 		stations = stations,
 		queuePoints = queuePoints,
-		restPoints = restPoints,
+		ownerPoints = ownerPoints,
 		entranceOutside = Vector3.new(plan.entrance.outside[1], plan.floorY, plan.entrance.outside[2]),
 		entranceInside = Vector3.new(plan.entrance.inside[1], plan.floorY, plan.entrance.inside[2]),
 		roomOf = roomOf,

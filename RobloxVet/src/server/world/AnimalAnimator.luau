@@ -121,7 +121,9 @@ function Animator.walkPath(rig: AnimalFactory.Rig, points: { Vector3 }, onArrive
 	entry.waypoints = table.clone(points)
 	entry.onArrive = onArrive
 	entry.state = if #entry.waypoints > 0 then "walk" else "idle"
-	-- Yurumeye baslayan yilan kivrilmasini cozer.
+	-- Yurumeye baslayan yilan kivrilmasini cozer; durunca yeniden
+	-- kiviriliyor (asagidaki dongu). Beklerken duz uzanan bir yilan hem
+	-- gercekci degil hem de 7,2 stud'luk govdesiyle komsusuna giriyordu.
 	entry.coiled = false
 end
 
@@ -300,6 +302,11 @@ function Animator.start()
 				continue
 			end
 			local speed = stepMovement(entry, step)
+			-- Duran serpentine rig kendiliginden kiviriliyor: bekleme
+			-- ayak izi 7,2 degil ~3 stud oluyor (data: tableFootprint).
+			if entry.rig.spec.rig == "serpentine" and #entry.waypoints == 0 then
+				entry.coiled = true
+			end
 			stepPose(entry, step, speed)
 		end
 	end)

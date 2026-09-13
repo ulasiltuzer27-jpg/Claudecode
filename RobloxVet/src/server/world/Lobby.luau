@@ -188,7 +188,8 @@ function Lobby.build(parent: Instance): Built
 
 	-- Tavan lambalari
 	local lamp = SkyLighting.lamp("ceiling")
-	for _, position in { { -20, -12 }, { 20, -12 }, { -20, 8 }, { 20, 8 }, { 0, -2 } } do
+	-- Az sayida, genis menzilli armatur: cok lamba sahneyi yikiyor.
+	for _, position in { { -22, -10 }, { 22, -10 }, { 0, 10 } } do
 		Build.ceilingLight(Vector3.new(position[1], plan.wallHeight - 0.9, position[2]), root, lamp)
 	end
 

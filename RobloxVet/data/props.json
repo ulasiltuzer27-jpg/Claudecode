@@ -382,6 +382,62 @@
       ],
       "base": 0,
       "againstWall": false
+    },
+    {
+      "id": "aquarium",
+      "size": [
+        5.4,
+        1.8,
+        5.0
+      ],
+      "offset": [
+        0,
+        0
+      ],
+      "base": 0,
+      "againstWall": false
+    },
+    {
+      "id": "wallClock",
+      "size": [
+        2.8,
+        0.5,
+        2.8
+      ],
+      "offset": [
+        0,
+        0
+      ],
+      "base": 6.0,
+      "againstWall": true
+    },
+    {
+      "id": "certificate",
+      "size": [
+        2.4,
+        0.4,
+        3.0
+      ],
+      "offset": [
+        0,
+        0
+      ],
+      "base": 5.6,
+      "againstWall": true
+    },
+    {
+      "id": "flowerPot",
+      "size": [
+        2.6,
+        2.6,
+        4.2
+      ],
+      "offset": [
+        0,
+        0
+      ],
+      "base": 0,
+      "againstWall": false
     }
   ],
   "_yuzey_notu": "surface = masanin uzerine hayvan konabilen yuzeyi [uzunluk, genislik]. Buyuk bir hayvan kucuk bir masaya konamaz; PatientFlow bunu denetliyor ve verify_layout her turun EN AZ BIR masaya sigdigini dogruluyor.",

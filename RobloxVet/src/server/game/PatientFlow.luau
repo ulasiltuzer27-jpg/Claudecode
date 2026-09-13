@@ -16,6 +16,7 @@
 -- oyunculu oturumda iki veteriner ayni hastayi cekistirmez.
 
 local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Shared = ReplicatedStorage:WaitForChild("VetShared")
@@ -223,10 +224,47 @@ local function chartSnapshot(patient: Patient?, viewer: Player): any
 	local level = if entry ~= nil then entry.data.level else 1
 
 	-- Teshis adaylari: bu turun, bu seviyede gorulebilecek hastaliklari.
+	--
+	-- Her adayin yaninda ESLESME ORANI da gidiyor: bulunan belirtilerin
+	-- kaci bu hastalikta da var. Bunu istemciye HESAPLATMAK, hastalik
+	-- tablosunun tamamini istemciye yollamak demekti; burada hesaplanan
+	-- oran ise zaten oyuncunun elindeki bilgiden (bulunmus belirtiler)
+	-- cikiyor, yani yeni bir sey sizdirmiyor. Hangi adayin dogru oldugu
+	-- hala yalnizca sunucuda.
+	local revealedCount = 0
+	for _ in patient.revealed do
+		revealedCount += 1
+	end
+
 	local candidates = {}
 	for _, condition in Diagnosis.conditionsFor(patient.animalId, level) do
-		table.insert(candidates, { id = condition.id, nameKey = condition.nameKey })
+		local hits = 0
+		for _, symptomId in condition.symptoms do
+			if patient.revealed[symptomId] == true then
+				hits += 1
+			end
+		end
+		table.insert(candidates, {
+			id = condition.id,
+			nameKey = condition.nameKey,
+			hits = hits,
+			-- Bulunan belirtilerin kaci bu hastaligi destekliyor.
+			match = if revealedCount == 0 then 0 else hits / revealedCount,
+			-- Bu hastaligin belirtilerinin kaci bulundu (kapsam).
+			coverage = if #condition.symptoms == 0 then 0 else hits / #condition.symptoms,
+		})
 	end
+	-- Once eslesme, esitlikte kapsam, yine esitlikte ad: sira her
+	-- guncellemede ayni kalsin diye kararli bir olcut zinciri.
+	table.sort(candidates, function(a, b)
+		if a.match ~= b.match then
+			return a.match > b.match
+		end
+		if a.coverage ~= b.coverage then
+			return a.coverage > b.coverage
+		end
+		return a.id < b.id
+	end)
 
 	local required = {}
 	local done = {}
@@ -530,13 +568,20 @@ local function spawnPatient()
 
 	if emergency then
 		-- Acil vaka gorsel olarak bagirsin: kirmizi donen isik.
+		-- Acil feneri NABIZ gibi: sabit yanan bir isik hem dikkat
+		-- cekmiyor hem sahneye surekli isik ekliyor.
 		local lamp = SkyLighting.lamp("emergency")
 		local beacon = Instance.new("PointLight")
 		beacon.Name = "AcilIsigi"
 		beacon.Color = lamp.color
-		beacon.Brightness = lamp.brightness
+		beacon.Brightness = 0
 		beacon.Range = lamp.range
+		beacon.Shadows = false
 		beacon.Parent = rig.root
+		task.spawn(function()
+			local info = TweenInfo.new(0.6, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true)
+			TweenService:Create(beacon, info, { Brightness = lamp.brightness }):Play()
+		end)
 		Audio.ambience("emergencySiren", rig.root)
 		OwnerFactory.say(owner, "hint.emergency")
 	end

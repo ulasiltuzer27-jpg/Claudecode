@@ -5,7 +5,6 @@
   "name": "Türkçe",
   "strings": {
     "clinic.name": "PATİ VETERİNER KLİNİĞİ",
-
     "hud.money": "{1} TL",
     "hud.level": "Seviye {1} — {2}",
     "hud.xp": "{1} XP",
@@ -14,8 +13,18 @@
     "hud.queue": "Bekleyen hasta: {1}/{2}",
     "hud.hints": "E ile hastayı masaya al",
     "hud.keys": "E hastayı al · 1-8 alet · T taburcu · B mağaza · G ilerleme · O ayarlar · Shift koş",
-    "hud.transient": "⚠ Kayıt kapalı — ilerleme saklanmıyor",
-
+    "hud.transient": "Kayıt kapalı — ilerleme saklanmıyor",
+    "hud.capMoney": "Kasa",
+    "hud.capLevel": "Seviye",
+    "hud.capReputation": "İtibar",
+    "hud.gainMoney": "+{1} TL",
+    "hud.gainXp": "+{1} XP",
+    "hud.objective.callNext": "Sıradaki hastayı masaya al  (E)",
+    "hud.objective.examine": "Belirtileri bul — aletlerini kullan  (1-8)",
+    "hud.objective.diagnose": "Belirtiler yeterli — teşhis koy",
+    "hud.objective.treat": "Tedaviyi tamamla",
+    "hud.objective.discharge": "Hastayı taburcu et  (T)",
+    "hud.objective.emergency": "ACİL VAKA — zaman doluyor!",
     "room.reception": "RESEPSİYON",
     "room.pharmacy": "ECZANE",
     "room.exam1": "MUAYENE 1",
@@ -23,33 +32,28 @@
     "room.surgery": "AMELİYATHANE",
     "room.kennels": "KOĞUŞ",
     "room.wash": "YIKAMA",
-
     "prop.poster": "EVCİL DOSTUNUZU\nYILDA BİR KEZ\nKONTROLE GETİRİN",
     "prop.monitor": "HASTA TAKİP",
     "prop.xray": "RÖNTGEN",
     "prop.cabinet": "MALZEME",
     "prop.kennel": "KOĞUŞ 1",
-
     "prompt.callNext": "Hastayı masaya al",
     "prompt.station.exam1": "Muayene Masası 1",
     "prompt.station.exam2": "Muayene Masası 2",
     "prompt.station.surgery": "Ameliyat Masası",
     "prompt.station.wash": "Yıkama Küveti",
-
     "animal.dog": "Köpek",
     "animal.cat": "Kedi",
     "animal.rabbit": "Tavşan",
     "animal.hamster": "Hamster",
     "animal.parrot": "Papağan",
     "animal.turtle": "Kaplumbağa",
-
     "tool.visual": "Gözle Muayene",
     "tool.stethoscope": "Steteskop",
     "tool.thermometer": "Termometre",
     "tool.otoscope": "Otoskop",
     "tool.xray": "Röntgen",
     "tool.bloodtest": "Kan Testi",
-
     "symptom.limp": "Topallama",
     "symptom.swelling": "Şişlik",
     "symptom.rash": "Ciltte kızarıklık",
@@ -73,7 +77,6 @@
     "symptom.anemia": "Kansızlık",
     "symptom.kidneyMarkers": "Böbrek değerleri yüksek",
     "symptom.parasiteEggs": "Parazit yumurtası",
-
     "condition.kennelCough": "Köpek Öksürüğü",
     "condition.earMites": "Kulak Uyuzu",
     "condition.fleas": "Pire",
@@ -94,7 +97,6 @@
     "condition.kidneyTrouble": "Böbrek Yetmezliği",
     "condition.arthritis": "Eklem İltihabı",
     "condition.heartMurmur": "Kalp Üfürümü",
-
     "treatment.injection": "İğne",
     "treatment.pill": "İlaç",
     "treatment.bandage": "Sargı",
@@ -103,7 +105,6 @@
     "treatment.feed": "Besleme",
     "treatment.water": "Su",
     "treatment.surgery": "Ameliyat",
-
     "upgrade.waitingRoom": "Bekleme Odası",
     "upgrade.waitingRoom.desc": "2 hasta daha aynı anda bekleyebilir.",
     "upgrade.betterTable": "İyi Muayene Masası",
@@ -122,7 +123,6 @@
     "upgrade.reputationBoard.desc": "İtibar kazancı %50 artar.",
     "upgrade.premiumCare": "Premium Bakım Paketi",
     "upgrade.premiumCare.desc": "Bütün ücretler %25 artar.",
-
     "title.1": "Stajyer",
     "title.2": "Yardımcı",
     "title.3": "Veteriner",
@@ -133,7 +133,6 @@
     "title.8": "Başhekim",
     "title.9": "Profesör",
     "title.10": "Efsane Veteriner",
-
     "chart.empty": "Masada hasta yok",
     "chart.undiagnosed": "Teşhis konmadı",
     "chart.diagnosed": "Teşhis: {1}",
@@ -142,23 +141,40 @@
     "chart.symptoms": "BULUNAN BELİRTİLER",
     "chart.noSymptoms": "Henüz bir şey bulunmadı — alet kullan",
     "chart.discharge": "TABURCU ET  (T)",
-
     "diagnosis.title": "TEŞHİS KOY",
     "diagnosis.hint": "Belirtilere bakıp hastalığı seç. Yanlış teşhis itibarını düşürür ve hayvanı gerer.",
-
     "treatment.title": "TEDAVİ UYGULA",
-
+    "treatment.cost": "{1} TL",
     "surgery.title": "AMELİYAT",
     "surgery.hint": "İşaretçi yeşil alandayken Boşluk'a bas",
     "surgery.step": "Adım {1}/{2}",
     "surgery.perfect": "TAM İSABET",
     "surgery.good": "İYİ",
     "surgery.miss": "KAÇTI",
-
     "shop.title": "MAĞAZA",
     "shop.close": "Kapat (B)",
     "shop.tools": "ALETLER",
     "shop.upgrades": "KLİNİK YÜKSELTMELERİ",
+    "shop.decor": "DEKORASYON",
+    "shop.price": "{1} TL",
+    "shop.emptyTab": "Bu sekmede henüz bir şey yok.",
+    "decor.themeClassic": "Klasik Beyaz",
+    "decor.themeClassic.desc": "Kliniğin standart duvar ve zemin rengi.",
+    "decor.themeWarm": "Sıcak Ahşap",
+    "decor.themeWarm.desc": "Krem duvarlar, bal rengi zemin — daha samimi bir bekleme alanı.",
+    "decor.themeForest": "Orman Yeşili",
+    "decor.themeForest.desc": "Yumuşak yeşil tonlar; gergin hayvanları sakinleştiren bir palet.",
+    "decor.themeNight": "Gece Mavisi",
+    "decor.themeNight.desc": "Serin mavi duvarlar, gece nöbetine yakışan bir klinik.",
+    "decor.aquarium": "Akvaryum",
+    "decor.aquarium.desc": "Resepsiyona konan cam akvaryum — bekleyenlerin gözü onda.",
+    "decor.wallClock": "Duvar Saati",
+    "decor.wallClock.desc": "Muayene 1'in duvarına asılan ahşap kasalı saat.",
+    "decor.certificate": "Diploma Çerçevesi",
+    "decor.certificate.desc": "Muayene 2'nin duvarına asılan çerçeveli veterinerlik diploması.",
+    "decor.certificate.text": "VETERİNER\nHEKİMLİK\nDİPLOMASI",
+    "decor.flowerPot": "Çiçek Saksısı",
+    "decor.flowerPot.desc": "Resepsiyonun ortasına konan renkli çiçek saksısı.",
     "shop.owned": "SAHİPSİN",
     "shop.locked": "Seviye {1}",
     "shop.bought": "Satın alındı.",
@@ -167,12 +183,10 @@
     "shop.levelTooLow": "Bunun için {1}. seviye gerekiyor.",
     "shop.notEnoughMoney": "Paran yetmiyor.",
     "shop.keepReserve": "Kasada en az {1} TL kalmalı — sarf malzemesi alamazsan hasta bakamazsın.",
-
     "treat.done": "Tedavi uygulandı.",
     "treat.wrong": "Bu tedavi bu hastalığa iyi gelmedi.",
     "treat.resisted": "Hayvan çok gergin, direniyor! Önce sakinleştir.",
     "treat.unknown": "Bilinmeyen tedavi.",
-
     "notify.patientArrived": "Yeni hasta geldi.",
     "notify.patientTaken": "Hasta masaya alındı.",
     "notify.patientMoved": "Hasta bu masaya taşındı.",
@@ -209,15 +223,12 @@
     "notify.dischargedTip": "Hasta taburcu edildi. +{1} TL, bahşiş +{2} TL, +{3} XP",
     "notify.taskDone": "Günlük görev tamam: {1}  (+{2} TL, +{3} XP)",
     "notify.achievement": "Başarım açıldı: {1}  (+{2} TL, +{3} XP)",
-
     "animal.hedgehog": "Kirpi",
     "animal.snake": "Yılan",
     "animal.iguana": "İguana",
     "animal.horse": "At",
-
     "tool.urinalysis": "İdrar Testi",
     "tool.ultrasound": "Ultrason",
-
     "symptom.irregularRhythm": "Düzensiz kalp ritmi",
     "symptom.spineLoss": "Diken dökülmesi",
     "symptom.stuckShed": "Deri sıyrılmamış",
@@ -228,7 +239,6 @@
     "symptom.pregnancy": "Gebelik",
     "symptom.organSwelling": "Organ büyümesi",
     "symptom.bladderStone": "Mesane taşı",
-
     "condition.urinaryInfection": "İdrar Yolu Enfeksiyonu",
     "condition.spineLoss": "Diken Dökülmesi",
     "condition.diabetes": "Şeker Hastalığı",
@@ -240,14 +250,12 @@
     "condition.metabolicBone": "Metabolik Kemik Hastalığı",
     "condition.colic": "Kolik",
     "condition.laminitis": "Nal İltihabı",
-
     "hint.generic": "Bir tuhaflık var ama tam anlatamıyorum, siz bakın.",
     "hint.emergency": "ACİL! Lütfen hemen bakın, çok kötü durumda!",
     "hint.relieved": "Çok şükür, ne olduğunu anladınız.",
     "hint.worried": "Emin misiniz? Bana pek öyle gelmedi...",
     "hint.thanks": "Sağ olun doktor, üstü kalsın.",
     "hint.goodbye": "Teşekkürler, iyi günler.",
-
     "hint.kennelCough": "İki gündür boğuk boğuk öksürüyor, geceleri daha da kötü.",
     "hint.earMites": "Durmadan kulağını kaşıyor, başını sallayıp duruyor.",
     "hint.fleas": "Sürekli kaşınıyor, tüylerinin arasında bir şeyler kıpırdıyor.",
@@ -279,13 +287,11 @@
     "hint.metabolicBone": "Kemikleri yumuşamış gibi, en ufak şeyde incinip duruyor.",
     "hint.colic": "Sabahtan beri yere yatıp yuvarlanıyor, hep karnına bakıyor.",
     "hint.laminitis": "Ön ayaklarına basamıyor, sürekli geriye yaslanıyor.",
-
     "title.11": "Doçent",
     "title.12": "Klinik Şefi",
     "title.13": "Bilim Kurulu",
     "title.14": "Ülke Çapında Tanınan",
     "title.15": "Efsane Veteriner",
-
     "ach.firstPatient": "İlk Hasta",
     "ach.firstPatient.desc": "İlk hastanı taburcu et.",
     "ach.tenPatients": "İşler Açılıyor",
@@ -322,7 +328,6 @@
     "ach.taskmaster.desc": "15 günlük görev tamamla.",
     "ach.chiefVet": "Başhekim",
     "ach.chiefVet.desc": "15. seviyeye ulaş.",
-
     "task.treat5": "Bugün 5 hasta taburcu et",
     "task.treat12": "Bugün 12 hasta taburcu et",
     "task.correct8": "Bugün 8 doğru teşhis koy",
@@ -333,13 +338,13 @@
     "task.earn1500": "Bugün 1.500 TL kazan",
     "task.earn5000": "Bugün 5.000 TL kazan",
     "task.species4": "Bugün 4 farklı türe bak",
-
     "chart.satisfaction": "Sahibinin memnuniyeti {1}/100",
+    "chart.healthShort": "Sağlık",
+    "chart.stressShort": "Stres",
+    "chart.satisfactionShort": "Sahibinin memnuniyeti",
     "chart.emergency": "ACİL VAKA — {1}:{2} kaldı",
-
     "fps.rate": "{1} FPS",
     "fps.detail": "en düşük {1} · gecikme {2} ms",
-
     "set.title": "AYARLAR",
     "set.close": "Kapat (O)",
     "set.on": "AÇIK",
@@ -358,7 +363,6 @@
     "set.sprint.desc": "Shift basılı tutunca hızlanma ve görüş açısının açılması.",
     "set.fps": "Kare sayacı",
     "set.fps.desc": "Sağ üstte FPS, en düşük kare ve gecikme göstergesi.",
-
     "progress.title": "İLERLEME",
     "progress.close": "Kapat (G)",
     "progress.tabTasks": "Günlük Görevler",
@@ -368,7 +372,6 @@
     "progress.achSub": "{1}/{2} başarım açıldı",
     "progress.statsSub": "Teşhis isabetin: %{1}",
     "progress.reward": "+{1} TL · +{2} XP",
-
     "stat.patients": "Taburcu edilen hasta",
     "stat.correct": "Doğru teşhis",
     "stat.wrong": "Yanlış teşhis",
@@ -382,7 +385,6 @@
     "stat.emergencies": "Kurtarılan acil vaka",
     "stat.lost": "Kaybedilen hasta",
     "stat.tasks": "Tamamlanan görev",
-
     "lobby.title": "PATİ VETERİNER — MOD SEÇ",
     "lobby.hint": "Bir mod seç, kadro dolunca kliniğe birlikte ışınlanacaksınız.",
     "lobby.solo": "Tek Kişilik",
@@ -401,7 +403,6 @@
     "lobby.pick": "Başlamak için bir mod seç",
     "lobby.online": "Lobide {1} oyuncu",
     "notify.teleportFallback": "Işınlanma yapılamadı (Studio) — klinik bu sunucuda açıldı.",
-
     "board.money": "Para",
     "board.level": "Seviye",
     "board.patients": "Hasta"

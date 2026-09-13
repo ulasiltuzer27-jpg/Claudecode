@@ -25,15 +25,16 @@ local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Data = ReplicatedStorage:WaitForChild("VetData")
 
+local decorData = require(Data.decor)
 local economy = require(Data.economy)
 local settingsData = require(Data.settings)
 local toolData = require(Data.tools)
 
 local Profile = {}
 
-local SCHEMA_VERSION = 2
+local SCHEMA_VERSION = 3
 local STORE_NAME = "VetProfile_v1"
--- STORE_NAME degismiyor: sema surumu 2'ye ciksa da ESKI KAYITLAR OKUNMAYA
+-- STORE_NAME degismiyor: sema surumu 3'e ciksa da ESKI KAYITLAR OKUNMAYA
 -- devam etsin. migrate() eksik alanlari varsayilanla dolduruyor; store'u
 -- degistirmek herkesin ilerlemesini silmek demek olurdu.
 local KEY_PREFIX = "player_"
@@ -86,6 +87,9 @@ export type Data = {
 	reputation: number,
 	tools: { [string]: boolean },
 	upgrades: { [string]: boolean },
+	-- Satin alinmis dekorasyon (tema + sus esyasi). Sema 3 ile geldi;
+	-- eski kayitlarda bulunmuyor, migrate() bos tabloyla dolduruyor.
+	decor: { [string]: boolean },
 	stats: Stats,
 	species: { [string]: boolean },
 	achievements: { [string]: boolean },
@@ -114,6 +118,19 @@ local function starterTools(): { [string]: boolean }
 		end
 	end
 	return tools
+end
+
+--- Bastan acik dekorasyon: bedava temalar. starterTools ile ayni
+--- gerekce - kodda ikinci bir liste tutmak veri degisince sessizce
+--- tutarsiz kalirdi.
+local function starterDecor(): { [string]: boolean }
+	local owned = {}
+	for _, theme in decorData.themes do
+		if theme.cost == 0 and theme.unlockLevel <= 1 then
+			owned[theme.id] = true
+		end
+	end
+	return owned
 end
 
 local function defaultStats(): Stats
@@ -158,6 +175,7 @@ local function defaultData(): Data
 		reputation = economy.startingReputation,
 		tools = starterTools(),
 		upgrades = {},
+		decor = starterDecor(),
 		stats = defaultStats(),
 		species = {},
 		achievements = {},
@@ -192,6 +210,13 @@ local function migrate(raw: any): Data
 		for id, owned in raw.upgrades do
 			if owned == true then
 				result.upgrades[id] = true
+			end
+		end
+	end
+	if type(raw.decor) == "table" then
+		for id, owned in raw.decor do
+			if owned == true then
+				result.decor[id] = true
 			end
 		end
 	end

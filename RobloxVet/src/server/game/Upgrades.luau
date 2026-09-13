@@ -18,6 +18,7 @@ local Data = ReplicatedStorage:WaitForChild("VetData")
 local Economy = require(script.Parent.Economy)
 local Profile = require(script.Parent.Profile)
 
+local decorData = require(Data.decor)
 local toolData = require(Data.tools)
 local upgradeData = require(Data.upgrades)
 
@@ -39,6 +40,36 @@ end
 local upgradeById: { [string]: any } = {}
 for _, upgrade in upgradeData.upgrades do
 	upgradeById[upgrade.id] = upgrade
+end
+
+-- Dekorasyon tek listede toplaniyor: tema ve sus esyasi ayni magaza
+-- sekmesinde, ayni satin alma yolundan geciyor. Ayri iki satin alma
+-- yolu, rezerv ve seviye kurallarinin ikiye bolunmesi demek olurdu.
+local decorById: { [string]: any } = {}
+local decorOrder: { any } = {}
+for _, theme in decorData.themes do
+	local entry = {
+		id = theme.id,
+		nameKey = theme.nameKey,
+		descKey = theme.descKey,
+		cost = theme.cost,
+		unlockLevel = theme.unlockLevel,
+		kind = "theme",
+	}
+	decorById[theme.id] = entry
+	table.insert(decorOrder, entry)
+end
+for _, item in decorData.props do
+	local entry = {
+		id = item.id,
+		nameKey = item.nameKey,
+		descKey = item.descKey,
+		cost = item.cost,
+		unlockLevel = item.unlockLevel,
+		kind = "prop",
+	}
+	decorById[item.id] = entry
+	table.insert(decorOrder, entry)
 end
 
 function Upgrades.tool(id: string): any?
@@ -165,6 +196,16 @@ function Upgrades.buyUpgrade(data: Profile.Data, id: string): BuyResult
 	return purchase(data, data.upgrades, upgradeById[id], id)
 end
 
+--- Dekorasyon satin alir. Tema da sus esyasi da ayni yoldan geciyor.
+function Upgrades.buyDecor(data: Profile.Data, id: string): BuyResult
+	return purchase(data, data.decor, decorById[id], id)
+end
+
+--- Dekorasyon kimligi taniniyor mu? (SelfTest ve verify_data icin.)
+function Upgrades.knownDecor(id: string): boolean
+	return decorById[id] ~= nil
+end
+
 --- Seviye atlayinca fiyati 0 olan aletler kendiliginden aciliyor:
 --- oyuncuyu bedava bir seyi "satin al" diye magazaya yollamak anlamsiz.
 function Upgrades.grantFreeTools(data: Profile.Data): { string }
@@ -210,7 +251,20 @@ function Upgrades.shopSnapshot(data: Profile.Data): any
 		})
 	end
 
-	return { tools = tools, upgrades = upgrades, maxLevel = Economy.MAX_LEVEL }
+	local decor = {}
+	for _, item in decorOrder do
+		table.insert(decor, {
+			id = item.id,
+			nameKey = item.nameKey,
+			descKey = item.descKey,
+			price = item.cost,
+			unlockLevel = item.unlockLevel,
+			owned = data.decor[item.id] == true,
+			locked = data.level < item.unlockLevel,
+		})
+	end
+
+	return { tools = tools, upgrades = upgrades, decor = decor, maxLevel = Economy.MAX_LEVEL }
 end
 
 return Upgrades

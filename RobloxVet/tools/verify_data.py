@@ -207,6 +207,57 @@ def main() -> int:
         for key in upgrade["effect"]:
             check(f"yukseltme '{upgrade['id']}' bilinen etki kullaniyor: {key}", key in declared)
 
+    # 9b. Dekorasyon (data/decor.json)
+    #
+    # Dekor iki kaynaga birden bagli: metinleri tr.json'da, sus esyalarinin
+    # govdesi props.json'da olmak zorunda. Ikisinden biri eksikse oyunda
+    # ya "[decor.x]" yazisi ya da kurulmayan bir model cikardi.
+    decor = load("decor.json")
+    props_file = load("props.json")
+    prop_ids = {entry["id"] for entry in props_file["props"]}
+    seen_decor: set[str] = set()
+    orders: set[int] = set()
+
+    for theme in decor["themes"]:
+        identifier = theme["id"]
+        check(f"tema '{identifier}' kimligi tekil", identifier not in seen_decor)
+        seen_decor.add(identifier)
+        check(f"tema '{identifier}' adi tr.json'da var", theme["nameKey"] in strings)
+        check(f"tema '{identifier}' aciklamasi tr.json'da var", theme["descKey"] in strings)
+        check(f"tema '{identifier}' sira degeri tekil", theme["order"] not in orders)
+        orders.add(theme["order"])
+        check(f"tema '{identifier}' bedeli negatif degil", theme["cost"] >= 0)
+        check(
+            f"tema '{identifier}' acilis seviyesi egrinin icinde",
+            1 <= theme["unlockLevel"] <= level_max,
+        )
+        for role in ("wall", "wallTrim", "floor", "floorTile", "accent"):
+            channels = theme[role]
+            check(
+                f"tema '{identifier}' {role} rengi 3 kanal, 0-255",
+                len(channels) == 3 and all(0 <= value <= 255 for value in channels),
+            )
+
+    # Bedava bir baslangic temasi OLMAK ZORUNDA: yoksa yeni oyuncunun
+    # klinigi hicbir temayla boyanmaz ve Decor.applyTheme bos doner.
+    check(
+        "en az bir bedava baslangic temasi var",
+        any(theme["cost"] == 0 and theme["unlockLevel"] <= 1 for theme in decor["themes"]),
+    )
+
+    for item in decor["props"]:
+        identifier = item["id"]
+        check(f"dekor '{identifier}' kimligi tekil", identifier not in seen_decor)
+        seen_decor.add(identifier)
+        check(f"dekor '{identifier}' adi tr.json'da var", item["nameKey"] in strings)
+        check(f"dekor '{identifier}' aciklamasi tr.json'da var", item["descKey"] in strings)
+        check(f"dekor '{identifier}' bedeli pozitif", item["cost"] > 0)
+        check(
+            f"dekor '{identifier}' acilis seviyesi egrinin icinde",
+            1 <= item["unlockLevel"] <= level_max,
+        )
+        check(f"dekor '{identifier}' props.json'da govdesi var", item["prop"] in prop_ids)
+
     # 10. XP egrisi
     previous = -1
     for row in economy["levels"]:

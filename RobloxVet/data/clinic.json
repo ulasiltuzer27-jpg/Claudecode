@@ -96,54 +96,38 @@
       "floorMaterial": "WoodPlanks",
       "lights": [
         [
-          -28,
-          -22
+          -26,
+          -17
         ],
         [
-          -10,
-          -22
-        ],
-        [
-          -28,
-          -10
-        ],
-        [
-          -10,
-          -10
+          -4,
+          -17
         ]
       ],
       "queuePoints": [
         [
           -32,
-          -20
+          -26
         ],
         [
-          -27,
-          -20
+          -25,
+          -26
         ],
         [
-          -22,
-          -20
-        ],
-        [
-          -17,
-          -20
+          -18,
+          -26
         ],
         [
           -32,
-          -13
+          -14
         ],
         [
-          -27,
-          -13
+          -25,
+          -14
         ],
         [
-          -22,
-          -13
-        ],
-        [
-          -17,
-          -13
+          -18,
+          -14
         ]
       ],
       "props": [
@@ -173,14 +157,6 @@
           "rot": 90
         },
         {
-          "id": "waitingBench",
-          "at": [
-            -12,
-            -24
-          ],
-          "rot": 270
-        },
-        {
           "id": "poster",
           "at": [
             -20,
@@ -207,7 +183,7 @@
         {
           "id": "plant",
           "at": [
-            -20,
+            -37.5,
             -6.5
           ],
           "rot": 0
@@ -223,8 +199,8 @@
         {
           "id": "trashBin",
           "at": [
-            -16.5,
-            -6
+            -15,
+            -8
           ],
           "rot": 0
         }
@@ -234,6 +210,32 @@
         210,
         200,
         186
+      ],
+      "ownerPoints": [
+        [
+          -32,
+          -19.5
+        ],
+        [
+          -25,
+          -19.5
+        ],
+        [
+          -18,
+          -19.5
+        ],
+        [
+          -32,
+          -8
+        ],
+        [
+          -25,
+          -8
+        ],
+        [
+          -18,
+          -8
+        ]
       ]
     },
     {
@@ -255,16 +257,8 @@
       "floorMaterial": "SmoothPlastic",
       "lights": [
         [
-          18,
-          -22
-        ],
-        [
-          32,
-          -22
-        ],
-        [
           25,
-          -9
+          -17
         ]
       ],
       "props": [
@@ -360,20 +354,8 @@
       "floorMaterial": "SmoothPlastic",
       "lights": [
         [
-          -30,
-          2
-        ],
-        [
-          -18,
-          2
-        ],
-        [
-          -30,
-          13
-        ],
-        [
-          -18,
-          13
+          -26,
+          7
         ]
       ],
       "props": [
@@ -469,20 +451,8 @@
       "floorMaterial": "SmoothPlastic",
       "lights": [
         [
-          -4,
-          2
-        ],
-        [
-          10,
-          2
-        ],
-        [
-          -4,
-          13
-        ],
-        [
-          10,
-          13
+          2,
+          7
         ]
       ],
       "props": [
@@ -571,20 +541,8 @@
       "floorMaterial": "SmoothPlastic",
       "lights": [
         [
-          22,
-          2
-        ],
-        [
-          34,
-          2
-        ],
-        [
-          22,
-          14
-        ],
-        [
-          34,
-          14
+          28,
+          7
         ]
       ],
       "props": [
@@ -672,34 +630,8 @@
       "floorMaterial": "Concrete",
       "lights": [
         [
-          -30,
+          -20,
           24
-        ],
-        [
-          -18,
-          24
-        ],
-        [
-          -6,
-          24
-        ]
-      ],
-      "restPoints": [
-        [
-          -36,
-          22
-        ],
-        [
-          -29,
-          22
-        ],
-        [
-          -22,
-          22
-        ],
-        [
-          -15,
-          22
         ]
       ],
       "props": [
@@ -779,15 +711,7 @@
       "floorMaterial": "Concrete",
       "lights": [
         [
-          10,
-          24
-        ],
-        [
-          22,
-          24
-        ],
-        [
-          34,
+          20,
           24
         ]
       ],
@@ -1258,5 +1182,7 @@
     ]
   },
   "_pencere_notu": "Duvarlardaki cam bosluklari. at = duvar ekseni uzerindeki merkez, sill = yerden yukseklik, height = pencere yuksekligi. Clinic.luau kapi boslugu ile AYNI mantikla aciyor; verify_layout pencerenin onunun esyayla kapanmadigini denetliyor.",
-  "_zemin_notu": "floorTile: odanin zemininde dama deseni karo boyutu. 0 = desen yok."
+  "_zemin_notu": "floorTile: odanin zemininde dama deseni karo boyutu. 0 = desen yok.",
+  "_isik_notu": "Oda basina tavan lambasi bilerek AZ: 25 lamba sahneyi yikiyordu (her nokta 4-6 lambadan aydinlaniyor, isik toplaniyordu). Az sayida, genis menzilli, GOLGESIZ armatur + ortam isigi yeterli. Toplam dinamik isik butcesi data/lighting.json > maxDynamicLights.",
+  "_sahip_notu": "ownerPoints = hayvan sahiplerinin bekledigi yerler. Kuyruk noktalarinin yanina hesapla koymak yetmiyordu: 8 stud arayla dizilen hayvanlarin arasinda 2,8 stud'luk bir NPC'ye yer kalmiyor. Ayri bir sira olarak veride duruyor ve verify_layout bos oldugunu denetliyor."
 }

@@ -45,6 +45,7 @@ Net.Schema = {
 	Discharge = { direction = "toServer", args = {} },
 	BuyTool = { direction = "toServer", args = { "string" } },
 	BuyUpgrade = { direction = "toServer", args = { "string" } },
+	BuyDecor = { direction = "toServer", args = { "string" } },
 	SaveSettings = { direction = "toServer", args = { "table" } },
 	RequestProgress = { direction = "toServer", args = {} },
 	JoinQueue = { direction = "toServer", args = { "string" } },
@@ -63,6 +64,7 @@ Net.RateLimit = {
 	Discharge = 4,
 	BuyTool = 4,
 	BuyUpgrade = 4,
+	BuyDecor = 4,
 	-- Ayar kaydetme seyrek olmali: her kaydirici hareketinde DataStore'a
 	-- yazmak hem gereksiz hem de kota yakar. Istemci de kendi tarafinda
 	-- bekletiyor (SettingsPanel).

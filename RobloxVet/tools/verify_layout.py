@@ -31,6 +31,11 @@ Kontroller
    ama icine gomulemez.)
 5. Kapi bosluklarinin onu ve arkasi acik mi? (Kapiyi tikayan esya yok.)
 6. Bekleme/dinlenme noktalari bos mu?
+6b. BEKLEYEN HAYVAN oraya sigiyor mu? Esyalarla ve BIRBIRIYLE cakismiyor mu?
+    (Olcum bunu yakaladi: sira noktalari 7 stud arayla dizilmisti, en uzun
+    hayvan 7,2 stud'du - hayvanlar ust uste biniyordu.)
+6c. Sahip NPC'lerinin yeri bos mu ve odanin icinde mi?
+6d. LOBI: esya-esya, sinirlar, portal pedleri, dogma alani.
 7. Istasyon masasinin cevresinde veterinerin duracagi yer var mi?
 8. En buyuk hayvan muayene masasina sigiyor mu?
 9. Dis esyalar binanin icine giriyor mu?
@@ -143,6 +148,26 @@ def main() -> int:
             continue
         placed.append(("disari", entry, prop_box(budget, entry["at"], entry.get("rot", 0)), budget, None))
 
+    # Dekorasyon esyalari: oyuncu satin almasa bile kurulusta INSA
+    # EDILIYORLAR (yalnizca gorunmezler). Yani odadaki her sey gibi
+    # cakisma, duvar ve kapi denetimlerinden gecmek zorundalar.
+    decor = load("decor.json")
+    room_by_id = {room["id"]: room for room in clinic["rooms"]}
+    for entry in decor["props"]:
+        budget = budgets.get(entry["prop"])
+        check(f"dekor '{entry['id']}' icin props.json'da butce var", budget is not None)
+        room = room_by_id.get(entry["room"])
+        check(f"dekor '{entry['id']}' gecerli bir odaya konuyor ({entry['room']})", room is not None)
+        if budget is None or room is None:
+            continue
+        placed.append((
+            "dekor/" + entry["room"],
+            {"id": entry["prop"], "at": entry["at"], "rot": entry.get("rot", 0)},
+            prop_box(budget, entry["at"], entry.get("rot", 0)),
+            budget,
+            room,
+        ))
+
     # 2. Esya x esya
     for (ra, ea, ba, _, _), (rb, eb, bb, _, _) in itertools.combinations(placed, 2):
         check(
@@ -254,6 +279,134 @@ def main() -> int:
                     f"{room['id']} bekleme noktasi {point} bos — {room_id}/{entry['id']}@{entry['at']} degil",
                     not box.overlaps(spot),
                 )
+
+    # 6b. Bekleyen hayvanlar
+    #
+    # Hayvan bekleme noktasinda hangi yone donuk duracagi belli olmadigi
+    # icin ayak izi DAIRESEL kabul ediliyor: uzun kenar iki eksende de
+    # hesaba katiliyor. Yilan beklerken kiviriliyor, bu yuzden onun olcusu
+    # `tableFootprint`.
+    def waiting_radius(animal) -> float:
+        declared = animal.get("tableFootprint")
+        length, width = (declared[0], declared[1]) if declared else (
+            animal["body"]["length"], animal["body"]["width"]
+        )
+        return max(length, width) / 2
+
+    biggest_wait = max(animals, key=waiting_radius)
+    radius = waiting_radius(biggest_wait)
+
+    waiting_spots = []
+    for room in clinic["rooms"]:
+        for point in room.get("queuePoints", []) + room.get("restPoints", []):
+            waiting_spots.append((room, point, Box(
+                point[0] - radius, point[0] + radius, 0, 4.5,
+                point[1] - radius, point[1] + radius,
+            )))
+
+    for room, point, spot in waiting_spots:
+        check(
+            f"{room['id']} bekleme noktasi {point} odanin icinde "
+            f"({biggest_wait['id']} icin {radius * 2:.1f} stud)",
+            spot.x0 >= room["min"][0] - 0.5
+            and spot.x1 <= room["max"][0] + 0.5
+            and spot.z0 >= room["min"][1] - 0.5
+            and spot.z1 <= room["max"][1] + 0.5,
+        )
+        for room_id, entry, box, _b, _r in placed:
+            check(
+                f"{room['id']} bekleme noktasindaki {biggest_wait['id']} {point} "
+                f"{room_id}/{entry['id']}@{entry['at']} icine girmiyor",
+                not box.overlaps(spot),
+            )
+
+    for (room_a, point_a, spot_a), (room_b, point_b, spot_b) in itertools.combinations(waiting_spots, 2):
+        check(
+            f"bekleyen hayvanlar {room_a['id']}{point_a} ve {room_b['id']}{point_b} ust uste degil",
+            not spot_a.overlaps(spot_b),
+        )
+
+    # 6c. Sahip NPC'leri
+    npc = 1.5
+    owner_spots = []
+    for room in clinic["rooms"]:
+        for point in room.get("ownerPoints", []):
+            owner_spots.append((room, point, Box(
+                point[0] - npc, point[0] + npc, 0, 7, point[1] - npc, point[1] + npc,
+            )))
+    for room, point, spot in owner_spots:
+        check(
+            f"{room['id']} sahip yeri {point} odanin icinde",
+            spot.x0 >= room["min"][0] - 0.5
+            and spot.x1 <= room["max"][0] + 0.5
+            and spot.z0 >= room["min"][1] - 0.5
+            and spot.z1 <= room["max"][1] + 0.5,
+        )
+        for room_id, entry, box, _b, _r in placed:
+            check(
+                f"{room['id']} sahip yeri {point} bos — {room_id}/{entry['id']}@{entry['at']} degil",
+                not box.overlaps(spot),
+            )
+    for (ra, pa, sa), (rb, pb, sb) in itertools.combinations(owner_spots, 2):
+        check(f"sahip yerleri {pa} ve {pb} ust uste degil", not sa.overlaps(sb))
+    for _room, point, spot in owner_spots:
+        for room_b, point_b, wait in waiting_spots:
+            check(
+                f"sahip yeri {point} bekleyen hayvanin ({point_b}) icinde degil",
+                not spot.overlaps(wait),
+            )
+
+    # Her kuyruk yuvasi icin bir sahip yeri olmali.
+    queue_total = sum(len(room.get("queuePoints", [])) for room in clinic["rooms"])
+    check(
+        f"sahip yeri sayisi ({len(owner_spots)}) kuyruk yuvasini ({queue_total}) karsiliyor",
+        len(owner_spots) >= queue_total,
+    )
+
+    # 6d. LOBI — klinikte denetlenen her sey lobide de denetleniyor.
+    lobby = load("lobby.json")
+    lobby_min, lobby_max = lobby["bounds"]["min"], lobby["bounds"]["max"]
+    lobby_placed = []
+    for entry in lobby["props"]:
+        budget = budgets.get(entry["id"])
+        check(f"lobi esyasi '{entry['id']}' butce bildiriyor", budget is not None)
+        if budget is None:
+            continue
+        lobby_placed.append((entry, prop_box(budget, entry["at"], entry.get("rot", 0))))
+
+    for (ea, ba), (eb, bb) in itertools.combinations(lobby_placed, 2):
+        check(
+            f"lobi: {ea['id']}@{ea['at']} ile {eb['id']}@{eb['at']} ic ice degil",
+            not ba.overlaps(bb),
+        )
+    for entry, box in lobby_placed:
+        check(
+            f"lobi: {entry['id']}@{entry['at']} salonun icinde",
+            box.x0 >= lobby_min[0] - 0.8
+            and box.x1 <= lobby_max[0] + 0.8
+            and box.z0 >= lobby_min[1] - 0.8
+            and box.z1 <= lobby_max[1] + 0.8,
+        )
+
+    # Portal pedi: oyuncunun uzerine basacagi yer bos olmali.
+    for portal in lobby["portals"]:
+        pad = Box(
+            portal["at"][0] - 5.5, portal["at"][0] + 5.5, 0, 13,
+            portal["at"][1] - 6, portal["at"][1] - 0.4,
+        )
+        for entry, box in lobby_placed:
+            check(
+                f"lobi portali '{portal['id']}' onu acik — {entry['id']}@{entry['at']} degil",
+                not box.overlaps(pad),
+            )
+    for a, b in itertools.combinations(lobby["portals"], 2):
+        gap = abs(a["at"][0] - b["at"][0]) + abs(a["at"][1] - b["at"][1])
+        check(f"lobi portalleri '{a['id']}' ve '{b['id']}' ayri duruyor", gap >= 12)
+
+    spawn = lobby["spawn"]["at"]
+    spawn_box = Box(spawn[0] - 8, spawn[0] + 8, 0, 6, spawn[1] - 6, spawn[1] + 6)
+    for entry, box in lobby_placed:
+        check(f"lobi dogma alani bos — {entry['id']}@{entry['at']} degil", not box.overlaps(spawn_box))
 
     # 7. Istasyonun cevresinde veterinerin duracagi yer
     stand = 3.0

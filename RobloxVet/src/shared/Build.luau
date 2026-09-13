@@ -174,12 +174,20 @@ end
 --- Parlaklik/menzil VERIDEN geliyor (data/lighting.json). Kod icine
 --- gomulu bir "1.6" degeri, sahne fazla parlayinca kullanicinin
 --- bulamayacagi bir sayi olurdu.
-export type LampConfig = { brightness: number, range: number, color: Color3, angle: number? }
+export type LampConfig = {
+	brightness: number,
+	range: number,
+	color: Color3,
+	angle: number?,
+	shadows: boolean?,
+}
 
 function Build.ceilingLight(position: Vector3, parent: Instance, lamp: LampConfig): Part
+	-- Lineer armatur: az sayida ama UZUN lamba, cok sayida kucuk lambadan
+	-- hem daha duzgun gorunuyor hem sahneyi yikamiyor.
 	local housing = Build.part({
 		name = "LambaKasasi",
-		size = Vector3.new(6.4, 0.5, 2.6),
+		size = Vector3.new(13, 0.55, 2.8),
 		cf = CFrame.new(position),
 		color = Color3.fromRGB(214, 220, 228),
 		material = Enum.Material.Metal,
@@ -191,7 +199,7 @@ function Build.ceilingLight(position: Vector3, parent: Instance, lamp: LampConfi
 	-- Difuzor: gercekten isik yayan yuzey oldugu icin Neon burada hakli.
 	local diffuser = Build.part({
 		name = "Difuzor",
-		size = Vector3.new(5.8, 0.18, 2.1),
+		size = Vector3.new(12.4, 0.2, 2.3),
 		cf = CFrame.new(position - Vector3.new(0, 0.3, 0)),
 		color = lamp.color,
 		material = Enum.Material.Neon,
@@ -204,7 +212,9 @@ function Build.ceilingLight(position: Vector3, parent: Instance, lamp: LampConfi
 	light.Brightness = lamp.brightness
 	light.Range = lamp.range
 	light.Color = lamp.color
-	light.Shadows = true
+	-- Golge VERIDEN: 25 golge ureten tavan lambasi hem sahneyi yikiyor
+	-- hem kareyi dusuruyordu.
+	light.Shadows = if lamp.shadows == nil then false else lamp.shadows
 	light.Parent = diffuser
 	return housing
 end

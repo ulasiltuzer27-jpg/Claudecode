@@ -36,6 +36,7 @@ local Validate = require(Shared.Validate)
 
 local AnimalAnimator = require(script.world.AnimalAnimator)
 local Clinic = require(script.world.Clinic)
+local Decor = require(script.world.Decor)
 local Lobby = require(script.world.Lobby)
 local OwnerFactory = require(script.world.OwnerFactory)
 local SkyLighting = require(script.world.Lighting)
@@ -239,6 +240,23 @@ end
 
 -- ── Oyuncu yasam dongusu ──────────────────────────────────────────────
 
+--- Klinigin dekorunu online oyunculara gore tazeler. Bina ORTAK
+--- oldugu icin tek bir oyuncunun degil, o an iceride olan herkesin
+--- sahip oldugu dekor birlestiriliyor (Decor.refresh kurali).
+local function refreshDecor()
+	if mode ~= "clinic" or clinicBuilt == nil then
+		return
+	end
+	local bags = {}
+	for _, player in Players:GetPlayers() do
+		local entry = Profile.get(player)
+		if entry ~= nil then
+			table.insert(bags, entry.data.decor)
+		end
+	end
+	Decor.refresh(bags)
+end
+
 local function onPlayerAdded(player: Player)
 	local entry = Profile.load(player)
 	Leaderboard.attach(player)
@@ -247,6 +265,8 @@ local function onPlayerAdded(player: Player)
 	task.defer(function()
 		if mode == "clinic" then
 			PatientFlow.pushState(player)
+			-- Giren oyuncunun dekoru de klinige isliyor.
+			refreshDecor()
 		else
 			pushLobby(player)
 		end
@@ -259,6 +279,8 @@ Players.PlayerRemoving:Connect(function(player: Player)
 	Surgery.cancel(player)
 	Matchmaking.leave(player)
 	Validate.forget(player)
+	-- Cikan oyuncunun dekoru da kalkiyor; kalanlarinki duruyor.
+	task.defer(refreshDecor)
 end)
 
 for _, player in Players:GetPlayers() do
@@ -310,6 +332,22 @@ bind("BuyUpgrade", function(player: Player, upgradeId: string)
 	Net.toPlayer("Notify", player, if result.ok then "good" else "warn", result.reasonKey, result.args)
 	if result.ok then
 		Profile.markDirty(player)
+	end
+	PatientFlow.pushState(player)
+end)
+bind("BuyDecor", function(player: Player, decorId: string)
+	local entry = Profile.get(player)
+	if entry == nil then
+		return
+	end
+	local result = Upgrades.buyDecor(entry.data, decorId)
+	Net.toPlayer("Notify", player, if result.ok then "good" else "warn", result.reasonKey, result.args)
+	if result.ok then
+		Profile.markDirty(player)
+		-- Dekorasyon KLINIGE isliyor: satin alan kisi degil, binanin
+		-- kendisi degisiyor. Bu yuzden herkesin gozunde ayni anda
+		-- guncelleniyor.
+		refreshDecor()
 	end
 	PatientFlow.pushState(player)
 end)

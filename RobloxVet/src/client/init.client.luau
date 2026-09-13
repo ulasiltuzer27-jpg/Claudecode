@@ -99,9 +99,34 @@ hints.TextStrokeTransparency = 0.6
 
 local lastState: any = nil
 local lastChart: any = nil
+local lastMoney: number? = nil
+
+--- Oyuncunun "simdi ne yapmaliyim?" sorusunun cevabi. Sunucudan gelen
+--- durumun okunmasindan ibaret: burada hicbir oyun karari verilmiyor,
+--- yalnizca mevcut duruma bir cumle karsilik geliyor.
+local function objectiveKey(chart: any): string
+	if chart == nil or chart.present ~= true then
+		return "hud.objective.callNext"
+	end
+	if chart.emergency == true and chart.secondsLeft >= 0 and chart.secondsLeft < 20 then
+		return "hud.objective.emergency"
+	end
+	if chart.diagnosed ~= true then
+		if #chart.revealed == 0 then
+			return "hud.objective.examine"
+		end
+		return "hud.objective.diagnose"
+	end
+	if chart.complete ~= true then
+		return "hud.objective.treat"
+	end
+	return "hud.objective.discharge"
+end
 
 local function redraw()
 	Hud.update(lastState)
+	Hud.setObjective(objectiveKey(lastChart))
+	Hud.setStress(if lastChart ~= nil and lastChart.present == true then lastChart.stress / 100 else 0)
 	ToolBar.update(lastState)
 	ShopPanel.update(lastState)
 	Chart.update(lastChart)
@@ -120,6 +145,16 @@ Net.get("StateUpdate").OnClientEvent:Connect(function(state: any)
 	-- Ilk oyun durumu geldi: lobi bitti, klinik basladi.
 	lobbyScreen.Enabled = false
 	screen.Enabled = true
+	-- Kazanc yazisi: paranin ARTTIGI durumda ekranda yukselen bir yazi.
+	-- Azalma (alisveris) icin gosterilmiyor; magaza zaten kendi
+	-- geri bildirimini veriyor.
+	if state ~= nil and state.ready == true then
+		if lastMoney ~= nil and state.money > lastMoney then
+			Hud.gain(state.money - lastMoney)
+		end
+		lastMoney = state.money
+	end
+
 	lastState = state
 	-- Kayitli kamera ayarlari durumla birlikte geliyor.
 	if state ~= nil and state.settings ~= nil then

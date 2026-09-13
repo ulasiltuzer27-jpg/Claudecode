@@ -49,17 +49,19 @@ local function replace(className: string, name: string): Instance
 end
 
 --- Bir lamba ayarini veriden getirir. Bilinmeyen ad sessizce yutulmaz.
-function Sky.lamp(name: string): { brightness: number, range: number, color: Color3, angle: number? }
+function Sky.lamp(name: string): Build.LampConfig
 	local entry = config.lights[name]
 	if entry == nil then
 		warn(("[Lighting] bilinmeyen lamba ayari: '%s' (data/lighting.json)"):format(name))
-		return { brightness = 1, range = 16, color = Color3.new(1, 1, 1) }
+		return { brightness = 1, range = 16, color = Color3.new(1, 1, 1), shadows = false }
 	end
 	return {
 		brightness = entry.brightness,
 		range = entry.range,
 		color = Build.color(entry.color),
 		angle = entry.angle,
+		-- Yalnizca ameliyat lambasi ve sokak lambalari golge uretiyor.
+		shadows = if name == "ceiling" then config.ceilingShadows else true,
 	}
 end
 

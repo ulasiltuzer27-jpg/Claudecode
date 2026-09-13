@@ -171,6 +171,9 @@ function Matchmaking.snapshot(): any
 			waiting = #queue,
 			-- Yedek sayacin kalan suresi: arayuzde geri sayim.
 			fallbackIn = math.max(0, plan.soloFallbackSeconds - waited),
+			-- Toplam sure de gidiyor: arayuzdeki geri sayim halkasi
+			-- oranı buradan hesapliyor, veriyi istemciye kopyalamiyor.
+			fallbackTotal = plan.soloFallbackSeconds,
 		})
 	end
 	return { modes = list, players = #Players:GetPlayers() }

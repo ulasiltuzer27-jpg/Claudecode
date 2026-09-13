@@ -71,6 +71,10 @@ local C = {
 	towel = Color3.fromRGB(238, 228, 210),
 	black = Color3.fromRGB(40, 44, 50),
 	rubber = Color3.fromRGB(58, 62, 68),
+	-- Dekorasyon renkleri (data/decor.json'daki sus esyalari icin)
+	sand = Color3.fromRGB(226, 208, 168),
+	gold = Color3.fromRGB(214, 176, 92),
+	blossom = Color3.fromRGB(232, 148, 176),
 }
 
 type Builder = (model: Model, origin: CFrame) -> ()
@@ -843,6 +847,181 @@ builders.plant = function(model, origin)
 			canCollide = false,
 			castShadow = index == 1,
 			parent = model,
+		})
+	end
+end
+
+-- ── Dekorasyon esyalari ───────────────────────────────────────────────
+-- Bunlar magazadan satin alinip aciliyor (data/decor.json). Kurulusta
+-- hepsi INSA EDILIYOR ama gorunmez; boylece hepsi verify_layout'un
+-- cakisma denetiminden geciyor ve calisma aninda hicbir yeni parca
+-- yaratilmiyor.
+
+builders.aquarium = function(model, origin)
+	local d = makerDecor(model, origin)
+	-- Dolap
+	Build.part({
+		name = "Dolap", size = Vector3.new(5.2, 1.9, 1.7),
+		cf = origin * CFrame.new(0, 0.95, 0), color = C.darkWood,
+		material = Enum.Material.Wood, parent = model,
+	})
+	d("DolapAlin", Vector3.new(5.4, 0.22, 1.9), Vector3.new(0, 1.95, 0), C.midWood, Enum.Material.Wood)
+	for index = 1, 4 do
+		Detail.leg(model, origin * CFrame.new(
+			if index <= 2 then -2.2 else 2.2,
+			0.1,
+			if index % 2 == 0 then -0.6 else 0.6
+		), 0.2, C.darkSteel)
+	end
+	-- Cam govde
+	local tank = Build.part({
+		name = "Cam", size = Vector3.new(5.0, 2.7, 1.5),
+		cf = origin * CFrame.new(0, 3.45, 0), color = C.glass,
+		material = Enum.Material.Glass, parent = model,
+	})
+	tank.Transparency = 0.65
+	d("Su", Vector3.new(4.8, 2.3, 1.3), Vector3.new(0, 3.3, 0), C.water, Enum.Material.Glass)
+	d("Kapak", Vector3.new(5.2, 0.22, 1.7), Vector3.new(0, 4.9, 0), C.darkSteel)
+	d("Kum", Vector3.new(4.8, 0.3, 1.3), Vector3.new(0, 2.25, 0), C.sand, Enum.Material.Sand)
+	-- Bitkiler ve tasla dolu bir dip
+	for index = 1, 4 do
+		local x = -1.8 + (index - 1) * 1.2
+		d(
+			"Yosun" .. index,
+			Vector3.new(0.22, 1.1 + (index % 3) * 0.35, 0.22),
+			Vector3.new(x, 2.95 + (index % 3) * 0.18, 0),
+			if index % 2 == 0 then C.leaf else C.darkLeaf,
+			Enum.Material.Grass
+		)
+	end
+	for index = 1, 3 do
+		Build.ball({
+			name = "Tas" .. index,
+			size = Vector3.new(0.55, 0.4, 0.45),
+			cf = origin * CFrame.new(-1.2 + index * 1.1, 2.5, 0),
+			color = C.darkSteel,
+			material = Enum.Material.Slate,
+			canCollide = false, castShadow = false, parent = model,
+		})
+	end
+	-- Balıklar: hareket AnimalAnimator'da degil, burada da yok; bunlar
+	-- sabit sus. Hareketli olmalari icin bir Motor6D gerekirdi ve bir
+	-- sus esyasi ugruna rig kurmak, kare butcesini bosa harcamak olurdu.
+	local fish = { C.accent, C.teal, C.towel }
+	for index, color in fish do
+		Build.ball({
+			name = "Balik" .. index,
+			size = Vector3.new(0.5, 0.3, 0.24),
+			cf = origin * CFrame.new(-1.4 + index * 1.3, 3.4 + (index % 2) * 0.5, 0),
+			color = color,
+			canCollide = false, castShadow = false, parent = model,
+		})
+	end
+	d("Aydinlatma", Vector3.new(4.6, 0.1, 0.5), Vector3.new(0, 4.72, 0), C.paleTeal)
+end
+
+builders.wallClock = function(model, origin)
+	local d = makerDecor(model, origin)
+	Build.pillar({
+		name = "Kasa", size = Vector3.new(2.7, 0.34, 2.7),
+		cf = origin * CFrame.new(0, 7.4, 0) * CFrame.Angles(math.pi / 2, 0, 0),
+		color = C.darkWood, material = Enum.Material.Wood,
+		canCollide = false, castShadow = false, parent = model,
+	})
+	Build.pillar({
+		name = "Kadran", size = Vector3.new(2.3, 0.12, 2.3),
+		cf = origin * CFrame.new(0, 7.4, -0.2) * CFrame.Angles(math.pi / 2, 0, 0),
+		color = C.white,
+		canCollide = false, castShadow = false, parent = model,
+	})
+	-- Saat isaretleri: 12 kucuk cizgi, cember uzerinde.
+	for index = 1, 12 do
+		local angle = index / 12 * math.pi * 2
+		d(
+			"Isaret" .. index,
+			Vector3.new(0.1, if index % 3 == 0 then 0.34 else 0.2, 0.06),
+			Vector3.new(math.sin(angle) * 0.92, 7.4 + math.cos(angle) * 0.92, -0.3),
+			C.navy,
+			nil,
+			CFrame.Angles(0, 0, -angle)
+		)
+	end
+	d("Akrep", Vector3.new(0.12, 0.62, 0.06), Vector3.new(0.16, 7.68, -0.32), C.navy, nil, CFrame.Angles(0, 0, math.rad(-25)))
+	d("Yelkovan", Vector3.new(0.09, 0.92, 0.06), Vector3.new(-0.28, 7.28, -0.32), C.navy, nil, CFrame.Angles(0, 0, math.rad(70)))
+	d("Merkez", Vector3.new(0.18, 0.18, 0.08), Vector3.new(0, 7.4, -0.34), C.accent)
+end
+
+builders.certificate = function(model, origin)
+	local d = makerDecor(model, origin)
+	Detail.plate(
+		model,
+		origin * CFrame.new(0, 7.1, -0.16),
+		2.0,
+		2.6,
+		C.darkWood,
+		C.gold,
+		Loc.get("decor.certificate.text")
+	)
+	d("Cerceve", Vector3.new(2.4, 3.0, 0.16), Vector3.new(0, 7.1, 0), C.darkWood, Enum.Material.Wood)
+	d("Pasepartu", Vector3.new(2.0, 2.6, 0.06), Vector3.new(0, 7.1, -0.1), C.white)
+	d("Muhur", Vector3.new(0.42, 0.42, 0.06), Vector3.new(0.6, 6.2, -0.2), C.accent)
+	d("Kurdele1", Vector3.new(0.12, 0.5, 0.05), Vector3.new(0.52, 5.9, -0.2), C.teal, nil, CFrame.Angles(0, 0, math.rad(12)))
+	d("Kurdele2", Vector3.new(0.12, 0.5, 0.05), Vector3.new(0.68, 5.9, -0.2), C.teal, nil, CFrame.Angles(0, 0, math.rad(-12)))
+	d("Cizgi1", Vector3.new(1.3, 0.07, 0.05), Vector3.new(0, 7.3, -0.2), C.shadowWhite)
+	d("Cizgi2", Vector3.new(1.0, 0.07, 0.05), Vector3.new(0, 7.05, -0.2), C.shadowWhite)
+	d("Cizgi3", Vector3.new(1.15, 0.07, 0.05), Vector3.new(0, 6.8, -0.2), C.shadowWhite)
+end
+
+builders.flowerPot = function(model, origin)
+	local d = makerDecor(model, origin)
+	Build.pillar({
+		name = "Saksi", size = Vector3.new(2.4, 1.9, 2.4),
+		cf = origin * CFrame.new(0, 0.95, 0), color = C.terracotta,
+		material = Enum.Material.Slate, parent = model,
+	})
+	Build.pillar({
+		name = "SaksiAgzi", size = Vector3.new(2.6, 0.3, 2.6),
+		cf = origin * CFrame.new(0, 1.95, 0), color = C.terracotta,
+		material = Enum.Material.Slate, canCollide = false, castShadow = false, parent = model,
+	})
+	Build.pillar({
+		name = "Toprak", size = Vector3.new(2.2, 0.22, 2.2),
+		cf = origin * CFrame.new(0, 1.9, 0), color = C.soil,
+		material = Enum.Material.Ground, canCollide = false, castShadow = false, parent = model,
+	})
+	-- Cicek sapları ve tomurcuklar: saksi bitkisinden farki, renkli
+	-- ciceklerin olmasi - klinigi "yasayan" gosteren sey bu.
+	local blooms = {
+		{ Vector3.new(0.7, 1.6, 0), C.accent },
+		{ Vector3.new(-0.62, 1.35, 0.4), C.towel },
+		{ Vector3.new(0.1, 1.8, -0.55), C.teal },
+		{ Vector3.new(-0.2, 1.5, -0.15), C.blossom },
+	}
+	for index, bloom in blooms do
+		local offset = bloom[1] :: Vector3
+		d(
+			"Sap" .. index,
+			Vector3.new(0.14, offset.Y, 0.14),
+			Vector3.new(offset.X, 2.0 + offset.Y * 0.5, offset.Z),
+			C.darkLeaf,
+			Enum.Material.Grass
+		)
+		Build.ball({
+			name = "Cicek" .. index,
+			size = Vector3.new(0.72, 0.62, 0.72),
+			cf = origin * CFrame.new(offset.X, 2.05 + offset.Y, offset.Z),
+			color = bloom[2] :: Color3,
+			canCollide = false, castShadow = false, parent = model,
+		})
+	end
+	for index = 1, 3 do
+		Build.ball({
+			name = "Yaprak" .. index,
+			size = Vector3.new(1.05, 0.7, 1.05),
+			cf = origin * CFrame.new(-0.7 + index * 0.55, 2.35, 0.45),
+			color = if index % 2 == 0 then C.leaf else C.midLeaf,
+			material = Enum.Material.Grass,
+			canCollide = false, castShadow = false, parent = model,
 		})
 	end
 end

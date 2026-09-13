@@ -1,0 +1,197 @@
+{
+  "_comment": "(VERI) Klinik dekorasyonu: duvar/zemin temalari ve sus esyalari. Oyuncu magazanin DEKORASYON sekmesinden aliyor.",
+  "_tema_notu": "Tema satin alinca AKTIF olur; ayrica bir secim ekrani yok. Birden fazla tema varsa `order` degeri en buyuk olan kazanir. Cok oyunculu oturumda klinik ortak oldugu icin ONLINE oyuncularin sahip oldugu en yuksek `order`li tema uygulanir - yukseltmelerdeki CLINIC_WIDE kuralinin aynisi.",
+  "_esya_notu": "Sus esyalari kurulusta GORUNMEZ olarak insa edilip sahip olununca aciliyor. Calisma aninda yeni parca yaratmak, yerlesim denetiminden (tools/verify_layout.py) kacan bir model demek olurdu; boylece her sus esyasi da butun cakisma denetimlerinden geciyor.",
+  "themes": [
+    {
+      "id": "themeClassic",
+      "nameKey": "decor.themeClassic",
+      "descKey": "decor.themeClassic.desc",
+      "cost": 0,
+      "unlockLevel": 1,
+      "order": 0,
+      "wall": [
+        232,
+        236,
+        240
+      ],
+      "wallTrim": [
+        206,
+        212,
+        220
+      ],
+      "floor": [
+        226,
+        218,
+        206
+      ],
+      "floorTile": [
+        210,
+        200,
+        186
+      ],
+      "accent": [
+        72,
+        176,
+        176
+      ]
+    },
+    {
+      "id": "themeWarm",
+      "nameKey": "decor.themeWarm",
+      "descKey": "decor.themeWarm.desc",
+      "cost": 1200,
+      "unlockLevel": 3,
+      "order": 1,
+      "wall": [
+        240,
+        228,
+        210
+      ],
+      "wallTrim": [
+        214,
+        190,
+        158
+      ],
+      "floor": [
+        212,
+        186,
+        152
+      ],
+      "floorTile": [
+        196,
+        168,
+        132
+      ],
+      "accent": [
+        214,
+        148,
+        72
+      ]
+    },
+    {
+      "id": "themeForest",
+      "nameKey": "decor.themeForest",
+      "descKey": "decor.themeForest.desc",
+      "cost": 2200,
+      "unlockLevel": 5,
+      "order": 2,
+      "wall": [
+        222,
+        234,
+        224
+      ],
+      "wallTrim": [
+        176,
+        200,
+        178
+      ],
+      "floor": [
+        206,
+        214,
+        200
+      ],
+      "floorTile": [
+        186,
+        198,
+        180
+      ],
+      "accent": [
+        96,
+        172,
+        118
+      ]
+    },
+    {
+      "id": "themeNight",
+      "nameKey": "decor.themeNight",
+      "descKey": "decor.themeNight.desc",
+      "cost": 3600,
+      "unlockLevel": 7,
+      "order": 3,
+      "wall": [
+        206,
+        214,
+        228
+      ],
+      "wallTrim": [
+        156,
+        168,
+        190
+      ],
+      "floor": [
+        188,
+        196,
+        210
+      ],
+      "floorTile": [
+        170,
+        180,
+        198
+      ],
+      "accent": [
+        110,
+        150,
+        232
+      ]
+    }
+  ],
+  "props": [
+    {
+      "id": "aquarium",
+      "nameKey": "decor.aquarium",
+      "descKey": "decor.aquarium.desc",
+      "cost": 1500,
+      "unlockLevel": 4,
+      "prop": "aquarium",
+      "room": "reception",
+      "at": [
+        -6,
+        -16
+      ],
+      "rot": 0
+    },
+    {
+      "id": "wallClock",
+      "nameKey": "decor.wallClock",
+      "descKey": "decor.wallClock.desc",
+      "cost": 450,
+      "unlockLevel": 2,
+      "prop": "wallClock",
+      "room": "exam1",
+      "at": [
+        -17,
+        -3.1
+      ],
+      "rot": 0
+    },
+    {
+      "id": "certificate",
+      "nameKey": "decor.certificate",
+      "descKey": "decor.certificate.desc",
+      "cost": 700,
+      "unlockLevel": 3,
+      "prop": "certificate",
+      "room": "exam2",
+      "at": [
+        10,
+        -3.1
+      ],
+      "rot": 0
+    },
+    {
+      "id": "flowerPot",
+      "nameKey": "decor.flowerPot",
+      "descKey": "decor.flowerPot.desc",
+      "cost": 300,
+      "unlockLevel": 2,
+      "prop": "flowerPot",
+      "room": "reception",
+      "at": [
+        -6,
+        -22
+      ],
+      "rot": 0
+    }
+  ]
+}

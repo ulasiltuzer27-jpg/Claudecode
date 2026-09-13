@@ -12,6 +12,13 @@
 -- NPC'nin basindaki balon uzaktan okunmuyor ve oyuncu masaya egildiginde
 -- kayboluyor. Ayni cumle kartta da duruyor: ipucu, isin yapildigi yerde
 -- goz onunde olmali.
+--
+-- Vitaller neden BOLMELI?
+-- -----------------------
+-- Duz bir cubugun %62 mi %71 mi oldugu okunmuyor; on bolmeli cubukta
+-- "yedi bolme dolu" bir bakista goruluyor. Renk de esige gore degisiyor
+-- (Theme.statusColor), yani dusen saglik once sariya sonra kirmiziya
+-- donuyor - sayiyi okumaya gerek kalmadan.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Shared = ReplicatedStorage:WaitForChild("VetShared")
@@ -23,6 +30,7 @@ local Theme = require(script.Parent.Theme)
 local Chart = {}
 
 local widgets: any = nil
+local emergencyPulse: Theme.Pulse? = nil
 
 local SEVERITY_COLOR = {
 	[1] = Theme.color.textDim,
@@ -30,109 +38,184 @@ local SEVERITY_COLOR = {
 	[3] = Theme.color.bad,
 }
 
+--- Tek bir vital satiri: ad + sayi + bolmeli cubuk.
+local function meter(parent: Instance, name: string, y: number, color: Color3): any
+	local caption = Theme.label({
+		name = name .. "Ad",
+		text = "",
+		size = UDim2.new(0.6, 0, 0, 14),
+		position = UDim2.fromOffset(Theme.space.md, y),
+		textSize = Theme.size.micro,
+		color = Theme.color.textDim,
+		parent = parent,
+		zIndex = 2,
+	})
+	local value = Theme.label({
+		name = name .. "Deger",
+		text = "",
+		size = UDim2.new(0.4, -Theme.space.md, 0, 14),
+		position = UDim2.new(0.6, 0, 0, y),
+		textSize = Theme.size.micro,
+		bold = true,
+		align = Enum.TextXAlignment.Right,
+		color = color,
+		parent = parent,
+		zIndex = 2,
+	})
+	local bar = Theme.bar(
+		parent,
+		UDim2.new(1, -Theme.space.md * 2, 0, 9),
+		UDim2.fromOffset(Theme.space.md, y + 16),
+		color,
+		{ segments = 10 }
+	)
+	bar.track.ZIndex = 2
+	bar.fill.ZIndex = 3
+	return { caption = caption, value = value, bar = bar }
+end
+
 function Chart.create(parent: ScreenGui)
-	-- Acil vaka bandi ekranin ORTASINDA ve ustte: geri sayim, oyuncunun
-	-- gozunun kacinilmaz olarak dustugu yerde olmali.
-	local banner = Theme.frame({
+	-- Acil vaka bandi ekranin ORTASINDA ve ustte, hedef bandinin hemen
+	-- altinda: geri sayim, gozun kacinilmaz olarak dustugu yerde olmali.
+	local banner = Theme.card({
 		name = "AcilBandi",
-		size = UDim2.fromOffset(380, 44),
-		position = UDim2.new(0.5, 0, 0, 14),
+		size = UDim2.fromOffset(300, 56),
+		position = UDim2.new(0.5, 0, 0, 58),
 		anchor = Vector2.new(0.5, 0),
-		color = Color3.fromRGB(92, 26, 26),
-		transparency = 0.05,
+		color = Color3.fromRGB(74, 22, 24),
 		parent = parent,
 		visible = false,
-	})
-	Theme.stroke(banner, Theme.color.bad, 2)
+	}, Theme.color.bad)
+
+	local ring = Theme.ring(banner, 40, UDim2.new(0, 34, 0.5, 0), Theme.color.bad, 20)
+	ring.root.ZIndex = 3
+	for _, dot in ring.dots do
+		dot.ZIndex = 3
+	end
+
 	local bannerText = Theme.label({
 		name = "Metin",
 		text = "",
-		size = UDim2.new(1, -20, 1, 0),
-		position = UDim2.fromOffset(10, 0),
-		textSize = 17,
+		size = UDim2.new(1, -72, 1, 0),
+		position = UDim2.fromOffset(62, 0),
+		textSize = Theme.size.title,
 		bold = true,
-		align = Enum.TextXAlignment.Center,
+		align = Enum.TextXAlignment.Left,
+		color = Theme.color.text,
 		parent = banner,
+		zIndex = 2,
 	})
 
-	local panel = Theme.frame({
+	-- ── Hasta karti ───────────────────────────────────────────────────
+	local panel = Theme.card({
 		name = "HastaKarti",
-		size = UDim2.fromOffset(330, 316),
-		position = UDim2.new(1, -16, 0, 82),
+		size = UDim2.fromOffset(330, 372),
+		position = UDim2.new(1, -Theme.space.lg, 0, 92),
 		anchor = Vector2.new(1, 0),
 		parent = parent,
 	})
-	Theme.stroke(panel)
+
+	Theme.icon({
+		name = "paw",
+		size = 18,
+		color = Theme.color.accent,
+		position = UDim2.fromOffset(Theme.space.md, Theme.space.md),
+		parent = panel,
+		zIndex = 2,
+	})
 
 	local title = Theme.label({
 		name = "Baslik",
 		text = Loc.get("chart.empty"),
-		size = UDim2.new(1, -24, 0, 24),
-		position = UDim2.fromOffset(12, 8),
-		textSize = 18,
+		size = UDim2.new(1, -Theme.space.md * 2 - 26, 0, 24),
+		position = UDim2.fromOffset(Theme.space.md + 26, Theme.space.sm + 2),
+		textSize = Theme.size.title,
 		bold = true,
 		parent = panel,
+		zIndex = 2,
 	})
 
 	local condition = Theme.label({
 		name = "Hastalik",
 		text = "",
-		size = UDim2.new(1, -24, 0, 18),
-		position = UDim2.fromOffset(12, 32),
-		textSize = 13,
+		size = UDim2.new(1, -Theme.space.md * 2, 0, 18),
+		position = UDim2.fromOffset(Theme.space.md, 36),
+		textSize = Theme.size.small,
+		bold = true,
 		color = Theme.color.good,
 		parent = panel,
+		zIndex = 2,
 	})
 
+	-- Sahibin sikayeti ALINTI BALONU icinde: kartin geri kalani olcum,
+	-- bu ise bir insanin soyledigi sey. Gorsel olarak ayrilmasi, oyuncunun
+	-- onu "veri" degil "ipucu" diye okumasini sagliyor.
+	local quote = Theme.frame({
+		name = "SikayetBalonu",
+		size = UDim2.new(1, -Theme.space.md * 2, 0, 44),
+		position = UDim2.fromOffset(Theme.space.md, 58),
+		color = Theme.color.panelDeep,
+		transparency = 0.25,
+		radius = Theme.radius.sm,
+		parent = panel,
+	})
+	quote.ZIndex = 2
+	Theme.frame({
+		name = "Serit",
+		size = UDim2.new(0, 3, 1, -10),
+		position = UDim2.fromOffset(6, 5),
+		color = Theme.color.accent,
+		transparency = 0.2,
+		radius = 2,
+		parent = quote,
+		zIndex = 3,
+	})
 	local hint = Theme.label({
 		name = "Sikayet",
 		text = "",
-		size = UDim2.new(1, -24, 0, 30),
-		position = UDim2.fromOffset(12, 52),
-		textSize = 11,
+		size = UDim2.new(1, -22, 1, -6),
+		position = UDim2.fromOffset(16, 3),
+		textSize = Theme.size.micro,
 		color = Theme.color.textDim,
 		wrapped = true,
-		parent = panel,
+		parent = quote,
+		zIndex = 3,
 	})
 
-	local function meter(labelName: string, y: number, color: Color3)
-		local label = Theme.label({
-			name = labelName,
-			text = "",
-			size = UDim2.new(1, -24, 0, 14),
-			position = UDim2.fromOffset(12, y),
-			textSize = 11,
-			color = Theme.color.textDim,
-			parent = panel,
-		})
-		local bar = Theme.bar(panel, UDim2.new(1, -24, 0, 9), UDim2.fromOffset(12, y + 16), color)
-		return label, bar
-	end
+	local health = meter(panel, "Saglik", 114, Theme.color.health)
+	local stress = meter(panel, "Stres", 150, Theme.color.stress)
+	local satisfaction = meter(panel, "Memnuniyet", 186, Theme.color.accent)
 
-	local healthLabel, healthBar = meter("SaglikYazi", 84, Theme.color.health)
-	local stressLabel, stressBar = meter("StresYazi", 114, Theme.color.stress)
-	local satisfactionLabel, satisfactionBar = meter("MemnuniyetYazi", 144, Theme.color.accent)
+	Theme.divider(panel, 0).Position = UDim2.new(0, Theme.space.md, 0, 220)
 
 	Theme.label({
 		name = "SemptomBaslik",
 		text = Loc.get("chart.symptoms"),
-		size = UDim2.new(1, -24, 0, 16),
-		position = UDim2.fromOffset(12, 176),
-		textSize = 12,
+		size = UDim2.new(1, -Theme.space.md * 2, 0, 16),
+		position = UDim2.fromOffset(Theme.space.md, 228),
+		textSize = Theme.size.micro,
 		bold = true,
-		color = Theme.color.textDim,
+		color = Theme.color.textFaint,
 		parent = panel,
+		zIndex = 2,
 	})
 
-	local list = Theme.scroller(panel, UDim2.new(1, -24, 0, 80), UDim2.fromOffset(12, 194))
-	Theme.list(list, 3)
+	local list = Theme.scroller(
+		panel,
+		UDim2.new(1, -Theme.space.md * 2, 0, 92),
+		UDim2.fromOffset(Theme.space.md, 248)
+	)
+	list.ZIndex = 2
+	Theme.list(list, Theme.space.xs)
 
 	local discharge = Theme.button({
 		name = "Taburcu",
 		text = Loc.get("chart.discharge"),
-		size = UDim2.new(1, -24, 0, 28),
-		position = UDim2.new(0, 12, 1, -36),
+		size = UDim2.new(1, -Theme.space.md * 2, 0, 32),
+		position = UDim2.new(0, Theme.space.md, 1, -42),
 		color = Theme.color.accentDark,
+		textSize = Theme.size.small,
+		zIndex = 2,
 		parent = panel,
 		onClick = function()
 			Net.toServer("Discharge")
@@ -143,18 +226,29 @@ function Chart.create(parent: ScreenGui)
 		panel = panel,
 		banner = banner,
 		bannerText = bannerText,
+		ring = ring,
 		title = title,
 		condition = condition,
 		hint = hint,
-		healthLabel = healthLabel,
-		healthBar = healthBar,
-		stressLabel = stressLabel,
-		stressBar = stressBar,
-		satisfactionLabel = satisfactionLabel,
-		satisfactionBar = satisfactionBar,
+		quote = quote,
+		health = health,
+		stress = stress,
+		satisfaction = satisfaction,
 		list = list,
 		discharge = discharge,
+		symptomCount = -1,
 	}
+end
+
+--- Bir vital satirini gunceller; rengi esige gore degistiriyor.
+local function setMeter(entry: any, key: string, value: number, risky: boolean)
+	local ratio = value / 100
+	local color = if risky then Theme.riskColor(ratio) else Theme.statusColor(ratio)
+	entry.caption.Text = Loc.get(key)
+	entry.value.Text = string.format("%d", value)
+	entry.value.TextColor3 = color
+	Theme.setBar(entry.bar, ratio)
+	Theme.setBarColor(entry.bar, color)
 end
 
 function Chart.update(chart: any)
@@ -166,16 +260,21 @@ function Chart.update(chart: any)
 		widgets.title.Text = Loc.get("chart.empty")
 		widgets.condition.Text = ""
 		widgets.hint.Text = ""
-		widgets.healthLabel.Text = ""
-		widgets.stressLabel.Text = ""
-		widgets.satisfactionLabel.Text = ""
-		Theme.setBar(widgets.healthBar, 0)
-		Theme.setBar(widgets.stressBar, 0)
-		Theme.setBar(widgets.satisfactionBar, 0)
+		widgets.quote.Visible = false
+		for _, entry in { widgets.health, widgets.stress, widgets.satisfaction } do
+			entry.caption.Text = ""
+			entry.value.Text = ""
+			Theme.setBar(entry.bar, 0)
+		end
 		widgets.list:ClearAllChildren()
-		Theme.list(widgets.list, 3)
+		Theme.list(widgets.list, Theme.space.xs)
+		widgets.symptomCount = -1
 		widgets.discharge.Visible = false
 		widgets.banner.Visible = false
+		if emergencyPulse ~= nil then
+			emergencyPulse.stop()
+			emergencyPulse = nil
+		end
 		return
 	end
 
@@ -185,45 +284,88 @@ function Chart.update(chart: any)
 		else Loc.get("chart.undiagnosed")
 	widgets.condition.TextColor3 = if chart.diagnosed then Theme.color.good else Theme.color.warn
 
-	widgets.hint.Text = if chart.hintKey ~= nil then "\u{201C}" .. Loc.get(chart.hintKey) .. "\u{201D}" else ""
+	widgets.quote.Visible = chart.hintKey ~= nil
+	widgets.hint.Text = if chart.hintKey ~= nil
+		then "\u{201C}" .. Loc.get(chart.hintKey) .. "\u{201D}"
+		else ""
 
-	widgets.healthLabel.Text = Loc.get("chart.health", chart.health)
-	Theme.setBar(widgets.healthBar, chart.health / 100)
-	widgets.stressLabel.Text = Loc.get("chart.stress", chart.stress)
-	Theme.setBar(widgets.stressBar, chart.stress / 100)
-	widgets.satisfactionLabel.Text = Loc.get("chart.satisfaction", chart.satisfaction)
-	Theme.setBar(widgets.satisfactionBar, chart.satisfaction / 100)
+	setMeter(widgets.health, "chart.healthShort", chart.health, false)
+	setMeter(widgets.stress, "chart.stressShort", chart.stress, true)
+	setMeter(widgets.satisfaction, "chart.satisfactionShort", chart.satisfaction, false)
 
 	-- Acil vaka geri sayimi. secondsLeft negatifse acil degil.
 	if chart.emergency == true and chart.secondsLeft >= 0 then
 		local seconds = math.floor(chart.secondsLeft)
 		widgets.banner.Visible = true
 		widgets.bannerText.Text = Loc.get("chart.emergency", math.floor(seconds / 60), seconds % 60)
+		-- Halka kalan sureyi gosteriyor; 90 saniye tam tur kabul ediliyor.
+		Theme.setRing(widgets.ring, math.clamp(chart.secondsLeft / 90, 0, 1))
+		local critical = chart.secondsLeft < 20
+		Theme.setRingColor(widgets.ring, if critical then Theme.color.bad else Theme.color.warn)
+		if critical and emergencyPulse == nil then
+			emergencyPulse = Theme.pulse(widgets.banner, "BackgroundTransparency", 0.5, 0.45)
+		elseif not critical and emergencyPulse ~= nil then
+			emergencyPulse.stop()
+			emergencyPulse = nil
+		end
 	else
 		widgets.banner.Visible = false
+		if emergencyPulse ~= nil then
+			emergencyPulse.stop()
+			emergencyPulse = nil
+		end
 	end
 
-	widgets.list:ClearAllChildren()
-	Theme.list(widgets.list, 3)
+	-- Belirti listesi her karede yeniden kurulmuyor: sayi degismediyse
+	-- dokunulmuyor. (Aksi halde kaydirma cubugu her guncellemede basa
+	-- donerdi ve liste titrerdi.)
+	if widgets.symptomCount ~= #chart.revealed then
+		widgets.symptomCount = #chart.revealed
+		widgets.list:ClearAllChildren()
+		Theme.list(widgets.list, Theme.space.xs)
 
-	if #chart.revealed == 0 then
-		Theme.label({
-			text = Loc.get("chart.noSymptoms"),
-			size = UDim2.new(1, -8, 0, 18),
-			textSize = 12,
-			color = Theme.color.textDim,
-			parent = widgets.list,
-		})
-	else
-		for index, symptom in chart.revealed do
+		if #chart.revealed == 0 then
 			Theme.label({
-				text = "• " .. Loc.get(symptom.nameKey),
-				size = UDim2.new(1, -8, 0, 18),
-				textSize = 13,
-				color = SEVERITY_COLOR[symptom.severity] or Theme.color.text,
-				layoutOrder = index,
+				text = Loc.get("chart.noSymptoms"),
+				size = UDim2.new(1, -Theme.space.sm, 0, 20),
+				textSize = Theme.size.micro,
+				color = Theme.color.textFaint,
 				parent = widgets.list,
+				zIndex = 2,
 			})
+		else
+			for index, symptom in chart.revealed do
+				local color = SEVERITY_COLOR[symptom.severity] or Theme.color.text
+				local row = Theme.frame({
+					name = "Belirti",
+					size = UDim2.new(1, -Theme.space.sm, 0, 24),
+					color = Theme.color.panelLight,
+					transparency = 0.35,
+					radius = Theme.radius.sm,
+					parent = widgets.list,
+					layoutOrder = index,
+					zIndex = 2,
+				})
+				Theme.frame({
+					name = "Siddet",
+					size = UDim2.fromOffset(6, 6),
+					position = UDim2.new(0, Theme.space.sm, 0.5, -3),
+					color = color,
+					transparency = 0,
+					radius = 3,
+					parent = row,
+					zIndex = 3,
+				})
+				Theme.label({
+					text = Loc.get(symptom.nameKey),
+					size = UDim2.new(1, -26, 1, 0),
+					position = UDim2.fromOffset(22, 0),
+					textSize = Theme.size.small,
+					color = color,
+					parent = row,
+					zIndex = 3,
+				})
+			end
 		end
 	end
 
