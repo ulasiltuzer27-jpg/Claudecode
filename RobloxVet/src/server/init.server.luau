@@ -36,6 +36,7 @@ local Validate = require(Shared.Validate)
 
 local AnimalAnimator = require(script.world.AnimalAnimator)
 local Clinic = require(script.world.Clinic)
+local DayCycle = require(script.world.DayCycle)
 local Decor = require(script.world.Decor)
 local Doors = require(script.world.Doors)
 local Lobby = require(script.world.Lobby)
@@ -165,6 +166,10 @@ local function startClinic()
 	local ok, err = pcall(function()
 		clinicBuilt = Clinic.build(workspace)
 		Doors.start()
+		-- Gunduz/gece: once sokak lambalari toplaniyor, sonra dongu
+		-- basliyor. Ters sirada ilk gecede hicbir lamba yanmazdi.
+		DayCycle.collectLamps((clinicBuilt :: Clinic.Built).model)
+		DayCycle.start()
 		AnimalAnimator.start()
 		OwnerFactory.start()
 		PatientFlow.start(clinicBuilt :: Clinic.Built)

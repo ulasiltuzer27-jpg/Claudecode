@@ -54,11 +54,38 @@ function Diagnosis.allSymptoms(): { any }
 	return symptomData.symptoms
 end
 
+--- Bu vaka RUTIN mi? Rutin vakalarda belirti ve teshis yok: hasta
+--- zaten "asi olacak" diye geliyor, oyuncu tek adimlik islemi
+--- uyguluyor. Kuyruga cesit katiyorlar.
+function Diagnosis.isRoutine(conditionId: string): boolean
+	local condition = conditionById[conditionId]
+	return condition ~= nil and condition.kind == "routine"
+end
+
 --- Bir turun, verilen seviyede yakalanabilecegi hastaliklar.
+--- RUTIN VAKALAR BU LISTEDE YOK: teshis panelinde "Asi" secenegi
+--- gormek, bulmacayi anlamsizlastirirdi.
 function Diagnosis.conditionsFor(animalId: string, level: number): { any }
 	local result = {}
 	for _, condition in conditionData.conditions do
-		if condition.unlockLevel > level then
+		if condition.unlockLevel > level or condition.kind == "routine" then
+			continue
+		end
+		for _, species in condition.species do
+			if species == animalId then
+				table.insert(result, condition)
+				break
+			end
+		end
+	end
+	return result
+end
+
+--- Bir turun, verilen seviyede gelebilecek RUTIN islemleri.
+function Diagnosis.routinesFor(animalId: string, level: number): { any }
+	local result = {}
+	for _, condition in conditionData.conditions do
+		if condition.unlockLevel > level or condition.kind ~= "routine" then
 			continue
 		end
 		for _, species in condition.species do

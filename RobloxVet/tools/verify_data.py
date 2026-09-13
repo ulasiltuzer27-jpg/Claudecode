@@ -197,7 +197,15 @@ def main() -> int:
 
     for condition in conditions:
         name = condition["id"]
-        check(f"hastalik '{name}' en az bir semptoma sahip", len(condition["symptoms"]) > 0)
+        # RUTIN vakalarda belirti YOK ve olmamali: asi icin "belirti
+        # bulmak" diye bir sey yok, hasta zaten asi olmaya geliyor.
+        routine = condition.get("kind") == "routine"
+        if routine:
+            check(f"rutin vaka '{name}' belirti bildirmiyor", len(condition["symptoms"]) == 0)
+            check(f"rutin vaka '{name}' tek adimli", len(condition["treatments"]) == 1)
+            check(f"rutin vaka '{name}' yanlis teshis cezasi tasimiyor", condition["wrongPenalty"] == 0)
+        else:
+            check(f"hastalik '{name}' en az bir semptoma sahip", len(condition["symptoms"]) > 0)
         check(f"hastalik '{name}' en az bir tedaviye sahip", len(condition["treatments"]) > 0)
         check(f"hastalik '{name}' acilis seviyesi egrinin icinde", 1 <= condition["unlockLevel"] <= level_max)
         check(f"hastalik '{name}' ucret carpani pozitif", condition["feeMultiplier"] > 0)
@@ -232,7 +240,13 @@ def main() -> int:
             )
 
     # 6. Cozulebilirlik
-    for a, b in itertools.combinations(conditions, 2):
+    #
+    # Rutin vakalar bu denetimin DISINDA: hepsinin semptom kumesi bos
+    # ve bos olmasi gerekiyor. Ayirt edilmeleri de gerekmiyor - teshis
+    # panelinde hic gorunmuyorlar (Diagnosis.conditionsFor onlari
+    # atliyor).
+    diagnosable = [c for c in conditions if c.get("kind") != "routine"]
+    for a, b in itertools.combinations(diagnosable, 2):
         if not (set(a["species"]) & set(b["species"])):
             continue
         check(
@@ -322,6 +336,50 @@ def main() -> int:
             1 <= item["unlockLevel"] <= level_max,
         )
         check(f"dekor '{identifier}' props.json'da govdesi var", item["prop"] in prop_ids)
+
+    # 9c. Gunduz/gece (data/daycycle.json)
+    #
+    # Gecenin "baska bir oyun" olmasi sayilara bagli: hasta SEYREK,
+    # ucret ZAMLI. Bu iki kosul bozulursa gece yalnizca karanlik bir
+    # gunduz olur.
+    daycycle = load("daycycle.json")
+    check("gun suresi makul (1-60 dk)", 1 <= daycycle["dayMinutes"] <= 60)
+    check("baslangic saati 0-24", 0 <= daycycle["startClockTime"] < 24)
+    for field in ("nightStart", "nightEnd"):
+        check(f"daycycle.{field} 0-24 araliginda", 0 <= daycycle[field] < 24)
+    check("gecis suresi pozitif ve makul", 0 < daycycle["transitionHours"] <= 4)
+    check(
+        "gece ucret zammi gunduzden yuksek",
+        daycycle["night"]["feeMultiplier"] > daycycle["day"]["feeMultiplier"],
+    )
+    check(
+        "gece hasta araligi gunduzden uzun",
+        daycycle["night"]["arrivalScale"] > daycycle["day"]["arrivalScale"],
+    )
+    check(
+        "gece acil orani gunduzden yuksek",
+        daycycle["night"]["emergencyChanceBonus"] > daycycle["day"]["emergencyChanceBonus"],
+    )
+    check(
+        "gece daha karanlik",
+        daycycle["night"]["brightness"] < daycycle["day"]["brightness"],
+    )
+    for phase in ("day", "night"):
+        for field in ("ambient", "outdoorAmbient", "fogColor"):
+            channels = daycycle[phase][field]
+            check(
+                f"daycycle.{phase}.{field} 3 kanal, 0-255",
+                len(channels) == 3 and all(0 <= value <= 255 for value in channels),
+            )
+    check(
+        "acil orani gece tavani asmiyor",
+        economy["emergency"]["chance"] + daycycle["night"]["emergencyChanceBonus"] < 0.6,
+    )
+    check("rutin vaka orani 0-1 arasi", 0 <= economy.get("routineChance", -1) <= 1)
+    check(
+        "rutin vaka orani oyunu bulmacasiz birakmiyor",
+        economy.get("routineChance", 1) < 0.5,
+    )
 
     # 10. XP egrisi
     previous = -1

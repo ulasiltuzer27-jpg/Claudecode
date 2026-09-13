@@ -109,8 +109,11 @@ function Chart.create(parent: ScreenGui)
 	-- ── Hasta karti ───────────────────────────────────────────────────
 	local panel = Theme.card({
 		name = "HastaKarti",
-		size = UDim2.fromOffset(330, 372),
-		position = UDim2.new(1, -Theme.space.lg, 0, 92),
+		-- Sag sutun asagidan yukariya: alet cubugu, teshis/tedavi paneli,
+		-- hasta karti, vardiya karti, kuyruk karti. Yukseklikler bu
+		-- sirayla toplaniyor; biri degisirse asagidakiler de kayar.
+		size = UDim2.fromOffset(330, 344),
+		position = UDim2.new(1, -Theme.space.lg, 0, 144),
 		anchor = Vector2.new(1, 0),
 		parent = parent,
 	})
@@ -202,7 +205,7 @@ function Chart.create(parent: ScreenGui)
 
 	local list = Theme.scroller(
 		panel,
-		UDim2.new(1, -Theme.space.md * 2, 0, 92),
+		UDim2.new(1, -Theme.space.md * 2, 0, 64),
 		UDim2.fromOffset(Theme.space.md, 248)
 	)
 	list.ZIndex = 2
@@ -279,10 +282,17 @@ function Chart.update(chart: any)
 	end
 
 	widgets.title.Text = Loc.get(chart.nameKey)
-	widgets.condition.Text = if chart.diagnosed and chart.conditionNameKey ~= nil
-		then Loc.get("chart.diagnosed", Loc.get(chart.conditionNameKey))
-		else Loc.get("chart.undiagnosed")
-	widgets.condition.TextColor3 = if chart.diagnosed then Theme.color.good else Theme.color.warn
+	-- Rutin islemde "Teshis: Asi" yazmak yaniltici olurdu: teshis diye
+	-- bir sey yok, hasta zaten asi olmaya geldi.
+	if chart.routine == true then
+		widgets.condition.Text = Loc.get("chart.routine")
+		widgets.condition.TextColor3 = Theme.color.accentGlow
+	else
+		widgets.condition.Text = if chart.diagnosed and chart.conditionNameKey ~= nil
+			then Loc.get("chart.diagnosed", Loc.get(chart.conditionNameKey))
+			else Loc.get("chart.undiagnosed")
+		widgets.condition.TextColor3 = if chart.diagnosed then Theme.color.good else Theme.color.warn
+	end
 
 	widgets.quote.Visible = chart.hintKey ~= nil
 	widgets.hint.Text = if chart.hintKey ~= nil

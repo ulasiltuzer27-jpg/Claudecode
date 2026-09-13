@@ -131,14 +131,22 @@ def arrival_seconds(best_reputation: float, arrival_scale: float) -> float:
 OVERHEAD_SECONDS = 14.0
 
 
-def cases_for_level(level: int):
-    """O seviyede uretilebilecek (hayvan, hastalik) ciftleri."""
+def cases_for_level(level: int, routine: bool = False):
+    """O seviyede uretilebilecek (hayvan, vaka) ciftleri.
+
+    `routine` PatientFlow.pickCase ile ayni ayrimi yapiyor: rutin
+    islemler (asi, kontrol) ayri havuzda. Ikisini tek havuzda karistirmak
+    rutin vakalarin oranini %22 yerine listedeki paylarina (%11) esitler
+    ve egriyi yanlis cizerdi.
+    """
     result = []
     for animal in ANIMALS:
         if animal["unlockLevel"] > level:
             continue
         for condition in CONDITIONS:
             if condition["unlockLevel"] > level:
+                continue
+            if (condition.get("kind") == "routine") != routine:
                 continue
             if animal["id"] in condition["species"]:
                 result.append((animal, condition))
@@ -193,8 +201,12 @@ def simulate(competent: bool, buy_things: bool, patients: int = 4000, seed: int 
     level_at_time = {1: 0.0}
     tool_bought_at = {}
 
+    routine_chance = ECONOMY.get("routineChance", 0)
     for index in range(1, patients + 1):
-        cases = cases_for_level(level)
+        wants_routine = rng.random() < routine_chance
+        cases = cases_for_level(level, wants_routine)
+        if not cases and wants_routine:
+            cases = cases_for_level(level, False)
         if not cases:
             break
         animal, condition = cases[rng.randrange(len(cases))]

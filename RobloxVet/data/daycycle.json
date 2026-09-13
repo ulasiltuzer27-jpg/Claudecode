@@ -1,0 +1,57 @@
+{
+  "_comment": "(VERI) Gunduz/gece dongusu ve gece nobeti. Sunucu saati TEK KAYNAK: istemci yalnizca ciziyor.",
+  "_sure_notu": "dayMinutes: bir tam gunun GERCEK dakika cinsinden suresi. 12 dakika, ortalama bir oturumda oyuncunun gunduzu de geceyi de gormesi icin secildi; daha uzunu geceyi hic gormeyen oyuncular, daha kisasi surekli donen bir gokyuzu demekti.",
+  "_nobet_notu": "Gece hasta seyrek ama ucret zamli ve acil vaka orani yuksek. Amac, gecenin 'bos zaman' degil BASKA BIR OYUN olmasi: az hasta, yuksek risk, yuksek kazanc.",
+  "dayMinutes": 12,
+  "startClockTime": 8.5,
+  "_esik_notu": "nightStart ve nightEnd saat cinsinden (0-24). Aralarindaki sure gece sayiliyor; gecis ikisinin etrafinda transitionHours boyunca yumusakca oluyor.",
+  "nightStart": 19.5,
+  "nightEnd": 6.5,
+  "transitionHours": 1.2,
+  "night": {
+    "arrivalScale": 1.55,
+    "feeMultiplier": 1.35,
+    "xpMultiplier": 1.2,
+    "emergencyChanceBonus": 0.12,
+    "ambient": [
+      42,
+      48,
+      64
+    ],
+    "outdoorAmbient": [
+      38,
+      44,
+      60
+    ],
+    "brightness": 0.7,
+    "fogColor": [
+      36,
+      44,
+      62
+    ],
+    "starCount": 2400
+  },
+  "day": {
+    "arrivalScale": 1.0,
+    "feeMultiplier": 1.0,
+    "xpMultiplier": 1.0,
+    "emergencyChanceBonus": 0,
+    "ambient": [
+      92,
+      96,
+      106
+    ],
+    "outdoorAmbient": [
+      124,
+      132,
+      146
+    ],
+    "brightness": 1.7,
+    "fogColor": [
+      200,
+      214,
+      228
+    ],
+    "starCount": 0
+  }
+}

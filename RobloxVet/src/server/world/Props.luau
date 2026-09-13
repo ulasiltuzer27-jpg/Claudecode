@@ -720,7 +720,10 @@ builders.lampPost = function(model, origin)
 	for _, corner in { Vector3.new(0.8, 11.5, 0.8), Vector3.new(-0.8, 11.5, 0.8), Vector3.new(0.8, 11.5, -0.8), Vector3.new(-0.8, 11.5, -0.8) } do
 		d("FenerDikmesi", Vector3.new(0.12, 1.5, 0.12), corner, C.navy, Enum.Material.Metal)
 	end
+	-- Adi SABIT: DayCycle sokak lambalarini bu adla buluyor ve geceyle
+	-- birlikte yakiyor. Ad degisirse lambalar gece yanmaz.
 	local light = Instance.new("PointLight")
+	light.Name = "SokakLambasiIsik"
 	light.Brightness = lamp.brightness
 	light.Range = lamp.range
 	light.Color = lamp.color

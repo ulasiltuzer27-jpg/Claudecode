@@ -26,6 +26,7 @@ local Net = require(Shared.Net)
 
 local AnimalAnimator = require(script.Parent.world.AnimalAnimator)
 local AnimalFactory = require(script.Parent.world.AnimalFactory)
+local DayCycle = require(script.Parent.world.DayCycle)
 local Decor = require(script.Parent.world.Decor)
 local Doors = require(script.Parent.world.Doors)
 local Effects = require(script.Parent.world.Effects)
@@ -43,6 +44,7 @@ local Treatment = require(script.Parent.game.Treatment)
 local Upgrades = require(script.Parent.game.Upgrades)
 
 local clinicPlan = require(Data.clinic)
+local dayCycleData = require(Data.daycycle)
 local decorData = require(Data.decor)
 local toolData = require(Data.tools)
 local lobbyPlan = require(Data.lobby)
@@ -615,6 +617,45 @@ do
 	for kind in gameKinds do
 		check(("mini-oyun '%s' basligi cevrili"):format(kind), Loc.has("toolgame." .. kind))
 		check(("mini-oyun '%s' ipucu cevrili"):format(kind), Loc.has("toolgame." .. kind .. ".hint"))
+	end
+
+	-- Gunduz/gece: sokak lambalari bulunmus mu, carpanlar makul mu.
+	check("sokak lambalari gece dongusune baglandi", DayCycle.lampCount() > 0)
+	check("saat 0-24 araliginda", DayCycle.clockTime() >= 0 and DayCycle.clockTime() < 24)
+	local shift = DayCycle.modifiers()
+	check("gece ucret carpani 1'den kucuk degil", shift.feeMultiplier >= 1)
+	check("gece hasta araligi kisalmiyor", shift.arrivalScale >= 1)
+	check(
+		"gece ucret zammi gunduzden yuksek",
+		dayCycleData.night.feeMultiplier > dayCycleData.day.feeMultiplier
+	)
+	check(
+		"gece hasta seyrekligi gunduzden fazla",
+		dayCycleData.night.arrivalScale > dayCycleData.day.arrivalScale
+	)
+
+	-- Rutin vakalar: belirtisiz, tek adimli, teshis panelinde gorunmez.
+	local routineCount = 0
+	for _, condition in Diagnosis.allConditions() do
+		if condition.kind ~= "routine" then
+			continue
+		end
+		routineCount += 1
+		check(("rutin vaka '%s' belirtisiz"):format(condition.id), #condition.symptoms == 0)
+		check(("rutin vaka '%s' tek adimli"):format(condition.id), #condition.treatments == 1)
+		check(("rutin vaka '%s' Diagnosis tarafindan rutin sayiliyor"):format(condition.id),
+			Diagnosis.isRoutine(condition.id))
+		check(("rutin vaka '%s' adi cevrili"):format(condition.id), Loc.has(condition.nameKey))
+	end
+	check("en az bir rutin vaka var", routineCount > 0)
+	-- Rutin vakalar teshis listesinde GORUNMEMELI.
+	for _, animal in require(Data.animals).animals do
+		for _, condition in Diagnosis.conditionsFor(animal.id, 10) do
+			check(
+				("'%s' teshis listesinde rutin vaka yok (%s)"):format(animal.id, condition.id),
+				condition.kind ~= "routine"
+			)
+		end
 	end
 
 	-- Birinci sahis el modeli: her aletin viewModel bloku olmali.

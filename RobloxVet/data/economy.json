@@ -2,10 +2,8 @@
   "_comment": "(VERI) Ilerleme ve ekonomi. Butun sayilar burada; oyunun dengesini degistirmek icin kod degil bu dosya duzenlenir. tools/simulate_economy.py egriyi bassiz dogruluyor.",
   "startingMoney": 500,
   "startingReputation": 50,
-
   "_rezerv_notu": "Magaza, kasayi bu tutarin altina indiren bir satin almayi reddeder. Sebep: butun parasini alete yatiran oyuncu sarf malzemesi alamaz, tedavi edemez, para kazanamaz ve oyun KILITLENIR. tools/simulate_economy.py bu durumu yakaladi.",
   "minimumReserve": 150,
-
   "_ucret_notu": "Ucret = baseFee x feeMultiplier x itibarCarpani x feeBonus(yukseltme) x saglikOrani. Itibar carpani reputationFeeFloor ile reputationFeeCeil arasinda dogrusal.",
   "fee": {
     "reputationFeeFloor": 0.7,
@@ -13,7 +11,6 @@
     "healthShare": 0.35,
     "minimumFee": 20
   },
-
   "_hasta_notu": "Hastalar araliksiz gelir; aralik itibar ve yukseltmelerle kisalir. patienceSeconds dolarsa hasta kizip gider ve itibar duser.",
   "arrival": {
     "baseSeconds": 26,
@@ -22,7 +19,6 @@
     "patienceSeconds": 260,
     "queueSlots": 3
   },
-
   "_itibar_notu": "Itibar 0-100. Dogru teshis ve saglikli taburcu yukseltir; yanlis teshis, stresli taburcu ve bekletip kacirmak dusurur.",
   "reputation": {
     "min": 0,
@@ -33,7 +29,6 @@
     "stressedDischarge": -4,
     "timeout": -8
   },
-
   "_hayvan_notu": "Hayvanin sagligi ve stresi. Saglik 0'a duserse hasta kaybedilir; stres 100'e ulasirsa hayvan direnir ve o tedavi bosa gider.",
   "patient": {
     "startHealthMin": 35,
@@ -46,10 +41,8 @@
     "dischargeHealth": 85,
     "healthyDischargeThreshold": 90
   },
-
   "_alet_notu": "Her alet kullanimi hayvani biraz gerer. Boylece butun aletleri sirayla denemek bedava olmuyor: stres 100'e varirsa hayvan direnir.",
   "toolStress": 4,
-
   "_acil_notu": "Acil vaka: ambulansla gelen agir hasta. Daha dusuk saglikla baslar, sure siniri vardir, ucreti ve XP'si yuksektir; kaybedilirse itibar cezasi agirdir. minLevel'den once cikmaz - yeni oyuncunun ilk 10 dakikasinda kaldiramayacagi bir sey olmasin.",
   "emergency": {
     "chance": 0.16,
@@ -61,7 +54,6 @@
     "reputationLoss": -12,
     "reputationGain": 6
   },
-
   "_sahip_notu": "Hayvanin sahibi bekleme odasinda oturur. Memnuniyeti bekleme suresiyle duser, dogru teshis ve saglikli taburcu ile yukselir. Yeterince memnunsa ucretin uzerine BAHSIS birakir.",
   "owner": {
     "startSatisfaction": 75,
@@ -72,33 +64,92 @@
     "tipShare": 0.3,
     "minTipSatisfaction": 60
   },
-
   "_gorev_notu": "Gunluk gorevler: havuzdan rastgele secilen hedefler. resetHours dolunca yenilenir; sayac oyuncunun profiline yaziliyor, yani sunucu degistirse de kaybolmuyor.",
   "dailyTasks": {
     "count": 3,
     "resetHours": 24
   },
-
   "wrongDiagnosisStress": 18,
   "wrongTreatmentStress": 12,
   "wrongTreatmentHealth": -6,
-
   "_seviye_notu": "xp, O SEVIYEYE ULASMAK icin gereken toplam XP. titleKey oyuncunun unvani.",
   "levels": [
-    { "level": 1,  "xp": 0,    "titleKey": "title.1" },
-    { "level": 2,  "xp": 120,  "titleKey": "title.2" },
-    { "level": 3,  "xp": 320,  "titleKey": "title.3" },
-    { "level": 4,  "xp": 640,  "titleKey": "title.4" },
-    { "level": 5,  "xp": 1100, "titleKey": "title.5" },
-    { "level": 6,  "xp": 1750, "titleKey": "title.6" },
-    { "level": 7,  "xp": 2600, "titleKey": "title.7" },
-    { "level": 8,  "xp": 3700, "titleKey": "title.8" },
-    { "level": 9,  "xp": 5100, "titleKey": "title.9" },
-    { "level": 10, "xp": 6900, "titleKey": "title.10" },
-    { "level": 11, "xp": 9000,  "titleKey": "title.11" },
-    { "level": 12, "xp": 11600, "titleKey": "title.12" },
-    { "level": 13, "xp": 14800, "titleKey": "title.13" },
-    { "level": 14, "xp": 18700, "titleKey": "title.14" },
-    { "level": 15, "xp": 23500, "titleKey": "title.15" }
-  ]
+    {
+      "level": 1,
+      "xp": 0,
+      "titleKey": "title.1"
+    },
+    {
+      "level": 2,
+      "xp": 120,
+      "titleKey": "title.2"
+    },
+    {
+      "level": 3,
+      "xp": 320,
+      "titleKey": "title.3"
+    },
+    {
+      "level": 4,
+      "xp": 640,
+      "titleKey": "title.4"
+    },
+    {
+      "level": 5,
+      "xp": 1100,
+      "titleKey": "title.5"
+    },
+    {
+      "level": 6,
+      "xp": 1750,
+      "titleKey": "title.6"
+    },
+    {
+      "level": 7,
+      "xp": 2600,
+      "titleKey": "title.7"
+    },
+    {
+      "level": 8,
+      "xp": 3700,
+      "titleKey": "title.8"
+    },
+    {
+      "level": 9,
+      "xp": 5100,
+      "titleKey": "title.9"
+    },
+    {
+      "level": 10,
+      "xp": 6900,
+      "titleKey": "title.10"
+    },
+    {
+      "level": 11,
+      "xp": 9000,
+      "titleKey": "title.11"
+    },
+    {
+      "level": 12,
+      "xp": 11600,
+      "titleKey": "title.12"
+    },
+    {
+      "level": 13,
+      "xp": 14800,
+      "titleKey": "title.13"
+    },
+    {
+      "level": 14,
+      "xp": 18700,
+      "titleKey": "title.14"
+    },
+    {
+      "level": 15,
+      "xp": 23500,
+      "titleKey": "title.15"
+    }
+  ],
+  "routineChance": 0.22,
+  "_rutin_notu": "Gelen hastanin RUTIN KONTROL olma olasiligi. Acil vakalar bundan once degerlendiriliyor: bir vaka hem acil hem rutin olamaz."
 }

@@ -33,8 +33,8 @@ local CELL = UDim2.fromOffset(96, 64)
 function TreatmentPanel.create(parent: ScreenGui)
 	local panel = Theme.card({
 		name = "TedaviPaneli",
-		size = UDim2.fromOffset(330, 292),
-		position = UDim2.new(1, -Theme.space.lg, 0, 476),
+		size = UDim2.fromOffset(330, 276),
+		position = UDim2.new(1, -Theme.space.lg, 0, 496),
 		anchor = Vector2.new(1, 0),
 		parent = parent,
 		visible = false,

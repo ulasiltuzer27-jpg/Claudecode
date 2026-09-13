@@ -28,6 +28,7 @@ local Net = require(Shared.Net)
 local AnimalAnimator = require(script.Parent.Parent.world.AnimalAnimator)
 local AnimalFactory = require(script.Parent.Parent.world.AnimalFactory)
 local Clinic = require(script.Parent.Parent.world.Clinic)
+local DayCycle = require(script.Parent.Parent.world.DayCycle)
 local Effects = require(script.Parent.Parent.world.Effects)
 local OwnerFactory = require(script.Parent.Parent.world.OwnerFactory)
 local SkyLighting = require(script.Parent.Parent.world.Lighting)
@@ -315,6 +316,9 @@ local function chartSnapshot(patient: Patient?, viewer: Player): any
 		secondsLeft = if patient.emergency then math.max(0, patient.deadline - os.clock()) else -1,
 		satisfaction = math.floor(patient.satisfaction + 0.5),
 		hintKey = if always ~= nil then always.hintKey else nil,
+		-- Rutin islemde teshis paneli hic acilmiyor; istemci bunu
+		-- buradan biliyor.
+		routine = Diagnosis.isRoutine(patient.conditionId),
 	}
 end
 
@@ -375,6 +379,9 @@ local function stateSnapshot(player: Player): any
 		-- Ayarlar profilde saklaniyor; istemci acilista bunlari alip
 		-- kamerayi ona gore kuruyor.
 		settings = data.settings,
+		-- Gunduz/gece: saat, nobet rozeti ve ucret carpani. Sunucu
+		-- saati tek kaynak; istemci yalnizca ciziyor.
+		shift = DayCycle.snapshot(),
 	}
 end
 
@@ -453,18 +460,27 @@ end
 -- ── Hasta uretimi ─────────────────────────────────────────────────────
 
 --- Seviyeye uygun (tur, hastalik) cifti secer. Hicbir cift yoksa nil.
-local function pickCase(level: number): (string?, string?)
+--- `routine` true ise rutin islemler, degilse hastaliklar arasindan
+--- seciyor. Rutin listesi bossa (veri henuz eklenmemisse) sessizce
+--- hastaliklara dusuyor: kuyruk asla bos kalmamali.
+local function pickCase(level: number, routine: boolean): (string?, string?)
 	local candidates = {}
 	for _, animalId in AnimalFactory.allIds() do
 		local animal = AnimalFactory.spec(animalId)
 		if animal == nil or animal.unlockLevel > level then
 			continue
 		end
-		for _, condition in Diagnosis.conditionsFor(animalId, level) do
+		local list = if routine
+			then Diagnosis.routinesFor(animalId, level)
+			else Diagnosis.conditionsFor(animalId, level)
+		for _, condition in list do
 			table.insert(candidates, { animalId, condition.id })
 		end
 	end
 	if #candidates == 0 then
+		if routine then
+			return pickCase(level, false)
+		end
 		return nil, nil
 	end
 	local pick = candidates[math.random(1, #candidates)]
@@ -502,7 +518,15 @@ local function spawnPatient()
 		return -- bekleme yeri dolu
 	end
 
-	local animalId, conditionId = pickCase(highestLevel())
+	-- Acil vaka once degerlendiriliyor: bir vaka hem acil hem rutin
+	-- olamaz. Gece acil orani daha yuksek (data/daycycle.json).
+	local night = DayCycle.modifiers()
+	local level = highestLevel()
+	local isEmergency = level >= economy.emergency.minLevel
+		and math.random() < economy.emergency.chance + night.emergencyBonus
+	local isRoutine = not isEmergency and math.random() < economy.routineChance
+
+	local animalId, conditionId = pickCase(level, isRoutine)
 	if animalId == nil or conditionId == nil then
 		warn("[PatientFlow] bu seviyede uygun hasta bulunamadi - veri tablolarini kontrol edin")
 		return
@@ -516,8 +540,8 @@ local function spawnPatient()
 
 	-- Acil vaka: ambulansla gelen agir hasta. minLevel'den once cikmiyor -
 	-- yeni oyuncunun ilk dakikalarinda kaldiramayacagi bir sey olmasin.
-	local emergency = highestLevel() >= economy.emergency.minLevel
-		and math.random() < economy.emergency.chance
+	-- Rutin bir islem acil olamaz.
+	local emergency = isEmergency and not Diagnosis.isRoutine(conditionId)
 
 	local id = nextPatientId
 	nextPatientId += 1
@@ -536,7 +560,10 @@ local function spawnPatient()
 		stress = math.random(economy.patient.startStressMin, economy.patient.startStressMax),
 		revealed = {},
 		toolsUsed = {},
-		diagnosed = false,
+		-- Rutin islemde teshis yok: hasta zaten "asi olacak" diye
+		-- geliyor. Bu yuzden teshisli doguyor ve tedavi paneli aninda
+		-- aciliyor.
+		diagnosed = Diagnosis.isRoutine(conditionId),
 		treatmentsDone = {},
 		vet = nil,
 		owner = nil,
@@ -1225,6 +1252,14 @@ function PatientFlow.discharge(player: Player)
 	-- fark edilmez.
 	local previousLevel = data.level
 	local xpGain = condition.xp
+
+	-- Gece nobeti zammi: gece hasta seyrek ama ucret ve XP zamli.
+	-- Carpan HASTA GELDIGI an degil, TABURCU edildigi an okunuyor -
+	-- yani nobeti bitirmek de nobette calismak kadar onemli.
+	local shift = DayCycle.modifiers()
+	fee = math.floor(fee * shift.feeMultiplier + 0.5)
+	xpGain = math.floor(xpGain * shift.xpMultiplier + 0.5)
+
 	if patient.emergency then
 		fee = math.floor(fee * economy.emergency.feeMultiplier + 0.5)
 		xpGain = math.floor(xpGain * economy.emergency.xpMultiplier + 0.5)
@@ -1417,7 +1452,13 @@ function PatientFlow.start(built: Clinic.Built)
 				spawnPatient()
 			end
 			local clinicEffects = Upgrades.clinicEffects(Players:GetPlayers())
-			task.wait(Economy.arrivalSeconds(bestReputation(), clinicEffects.arrivalScale))
+			-- Gece hasta SEYREK geliyor: arrivalScale 1'in ustunde,
+			-- yani bekleme suresi uzuyor.
+			local shift = DayCycle.modifiers()
+			task.wait(Economy.arrivalSeconds(
+				bestReputation(),
+				clinicEffects.arrivalScale * shift.arrivalScale
+			))
 		end
 	end)
 

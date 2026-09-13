@@ -4693,12 +4693,183 @@ return {
 			[&quot;wrongPenalty&quot;] = 84,
 			[&quot;severity&quot;] = 3,
 		},
+		{
+			[&quot;id&quot;] = &quot;vaccination&quot;,
+			[&quot;nameKey&quot;] = &quot;condition.vaccination&quot;,
+			[&quot;hintKey&quot;] = &quot;hint.vaccination&quot;,
+			[&quot;kind&quot;] = &quot;routine&quot;,
+			[&quot;species&quot;] = {
+				&quot;dog&quot;,
+				&quot;cat&quot;,
+				&quot;rabbit&quot;,
+				&quot;hamster&quot;,
+				&quot;parrot&quot;,
+				&quot;turtle&quot;,
+				&quot;hedgehog&quot;,
+				&quot;snake&quot;,
+				&quot;iguana&quot;,
+				&quot;horse&quot;,
+			},
+			[&quot;symptoms&quot;] = {},
+			[&quot;treatments&quot;] = {
+				&quot;injection&quot;,
+			},
+			[&quot;feeMultiplier&quot;] = 0.9,
+			[&quot;xp&quot;] = 26,
+			[&quot;unlockLevel&quot;] = 1,
+			[&quot;wrongPenalty&quot;] = 0,
+			[&quot;severity&quot;] = 1,
+		},
+		{
+			[&quot;id&quot;] = &quot;checkup&quot;,
+			[&quot;nameKey&quot;] = &quot;condition.checkup&quot;,
+			[&quot;hintKey&quot;] = &quot;hint.checkup&quot;,
+			[&quot;kind&quot;] = &quot;routine&quot;,
+			[&quot;species&quot;] = {
+				&quot;dog&quot;,
+				&quot;cat&quot;,
+				&quot;rabbit&quot;,
+				&quot;hamster&quot;,
+				&quot;parrot&quot;,
+				&quot;turtle&quot;,
+				&quot;hedgehog&quot;,
+				&quot;snake&quot;,
+				&quot;iguana&quot;,
+				&quot;horse&quot;,
+			},
+			[&quot;symptoms&quot;] = {},
+			[&quot;treatments&quot;] = {
+				&quot;pill&quot;,
+			},
+			[&quot;feeMultiplier&quot;] = 0.7,
+			[&quot;xp&quot;] = 18,
+			[&quot;unlockLevel&quot;] = 1,
+			[&quot;wrongPenalty&quot;] = 0,
+			[&quot;severity&quot;] = 1,
+		},
+		{
+			[&quot;id&quot;] = &quot;grooming&quot;,
+			[&quot;nameKey&quot;] = &quot;condition.grooming&quot;,
+			[&quot;hintKey&quot;] = &quot;hint.grooming&quot;,
+			[&quot;kind&quot;] = &quot;routine&quot;,
+			[&quot;species&quot;] = {
+				&quot;dog&quot;,
+				&quot;cat&quot;,
+				&quot;rabbit&quot;,
+				&quot;hamster&quot;,
+				&quot;parrot&quot;,
+				&quot;turtle&quot;,
+				&quot;hedgehog&quot;,
+				&quot;snake&quot;,
+				&quot;iguana&quot;,
+				&quot;horse&quot;,
+			},
+			[&quot;symptoms&quot;] = {},
+			[&quot;treatments&quot;] = {
+				&quot;wash&quot;,
+			},
+			[&quot;feeMultiplier&quot;] = 0.8,
+			[&quot;xp&quot;] = 22,
+			[&quot;unlockLevel&quot;] = 2,
+			[&quot;wrongPenalty&quot;] = 0,
+			[&quot;severity&quot;] = 1,
+		},
+		{
+			[&quot;id&quot;] = &quot;deworming&quot;,
+			[&quot;nameKey&quot;] = &quot;condition.deworming&quot;,
+			[&quot;hintKey&quot;] = &quot;hint.deworming&quot;,
+			[&quot;kind&quot;] = &quot;routine&quot;,
+			[&quot;species&quot;] = {
+				&quot;dog&quot;,
+				&quot;cat&quot;,
+				&quot;rabbit&quot;,
+				&quot;hamster&quot;,
+				&quot;parrot&quot;,
+				&quot;turtle&quot;,
+				&quot;hedgehog&quot;,
+				&quot;snake&quot;,
+				&quot;iguana&quot;,
+				&quot;horse&quot;,
+			},
+			[&quot;symptoms&quot;] = {},
+			[&quot;treatments&quot;] = {
+				&quot;pill&quot;,
+			},
+			[&quot;feeMultiplier&quot;] = 1,
+			[&quot;xp&quot;] = 30,
+			[&quot;unlockLevel&quot;] = 4,
+			[&quot;wrongPenalty&quot;] = 0,
+			[&quot;severity&quot;] = 1,
+		},
 	},
 }
 </ProtectedString>
 				</Properties>
 			</Item>
 			<Item class="ModuleScript" referent="RBX18">
+				<Properties>
+					<string name="Name">daycycle</string>
+					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
+-- Kaynak: data/daycycle.json
+-- Uretici: tools/jsontolua.py  (python3 build.py)
+-- (VERI) Gunduz/gece dongusu ve gece nobeti. Sunucu saati TEK KAYNAK: istemci yalnizca ciziyor.
+return {
+	[&quot;dayMinutes&quot;] = 12,
+	[&quot;startClockTime&quot;] = 8.5,
+	[&quot;nightStart&quot;] = 19.5,
+	[&quot;nightEnd&quot;] = 6.5,
+	[&quot;transitionHours&quot;] = 1.2,
+	[&quot;night&quot;] = {
+		[&quot;arrivalScale&quot;] = 1.55,
+		[&quot;feeMultiplier&quot;] = 1.35,
+		[&quot;xpMultiplier&quot;] = 1.2,
+		[&quot;emergencyChanceBonus&quot;] = 0.12,
+		[&quot;ambient&quot;] = {
+			42,
+			48,
+			64,
+		},
+		[&quot;outdoorAmbient&quot;] = {
+			38,
+			44,
+			60,
+		},
+		[&quot;brightness&quot;] = 0.7,
+		[&quot;fogColor&quot;] = {
+			36,
+			44,
+			62,
+		},
+		[&quot;starCount&quot;] = 2400,
+	},
+	[&quot;day&quot;] = {
+		[&quot;arrivalScale&quot;] = 1,
+		[&quot;feeMultiplier&quot;] = 1,
+		[&quot;xpMultiplier&quot;] = 1,
+		[&quot;emergencyChanceBonus&quot;] = 0,
+		[&quot;ambient&quot;] = {
+			92,
+			96,
+			106,
+		},
+		[&quot;outdoorAmbient&quot;] = {
+			124,
+			132,
+			146,
+		},
+		[&quot;brightness&quot;] = 1.7,
+		[&quot;fogColor&quot;] = {
+			200,
+			214,
+			228,
+		},
+		[&quot;starCount&quot;] = 0,
+	},
+}
+</ProtectedString>
+				</Properties>
+			</Item>
+			<Item class="ModuleScript" referent="RBX19">
 				<Properties>
 					<string name="Name">decor</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -4902,7 +5073,7 @@ return {
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX19">
+			<Item class="ModuleScript" referent="RBX20">
 				<Properties>
 					<string name="Name">economy</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -5050,11 +5221,12 @@ return {
 			[&quot;titleKey&quot;] = &quot;title.15&quot;,
 		},
 	},
+	[&quot;routineChance&quot;] = 0.22,
 }
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX20">
+			<Item class="ModuleScript" referent="RBX21">
 				<Properties>
 					<string name="Name">lighting</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -5185,7 +5357,7 @@ return {
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX21">
+			<Item class="ModuleScript" referent="RBX22">
 				<Properties>
 					<string name="Name">lobby</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -5395,11 +5567,11 @@ return {
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="Folder" referent="RBX22">
+			<Item class="Folder" referent="RBX23">
 				<Properties>
 					<string name="Name">locale</string>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX23">
+				<Item class="ModuleScript" referent="RBX24">
 					<Properties>
 						<string name="Name">tr</string>
 						<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -5431,6 +5603,8 @@ return {
 		[&quot;hud.objective.treat&quot;] = &quot;Tedaviyi tamamla&quot;,
 		[&quot;hud.objective.discharge&quot;] = &quot;Hastayı taburcu et  (T)&quot;,
 		[&quot;hud.objective.emergency&quot;] = &quot;ACİL VAKA — zaman doluyor!&quot;,
+		[&quot;hud.dayShift&quot;] = &quot;GÜNDÜZ&quot;,
+		[&quot;hud.nightShift&quot;] = &quot;GECE NÖBETİ ×{1}&quot;,
 		[&quot;room.reception&quot;] = &quot;RESEPSİYON&quot;,
 		[&quot;room.pharmacy&quot;] = &quot;ECZANE&quot;,
 		[&quot;room.exam1&quot;] = &quot;MUAYENE 1&quot;,
@@ -5666,6 +5840,15 @@ return {
 		[&quot;condition.metabolicBone&quot;] = &quot;Metabolik Kemik Hastalığı&quot;,
 		[&quot;condition.colic&quot;] = &quot;Kolik&quot;,
 		[&quot;condition.laminitis&quot;] = &quot;Nal İltihabı&quot;,
+		[&quot;condition.vaccination&quot;] = &quot;Aşı&quot;,
+		[&quot;condition.checkup&quot;] = &quot;Rutin Kontrol&quot;,
+		[&quot;condition.grooming&quot;] = &quot;Tımar&quot;,
+		[&quot;condition.deworming&quot;] = &quot;Parazit İlacı&quot;,
+		[&quot;hint.vaccination&quot;] = &quot;Aşı zamanı gelmiş, bir de siz bakın.&quot;,
+		[&quot;hint.checkup&quot;] = &quot;Bir şeyi yok sanırım, yıllık kontrole getirdim.&quot;,
+		[&quot;hint.grooming&quot;] = &quot;Tüyleri iyice keçeleşti, bir güzel yıkayın.&quot;,
+		[&quot;hint.deworming&quot;] = &quot;Parazit ilacı vakti geldi diye getirdim.&quot;,
+		[&quot;chart.routine&quot;] = &quot;RUTİN İŞLEM — teşhis gerekmiyor&quot;,
 		[&quot;hint.generic&quot;] = &quot;Bir tuhaflık var ama tam anlatamıyorum, siz bakın.&quot;,
 		[&quot;hint.emergency&quot;] = &quot;ACİL! Lütfen hemen bakın, çok kötü durumda!&quot;,
 		[&quot;hint.relieved&quot;] = &quot;Çok şükür, ne olduğunu anladınız.&quot;,
@@ -5830,7 +6013,7 @@ return {
 					</Properties>
 				</Item>
 			</Item>
-			<Item class="ModuleScript" referent="RBX24">
+			<Item class="ModuleScript" referent="RBX25">
 				<Properties>
 					<string name="Name">props</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -6279,7 +6462,7 @@ return {
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX25">
+			<Item class="ModuleScript" referent="RBX26">
 				<Properties>
 					<string name="Name">settings</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -6380,7 +6563,7 @@ return {
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX26">
+			<Item class="ModuleScript" referent="RBX27">
 				<Properties>
 					<string name="Name">symptoms</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -6592,7 +6775,7 @@ return {
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX27">
+			<Item class="ModuleScript" referent="RBX28">
 				<Properties>
 					<string name="Name">tasks</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -6716,7 +6899,7 @@ return {
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX28">
+			<Item class="ModuleScript" referent="RBX29">
 				<Properties>
 					<string name="Name">tools</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -7010,7 +7193,7 @@ return {
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX29">
+			<Item class="ModuleScript" referent="RBX30">
 				<Properties>
 					<string name="Name">treatments</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -7129,7 +7312,7 @@ return {
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX30">
+			<Item class="ModuleScript" referent="RBX31">
 				<Properties>
 					<string name="Name">upgrades</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -7254,11 +7437,11 @@ return {
 			</Item>
 		</Item>
 	</Item>
-	<Item class="ServerScriptService" referent="RBX31">
+	<Item class="ServerScriptService" referent="RBX32">
 		<Properties>
 			<string name="Name">ServerScriptService</string>
 		</Properties>
-		<Item class="Script" referent="RBX32">
+		<Item class="Script" referent="RBX33">
 			<Properties>
 				<string name="Name">VetServer</string>
 				<ProtectedString name="Source">--!strict
@@ -7299,6 +7482,7 @@ local Validate = require(Shared.Validate)
 
 local AnimalAnimator = require(script.world.AnimalAnimator)
 local Clinic = require(script.world.Clinic)
+local DayCycle = require(script.world.DayCycle)
 local Decor = require(script.world.Decor)
 local Doors = require(script.world.Doors)
 local Lobby = require(script.world.Lobby)
@@ -7428,6 +7612,10 @@ local function startClinic()
 	local ok, err = pcall(function()
 		clinicBuilt = Clinic.build(workspace)
 		Doors.start()
+		-- Gunduz/gece: once sokak lambalari toplaniyor, sonra dongu
+		-- basliyor. Ters sirada ilk gecede hicbir lamba yanmazdi.
+		DayCycle.collectLamps((clinicBuilt :: Clinic.Built).model)
+		DayCycle.start()
 		AnimalAnimator.start()
 		OwnerFactory.start()
 		PatientFlow.start(clinicBuilt :: Clinic.Built)
@@ -7701,7 +7889,7 @@ end
 print((&quot;[Veteriner] sunucu hazir — mod: %s&quot;):format(mode))
 </ProtectedString>
 			</Properties>
-			<Item class="Script" referent="RBX33">
+			<Item class="Script" referent="RBX34">
 				<Properties>
 					<string name="Name">SelfTest</string>
 					<ProtectedString name="Source">--!strict
@@ -7732,6 +7920,7 @@ local Net = require(Shared.Net)
 
 local AnimalAnimator = require(script.Parent.world.AnimalAnimator)
 local AnimalFactory = require(script.Parent.world.AnimalFactory)
+local DayCycle = require(script.Parent.world.DayCycle)
 local Decor = require(script.Parent.world.Decor)
 local Doors = require(script.Parent.world.Doors)
 local Effects = require(script.Parent.world.Effects)
@@ -7749,6 +7938,7 @@ local Treatment = require(script.Parent.game.Treatment)
 local Upgrades = require(script.Parent.game.Upgrades)
 
 local clinicPlan = require(Data.clinic)
+local dayCycleData = require(Data.daycycle)
 local decorData = require(Data.decor)
 local toolData = require(Data.tools)
 local lobbyPlan = require(Data.lobby)
@@ -8323,6 +8513,45 @@ do
 		check((&quot;mini-oyun '%s' ipucu cevrili&quot;):format(kind), Loc.has(&quot;toolgame.&quot; .. kind .. &quot;.hint&quot;))
 	end
 
+	-- Gunduz/gece: sokak lambalari bulunmus mu, carpanlar makul mu.
+	check(&quot;sokak lambalari gece dongusune baglandi&quot;, DayCycle.lampCount() &gt; 0)
+	check(&quot;saat 0-24 araliginda&quot;, DayCycle.clockTime() &gt;= 0 and DayCycle.clockTime() &lt; 24)
+	local shift = DayCycle.modifiers()
+	check(&quot;gece ucret carpani 1'den kucuk degil&quot;, shift.feeMultiplier &gt;= 1)
+	check(&quot;gece hasta araligi kisalmiyor&quot;, shift.arrivalScale &gt;= 1)
+	check(
+		&quot;gece ucret zammi gunduzden yuksek&quot;,
+		dayCycleData.night.feeMultiplier &gt; dayCycleData.day.feeMultiplier
+	)
+	check(
+		&quot;gece hasta seyrekligi gunduzden fazla&quot;,
+		dayCycleData.night.arrivalScale &gt; dayCycleData.day.arrivalScale
+	)
+
+	-- Rutin vakalar: belirtisiz, tek adimli, teshis panelinde gorunmez.
+	local routineCount = 0
+	for _, condition in Diagnosis.allConditions() do
+		if condition.kind ~= &quot;routine&quot; then
+			continue
+		end
+		routineCount += 1
+		check((&quot;rutin vaka '%s' belirtisiz&quot;):format(condition.id), #condition.symptoms == 0)
+		check((&quot;rutin vaka '%s' tek adimli&quot;):format(condition.id), #condition.treatments == 1)
+		check((&quot;rutin vaka '%s' Diagnosis tarafindan rutin sayiliyor&quot;):format(condition.id),
+			Diagnosis.isRoutine(condition.id))
+		check((&quot;rutin vaka '%s' adi cevrili&quot;):format(condition.id), Loc.has(condition.nameKey))
+	end
+	check(&quot;en az bir rutin vaka var&quot;, routineCount &gt; 0)
+	-- Rutin vakalar teshis listesinde GORUNMEMELI.
+	for _, animal in require(Data.animals).animals do
+		for _, condition in Diagnosis.conditionsFor(animal.id, 10) do
+			check(
+				(&quot;'%s' teshis listesinde rutin vaka yok (%s)&quot;):format(animal.id, condition.id),
+				condition.kind ~= &quot;routine&quot;
+			)
+		end
+	end
+
 	-- Birinci sahis el modeli: her aletin viewModel bloku olmali.
 	for _, tool in toolData.tools do
 		check((&quot;alet '%s' viewModel bildiriyor&quot;):format(tool.id), tool.viewModel ~= nil)
@@ -8347,11 +8576,11 @@ end
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="Folder" referent="RBX34">
+			<Item class="Folder" referent="RBX35">
 				<Properties>
 					<string name="Name">game</string>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX35">
+				<Item class="ModuleScript" referent="RBX36">
 					<Properties>
 						<string name="Name">Achievements</string>
 						<ProtectedString name="Source">--!strict
@@ -8511,7 +8740,7 @@ return Achievements
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX36">
+				<Item class="ModuleScript" referent="RBX37">
 					<Properties>
 						<string name="Name">Diagnosis</string>
 						<ProtectedString name="Source">--!strict
@@ -8570,11 +8799,38 @@ function Diagnosis.allSymptoms(): { any }
 	return symptomData.symptoms
 end
 
+--- Bu vaka RUTIN mi? Rutin vakalarda belirti ve teshis yok: hasta
+--- zaten &quot;asi olacak&quot; diye geliyor, oyuncu tek adimlik islemi
+--- uyguluyor. Kuyruga cesit katiyorlar.
+function Diagnosis.isRoutine(conditionId: string): boolean
+	local condition = conditionById[conditionId]
+	return condition ~= nil and condition.kind == &quot;routine&quot;
+end
+
 --- Bir turun, verilen seviyede yakalanabilecegi hastaliklar.
+--- RUTIN VAKALAR BU LISTEDE YOK: teshis panelinde &quot;Asi&quot; secenegi
+--- gormek, bulmacayi anlamsizlastirirdi.
 function Diagnosis.conditionsFor(animalId: string, level: number): { any }
 	local result = {}
 	for _, condition in conditionData.conditions do
-		if condition.unlockLevel &gt; level then
+		if condition.unlockLevel &gt; level or condition.kind == &quot;routine&quot; then
+			continue
+		end
+		for _, species in condition.species do
+			if species == animalId then
+				table.insert(result, condition)
+				break
+			end
+		end
+	end
+	return result
+end
+
+--- Bir turun, verilen seviyede gelebilecek RUTIN islemleri.
+function Diagnosis.routinesFor(animalId: string, level: number): { any }
+	local result = {}
+	for _, condition in conditionData.conditions do
+		if condition.unlockLevel &gt; level or condition.kind ~= &quot;routine&quot; then
 			continue
 		end
 		for _, species in condition.species do
@@ -8646,7 +8902,7 @@ return Diagnosis
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX37">
+				<Item class="ModuleScript" referent="RBX38">
 					<Properties>
 						<string name="Name">Economy</string>
 						<ProtectedString name="Source">--!strict
@@ -8763,7 +9019,7 @@ return Economy
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX38">
+				<Item class="ModuleScript" referent="RBX39">
 					<Properties>
 						<string name="Name">Leaderboard</string>
 						<ProtectedString name="Source">--!strict
@@ -8839,7 +9095,7 @@ return Leaderboard
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX39">
+				<Item class="ModuleScript" referent="RBX40">
 					<Properties>
 						<string name="Name">Matchmaking</string>
 						<ProtectedString name="Source">--!strict
@@ -9077,7 +9333,7 @@ return Matchmaking
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX40">
+				<Item class="ModuleScript" referent="RBX41">
 					<Properties>
 						<string name="Name">PatientFlow</string>
 						<ProtectedString name="Source">--!strict
@@ -9110,6 +9366,7 @@ local Net = require(Shared.Net)
 local AnimalAnimator = require(script.Parent.Parent.world.AnimalAnimator)
 local AnimalFactory = require(script.Parent.Parent.world.AnimalFactory)
 local Clinic = require(script.Parent.Parent.world.Clinic)
+local DayCycle = require(script.Parent.Parent.world.DayCycle)
 local Effects = require(script.Parent.Parent.world.Effects)
 local OwnerFactory = require(script.Parent.Parent.world.OwnerFactory)
 local SkyLighting = require(script.Parent.Parent.world.Lighting)
@@ -9397,6 +9654,9 @@ local function chartSnapshot(patient: Patient?, viewer: Player): any
 		secondsLeft = if patient.emergency then math.max(0, patient.deadline - os.clock()) else -1,
 		satisfaction = math.floor(patient.satisfaction + 0.5),
 		hintKey = if always ~= nil then always.hintKey else nil,
+		-- Rutin islemde teshis paneli hic acilmiyor; istemci bunu
+		-- buradan biliyor.
+		routine = Diagnosis.isRoutine(patient.conditionId),
 	}
 end
 
@@ -9457,6 +9717,9 @@ local function stateSnapshot(player: Player): any
 		-- Ayarlar profilde saklaniyor; istemci acilista bunlari alip
 		-- kamerayi ona gore kuruyor.
 		settings = data.settings,
+		-- Gunduz/gece: saat, nobet rozeti ve ucret carpani. Sunucu
+		-- saati tek kaynak; istemci yalnizca ciziyor.
+		shift = DayCycle.snapshot(),
 	}
 end
 
@@ -9535,18 +9798,27 @@ end
 -- ── Hasta uretimi ─────────────────────────────────────────────────────
 
 --- Seviyeye uygun (tur, hastalik) cifti secer. Hicbir cift yoksa nil.
-local function pickCase(level: number): (string?, string?)
+--- `routine` true ise rutin islemler, degilse hastaliklar arasindan
+--- seciyor. Rutin listesi bossa (veri henuz eklenmemisse) sessizce
+--- hastaliklara dusuyor: kuyruk asla bos kalmamali.
+local function pickCase(level: number, routine: boolean): (string?, string?)
 	local candidates = {}
 	for _, animalId in AnimalFactory.allIds() do
 		local animal = AnimalFactory.spec(animalId)
 		if animal == nil or animal.unlockLevel &gt; level then
 			continue
 		end
-		for _, condition in Diagnosis.conditionsFor(animalId, level) do
+		local list = if routine
+			then Diagnosis.routinesFor(animalId, level)
+			else Diagnosis.conditionsFor(animalId, level)
+		for _, condition in list do
 			table.insert(candidates, { animalId, condition.id })
 		end
 	end
 	if #candidates == 0 then
+		if routine then
+			return pickCase(level, false)
+		end
 		return nil, nil
 	end
 	local pick = candidates[math.random(1, #candidates)]
@@ -9584,7 +9856,15 @@ local function spawnPatient()
 		return -- bekleme yeri dolu
 	end
 
-	local animalId, conditionId = pickCase(highestLevel())
+	-- Acil vaka once degerlendiriliyor: bir vaka hem acil hem rutin
+	-- olamaz. Gece acil orani daha yuksek (data/daycycle.json).
+	local night = DayCycle.modifiers()
+	local level = highestLevel()
+	local isEmergency = level &gt;= economy.emergency.minLevel
+		and math.random() &lt; economy.emergency.chance + night.emergencyBonus
+	local isRoutine = not isEmergency and math.random() &lt; economy.routineChance
+
+	local animalId, conditionId = pickCase(level, isRoutine)
 	if animalId == nil or conditionId == nil then
 		warn(&quot;[PatientFlow] bu seviyede uygun hasta bulunamadi - veri tablolarini kontrol edin&quot;)
 		return
@@ -9598,8 +9878,8 @@ local function spawnPatient()
 
 	-- Acil vaka: ambulansla gelen agir hasta. minLevel'den once cikmiyor -
 	-- yeni oyuncunun ilk dakikalarinda kaldiramayacagi bir sey olmasin.
-	local emergency = highestLevel() &gt;= economy.emergency.minLevel
-		and math.random() &lt; economy.emergency.chance
+	-- Rutin bir islem acil olamaz.
+	local emergency = isEmergency and not Diagnosis.isRoutine(conditionId)
 
 	local id = nextPatientId
 	nextPatientId += 1
@@ -9618,7 +9898,10 @@ local function spawnPatient()
 		stress = math.random(economy.patient.startStressMin, economy.patient.startStressMax),
 		revealed = {},
 		toolsUsed = {},
-		diagnosed = false,
+		-- Rutin islemde teshis yok: hasta zaten &quot;asi olacak&quot; diye
+		-- geliyor. Bu yuzden teshisli doguyor ve tedavi paneli aninda
+		-- aciliyor.
+		diagnosed = Diagnosis.isRoutine(conditionId),
 		treatmentsDone = {},
 		vet = nil,
 		owner = nil,
@@ -10307,6 +10590,14 @@ function PatientFlow.discharge(player: Player)
 	-- fark edilmez.
 	local previousLevel = data.level
 	local xpGain = condition.xp
+
+	-- Gece nobeti zammi: gece hasta seyrek ama ucret ve XP zamli.
+	-- Carpan HASTA GELDIGI an degil, TABURCU edildigi an okunuyor -
+	-- yani nobeti bitirmek de nobette calismak kadar onemli.
+	local shift = DayCycle.modifiers()
+	fee = math.floor(fee * shift.feeMultiplier + 0.5)
+	xpGain = math.floor(xpGain * shift.xpMultiplier + 0.5)
+
 	if patient.emergency then
 		fee = math.floor(fee * economy.emergency.feeMultiplier + 0.5)
 		xpGain = math.floor(xpGain * economy.emergency.xpMultiplier + 0.5)
@@ -10499,7 +10790,13 @@ function PatientFlow.start(built: Clinic.Built)
 				spawnPatient()
 			end
 			local clinicEffects = Upgrades.clinicEffects(Players:GetPlayers())
-			task.wait(Economy.arrivalSeconds(bestReputation(), clinicEffects.arrivalScale))
+			-- Gece hasta SEYREK geliyor: arrivalScale 1'in ustunde,
+			-- yani bekleme suresi uzuyor.
+			local shift = DayCycle.modifiers()
+			task.wait(Economy.arrivalSeconds(
+				bestReputation(),
+				clinicEffects.arrivalScale * shift.arrivalScale
+			))
 		end
 	end)
 
@@ -10535,7 +10832,7 @@ return PatientFlow
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX41">
+				<Item class="ModuleScript" referent="RBX42">
 					<Properties>
 						<string name="Name">Profile</string>
 						<ProtectedString name="Source">--!strict
@@ -11053,7 +11350,7 @@ return Profile
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX42">
+				<Item class="ModuleScript" referent="RBX43">
 					<Properties>
 						<string name="Name">Surgery</string>
 						<ProtectedString name="Source">--!strict
@@ -11210,7 +11507,7 @@ return Surgery
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX43">
+				<Item class="ModuleScript" referent="RBX44">
 					<Properties>
 						<string name="Name">Tasks</string>
 						<ProtectedString name="Source">--!strict
@@ -11390,7 +11687,7 @@ return Tasks
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX44">
+				<Item class="ModuleScript" referent="RBX45">
 					<Properties>
 						<string name="Name">ToolGame</string>
 						<ProtectedString name="Source">--!strict
@@ -11650,7 +11947,7 @@ return ToolGame
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX45">
+				<Item class="ModuleScript" referent="RBX46">
 					<Properties>
 						<string name="Name">Treatment</string>
 						<ProtectedString name="Source">--!strict
@@ -11810,7 +12107,7 @@ return Treatment
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX46">
+				<Item class="ModuleScript" referent="RBX47">
 					<Properties>
 						<string name="Name">Upgrades</string>
 						<ProtectedString name="Source">--!strict
@@ -12087,11 +12384,11 @@ return Upgrades
 					</Properties>
 				</Item>
 			</Item>
-			<Item class="Folder" referent="RBX47">
+			<Item class="Folder" referent="RBX48">
 				<Properties>
 					<string name="Name">world</string>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX48">
+				<Item class="ModuleScript" referent="RBX49">
 					<Properties>
 						<string name="Name">AnimalAnimator</string>
 						<ProtectedString name="Source">--!strict
@@ -12542,7 +12839,7 @@ return Animator
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX49">
+				<Item class="ModuleScript" referent="RBX50">
 					<Properties>
 						<string name="Name">AnimalFactory</string>
 						<ProtectedString name="Source">--!strict
@@ -13490,7 +13787,7 @@ return AnimalFactory
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX50">
+				<Item class="ModuleScript" referent="RBX51">
 					<Properties>
 						<string name="Name">Clinic</string>
 						<ProtectedString name="Source">--!strict
@@ -14000,7 +14297,211 @@ return Clinic
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX51">
+				<Item class="ModuleScript" referent="RBX52">
+					<Properties>
+						<string name="Name">DayCycle</string>
+						<ProtectedString name="Source">--!strict
+-- DayCycle.luau
+-- =============
+-- Gunduz/gece dongusu ve gece nobeti.
+--
+-- SUNUCU SAATI TEK KAYNAK
+-- -----------------------
+-- `Lighting.ClockTime` sunucuda yaziliyor ve Roblox onu istemcilere
+-- kendiliginden replike ediyor. Istemcinin kendi saatini isletmesi,
+-- bir oyuncuda gece digerinde gunduz olmasi demek olurdu - ve ucret
+-- carpani geceye baglandigi icin bu yalnizca gorsel bir hata degil,
+-- oynanis hatasi olurdu.
+--
+-- Gece neden farkli?
+-- ------------------
+-- Gece &quot;bos zaman&quot; degil, BASKA BIR OYUN: hasta seyrek geliyor ama
+-- ucret zamli, acil vaka orani yuksek. Oyuncu gece nobetini bilerek
+-- secebilsin diye butun sayilar data/daycycle.json'da.
+--
+-- Gecis neden yumusak?
+-- --------------------
+-- Bir karede gunduzden geceye atlamak (ambient, sis, yildizlar) goze
+-- carpiyor. `blend` degeri esiklerin etrafinda transitionHours boyunca
+-- 0'dan 1'e gidiyor ve butun renkler bu oran uzerinden karisiyor.
+
+local Lighting = game:GetService(&quot;Lighting&quot;)
+local RunService = game:GetService(&quot;RunService&quot;)
+
+local ReplicatedStorage = game:GetService(&quot;ReplicatedStorage&quot;)
+local Shared = ReplicatedStorage:WaitForChild(&quot;VetShared&quot;)
+local Data = ReplicatedStorage:WaitForChild(&quot;VetData&quot;)
+
+local Build = require(Shared.Build)
+
+local plan = require(Data.daycycle)
+
+local DayCycle = {}
+
+local clock = plan.startClockTime
+local running = false
+local streetLamps: { PointLight } = {}
+local baseBrightness: { [PointLight]: number } = {}
+local lampHeads: { [PointLight]: BasePart } = {}
+local lampHeadColor: { [PointLight]: Color3 } = {}
+
+--- Saatin 0..24 araligina sarmasi.
+local function wrap(hour: number): number
+	return hour % 24
+end
+
+--- &quot;Gece ne kadar?&quot; 0 = tam gunduz, 1 = tam gece. Esiklerin etrafinda
+--- transitionHours boyunca yumusakca gidiyor.
+local function nightBlend(hour: number): number
+	local fade = math.max(plan.transitionHours, 0.01)
+	local start = plan.nightStart
+	local finish = plan.nightEnd
+
+	-- Aksam: nightStart'tan once fade saat boyunca kararmaya basliyor.
+	local toEvening = wrap(hour - (start - fade))
+	if toEvening &lt;= fade then
+		return toEvening / fade
+	end
+	-- Sabah: nightEnd'den sonra fade saat boyunca aydinlaniyor.
+	local afterMorning = wrap(hour - finish)
+	if afterMorning &lt;= fade then
+		return 1 - afterMorning / fade
+	end
+
+	-- Aradaki tam gece / tam gunduz.
+	local sinceStart = wrap(hour - start)
+	local nightLength = wrap(finish - start)
+	return if sinceStart &lt; nightLength then 1 else 0
+end
+
+local function lerpColor(a: { number }, b: { number }, t: number): Color3
+	return Build.color(a):Lerp(Build.color(b), t)
+end
+
+--- Isiklandirmayi o anki karisima gore ayarlar.
+local function applyBlend(blend: number)
+	local day, night = plan.day, plan.night
+	Lighting.ClockTime = clock
+	Lighting.Ambient = lerpColor(day.ambient, night.ambient, blend)
+	Lighting.OutdoorAmbient = lerpColor(day.outdoorAmbient, night.outdoorAmbient, blend)
+	Lighting.Brightness = day.brightness + (night.brightness - day.brightness) * blend
+	Lighting.FogColor = lerpColor(day.fogColor, night.fogColor, blend)
+
+	local sky = Lighting:FindFirstChild(&quot;Gokyuzu&quot;)
+	if sky ~= nil and sky:IsA(&quot;Sky&quot;) then
+		sky.StarCount = math.floor(day.starCount + (night.starCount - day.starCount) * blend)
+	end
+
+	-- Sokak lambalari geceyle birlikte yaniyor. Gunduz sifir
+	-- parlaklikta duruyorlar: parcayi silip yeniden yaratmak yerine
+	-- parlakligi kismak, isik butcesini de sabit tutuyor.
+	for _, light in streetLamps do
+		light.Brightness = (baseBrightness[light] or 1) * blend
+		-- Fenerin kendisi de sonuyor: yanmayan bir lambanin cami gunduz
+		-- parliyorsa &quot;bozuk&quot; duruyor.
+		local head = lampHeads[light]
+		local color = lampHeadColor[light]
+		if head ~= nil and color ~= nil then
+			head.Color = color:Lerp(Color3.fromRGB(52, 56, 66), 1 - blend)
+		end
+	end
+end
+
+--- Kayitli sokak lambasi sayisi (SelfTest olcuyor: sifirsa ad
+--- eslesmesi bozulmus ve geceleri hicbir lamba yanmayacak demektir).
+function DayCycle.lampCount(): number
+	return #streetLamps
+end
+
+--- Sokak lambalarini kaydeder. Klinik kurulduktan sonra cagriliyor.
+function DayCycle.collectLamps(root: Instance)
+	streetLamps = {}
+	table.clear(baseBrightness)
+	table.clear(lampHeads)
+	table.clear(lampHeadColor)
+	for _, item in root:GetDescendants() do
+		if item:IsA(&quot;PointLight&quot;) and item.Name == &quot;SokakLambasiIsik&quot; then
+			table.insert(streetLamps, item)
+			baseBrightness[item] = item.Brightness
+			local head = item.Parent
+			if head ~= nil and head:IsA(&quot;BasePart&quot;) then
+				lampHeads[item] = head
+				lampHeadColor[item] = head.Color
+			end
+		end
+	end
+end
+
+--- O anki saat (0..24).
+function DayCycle.clockTime(): number
+	return clock
+end
+
+--- Gece karisimi (0..1). Ucret ve hasta sikligi bunu kullaniyor.
+function DayCycle.blend(): number
+	return nightBlend(clock)
+end
+
+--- Gece mi? Yarisindan fazlasi geceyse evet.
+function DayCycle.isNight(): boolean
+	return nightBlend(clock) &gt;= 0.5
+end
+
+--- O anki carpanlar. PatientFlow ve Economy bunlari okuyor; gunduzden
+--- geceye GECERKEN de dogru olsun diye karisimla yumusatiliyor.
+function DayCycle.modifiers(): { arrivalScale: number, feeMultiplier: number, xpMultiplier: number, emergencyBonus: number }
+	local blend = nightBlend(clock)
+	local day, night = plan.day, plan.night
+	return {
+		arrivalScale = day.arrivalScale + (night.arrivalScale - day.arrivalScale) * blend,
+		feeMultiplier = day.feeMultiplier + (night.feeMultiplier - day.feeMultiplier) * blend,
+		xpMultiplier = day.xpMultiplier + (night.xpMultiplier - day.xpMultiplier) * blend,
+		emergencyBonus = day.emergencyChanceBonus
+			+ (night.emergencyChanceBonus - day.emergencyChanceBonus) * blend,
+	}
+end
+
+--- Istemciye yollanan goruntu (HUD saati ve nobet rozeti).
+function DayCycle.snapshot(): any
+	local blend = nightBlend(clock)
+	return {
+		clockTime = clock,
+		night = blend &gt;= 0.5,
+		blend = blend,
+		feeMultiplier = DayCycle.modifiers().feeMultiplier,
+	}
+end
+
+--- Dongu. Saniyede 4 kez guncelliyor: ClockTime 12 dakikada bir tam tur
+--- attigi icin her karede yazmak ayni degeri tekrar tekrar replike
+--- etmekten baska bir sey yapmazdi.
+function DayCycle.start()
+	if running then
+		return
+	end
+	running = true
+	applyBlend(nightBlend(clock))
+
+	local accumulator = 0
+	local hoursPerSecond = 24 / (plan.dayMinutes * 60)
+	RunService.Heartbeat:Connect(function(dt: number)
+		-- dt tavanlaniyor: Studio duraklatilip devam ettirildiginde tek
+		-- karede saatlerce zaman gecmesin.
+		clock = wrap(clock + math.min(dt, 0.25) * hoursPerSecond)
+		accumulator += dt
+		if accumulator &lt; 0.25 then
+			return
+		end
+		accumulator = 0
+		applyBlend(nightBlend(clock))
+	end)
+end
+
+return DayCycle
+</ProtectedString>
+					</Properties>
+				</Item>
+				<Item class="ModuleScript" referent="RBX53">
 					<Properties>
 						<string name="Name">Decor</string>
 						<ProtectedString name="Source">--!strict
@@ -14241,7 +14742,7 @@ return Decor
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX52">
+				<Item class="ModuleScript" referent="RBX54">
 					<Properties>
 						<string name="Name">Doors</string>
 						<ProtectedString name="Source">--!strict
@@ -14487,7 +14988,7 @@ return Doors
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX53">
+				<Item class="ModuleScript" referent="RBX55">
 					<Properties>
 						<string name="Name">Effects</string>
 						<ProtectedString name="Source">--!strict
@@ -14671,7 +15172,7 @@ return Effects
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX54">
+				<Item class="ModuleScript" referent="RBX56">
 					<Properties>
 						<string name="Name">Lighting</string>
 						<ProtectedString name="Source">--!strict
@@ -14794,7 +15295,7 @@ return Sky
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX55">
+				<Item class="ModuleScript" referent="RBX57">
 					<Properties>
 						<string name="Name">Lobby</string>
 						<ProtectedString name="Source">--!strict
@@ -15053,7 +15554,7 @@ return Lobby
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX56">
+				<Item class="ModuleScript" referent="RBX58">
 					<Properties>
 						<string name="Name">OwnerFactory</string>
 						<ProtectedString name="Source">--!strict
@@ -15584,7 +16085,7 @@ return OwnerFactory
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX57">
+				<Item class="ModuleScript" referent="RBX59">
 					<Properties>
 						<string name="Name">Props</string>
 						<ProtectedString name="Source">--!strict
@@ -16309,7 +16810,10 @@ builders.lampPost = function(model, origin)
 	for _, corner in { Vector3.new(0.8, 11.5, 0.8), Vector3.new(-0.8, 11.5, 0.8), Vector3.new(0.8, 11.5, -0.8), Vector3.new(-0.8, 11.5, -0.8) } do
 		d(&quot;FenerDikmesi&quot;, Vector3.new(0.12, 1.5, 0.12), corner, C.navy, Enum.Material.Metal)
 	end
+	-- Adi SABIT: DayCycle sokak lambalarini bu adla buluyor ve geceyle
+	-- birlikte yakiyor. Ad degisirse lambalar gece yanmaz.
 	local light = Instance.new(&quot;PointLight&quot;)
+	light.Name = &quot;SokakLambasiIsik&quot;
 	light.Brightness = lamp.brightness
 	light.Range = lamp.range
 	light.Color = lamp.color
@@ -16685,15 +17189,15 @@ return Props
 			</Item>
 		</Item>
 	</Item>
-	<Item class="StarterPlayer" referent="RBX58">
+	<Item class="StarterPlayer" referent="RBX60">
 		<Properties>
 			<string name="Name">StarterPlayer</string>
 		</Properties>
-		<Item class="StarterPlayerScripts" referent="RBX59">
+		<Item class="StarterPlayerScripts" referent="RBX61">
 			<Properties>
 				<string name="Name">StarterPlayerScripts</string>
 			</Properties>
-			<Item class="LocalScript" referent="RBX60">
+			<Item class="LocalScript" referent="RBX62">
 				<Properties>
 					<string name="Name">VetClient</string>
 					<ProtectedString name="Source">--!strict
@@ -16943,7 +17447,7 @@ end)
 print(&quot;[Veteriner] istemci hazir.&quot;)
 </ProtectedString>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX61">
+				<Item class="ModuleScript" referent="RBX63">
 					<Properties>
 						<string name="Name">Camera</string>
 						<ProtectedString name="Source">--!strict
@@ -17194,7 +17698,7 @@ return Camera
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX62">
+				<Item class="ModuleScript" referent="RBX64">
 					<Properties>
 						<string name="Name">Chart</string>
 						<ProtectedString name="Source">--!strict
@@ -17308,8 +17812,11 @@ function Chart.create(parent: ScreenGui)
 	-- ── Hasta karti ───────────────────────────────────────────────────
 	local panel = Theme.card({
 		name = &quot;HastaKarti&quot;,
-		size = UDim2.fromOffset(330, 372),
-		position = UDim2.new(1, -Theme.space.lg, 0, 92),
+		-- Sag sutun asagidan yukariya: alet cubugu, teshis/tedavi paneli,
+		-- hasta karti, vardiya karti, kuyruk karti. Yukseklikler bu
+		-- sirayla toplaniyor; biri degisirse asagidakiler de kayar.
+		size = UDim2.fromOffset(330, 344),
+		position = UDim2.new(1, -Theme.space.lg, 0, 144),
 		anchor = Vector2.new(1, 0),
 		parent = parent,
 	})
@@ -17401,7 +17908,7 @@ function Chart.create(parent: ScreenGui)
 
 	local list = Theme.scroller(
 		panel,
-		UDim2.new(1, -Theme.space.md * 2, 0, 92),
+		UDim2.new(1, -Theme.space.md * 2, 0, 64),
 		UDim2.fromOffset(Theme.space.md, 248)
 	)
 	list.ZIndex = 2
@@ -17478,10 +17985,17 @@ function Chart.update(chart: any)
 	end
 
 	widgets.title.Text = Loc.get(chart.nameKey)
-	widgets.condition.Text = if chart.diagnosed and chart.conditionNameKey ~= nil
-		then Loc.get(&quot;chart.diagnosed&quot;, Loc.get(chart.conditionNameKey))
-		else Loc.get(&quot;chart.undiagnosed&quot;)
-	widgets.condition.TextColor3 = if chart.diagnosed then Theme.color.good else Theme.color.warn
+	-- Rutin islemde &quot;Teshis: Asi&quot; yazmak yaniltici olurdu: teshis diye
+	-- bir sey yok, hasta zaten asi olmaya geldi.
+	if chart.routine == true then
+		widgets.condition.Text = Loc.get(&quot;chart.routine&quot;)
+		widgets.condition.TextColor3 = Theme.color.accentGlow
+	else
+		widgets.condition.Text = if chart.diagnosed and chart.conditionNameKey ~= nil
+			then Loc.get(&quot;chart.diagnosed&quot;, Loc.get(chart.conditionNameKey))
+			else Loc.get(&quot;chart.undiagnosed&quot;)
+		widgets.condition.TextColor3 = if chart.diagnosed then Theme.color.good else Theme.color.warn
+	end
 
 	widgets.quote.Visible = chart.hintKey ~= nil
 	widgets.hint.Text = if chart.hintKey ~= nil
@@ -17575,7 +18089,7 @@ return Chart
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX63">
+				<Item class="ModuleScript" referent="RBX65">
 					<Properties>
 						<string name="Name">Crosshair</string>
 						<ProtectedString name="Source">--!strict
@@ -17723,7 +18237,7 @@ return Crosshair
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX64">
+				<Item class="ModuleScript" referent="RBX66">
 					<Properties>
 						<string name="Name">DiagnosisPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -17762,8 +18276,8 @@ local lastSignature = &quot;&quot;
 function DiagnosisPanel.create(parent: ScreenGui)
 	local panel = Theme.card({
 		name = &quot;TeshisPaneli&quot;,
-		size = UDim2.fromOffset(330, 262),
-		position = UDim2.new(1, -Theme.space.lg, 0, 476),
+		size = UDim2.fromOffset(330, 258),
+		position = UDim2.new(1, -Theme.space.lg, 0, 496),
 		anchor = Vector2.new(1, 0),
 		parent = parent,
 		visible = false,
@@ -17913,7 +18427,7 @@ return DiagnosisPanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX65">
+				<Item class="ModuleScript" referent="RBX67">
 					<Properties>
 						<string name="Name">Fps</string>
 						<ProtectedString name="Source">--!strict
@@ -18029,7 +18543,7 @@ return Fps
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX66">
+				<Item class="ModuleScript" referent="RBX68">
 					<Properties>
 						<string name="Name">Hud</string>
 						<ProtectedString name="Source">--!strict
@@ -18287,6 +18801,48 @@ function Hud.create(parent: ScreenGui)
 		zIndex = 2,
 	})
 
+	-- ── Vardiya: saat ve gece nobeti rozeti ───────────────────────────
+	-- Saat SUNUCUDAN geliyor (DayCycle). Istemci kendi saatini
+	-- isletseydi bir oyuncuda gece digerinde gunduz olurdu ve ucret
+	-- carpani geceye bagli oldugu icin bu bir oynanis hatasi olurdu.
+	local shift = Theme.card({
+		name = &quot;Vardiya&quot;,
+		size = UDim2.fromOffset(228, 44),
+		position = UDim2.new(1, -Theme.space.lg, 0, Theme.space.lg + 72),
+		anchor = Vector2.new(1, 0),
+		parent = parent,
+	})
+	local shiftIcon = Theme.icon({
+		name = &quot;day&quot;,
+		size = 16,
+		color = Theme.color.warn,
+		position = UDim2.fromOffset(Theme.space.md, 14),
+		parent = shift,
+		zIndex = 2,
+	})
+	local shiftClock = Theme.label({
+		name = &quot;Saat&quot;,
+		text = &quot;&quot;,
+		size = UDim2.fromOffset(70, 22),
+		position = UDim2.fromOffset(Theme.space.md + 24, 11),
+		textSize = Theme.size.title,
+		bold = true,
+		parent = shift,
+		zIndex = 2,
+	})
+	local shiftLabel = Theme.label({
+		name = &quot;Vardiya&quot;,
+		text = &quot;&quot;,
+		size = UDim2.new(1, -110, 0, 20),
+		position = UDim2.fromOffset(104, 12),
+		textSize = Theme.size.micro,
+		bold = true,
+		align = Enum.TextXAlignment.Right,
+		color = Theme.color.textDim,
+		parent = shift,
+		zIndex = 2,
+	})
+
 	-- ── Kazanc yazilari ───────────────────────────────────────────────
 	local floaters = Theme.frame({
 		name = &quot;Kazanclar&quot;,
@@ -18320,6 +18876,11 @@ function Hud.create(parent: ScreenGui)
 		objectiveText = objectiveText,
 		floaters = floaters,
 		vignette = vignette,
+		shift = shift,
+		shiftIcon = shiftIcon,
+		shiftClock = shiftClock,
+		shiftLabel = shiftLabel,
+		shiftNight = false,
 	}
 
 	widgets.moneyCaption.Text = Loc.get(&quot;hud.capMoney&quot;)
@@ -18358,6 +18919,34 @@ function Hud.update(state: any)
 
 	widgets.warning.Visible = state.transient == true
 	widgets.queueText.Text = Loc.get(&quot;hud.queue&quot;, state.queueWaiting, state.queueSlots)
+
+	if state.shift ~= nil then
+		local hours = math.floor(state.shift.clockTime)
+		local minutes = math.floor((state.shift.clockTime - hours) * 60)
+		widgets.shiftClock.Text = (&quot;%02d:%02d&quot;):format(hours, minutes)
+
+		local isNight = state.shift.night == true
+		widgets.shiftLabel.Text = if isNight
+			then Loc.get(&quot;hud.nightShift&quot;, (&quot;%.2f&quot;):format(state.shift.feeMultiplier))
+			else Loc.get(&quot;hud.dayShift&quot;)
+		widgets.shiftLabel.TextColor3 = if isNight then Theme.color.money else Theme.color.textDim
+
+		-- Ikon yalnizca vardiya DEGISINCE yeniden kuruluyor: her
+		-- guncellemede Frame yaratip yok etmek bosuna is.
+		if isNight ~= widgets.shiftNight then
+			widgets.shiftNight = isNight
+			widgets.shiftIcon:Destroy()
+			widgets.shiftIcon = Theme.icon({
+				name = if isNight then &quot;night&quot; else &quot;day&quot;,
+				size = 16,
+				color = if isNight then Theme.color.xp else Theme.color.warn,
+				position = UDim2.fromOffset(Theme.space.md, 14),
+				parent = widgets.shift,
+				zIndex = 2,
+			})
+		end
+	end
+
 	firstDraw = false
 end
 
@@ -18439,7 +19028,7 @@ return Hud
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX67">
+				<Item class="ModuleScript" referent="RBX69">
 					<Properties>
 						<string name="Name">LobbyPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -18729,7 +19318,7 @@ return LobbyPanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX68">
+				<Item class="ModuleScript" referent="RBX70">
 					<Properties>
 						<string name="Name">Notify</string>
 						<ProtectedString name="Source">--!strict
@@ -18915,7 +19504,7 @@ return Notify
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX69">
+				<Item class="ModuleScript" referent="RBX71">
 					<Properties>
 						<string name="Name">ProgressPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -19198,7 +19787,7 @@ return ProgressPanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX70">
+				<Item class="ModuleScript" referent="RBX72">
 					<Properties>
 						<string name="Name">SettingsPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -19471,7 +20060,7 @@ return SettingsPanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX71">
+				<Item class="ModuleScript" referent="RBX73">
 					<Properties>
 						<string name="Name">ShopPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -19854,7 +20443,7 @@ return ShopPanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX72">
+				<Item class="ModuleScript" referent="RBX74">
 					<Properties>
 						<string name="Name">SurgeryPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -20215,7 +20804,7 @@ return SurgeryPanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX73">
+				<Item class="ModuleScript" referent="RBX75">
 					<Properties>
 						<string name="Name">Theme</string>
 						<ProtectedString name="Source">--!strict
@@ -21199,7 +21788,7 @@ return Theme
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX74">
+				<Item class="ModuleScript" referent="RBX76">
 					<Properties>
 						<string name="Name">ToolBar</string>
 						<ProtectedString name="Source">--!strict
@@ -21440,7 +22029,7 @@ return ToolBar
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX75">
+				<Item class="ModuleScript" referent="RBX77">
 					<Properties>
 						<string name="Name">ToolGamePanel</string>
 						<ProtectedString name="Source">--!strict
@@ -21891,7 +22480,7 @@ return ToolGamePanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX76">
+				<Item class="ModuleScript" referent="RBX78">
 					<Properties>
 						<string name="Name">TreatmentPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -21929,8 +22518,8 @@ local CELL = UDim2.fromOffset(96, 64)
 function TreatmentPanel.create(parent: ScreenGui)
 	local panel = Theme.card({
 		name = &quot;TedaviPaneli&quot;,
-		size = UDim2.fromOffset(330, 292),
-		position = UDim2.new(1, -Theme.space.lg, 0, 476),
+		size = UDim2.fromOffset(330, 276),
+		position = UDim2.new(1, -Theme.space.lg, 0, 496),
 		anchor = Vector2.new(1, 0),
 		parent = parent,
 		visible = false,
@@ -22130,7 +22719,7 @@ return TreatmentPanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX77">
+				<Item class="ModuleScript" referent="RBX79">
 					<Properties>
 						<string name="Name">ViewModel</string>
 						<ProtectedString name="Source">--!strict
@@ -22510,19 +23099,19 @@ return ViewModel
 			</Item>
 		</Item>
 	</Item>
-	<Item class="StarterGui" referent="RBX78">
+	<Item class="StarterGui" referent="RBX80">
 		<Properties>
 			<string name="Name">StarterGui</string>
 			<bool name="ResetPlayerGuiOnSpawn">false</bool>
 		</Properties>
 	</Item>
-	<Item class="Players" referent="RBX79">
+	<Item class="Players" referent="RBX81">
 		<Properties>
 			<string name="Name">Players</string>
 			<bool name="CharacterAutoLoads">false</bool>
 		</Properties>
 	</Item>
-	<Item class="SoundService" referent="RBX80">
+	<Item class="SoundService" referent="RBX82">
 		<Properties>
 			<string name="Name">SoundService</string>
 		</Properties>

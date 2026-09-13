@@ -34,8 +34,8 @@ local lastSignature = ""
 function DiagnosisPanel.create(parent: ScreenGui)
 	local panel = Theme.card({
 		name = "TeshisPaneli",
-		size = UDim2.fromOffset(330, 262),
-		position = UDim2.new(1, -Theme.space.lg, 0, 476),
+		size = UDim2.fromOffset(330, 258),
+		position = UDim2.new(1, -Theme.space.lg, 0, 496),
 		anchor = Vector2.new(1, 0),
 		parent = parent,
 		visible = false,

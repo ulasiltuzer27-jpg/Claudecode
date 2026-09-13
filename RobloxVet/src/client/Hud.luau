@@ -253,6 +253,48 @@ function Hud.create(parent: ScreenGui)
 		zIndex = 2,
 	})
 
+	-- ── Vardiya: saat ve gece nobeti rozeti ───────────────────────────
+	-- Saat SUNUCUDAN geliyor (DayCycle). Istemci kendi saatini
+	-- isletseydi bir oyuncuda gece digerinde gunduz olurdu ve ucret
+	-- carpani geceye bagli oldugu icin bu bir oynanis hatasi olurdu.
+	local shift = Theme.card({
+		name = "Vardiya",
+		size = UDim2.fromOffset(228, 44),
+		position = UDim2.new(1, -Theme.space.lg, 0, Theme.space.lg + 72),
+		anchor = Vector2.new(1, 0),
+		parent = parent,
+	})
+	local shiftIcon = Theme.icon({
+		name = "day",
+		size = 16,
+		color = Theme.color.warn,
+		position = UDim2.fromOffset(Theme.space.md, 14),
+		parent = shift,
+		zIndex = 2,
+	})
+	local shiftClock = Theme.label({
+		name = "Saat",
+		text = "",
+		size = UDim2.fromOffset(70, 22),
+		position = UDim2.fromOffset(Theme.space.md + 24, 11),
+		textSize = Theme.size.title,
+		bold = true,
+		parent = shift,
+		zIndex = 2,
+	})
+	local shiftLabel = Theme.label({
+		name = "Vardiya",
+		text = "",
+		size = UDim2.new(1, -110, 0, 20),
+		position = UDim2.fromOffset(104, 12),
+		textSize = Theme.size.micro,
+		bold = true,
+		align = Enum.TextXAlignment.Right,
+		color = Theme.color.textDim,
+		parent = shift,
+		zIndex = 2,
+	})
+
 	-- ── Kazanc yazilari ───────────────────────────────────────────────
 	local floaters = Theme.frame({
 		name = "Kazanclar",
@@ -286,6 +328,11 @@ function Hud.create(parent: ScreenGui)
 		objectiveText = objectiveText,
 		floaters = floaters,
 		vignette = vignette,
+		shift = shift,
+		shiftIcon = shiftIcon,
+		shiftClock = shiftClock,
+		shiftLabel = shiftLabel,
+		shiftNight = false,
 	}
 
 	widgets.moneyCaption.Text = Loc.get("hud.capMoney")
@@ -324,6 +371,34 @@ function Hud.update(state: any)
 
 	widgets.warning.Visible = state.transient == true
 	widgets.queueText.Text = Loc.get("hud.queue", state.queueWaiting, state.queueSlots)
+
+	if state.shift ~= nil then
+		local hours = math.floor(state.shift.clockTime)
+		local minutes = math.floor((state.shift.clockTime - hours) * 60)
+		widgets.shiftClock.Text = ("%02d:%02d"):format(hours, minutes)
+
+		local isNight = state.shift.night == true
+		widgets.shiftLabel.Text = if isNight
+			then Loc.get("hud.nightShift", ("%.2f"):format(state.shift.feeMultiplier))
+			else Loc.get("hud.dayShift")
+		widgets.shiftLabel.TextColor3 = if isNight then Theme.color.money else Theme.color.textDim
+
+		-- Ikon yalnizca vardiya DEGISINCE yeniden kuruluyor: her
+		-- guncellemede Frame yaratip yok etmek bosuna is.
+		if isNight ~= widgets.shiftNight then
+			widgets.shiftNight = isNight
+			widgets.shiftIcon:Destroy()
+			widgets.shiftIcon = Theme.icon({
+				name = if isNight then "night" else "day",
+				size = 16,
+				color = if isNight then Theme.color.xp else Theme.color.warn,
+				position = UDim2.fromOffset(Theme.space.md, 14),
+				parent = widgets.shift,
+				zIndex = 2,
+			})
+		end
+	end
+
 	firstDraw = false
 end
 
