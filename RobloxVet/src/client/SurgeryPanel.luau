@@ -33,7 +33,33 @@ local sentSteps: { [number]: boolean } = {}
 -- boyuyoruz. Adimlar sirayla gittigi icin bu esleme guvenli.
 local lastPressed = 0
 
+-- Asistanlik durumu: sunucudan geliyor, istemci yalnizca ciziyor.
+local assistState: any = { active = false, canAssist = false, assisting = false }
+local assistHeld = false
+
 local TRACK_WIDTH = 440
+
+--- Isaretcinin ray uzerindeki yeri: ZAMANI konuma ceviren fonksiyon.
+---
+--- Neden ayni fonksiyon bolgeyi de ciziyor?
+--- Sunucu kararini yalnizca ZAMANA gore veriyor (|simdi - hedef|).
+--- Isaretciyi egri bir fonksiyonla cizip yesil bolgeyi duz cizseydik
+--- "bolgedeyim" ile "zamanindayim" ayni sey olmaktan cikardi - yani
+--- ekran yalan soylerdi. Bu yuzden hem isaretci hem bolgenin KENARLARI
+--- ayni fonksiyondan geciyor ve fonksiyon ARTAN olmak zorunda: geri
+--- giden bir isaretci bolgeye birden fazla kez girerdi.
+local function placeOnTrack(motion: string, ratio: number): number
+	local p = math.clamp(ratio, 0, 1)
+	if motion == "ease" then
+		-- Kenarlarda yavas, ortada hizli: hizalama anini daraltiyor.
+		return p * p * (3 - 2 * p)
+	elseif motion == "pulse" then
+		-- Nabiz gibi duraklayip ilerliyor. Genlik bilerek kucuk:
+		-- 0.06 * 4pi = 0.75 < 1, yani turev hep pozitif (artan).
+		return math.clamp(p + 0.06 * math.sin(p * math.pi * 4), 0, 1)
+	end
+	return p
+end
 
 local function currentStep(now: number): number
 	if schedule == nil then
@@ -87,7 +113,8 @@ function SurgeryPanel.create(parent: ScreenGui)
 		parent = panel,
 		zIndex = 2,
 	})
-	Theme.label({
+	local title = Theme.label({
+		name = "Baslik",
 		text = Loc.get("surgery.title"),
 		size = UDim2.new(1, -Theme.space.lg * 2, 0, 24),
 		position = UDim2.fromOffset(Theme.space.lg, 10),
@@ -229,12 +256,68 @@ function SurgeryPanel.create(parent: ScreenGui)
 	button.BackgroundTransparency = 1
 	button.ZIndex = 0
 
+	-- ── Asistan karti ─────────────────────────────────────────────────
+	-- Ameliyathanedeki ikinci oyuncu icin. Cerrahin panelinden AYRI:
+	-- ikisi ayni anda ekranda olabiliyor (cerrah kendi kararlilik
+	-- cubugunu goruyor, asistan kendi cagrisini).
+	local assistCard = Theme.card({
+		name = "AsistanKarti",
+		size = UDim2.fromOffset(340, 72),
+		position = UDim2.new(0.5, 0, 1, -120),
+		anchor = Vector2.new(0.5, 1),
+		parent = parent,
+		visible = false,
+	}, Theme.color.accentGlow)
+
+	Theme.icon({
+		name = "health",
+		size = 16,
+		color = Theme.color.accentGlow,
+		position = UDim2.fromOffset(Theme.space.md, 12),
+		parent = assistCard,
+		zIndex = 2,
+	})
+	local assistText = Theme.label({
+		name = "Yazi",
+		text = "",
+		size = UDim2.new(1, -Theme.space.md * 2 - 24, 0, 18),
+		position = UDim2.fromOffset(Theme.space.md + 24, 10),
+		textSize = Theme.size.small,
+		bold = true,
+		parent = assistCard,
+		zIndex = 2,
+	})
+	local assistHint = Theme.label({
+		name = "Ipucu",
+		text = Loc.get("surgery.assist.hint"),
+		size = UDim2.new(1, -Theme.space.md * 2, 0, 14),
+		position = UDim2.fromOffset(Theme.space.md, 28),
+		textSize = Theme.size.micro,
+		color = Theme.color.textDim,
+		parent = assistCard,
+		zIndex = 2,
+	})
+	local assistBar = Theme.bar(
+		assistCard,
+		UDim2.new(1, -Theme.space.md * 2, 0, 8),
+		UDim2.new(0, Theme.space.md, 1, -18),
+		Theme.color.good,
+		{ segments = 10 }
+	)
+	assistBar.track.ZIndex = 2
+	assistBar.fill.ZIndex = 3
+
 	widgets = {
 		panel = panel,
+		assistCard = assistCard,
+		assistText = assistText,
+		assistHint = assistHint,
+		assistBar = assistBar,
 		track = track,
 		marker = marker,
 		goodZone = goodZone,
 		perfectZone = perfectZone,
+		title = title,
 		pipRow = pipRow,
 		pips = {},
 		steps = steps,
@@ -244,11 +327,28 @@ function SurgeryPanel.create(parent: ScreenGui)
 	}
 
 	UserInputService.InputBegan:Connect(function(input: InputObject, processed: boolean)
-		if processed or schedule == nil then
+		if processed then
 			return
 		end
-		if input.KeyCode == Enum.KeyCode.Space or input.UserInputType == Enum.UserInputType.MouseButton1 then
+		local isAction = input.KeyCode == Enum.KeyCode.Space
+			or input.UserInputType == Enum.UserInputType.MouseButton1
+		if not isAction then
+			return
+		end
+		if schedule ~= nil then
+			-- Cerrahim: kesiyorum.
 			press()
+		elseif assistState.canAssist == true then
+			-- Asistanim: Bosluk'a BASILI TUTUYORUM, kararlilik cubugu
+			-- boyle yukarida kaliyor.
+			assistHeld = true
+			SurgeryPanel.pulseAssist()
+		end
+	end)
+
+	UserInputService.InputEnded:Connect(function(input: InputObject)
+		if input.KeyCode == Enum.KeyCode.Space or input.UserInputType == Enum.UserInputType.MouseButton1 then
+			assistHeld = false
 		end
 	end)
 end
@@ -282,12 +382,31 @@ function SurgeryPanel.begin(incoming: any)
 			zIndex = 3,
 		}))
 	end
+	-- Baslik ve ipucu AMELIYAT TURUNDEN geliyor: dikis ile kirik
+	-- hizalama ayni yazilari paylasmiyor.
+	widgets.title.Text = Loc.get(incoming.nameKey or "surgery.title")
+	widgets.hint.Text = Loc.get(incoming.hintKey or "surgery.hint")
+
+	-- Bolgeler, isaretciyle AYNI fonksiyondan geciyor (placeOnTrack).
+	-- Bolge duz, isaretci egri cizilseydi ekran yalan soylerdi.
+	local motion = incoming.motion or "linear"
+	local function zone(window: number): (number, number)
+		local half = window / incoming.stepSeconds
+		local left = placeOnTrack(motion, 0.5 - half)
+		local right = placeOnTrack(motion, 0.5 + half)
+		return left, right
+	end
+
+	local goodLeft, goodRight = zone(incoming.goodWindow)
+	widgets.goodZone.Position = UDim2.new((goodLeft + goodRight) * 0.5, 0, 0, 0)
 	widgets.goodZone.Size = UDim2.fromOffset(
-		math.max(8, TRACK_WIDTH * (incoming.goodWindow * 2 / incoming.stepSeconds)),
+		math.max(8, TRACK_WIDTH * (goodRight - goodLeft)),
 		34
 	)
+	local perfectLeft, perfectRight = zone(incoming.perfectWindow)
+	widgets.perfectZone.Position = UDim2.new((perfectLeft + perfectRight) * 0.5, 0, 0, 0)
 	widgets.perfectZone.Size = UDim2.fromOffset(
-		math.max(6, TRACK_WIDTH * (incoming.perfectWindow * 2 / incoming.stepSeconds)),
+		math.max(6, TRACK_WIDTH * (perfectRight - perfectLeft)),
 		34
 	)
 
@@ -303,7 +422,7 @@ function SurgeryPanel.begin(incoming: any)
 		local target = schedule.startTime + step * schedule.stepSeconds
 		local ratio = math.clamp(0.5 + (now - target) / schedule.stepSeconds, 0, 1)
 
-		widgets.marker.Position = UDim2.new(ratio, 0, 0.5, 0)
+		widgets.marker.Position = UDim2.new(placeOnTrack(motion, ratio), 0, 0.5, 0)
 		-- Isaretci mukemmel bolgedeyken beyazdan yesile donuyor:
 		-- basma anini yalnizca konumdan degil, renkten de okuyabilmek
 		-- gecikmeli oynayan oyuncuya yardim ediyor.
@@ -314,6 +433,54 @@ function SurgeryPanel.begin(incoming: any)
 			else Theme.color.text
 		widgets.steps.Text = Loc.get("surgery.step", step, schedule.steps)
 	end)
+end
+
+--- Asistan darbesi. Bosluk basili tutuldugu surece kendini tekrar
+--- cagiriyor; sunucudaki kararlilik cubugu boyle yukarida kaliyor.
+--- Hiz sabit (saniyede ~7): daha hizli basmak avantaj saglamasin.
+function SurgeryPanel.pulseAssist()
+	if not assistHeld or assistState.canAssist ~= true then
+		return
+	end
+	Net.toServer("SurgeryAssist")
+	task.delay(0.14, SurgeryPanel.pulseAssist)
+end
+
+--- Sunucudan gelen asistanlik durumu.
+function SurgeryPanel.assist(payload: any)
+	if widgets == nil or payload == nil then
+		return
+	end
+	assistState = payload
+
+	-- Cerrahin kendisi de kararliligi goruyor ama "asistanlik et"
+	-- cagrisini gormuyor.
+	local show = payload.active == true and (payload.canAssist == true or schedule ~= nil)
+	if show ~= widgets.assistCard.Visible then
+		if show then
+			Theme.open(widgets.assistCard)
+		else
+			Theme.close(widgets.assistCard)
+		end
+	end
+	if not show then
+		return
+	end
+
+	if schedule ~= nil then
+		widgets.assistText.Text = Loc.get("surgery.assist.stability")
+		widgets.assistHint.Text = Loc.get("surgery.assist.surgeon")
+	elseif payload.assisting == true then
+		widgets.assistText.Text = Loc.get("surgery.assist.active", payload.surgeon or "?")
+		widgets.assistHint.Text = Loc.get("surgery.assist.hint")
+	else
+		widgets.assistText.Text = Loc.get("surgery.assist.call", payload.surgeon or "?")
+		widgets.assistHint.Text = Loc.get("surgery.assist.hint")
+	end
+
+	local stability = payload.stability or 0
+	Theme.setBar(widgets.assistBar, stability)
+	Theme.setBarColor(widgets.assistBar, Theme.statusColor(stability))
 end
 
 --- Sunucu bir tiklamayi notlandirdi.

@@ -31,6 +31,10 @@ for _, treatment in treatmentData.treatments do
 end
 
 Treatment.surgeryConfig = treatmentData.surgery
+-- Ameliyat TURLERI ve asistanlik ayarlari. Surgery.luau buradan
+-- okuyor; veri tek yerde duruyor.
+Treatment.surgeryTypes = treatmentData.surgeryTypes
+Treatment.assistConfig = treatmentData.assist
 
 function Treatment.get(id: string): any?
 	return byId[id]

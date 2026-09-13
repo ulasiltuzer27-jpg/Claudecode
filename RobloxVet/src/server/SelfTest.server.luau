@@ -41,6 +41,7 @@ local Economy = require(script.Parent.game.Economy)
 local Profile = require(script.Parent.game.Profile)
 local Tasks = require(script.Parent.game.Tasks)
 local Staff = require(script.Parent.game.Staff)
+local Surgery = require(script.Parent.game.Surgery)
 local Ward = require(script.Parent.game.Ward)
 local ToolGame = require(script.Parent.game.ToolGame)
 local Treatment = require(script.Parent.game.Treatment)
@@ -659,6 +660,35 @@ do
 		end
 	end
 	scratch:Destroy()
+
+	-- Ameliyat turleri: hastaligin istedigi tur Surgery tarafindan
+	-- taninmali. Taninmayan tur sessizce 'rhythm'e duserdi.
+	local surgeryKinds = {}
+	for _, kind in Surgery.kinds() do
+		surgeryKinds[kind] = true
+	end
+	check("en az iki ameliyat turu var", #Surgery.kinds() >= 2)
+	for _, condition in Diagnosis.allConditions() do
+		local wantsSurgery = false
+		for _, treatmentId in condition.treatments do
+			if treatmentId == "surgery" then
+				wantsSurgery = true
+				break
+			end
+		end
+		if wantsSurgery then
+			local kind = condition.surgeryKind or "rhythm"
+			check(
+				("hastalik '%s' bilinen ameliyat turu istiyor (%s)"):format(condition.id, kind),
+				surgeryKinds[kind] == true
+			)
+		end
+	end
+	for kind in surgeryKinds do
+		local spec = Treatment.surgeryTypes[kind]
+		check(("ameliyat '%s' adi cevrili"):format(kind), spec ~= nil and Loc.has(spec.nameKey))
+		check(("ameliyat '%s' ipucu cevrili"):format(kind), spec ~= nil and Loc.has(spec.hintKey))
+	end
 
 	-- Personel: veri ile kodun tanidigi kume ayni mi, metinler var mi.
 	for _, member in staffData.staff do

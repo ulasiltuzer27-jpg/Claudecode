@@ -284,7 +284,8 @@
       "xp": 75,
       "unlockLevel": 4,
       "wrongPenalty": 70,
-      "severity": 3
+      "severity": 3,
+      "surgeryKind": "align"
     },
     {
       "id": "anemia",
@@ -413,7 +414,8 @@
       "xp": 90,
       "unlockLevel": 4,
       "wrongPenalty": 80,
-      "severity": 3
+      "severity": 3,
+      "surgeryKind": "suture"
     },
     {
       "id": "pneumonia",
@@ -634,7 +636,8 @@
       "xp": 95,
       "unlockLevel": 7,
       "wrongPenalty": 85,
-      "severity": 3
+      "severity": 3,
+      "surgeryKind": "bleed"
     },
     {
       "id": "pregnancyCheck",
@@ -890,5 +893,6 @@
       "severity": 1
     }
   ],
-  "_rutin_notu": "kind == 'routine' olan vakalar RUTIN KONTROL: belirti yok, teshis yok. Hasta masaya konunca zaten teshisli geliyor ve tek adimlik islem uygulaniyor. Hizli para, az XP. Kuyruga cesit katmak icin var: 31 hastaligin hepsi bulmaca olunca oyun tek ritimli kaliyordu. Orani data/economy.json -> routineChance."
+  "_rutin_notu": "kind == 'routine' olan vakalar RUTIN KONTROL: belirti yok, teshis yok. Hasta masaya konunca zaten teshisli geliyor ve tek adimlik islem uygulaniyor. Hizli para, az XP. Kuyruga cesit katmak icin var: 31 hastaligin hepsi bulmaca olunca oyun tek ritimli kaliyordu. Orani data/economy.json -> routineChance.",
+  "_ameliyat_notu": "`surgeryKind` ameliyat gerektiren hastaliklarda hangi ameliyat mini-oyununun acilacagini soyluyor (data/treatments.json -> surgeryTypes). Belirtilmezse 'rhythm'."
 }

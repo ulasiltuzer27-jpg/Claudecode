@@ -398,6 +398,52 @@ def main() -> int:
         )
         check(f"dekor '{identifier}' props.json'da govdesi var", item["prop"] in prop_ids)
 
+    # 9b2. Ameliyat turleri ve asistanlik
+    #
+    # Her ameliyat gerektiren hastaligin bir turu olmali ve tur tanimli
+    # olmali; tanimsiz tur sessizce 'rhythm'e duserdi ve icerik olu
+    # kalirdi.
+    surgery_types = treatments_file["surgeryTypes"]
+    check("en az iki ameliyat turu var", len(surgery_types) >= 2)
+    for kind, spec in surgery_types.items():
+        check(f"ameliyat '{kind}' adi tr.json'da var", spec["nameKey"] in strings)
+        check(f"ameliyat '{kind}' ipucu tr.json'da var", spec["hintKey"] in strings)
+        check(f"ameliyat '{kind}' hareketi taniniyor", spec["motion"] in ("linear", "ease", "pulse"))
+        check(f"ameliyat '{kind}' adim sayisi makul", 2 <= spec["steps"] <= 12)
+        check(f"ameliyat '{kind}' adim suresi pozitif", spec["stepSeconds"] > 0)
+        check(
+            f"ameliyat '{kind}' mukemmel penceresi iyi penceresinden dar",
+            0 < spec["perfectWindow"] < spec["goodWindow"],
+        )
+        check(
+            f"ameliyat '{kind}' iyi penceresi adim suresinin yarisindan kisa",
+            spec["goodWindow"] < spec["stepSeconds"] / 2,
+        )
+        check(f"ameliyat '{kind}' gecme baraji 0-1", 0 < spec["minScoreToPass"] < 1)
+    for condition in conditions:
+        if "surgery" not in condition["treatments"]:
+            continue
+        kind = condition.get("surgeryKind", "rhythm")
+        check(
+            f"hastalik '{condition['id']}' bilinen ameliyat turu istiyor: {kind}",
+            kind in surgery_types,
+        )
+
+    assist = treatments_file["assist"]
+    check("asistan kararliligi zamanla dusuyor", assist["decayPerSecond"] > 0)
+    check("asistan darbesi kararliligi yukseltiyor", assist["pulseGain"] > 0)
+    check(
+        "asistan bir darbede cubugu doldurmuyor",
+        assist["pulseGain"] < 1,
+    )
+    check("asistanlik pencereleri genisletiyor", assist["windowBonus"] > 0)
+    check("asistan XP payi 0-1 arasi", 0 < assist["xpShare"] <= 1)
+    for key in (
+        "surgery.assist.call", "surgery.assist.active",
+        "surgery.assist.stability", "surgery.assist.hint",
+    ):
+        check(f"asistanlik metni tr.json'da var: {key}", key in strings)
+
     # 9c. Gunduz/gece (data/daycycle.json)
     #
     # Gecenin "baska bir oyun" olmasi sayilara bagli: hasta SEYREK,

@@ -467,6 +467,42 @@ local function pushStateAll()
 	end
 end
 
+--- Ameliyathanedeki oyunculara "asistanlik edebilirsin" haberi.
+---
+--- Yakinlik SUNUCUDA olculuyor: istemcinin "oradayim" demesine
+--- guvenilmiyor (istasyon kuralinin aynisi). Ameliyat olmayan ya da
+--- uzakta olan oyuncuya bos bir panel gondermemek icin durum tek bir
+--- tabloda gidiyor.
+local function announceAssist()
+	local surgeons = Surgery.surgeons()
+	for _, player in Players:GetPlayers() do
+		local payload: any = { active = false, canAssist = false, assisting = false }
+		local mine = Surgery.assisting(player)
+		if mine ~= nil then
+			payload = Surgery.assistSnapshot(mine)
+			payload.canAssist = true
+			payload.assisting = true
+		else
+			for _, surgeon in surgeons do
+				if surgeon == player then
+					continue
+				end
+				-- Asistan ameliyat masasinin yaninda olmali.
+				if nearStation(player, "surgery") then
+					local session = Surgery.active(surgeon)
+					if session ~= nil and session.assistant == nil then
+						payload = Surgery.assistSnapshot(session)
+						payload.canAssist = true
+						payload.assisting = false
+						break
+					end
+				end
+			end
+		end
+		Net.toPlayer("SurgeryAssistState", player, payload)
+	end
+end
+
 --- Kogus herkese ayni gorunuyor: padoklar ortak, dolduklarinda herkes
 --- icin dolu. Bu yuzden tek bir goruntu butun oyunculara gidiyor.
 local function pushWard()
@@ -1246,12 +1282,41 @@ function PatientFlow.applyTreatment(player: Player, treatmentId: string)
 			return
 		end
 		local patientId = patient.id
-		local schedule = Surgery.begin(player, patientId, effects.surgeryTolerance, function(passed, score)
+		-- Hangi ameliyat? Hastalik soyluyor (data/conditions.json ->
+		-- surgeryKind); kodda hastalik listesi yok.
+		local caseCondition = Diagnosis.condition(patient.conditionId)
+		local surgeryKind = if caseCondition ~= nil and caseCondition.surgeryKind ~= nil
+			then caseCondition.surgeryKind
+			else "rhythm"
+		local schedule = Surgery.begin(player, patientId, effects.surgeryTolerance, surgeryKind, function(passed, score, assistant)
 			local current = patients[patientId]
 			Net.toPlayer("SurgeryEnd", player, passed, score)
 			if current == nil then
 				return
 			end
+			-- Asistan bosuna beklemedi: ameliyatin XP'sinden pay aliyor.
+			-- Ucret ameliyati yapanin - iki kisi ayni parayi iki kez
+			-- alamaz.
+			if assistant ~= nil and assistant.Parent ~= nil then
+				local helper = Profile.get(assistant)
+				if helper ~= nil then
+					local share = math.floor(
+						Treatment.surgeryTypes[surgeryKind].steps
+							* Treatment.assistConfig.xpShare
+							* 10
+							* score
+						+ 0.5
+					)
+					local before = helper.data.level
+					helper.data.xp += share
+					applyLevel(assistant, helper.data, before)
+					Profile.markDirty(assistant)
+					notify(assistant, "good", "notify.assistReward", { share })
+					pushState(assistant)
+				end
+			end
+			announceAssist()
+
 			if passed then
 				finishTreatment(player, current, treatmentId, {
 					ok = true,
@@ -1282,6 +1347,9 @@ function PatientFlow.applyTreatment(player: Player, treatmentId: string)
 			end
 		end)
 		Net.toPlayer("SurgeryBegin", player, schedule)
+		-- Ameliyathanedeki diger oyunculara "asistanlik edebilirsin"
+		-- haberi gidiyor.
+		announceAssist()
 		pushState(player)
 		return
 	end
@@ -1416,6 +1484,32 @@ function PatientFlow.giveMedicine(player: Player, bed: number)
 
 	notify(player, "good", "notify.wardDose", { entry.nameKey })
 	pushWard()
+end
+
+--- Asistanin darbesi (Bosluk basili tutulurken saniyede ~7 kez).
+--- Ilk darbe ayni zamanda asistanligi ustleniyor.
+function PatientFlow.surgeryAssist(player: Player)
+	if not nearStation(player, "surgery") then
+		return
+	end
+	for _, surgeon in Surgery.surgeons() do
+		if surgeon == player then
+			continue
+		end
+		local result = Surgery.assistPulse(player, surgeon)
+		if result.ok and result.session ~= nil then
+			local payload = Surgery.assistSnapshot(result.session)
+			payload.canAssist = true
+			payload.assisting = true
+			Net.toPlayer("SurgeryAssistState", player, payload)
+			-- Cerrah da asistaninin ne kadar saglam tuttugunu goruyor.
+			local surgeonPayload = Surgery.assistSnapshot(result.session)
+			surgeonPayload.canAssist = false
+			surgeonPayload.assisting = false
+			Net.toPlayer("SurgeryAssistState", surgeon, surgeonPayload)
+			return
+		end
+	end
 end
 
 function PatientFlow.surgeryInput(player: Player, step: number)
@@ -1739,10 +1833,27 @@ function PatientFlow.start(built: Clinic.Built)
 
 	-- Yasamsal belirtiler + kogus
 	task.spawn(function()
+		-- Asistanlik cagrisi saniyede bir tazeleniyor: ameliyat
+		-- basladiktan SONRA odaya giren oyuncu da cagriyi gormeli.
+		-- Vitals hiziyla (4/sn) yayin yapmak bosuna paket olurdu.
+		local assistTick = 0
+		local assistWasActive = false
 		while true do
 			task.wait(VITALS_TICK)
 			tickVitals(VITALS_TICK)
 			tickWard()
+
+			assistTick += 1
+			if assistTick >= 4 then
+				assistTick = 0
+				local active = #Surgery.surgeons() > 0
+				-- Ameliyat bitince bir kez daha yayin yapiliyor ki
+				-- kartlar kapansin.
+				if active or assistWasActive then
+					announceAssist()
+				end
+				assistWasActive = active
+			end
 		end
 	end)
 

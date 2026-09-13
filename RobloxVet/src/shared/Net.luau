@@ -32,6 +32,9 @@ Net.Schema = {
 	ToolResult = { direction = "toClient", args = { "string", "table" } },
 	SurgeryBegin = { direction = "toClient", args = { "table" } },
 	SurgeryEnd = { direction = "toClient", args = { "boolean", "number" } },
+	-- Asistanlik: "yakinda bir ameliyat var, yardim edebilirsin" ve
+	-- kararlilik cubugunun durumu.
+	SurgeryAssistState = { direction = "toClient", args = { "table" } },
 	ProgressUpdate = { direction = "toClient", args = { "table" } },
 	LobbyState = { direction = "toClient", args = { "table" } },
 	-- Alet mini-oyunlari. `ToolGameHint` sicak/soguk geri bildirimi:
@@ -50,6 +53,7 @@ Net.Schema = {
 	SubmitDiagnosis = { direction = "toServer", args = { "string" } },
 	ApplyTreatment = { direction = "toServer", args = { "string" } },
 	SurgeryInput = { direction = "toServer", args = { "number" } },
+	SurgeryAssist = { direction = "toServer", args = {} },
 	Discharge = { direction = "toServer", args = {} },
 	BuyTool = { direction = "toServer", args = { "string" } },
 	BuyUpgrade = { direction = "toServer", args = { "string" } },
@@ -73,6 +77,8 @@ Net.RateLimit = {
 	SubmitDiagnosis = 4,
 	ApplyTreatment = 6,
 	SurgeryInput = 20,
+	-- Asistan Bosluk'a basili tutuyor: saniyede ~7 darbe.
+	SurgeryAssist = 14,
 	Discharge = 4,
 	BuyTool = 4,
 	BuyUpgrade = 4,

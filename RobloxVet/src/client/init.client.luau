@@ -227,6 +227,10 @@ Net.get("SurgeryBegin").OnClientEvent:Connect(function(schedule: any)
 	SurgeryPanel.begin(schedule)
 end)
 
+Net.get("SurgeryAssistState").OnClientEvent:Connect(function(payload: any)
+	SurgeryPanel.assist(payload)
+end)
+
 Net.get("SurgeryEnd").OnClientEvent:Connect(function(_passed: boolean, _score: number)
 	SurgeryPanel.finish()
 end)
