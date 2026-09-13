@@ -177,5 +177,15 @@
     "healthDrain": -1.2,
     "satisfactionDrain": -1.5,
     "reputationDrain": -0.35
+  },
+  "chronic": {
+    "_comment": "KRONIK VAKALAR. contagious gibi conditions.json'da isaretli (chronic: true) hastaliklar geciyor degil, GERI DONUYOR: ayni hayvan gunler sonra ayni sikayetle geliyor.",
+    "_neden_notu": "Taburcu edilen hasta bir daha gorunmuyordu; klinigin bir gecmisi yoktu. Kronik vaka o eksigi kapatiyor ve KAYIT TUTMAYI odullendiriyor: gecmisi olan oyuncu hastayi taniyor, tanimayan bastan muayene ediyor.",
+    "_ucret_notu": "Kontrol ziyareti tam ucret etmiyor: teshis zaten biliniyor, is daha kolay. feeScale bu yuzden 1'in altinda - yoksa kronik vaka 'bedava para' olurdu.",
+    "chance": 0.16,
+    "minLevel": 3,
+    "minDaysApart": 1,
+    "feeScale": 0.82,
+    "xpScale": 0.9
   }
 }

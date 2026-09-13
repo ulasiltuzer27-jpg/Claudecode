@@ -82,6 +82,12 @@ export type Daily = {
 	species: { [string]: boolean },
 }
 
+export type HistoryEntry = {
+	animalId: string,
+	conditionId: string,
+	day: number,
+}
+
 export type Data = {
 	version: number,
 	money: number,
@@ -99,6 +105,12 @@ export type Data = {
 	-- ORTAK klinik XP'si. Oyuncunun kendi XP'sinden ayri: bina bununla
 	-- seviye atliyor ve acilanlar odadaki herkese aciliyor.
 	clinicXp: number,
+	-- Son taburcu edilen vakalar (en yenisi basta, en fazla HISTORY_MAX).
+	-- KRONIK hastaliklarda ayni hayvan gunler sonra geri geliyor ve
+	-- hasta kartinda "gecen sefer burada tedavi edilmisti" satiri
+	-- cikiyor. Kayit OYUNCUNUN profilinde: gecmisi bilen, onu tutan
+	-- oyuncudur - baska bir veteriner ayni hayvani taniyamaz.
+	history: { HistoryEntry },
 	stats: Stats,
 	species: { [string]: boolean },
 	achievements: { [string]: boolean },
@@ -176,6 +188,36 @@ local function defaultSettings(): Settings
 	}
 end
 
+--- Gecmiste kac vaka tutuluyor? Sinirsiz olsaydi profil her taburcuda
+--- biraz daha buyur ve DataStore'un 4 MB siniri uzak bir gunde
+--- kayitlari bozardi.
+local HISTORY_MAX = 20
+
+--- Taburcu edilen vakayi gecmise yazar (en yenisi basta) ve tasani
+--- atar. Tek yerde olsun diye burada: cagiran taraf sinirlamayi
+--- unutamiyor.
+function Profile.remember(data: Data, animalId: string, conditionId: string, day: number)
+	table.insert(data.history, 1, { animalId = animalId, conditionId = conditionId, day = day })
+	while #data.history > HISTORY_MAX do
+		table.remove(data.history)
+	end
+end
+
+--- Bu hayvan+hastalik daha once burada tedavi edildi mi? Edildiyse
+--- KAC GUN once oldugunu donuyor (bugunse 0), yoksa nil.
+function Profile.seenBefore(data: Data, animalId: string, conditionId: string, today: number): number?
+	for _, entry in data.history do
+		if entry.animalId == animalId and entry.conditionId == conditionId then
+			return math.max(0, today - entry.day)
+		end
+	end
+	return nil
+end
+
+function Profile.historyLimit(): number
+	return HISTORY_MAX
+end
+
 local function defaultData(): Data
 	return {
 		version = SCHEMA_VERSION,
@@ -188,6 +230,7 @@ local function defaultData(): Data
 		decor = starterDecor(),
 		staff = {},
 		clinicXp = 0,
+		history = {},
 		stats = defaultStats(),
 		species = {},
 		achievements = {},
@@ -233,6 +276,27 @@ local function migrate(raw: any): Data
 		end
 	end
 	result.clinicXp = if type(raw.clinicXp) == "number" then raw.clinicXp else fresh.clinicXp
+	-- Gecmis: bozuk/eksik satirlar SESSIZCE atlaniyor. Eski kayitlarda
+	-- bu alan hic yok ve bos gecmis gecerli bir durum - kronik vaka
+	-- yalnizca cikmiyor, hicbir sey bozulmuyor.
+	if type(raw.history) == "table" then
+		for _, entry in raw.history do
+			if #result.history >= HISTORY_MAX then
+				break
+			end
+			if type(entry) == "table"
+				and type(entry.animalId) == "string"
+				and type(entry.conditionId) == "string"
+				and type(entry.day) == "number"
+			then
+				table.insert(result.history, {
+					animalId = entry.animalId,
+					conditionId = entry.conditionId,
+					day = entry.day,
+				})
+			end
+		end
+	end
 	if type(raw.staff) == "table" then
 		for id, hired in raw.staff do
 			if hired == true then

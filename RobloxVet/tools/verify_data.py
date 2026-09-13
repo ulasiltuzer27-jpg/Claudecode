@@ -338,6 +338,81 @@ def main() -> int:
     top_xp = clinic_levels[-1]["xp"]
     check(f"en ust klinik seviyesi ({top_xp} XP) anlamli bir hedef", top_xp >= 5000)
 
+    # 9a4. Vardiya olaylari (data/events.json)
+    #
+    # Olaylar carpan tablosu: yanlis yonde bir sayi, "yogun vardiya"
+    # adiyla hastalari SEYRELTEN bir olay demek. Isim ile isin
+    # birbirinden ayrilmadigi burada olculuyor.
+    events_file = load("events.json")
+    events = events_file["events"]
+    with open(os.path.join(ROOT, "src", "server", "game", "Events.luau"), "r", encoding="utf-8") as handle:
+        events_src = handle.read()
+    event_effect_keys = {"arrivalScale", "feeMultiplier", "xpMultiplier"}
+    code_event_keys = set(re.findall(r"(\w+) = effect\.(?:\w+) or 1", events_src))
+    check(
+        "events.json etkileri ile Events.luau ayni kumeyi tanimliyor",
+        code_event_keys == event_effect_keys,
+    )
+    check("events.json en az 3 olay tanimliyor", len(events) >= 3)
+    check("events.json olay olasiligi 0 ile 1 arasinda", 0 < events_file["chance"] <= 1)
+    check("events.json salgin orani 0 ile 1 arasinda", 0 < events_file["outbreakChance"] <= 1)
+    check("events.json olaylar arasinda bosluk var", events_file["minGapSeconds"] > 0)
+    check("events.json olay denetimi makul sikligta", 5 <= events_file["checkSeconds"] <= 120)
+    check("events.json olaylar erken seviyede cikmiyor", events_file["minLevel"] >= 2)
+
+    event_ids: set[str] = set()
+    outbreaks = 0
+    for entry in events:
+        identifier = entry["id"]
+        check(f"olay '{identifier}' kimligi tekil", identifier not in event_ids)
+        event_ids.add(identifier)
+        check(f"olay '{identifier}' adi tr.json'da var", entry["nameKey"] in strings)
+        check(f"olay '{identifier}' aciklamasi tr.json'da var", entry["descKey"] in strings)
+        check(f"olay '{identifier}' agirligi pozitif", entry["weight"] > 0)
+        check(f"olay '{identifier}' suresi makul (30-600 sn)", 30 <= entry["seconds"] <= 600)
+        check(f"olay '{identifier}' turu taniniyor", entry["kind"] in {"outbreak", "plain"})
+        if entry["kind"] == "outbreak":
+            outbreaks += 1
+        for key, factor in entry["effect"].items():
+            check(f"olay '{identifier}' etkisi '{key}' taniniyor", key in event_effect_keys)
+            check(f"olay '{identifier}' etkisi '{key}' pozitif", factor > 0)
+        # Her olayin OYUNCU ICIN bir anlami olmali: hicbir carpani
+        # degistirmeyen bir olay ekranda serit gosterip hicbir sey
+        # yapmazdi.
+        check(
+            f"olay '{identifier}' en az bir carpani degistiriyor",
+            any(abs(factor - 1) > 1e-9 for factor in entry["effect"].values()),
+        )
+    check("en az bir salgin olayi var", outbreaks >= 1)
+
+    # Salgin ancak BULASICI bir hastalik varsa anlamli: Events.luau
+    # bulasici hastalik bulamazsa salgini hic baslatmiyor, ama tabloda
+    # hic bulasici hastalik yoksa salgin olayi olu bir satir demek.
+    contagious = [c for c in conditions if c.get("contagious") is True]
+    check(f"bulasici hastalik var ({len(contagious)} tane)", len(contagious) >= 1)
+    for condition in contagious:
+        check(
+            f"bulasici '{condition['id']}' rutin islem degil",
+            condition.get("kind") != "routine",
+        )
+
+    # 9a5. Kronik vakalar (data/economy.json -> chronic)
+    chronic_cfg = economy["chronic"]
+    check("kronik vaka olasiligi 0 ile 1 arasinda", 0 < chronic_cfg["chance"] < 1)
+    check("kronik vaka erken seviyede cikmiyor", chronic_cfg["minLevel"] >= 2)
+    # Kontrol ziyareti tam ucret etmemeli; yoksa kronik vaka en karli
+    # vaka turu olur ve oyuncu normal hasta istemez.
+    check("kronik kontrol tam ucret etmiyor", 0 < chronic_cfg["feeScale"] < 1)
+    check("kronik kontrol tam XP vermiyor", 0 < chronic_cfg["xpScale"] <= 1)
+    chronic_list = [c for c in conditions if c.get("chronic") is True]
+    check(f"kronik hastalik var ({len(chronic_list)} tane)", len(chronic_list) >= 3)
+    for condition in chronic_list:
+        check(f"kronik '{condition['id']}' rutin islem degil", condition.get("kind") != "routine")
+        # Kronik vaka geri DONUYOR; ilk karsilasmasi normal bir vaka
+        # oldugu icin en az bir belirtisi olmali (rutin islemlerin
+        # aksine).
+        check(f"kronik '{condition['id']}' en az bir belirti tasiyor", len(condition["symptoms"]) > 0)
+
     # 9a2. Personel (data/staff.json)
     #
     # Yukseltmelerdeki kalibin aynisi: veri ile KODUN OKUDUGU etki

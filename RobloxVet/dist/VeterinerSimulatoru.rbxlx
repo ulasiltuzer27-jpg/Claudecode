@@ -4700,6 +4700,7 @@ return {
 			[&quot;unlockLevel&quot;] = 5,
 			[&quot;wrongPenalty&quot;] = 76,
 			[&quot;severity&quot;] = 3,
+			[&quot;chronic&quot;] = true,
 		},
 		{
 			[&quot;id&quot;] = &quot;arthritis&quot;,
@@ -4723,6 +4724,7 @@ return {
 			[&quot;unlockLevel&quot;] = 4,
 			[&quot;wrongPenalty&quot;] = 58,
 			[&quot;severity&quot;] = 2,
+			[&quot;chronic&quot;] = true,
 		},
 		{
 			[&quot;id&quot;] = &quot;heartMurmur&quot;,
@@ -4746,6 +4748,7 @@ return {
 			[&quot;unlockLevel&quot;] = 6,
 			[&quot;wrongPenalty&quot;] = 78,
 			[&quot;severity&quot;] = 3,
+			[&quot;chronic&quot;] = true,
 		},
 		{
 			[&quot;id&quot;] = &quot;urinaryInfection&quot;,
@@ -4818,6 +4821,7 @@ return {
 			[&quot;unlockLevel&quot;] = 6,
 			[&quot;wrongPenalty&quot;] = 72,
 			[&quot;severity&quot;] = 3,
+			[&quot;chronic&quot;] = true,
 		},
 		{
 			[&quot;id&quot;] = &quot;shedProblem&quot;,
@@ -4966,6 +4970,7 @@ return {
 			[&quot;unlockLevel&quot;] = 8,
 			[&quot;wrongPenalty&quot;] = 78,
 			[&quot;severity&quot;] = 3,
+			[&quot;chronic&quot;] = true,
 		},
 		{
 			[&quot;id&quot;] = &quot;colic&quot;,
@@ -5010,6 +5015,7 @@ return {
 			[&quot;unlockLevel&quot;] = 9,
 			[&quot;wrongPenalty&quot;] = 84,
 			[&quot;severity&quot;] = 3,
+			[&quot;chronic&quot;] = true,
 		},
 		{
 			[&quot;id&quot;] = &quot;vaccination&quot;,
@@ -5563,11 +5569,89 @@ return {
 		[&quot;satisfactionDrain&quot;] = -1.5,
 		[&quot;reputationDrain&quot;] = -0.35,
 	},
+	[&quot;chronic&quot;] = {
+		[&quot;chance&quot;] = 0.16,
+		[&quot;minLevel&quot;] = 3,
+		[&quot;minDaysApart&quot;] = 1,
+		[&quot;feeScale&quot;] = 0.82,
+		[&quot;xpScale&quot;] = 0.9,
+	},
 }
 </ProtectedString>
 				</Properties>
 			</Item>
 			<Item class="ModuleScript" referent="RBX22">
+				<Properties>
+					<string name="Name">events</string>
+					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
+-- Kaynak: data/events.json
+-- Uretici: tools/jsontolua.py  (python3 build.py)
+-- (VERI) VARDIYA OLAYLARI. Bir vardiyayi digerinden ayiran sey. Gunduz/gece dongusunun (daycycle.json) USTUNE biniyor; ikisi de ayni carpanlara dokunuyor ve carpanlar birbiriyle CARPILIYOR.
+return {
+	[&quot;minLevel&quot;] = 4,
+	[&quot;checkSeconds&quot;] = 20,
+	[&quot;chance&quot;] = 0.18,
+	[&quot;minGapSeconds&quot;] = 210,
+	[&quot;outbreakChance&quot;] = 0.55,
+	[&quot;events&quot;] = {
+		{
+			[&quot;id&quot;] = &quot;outbreak&quot;,
+			[&quot;kind&quot;] = &quot;outbreak&quot;,
+			[&quot;nameKey&quot;] = &quot;event.outbreak&quot;,
+			[&quot;descKey&quot;] = &quot;event.outbreakDesc&quot;,
+			[&quot;weight&quot;] = 3,
+			[&quot;seconds&quot;] = 150,
+			[&quot;effect&quot;] = {
+				[&quot;arrivalScale&quot;] = 0.78,
+				[&quot;feeMultiplier&quot;] = 1.22,
+				[&quot;xpMultiplier&quot;] = 1.15,
+			},
+		},
+		{
+			[&quot;id&quot;] = &quot;busy&quot;,
+			[&quot;kind&quot;] = &quot;plain&quot;,
+			[&quot;nameKey&quot;] = &quot;event.busy&quot;,
+			[&quot;descKey&quot;] = &quot;event.busyDesc&quot;,
+			[&quot;weight&quot;] = 4,
+			[&quot;seconds&quot;] = 120,
+			[&quot;effect&quot;] = {
+				[&quot;arrivalScale&quot;] = 0.7,
+				[&quot;feeMultiplier&quot;] = 1,
+				[&quot;xpMultiplier&quot;] = 1.1,
+			},
+		},
+		{
+			[&quot;id&quot;] = &quot;calm&quot;,
+			[&quot;kind&quot;] = &quot;plain&quot;,
+			[&quot;nameKey&quot;] = &quot;event.calm&quot;,
+			[&quot;descKey&quot;] = &quot;event.calmDesc&quot;,
+			[&quot;weight&quot;] = 3,
+			[&quot;seconds&quot;] = 120,
+			[&quot;effect&quot;] = {
+				[&quot;arrivalScale&quot;] = 1.45,
+				[&quot;feeMultiplier&quot;] = 1.15,
+				[&quot;xpMultiplier&quot;] = 1,
+			},
+		},
+		{
+			[&quot;id&quot;] = &quot;inspection&quot;,
+			[&quot;kind&quot;] = &quot;plain&quot;,
+			[&quot;nameKey&quot;] = &quot;event.inspection&quot;,
+			[&quot;descKey&quot;] = &quot;event.inspectionDesc&quot;,
+			[&quot;weight&quot;] = 2,
+			[&quot;seconds&quot;] = 140,
+			[&quot;effect&quot;] = {
+				[&quot;arrivalScale&quot;] = 1,
+				[&quot;feeMultiplier&quot;] = 1,
+				[&quot;xpMultiplier&quot;] = 1.35,
+			},
+		},
+	},
+}
+</ProtectedString>
+				</Properties>
+			</Item>
+			<Item class="ModuleScript" referent="RBX23">
 				<Properties>
 					<string name="Name">lighting</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -5698,7 +5782,7 @@ return {
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX23">
+			<Item class="ModuleScript" referent="RBX24">
 				<Properties>
 					<string name="Name">lobby</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -5908,11 +5992,11 @@ return {
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="Folder" referent="RBX24">
+			<Item class="Folder" referent="RBX25">
 				<Properties>
 					<string name="Name">locale</string>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX25">
+				<Item class="ModuleScript" referent="RBX26">
 					<Properties>
 						<string name="Name">tr</string>
 						<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -5924,6 +6008,19 @@ return {
 	[&quot;name&quot;] = &quot;Türkçe&quot;,
 	[&quot;strings&quot;] = {
 		[&quot;clinic.name&quot;] = &quot;PATİ VETERİNER KLİNİĞİ&quot;,
+		[&quot;hud.eventLine&quot;] = &quot;{1} — {2}&quot;,
+		[&quot;event.outbreak&quot;] = &quot;SALGIN&quot;,
+		[&quot;event.outbreakDesc&quot;] = &quot;aynı hastalıktan seri hasta geliyor&quot;,
+		[&quot;event.busy&quot;] = &quot;YOĞUN VARDİYA&quot;,
+		[&quot;event.busyDesc&quot;] = &quot;kuyruk hızlı doluyor&quot;,
+		[&quot;event.calm&quot;] = &quot;SAKİN VARDİYA&quot;,
+		[&quot;event.calmDesc&quot;] = &quot;hasta seyrek, ücret yüksek&quot;,
+		[&quot;event.inspection&quot;] = &quot;DENETİM&quot;,
+		[&quot;event.inspectionDesc&quot;] = &quot;düzgün iş bugün fazladan XP getiriyor&quot;,
+		[&quot;chart.returning&quot;] = &quot;{1} gün önce burada tedavi edildi&quot;,
+		[&quot;chart.returningToday&quot;] = &quot;bugün burada tedavi edildi&quot;,
+		[&quot;chart.returningKnown&quot;] = &quot;{1} gün önce: {2}&quot;,
+		[&quot;chart.returningOther&quot;] = &quot;bu hayvan daha önce klinikte tedavi edildi&quot;,
 		[&quot;notify.sampleTaken&quot;] = &quot;{1} numunesi alındı — laboratuvarda incele (R)&quot;,
 		[&quot;notify.sampleAnalyzed&quot;] = &quot;Laboratuvar sonucu geldi ({1} numune)&quot;,
 		[&quot;notify.noSample&quot;] = &quot;İncelenecek numune yok&quot;,
@@ -6421,7 +6518,7 @@ return {
 					</Properties>
 				</Item>
 			</Item>
-			<Item class="ModuleScript" referent="RBX26">
+			<Item class="ModuleScript" referent="RBX27">
 				<Properties>
 					<string name="Name">props</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -6956,7 +7053,7 @@ return {
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX27">
+			<Item class="ModuleScript" referent="RBX28">
 				<Properties>
 					<string name="Name">settings</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -7057,7 +7154,7 @@ return {
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX28">
+			<Item class="ModuleScript" referent="RBX29">
 				<Properties>
 					<string name="Name">staff</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -7191,7 +7288,7 @@ return {
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX29">
+			<Item class="ModuleScript" referent="RBX30">
 				<Properties>
 					<string name="Name">symptoms</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -7403,7 +7500,7 @@ return {
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX30">
+			<Item class="ModuleScript" referent="RBX31">
 				<Properties>
 					<string name="Name">tasks</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -7527,7 +7624,7 @@ return {
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX31">
+			<Item class="ModuleScript" referent="RBX32">
 				<Properties>
 					<string name="Name">tools</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -7823,7 +7920,7 @@ return {
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX32">
+			<Item class="ModuleScript" referent="RBX33">
 				<Properties>
 					<string name="Name">treatments</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -7999,7 +8096,7 @@ return {
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX33">
+			<Item class="ModuleScript" referent="RBX34">
 				<Properties>
 					<string name="Name">upgrades</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -8124,11 +8221,11 @@ return {
 			</Item>
 		</Item>
 	</Item>
-	<Item class="ServerScriptService" referent="RBX34">
+	<Item class="ServerScriptService" referent="RBX35">
 		<Properties>
 			<string name="Name">ServerScriptService</string>
 		</Properties>
-		<Item class="Script" referent="RBX35">
+		<Item class="Script" referent="RBX36">
 			<Properties>
 				<string name="Name">VetServer</string>
 				<ProtectedString name="Source">--!strict
@@ -8177,6 +8274,7 @@ local Lobby = require(script.world.Lobby)
 local OwnerFactory = require(script.world.OwnerFactory)
 local SkyLighting = require(script.world.Lighting)
 
+local Events = require(script.game.Events)
 local Leaderboard = require(script.game.Leaderboard)
 local Matchmaking = require(script.game.Matchmaking)
 local PatientFlow = require(script.game.PatientFlow)
@@ -8309,6 +8407,9 @@ local function startClinic()
 		AnimalAnimator.start()
 		OwnerFactory.start()
 		PatientFlow.start(clinicBuilt :: Clinic.Built)
+		-- Vardiya olaylari klinik kurulduktan SONRA basliyor: bir
+		-- salgin, hasta gonderecek bir klinik olmadan anlamsiz olurdu.
+		Events.start()
 	end)
 	if not ok then
 		warn(&quot;[init] KLINIK KURULAMADI: &quot; .. tostring(err))
@@ -8455,6 +8556,18 @@ local function payWages(day: number)
 end
 
 DayCycle.onDayEnded(payWages)
+
+-- Olay basladiginda/bittiginde herkese haber ver ve HUD seridini
+-- tazele. Duyuru TEK yerde: olayin kendisi Events'te, gorunur tarafi
+-- burada.
+Events.onChanged(function(active)
+	for _, player in Players:GetPlayers() do
+		if active ~= nil then
+			Net.toPlayer(&quot;Notify&quot;, player, &quot;info&quot;, active.nameKey, {})
+		end
+		PatientFlow.pushState(player)
+	end
+end)
 
 local function onPlayerAdded(player: Player)
 	local entry = Profile.load(player)
@@ -8659,7 +8772,7 @@ end
 print((&quot;[Veteriner] sunucu hazir — mod: %s&quot;):format(mode))
 </ProtectedString>
 			</Properties>
-			<Item class="Script" referent="RBX36">
+			<Item class="Script" referent="RBX37">
 				<Properties>
 					<string name="Name">SelfTest</string>
 					<ProtectedString name="Source">--!strict
@@ -8706,6 +8819,7 @@ local Profile = require(script.Parent.game.Profile)
 local Tasks = require(script.Parent.game.Tasks)
 local Staff = require(script.Parent.game.Staff)
 local ClinicLevel = require(script.Parent.game.ClinicLevel)
+local Events = require(script.Parent.game.Events)
 local Surgery = require(script.Parent.game.Surgery)
 local Ward = require(script.Parent.game.Ward)
 local ToolGame = require(script.Parent.game.ToolGame)
@@ -9402,6 +9516,46 @@ do
 	)
 	check(&quot;klinik bos sunucuda 1. seviyede&quot;, ClinicLevel.activeLevel({}) == 1)
 
+	-- Vardiya olaylari: tablo tutarli mi ve baslangicta olay YOK mu?
+	-- Sunucu acilir acilmaz bir salginla baslamak, oyuncuyu daha ilk
+	-- saniyede anlamadigi bir seyin ortasina birakirdi.
+	check(&quot;olay tablosu en az 3 satir&quot;, #Events.all() &gt;= 3)
+	check(&quot;baslangicta vardiya olayi yok&quot;, Events.active() == nil)
+	local idle = Events.modifiers()
+	check(
+		&quot;olaysizken carpanlar 1&quot;,
+		idle.arrivalScale == 1 and idle.feeMultiplier == 1 and idle.xpMultiplier == 1
+	)
+	check(&quot;olaysizken salgin hastaligi yok&quot;, Events.outbreakCondition() == nil)
+	for _, kind in Events.kinds() do
+		check((&quot;olay turu '%s' taniniyor&quot;):format(kind), kind == &quot;outbreak&quot; or kind == &quot;plain&quot;)
+	end
+	for _, entry in Events.all() do
+		check((&quot;olay '%s' adi cevrili&quot;):format(entry.id), Loc.has(entry.nameKey))
+		check((&quot;olay '%s' aciklamasi cevrili&quot;):format(entry.id), Loc.has(entry.descKey))
+	end
+
+	-- Kronik vaka gecmisi: sinir gercekten isliyor mu? Sinirsiz bir
+	-- gecmis profili her taburcuda buyutur ve uzak bir gunde
+	-- DataStore'un 4 MB sinirina carpardi.
+	do
+		local sandbox = { history = {} }
+		local limit = Profile.historyLimit()
+		for index = 1, limit + 5 do
+			Profile.remember(sandbox :: any, &quot;dog&quot;, &quot;arthritis&quot;, index)
+		end
+		check((&quot;gecmis %d vakada kesiliyor&quot;):format(limit), #sandbox.history == limit)
+		check(&quot;gecmiste en yeni vaka basta&quot;, sandbox.history[1].day == limit + 5)
+		check(
+			&quot;gecmiste gorulen vaka bulunabiliyor&quot;,
+			Profile.seenBefore(sandbox :: any, &quot;dog&quot;, &quot;arthritis&quot;, limit + 7) == 2
+		)
+		check(
+			&quot;gorulmemis vaka gecmiste yok&quot;,
+			Profile.seenBefore(sandbox :: any, &quot;cat&quot;, &quot;arthritis&quot;, limit + 7) == nil
+		)
+	end
+
 	-- Kogus: yataklar kurulmus mu ve padoklarin ici hastayi aliyor mu?
 	-- Eski kafeslerin ici (4,8 stud) en buyuk hastanin ayak izinden
 	-- (6,4) kucuktu; sayilar bir daha oyle kaymasin diye olculuyor.
@@ -9479,11 +9633,11 @@ end
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="Folder" referent="RBX37">
+			<Item class="Folder" referent="RBX38">
 				<Properties>
 					<string name="Name">game</string>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX38">
+				<Item class="ModuleScript" referent="RBX39">
 					<Properties>
 						<string name="Name">Achievements</string>
 						<ProtectedString name="Source">--!strict
@@ -9643,7 +9797,7 @@ return Achievements
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX39">
+				<Item class="ModuleScript" referent="RBX40">
 					<Properties>
 						<string name="Name">ClinicLevel</string>
 						<ProtectedString name="Source">--!strict
@@ -9774,7 +9928,7 @@ return ClinicLevel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX40">
+				<Item class="ModuleScript" referent="RBX41">
 					<Properties>
 						<string name="Name">Diagnosis</string>
 						<ProtectedString name="Source">--!strict
@@ -9936,7 +10090,7 @@ return Diagnosis
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX41">
+				<Item class="ModuleScript" referent="RBX42">
 					<Properties>
 						<string name="Name">Economy</string>
 						<ProtectedString name="Source">--!strict
@@ -10053,7 +10207,280 @@ return Economy
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX42">
+				<Item class="ModuleScript" referent="RBX43">
+					<Properties>
+						<string name="Name">Events</string>
+						<ProtectedString name="Source">--!strict
+-- Events.luau
+-- ===========
+-- Vardiya olaylari: salgin, yogun gun, sakin gun, denetim.
+--
+-- Neden var?
+-- ----------
+-- Her vardiya birbirinin ayniydi. Gunduz/gece dongusu gunun SAATINI
+-- degistiriyordu ama oyunun ritmini degistirmiyordu. Olaylar o
+-- tekduzelige giriyor ve hepsi birbirinden FARKLI bir sey istiyor:
+--   - salgin: ayni hastaliktan seri hasta, karantina baskisi,
+--   - yogun gun: kuyruk dolup tasiyor, sira yonetimi,
+--   - sakin gun: hasta seyrek ama ucret yuksek, aceleye gerek yok,
+--   - denetim: XP zamli, dogru calismanin odullendigi vardiya.
+--
+-- Nerede duruyor?
+-- ---------------
+-- Olay SUNUCUDA: tek bir gercek var ve herkes ayni vardiyayi yasiyor.
+-- Istemciye yalnizca adi, aciklamasi ve kalan suresi gidiyor. Salginin
+-- HANGI hastalik oldugu istemciye GITMIYOR - gitseydi teshis listesini
+-- bir anda daraltirdi; oyuncu salgini muayene ederek anliyor.
+--
+-- Zaman `Workspace:GetServerTimeNow()` ile olculuyor (senkron sunucu
+-- saati), `os.clock()` ile degil: istemcideki geri sayimin sunucuyla
+-- ayni sayiyi gostermesi ancak boyle mumkun.
+
+local Players = game:GetService(&quot;Players&quot;)
+local Workspace = game:GetService(&quot;Workspace&quot;)
+
+local ReplicatedStorage = game:GetService(&quot;ReplicatedStorage&quot;)
+local Data = ReplicatedStorage:WaitForChild(&quot;VetData&quot;)
+
+local Diagnosis = require(script.Parent.Diagnosis)
+local Profile = require(script.Parent.Profile)
+
+local plan = require(Data.events)
+
+local Events = {}
+
+export type Active = {
+	id: string,
+	kind: string,
+	nameKey: string,
+	descKey: string,
+	startedAt: number,
+	endsAt: number,
+	-- Yalnizca salginda dolu: o vardiyanin hastaligi. SUNUCUDA kaliyor.
+	conditionId: string?,
+}
+
+local active: Active? = nil
+local nextEligibleAt = 0
+local listeners: { (Active?) -&gt; () } = {}
+local running = false
+
+local NEUTRAL = { arrivalScale = 1, feeMultiplier = 1, xpMultiplier = 1 }
+
+--- Tablodaki olaylar (SelfTest ve verify_data icin).
+function Events.all(): { any }
+	return plan.events
+end
+
+function Events.active(): Active?
+	local current = active
+	if current == nil then
+		return nil
+	end
+	if Workspace:GetServerTimeNow() &gt;= current.endsAt then
+		return nil
+	end
+	return current
+end
+
+--- O anki carpanlar. Olay yoksa hepsi 1.
+function Events.modifiers(): { arrivalScale: number, feeMultiplier: number, xpMultiplier: number }
+	local current = Events.active()
+	if current == nil then
+		return { arrivalScale = 1, feeMultiplier = 1, xpMultiplier = 1 }
+	end
+	for _, entry in plan.events do
+		if entry.id == current.id then
+			local effect = entry.effect
+			return {
+				arrivalScale = effect.arrivalScale or 1,
+				feeMultiplier = effect.feeMultiplier or 1,
+				xpMultiplier = effect.xpMultiplier or 1,
+			}
+		end
+	end
+	return { arrivalScale = 1, feeMultiplier = 1, xpMultiplier = 1 }
+end
+
+--- Salgin hastaligi (yoksa nil). YALNIZCA sunucu okuyor.
+function Events.outbreakCondition(): string?
+	local current = Events.active()
+	if current == nil or current.kind ~= &quot;outbreak&quot; then
+		return nil
+	end
+	return current.conditionId
+end
+
+--- Gelen hastanin salgin hastaligini tasima olasiligi.
+function Events.outbreakChance(): number
+	return plan.outbreakChance
+end
+
+--- Istemciye yollanan goruntu. Hastaligin KIMLIGI burada YOK.
+function Events.snapshot(): any
+	local current = Events.active()
+	if current == nil then
+		return nil
+	end
+	return {
+		id = current.id,
+		nameKey = current.nameKey,
+		descKey = current.descKey,
+		-- Mutlak zaman: istemci geri sayimi kendi ciziyor, saniyede bir
+		-- paket yollamaya gerek kalmiyor (kogus kartiyla ayni kalip).
+		endsAt = current.endsAt,
+		seconds = math.max(0, current.endsAt - Workspace:GetServerTimeNow()),
+	}
+end
+
+function Events.onChanged(listener: (Active?) -&gt; ())
+	table.insert(listeners, listener)
+end
+
+local function announce(current: Active?)
+	for _, listener in listeners do
+		listener(current)
+	end
+end
+
+--- Klinikteki en yuksek seviye: olaylar ancak minLevel'den sonra
+--- cikiyor. (Upgrades'teki CLINIC_WIDE kuralinin aynisi.)
+local function highestLevel(): number
+	local best = 1
+	for _, player in Players:GetPlayers() do
+		local entry = Profile.get(player)
+		if entry ~= nil then
+			best = math.max(best, entry.data.level)
+		end
+	end
+	return best
+end
+
+--- Agirliga gore olay secimi.
+local function pickEvent(): any?
+	local total = 0
+	for _, entry in plan.events do
+		total += entry.weight
+	end
+	if total &lt;= 0 then
+		return nil
+	end
+	local roll = math.random() * total
+	for _, entry in plan.events do
+		roll -= entry.weight
+		if roll &lt;= 0 then
+			return entry
+		end
+	end
+	return plan.events[#plan.events]
+end
+
+--- Salgin icin bulasici bir hastalik secer. Bulasici hastalik yoksa
+--- salgin BASLAMIYOR: &quot;salgin&quot; deyip bulasmayan bir hastalik secmek,
+--- olayin adiyla isini birbirinden ayirirdi.
+local function pickOutbreakCondition(level: number): string?
+	local pool = {}
+	for _, condition in Diagnosis.allConditions() do
+		if condition.contagious == true and condition.unlockLevel &lt;= level then
+			table.insert(pool, condition.id)
+		end
+	end
+	if #pool == 0 then
+		return nil
+	end
+	return pool[math.random(1, #pool)]
+end
+
+local function begin(): boolean
+	local level = highestLevel()
+	if level &lt; plan.minLevel then
+		return false
+	end
+	local entry = pickEvent()
+	if entry == nil then
+		return false
+	end
+
+	local conditionId: string? = nil
+	if entry.kind == &quot;outbreak&quot; then
+		conditionId = pickOutbreakCondition(level)
+		if conditionId == nil then
+			return false
+		end
+	end
+
+	local now = Workspace:GetServerTimeNow()
+	active = {
+		id = entry.id,
+		kind = entry.kind,
+		nameKey = entry.nameKey,
+		descKey = entry.descKey,
+		startedAt = now,
+		endsAt = now + entry.seconds,
+		conditionId = conditionId,
+	}
+	nextEligibleAt = now + entry.seconds + plan.minGapSeconds
+	announce(active)
+	return true
+end
+
+--- Olay dongusu. Dis dunyaya tek dokunusu `onChanged` dinleyicileri.
+function Events.start()
+	if running then
+		return
+	end
+	running = true
+	nextEligibleAt = Workspace:GetServerTimeNow() + plan.minGapSeconds
+
+	task.spawn(function()
+		local wasActive = false
+		while true do
+			task.wait(plan.checkSeconds)
+			local current = Events.active()
+			if current == nil then
+				-- Olay yeni bitmisse bir kez daha haber veriliyor ki
+				-- HUD serit kapansin.
+				if wasActive then
+					wasActive = false
+					active = nil
+					announce(nil)
+				end
+				if #Players:GetPlayers() &gt; 0
+					and Workspace:GetServerTimeNow() &gt;= nextEligibleAt
+					and math.random() &lt; plan.chance
+				then
+					wasActive = begin()
+				end
+			else
+				wasActive = true
+			end
+		end
+	end)
+end
+
+--- SelfTest icin: olay tablosunun kendisi tutarli mi?
+function Events.kinds(): { string }
+	local seen: { [string]: boolean } = {}
+	local kinds = {}
+	for _, entry in plan.events do
+		if not seen[entry.kind] then
+			seen[entry.kind] = true
+			table.insert(kinds, entry.kind)
+		end
+	end
+	table.sort(kinds)
+	return kinds
+end
+
+function Events.minLevel(): number
+	return plan.minLevel
+end
+
+return Events
+</ProtectedString>
+					</Properties>
+				</Item>
+				<Item class="ModuleScript" referent="RBX44">
 					<Properties>
 						<string name="Name">Leaderboard</string>
 						<ProtectedString name="Source">--!strict
@@ -10129,7 +10556,7 @@ return Leaderboard
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX43">
+				<Item class="ModuleScript" referent="RBX45">
 					<Properties>
 						<string name="Name">Matchmaking</string>
 						<ProtectedString name="Source">--!strict
@@ -10367,7 +10794,7 @@ return Matchmaking
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX44">
+				<Item class="ModuleScript" referent="RBX46">
 					<Properties>
 						<string name="Name">PatientFlow</string>
 						<ProtectedString name="Source">--!strict
@@ -10408,6 +10835,7 @@ local Achievements = require(script.Parent.Achievements)
 local ClinicLevel = require(script.Parent.ClinicLevel)
 local Diagnosis = require(script.Parent.Diagnosis)
 local Economy = require(script.Parent.Economy)
+local Events = require(script.Parent.Events)
 local Leaderboard = require(script.Parent.Leaderboard)
 local Profile = require(script.Parent.Profile)
 local Staff = require(script.Parent.Staff)
@@ -10457,6 +10885,12 @@ export type Patient = {
 	-- Numunesi laboratuvarda incelenen hasta taburcu edilirken kucuk
 	-- bir ucret zammi aliyor: yuruyusun karsiligi.
 	labBonus: boolean,
+	-- KRONIK DONUS: bu hayvan daha once ayni hastalikla burada tedavi
+	-- edildi. Kac gun once oldugu hasta kartinda yaziyor. Gecmis
+	-- oyuncunun PROFILINDE oldugu icin kartta kimin ne gordugunu
+	-- `chartSnapshot` viewer'a gore belirliyor.
+	chronicOf: Player?,
+	chronicDays: number,
 }
 
 local clinic: Clinic.Built? = nil
@@ -10760,6 +11194,16 @@ local function chartSnapshot(patient: Patient?, viewer: Player): any
 		-- bir sey (hayvan gozunun onunde bolmede duruyor); kart bunu
 		-- yazili da soyluyor ki &quot;neden yayilma durmadi&quot; sorusu kalmasin.
 		quarantined = isQuarantineStation(patient.stationId),
+		-- KRONIK DONUS. Hasta gecmisten geldiyse herkes &quot;bu hayvan daha
+		-- once buradaydi&quot; satirini goruyor; HASTALIGIN ADINI ise
+		-- yalnizca o vakayi kendi gecmisinde tutan oyuncu goruyor.
+		-- Kayit tutmanin karsiligi bu; baska bir veteriner ayni hayvani
+		-- tanimiyor.
+		returning = patient.chronicOf ~= nil,
+		returningDays = patient.chronicDays,
+		returningKey = if patient.chronicOf == viewer and always ~= nil
+			then always.nameKey
+			else nil,
 		-- Bulasicilik ANCAK dogru teshisten sonra gidiyor: once
 		-- gitseydi aday listesini 35'ten 6'ya indirirdi.
 		contagious = patient.diagnosed and condition ~= nil and condition.contagious == true,
@@ -10849,6 +11293,9 @@ local function stateSnapshot(player: Player): any
 		-- Bulasma uyarisi: teshisi konmus bulasici bir hasta hala
 		-- karantina disinda. Hangi hasta oldugunu SOYLEMIYOR.
 		contagion = contagionAlert,
+		-- Vardiya olayi. Salginin HANGI hastalik oldugu burada YOK:
+		-- gitseydi teshis listesini bir anda daraltirdi.
+		event = Events.snapshot(),
 	}
 end
 
@@ -11007,6 +11454,70 @@ end
 --- `routine` true ise rutin islemler, degilse hastaliklar arasindan
 --- seciyor. Rutin listesi bossa (veri henuz eklenmemisse) sessizce
 --- hastaliklara dusuyor: kuyruk asla bos kalmamali.
+--- SALGIN VAKASI: olay boyunca gelen hastalarin bir kismi ayni
+--- hastalikla geliyor. Hastaligin hangi TURDE cikacagi da hastaligin
+--- kendi `species` listesinden seciliyor - &quot;at nezlesi&quot; diye bir salgin
+--- cikarmamak icin.
+local function outbreakCase(level: number): (string?, string?)
+	local conditionId = Events.outbreakCondition()
+	if conditionId == nil or math.random() &gt;= Events.outbreakChance() then
+		return nil, nil
+	end
+	local condition = Diagnosis.condition(conditionId)
+	if condition == nil then
+		return nil, nil
+	end
+	local pool = {}
+	for _, animalId in condition.species do
+		local animal = AnimalFactory.spec(animalId)
+		if animal ~= nil and animal.unlockLevel &lt;= level then
+			table.insert(pool, animalId)
+		end
+	end
+	if #pool == 0 then
+		return nil, nil
+	end
+	return pool[math.random(1, #pool)], conditionId
+end
+
+--- KRONIK DONUS: online oyunculardan birinin gecmisindeki kronik bir
+--- vaka geri geliyor. Hangi oyuncunun gecmisinden geldigini de donuyor;
+--- hasta kartindaki &quot;gecen sefer&quot; satirini YALNIZCA o oyuncu goruyor.
+---
+--- Neden birinin gecmisinden? Sunucunun kendi tuttugu bir liste sunucu
+--- kapaninca silinirdi ve kronik vaka yeniden baslatmadan sonra hic
+--- cikmazdi. Profil kalici; klinigin hafizasi oyuncularin hafizasi.
+local function chronicCase(level: number): (string?, string?, Player?, number)
+	local config = economy.chronic
+	if level &lt; config.minLevel or math.random() &gt;= config.chance then
+		return nil, nil, nil, 0
+	end
+	local today = DayCycle.dayNumber()
+	local pool = {}
+	for _, player in Players:GetPlayers() do
+		local entry = Profile.get(player)
+		if entry == nil then
+			continue
+		end
+		for _, record in entry.data.history do
+			local condition = Diagnosis.condition(record.conditionId)
+			if condition == nil or condition.chronic ~= true then
+				continue
+			end
+			local days = today - record.day
+			if days &lt; config.minDaysApart then
+				continue
+			end
+			table.insert(pool, { record.animalId, record.conditionId, player, days })
+		end
+	end
+	if #pool == 0 then
+		return nil, nil, nil, 0
+	end
+	local pick = pool[math.random(1, #pool)]
+	return pick[1] :: string, pick[2] :: string, pick[3] :: Player, pick[4] :: number
+end
+
 local function pickCase(level: number, routine: boolean): (string?, string?)
 	local candidates = {}
 	for _, animalId in AnimalFactory.allIds() do
@@ -11070,7 +11581,24 @@ local function spawnPatient()
 		and math.random() &lt; economy.emergency.chance + night.emergencyBonus
 	local isRoutine = not isEmergency and math.random() &lt; economy.routineChance
 
-	local animalId, conditionId = pickCase(level, isRoutine)
+	-- Sira onemli: SALGIN &gt; KRONIK &gt; normal. Salgin vardiyasi o
+	-- vardiyanin KONUSU; kronik donus ise arka plandaki devamlilik.
+	-- Ikisi de rutin islemlerin onune geciyor cunku ikisinin de kendi
+	-- hastaligi var.
+	local chronicOf: Player? = nil
+	local chronicDays = 0
+	local animalId, conditionId = outbreakCase(level)
+	if animalId == nil then
+		local id, condition, owner, days = chronicCase(level)
+		if id ~= nil then
+			animalId, conditionId = id, condition
+			chronicOf, chronicDays = owner, days
+			isRoutine = false
+		end
+	end
+	if animalId == nil then
+		animalId, conditionId = pickCase(level, isRoutine)
+	end
 	if animalId == nil or conditionId == nil then
 		warn(&quot;[PatientFlow] bu seviyede uygun hasta bulunamadi - veri tablolarini kontrol edin&quot;)
 		return
@@ -11122,6 +11650,8 @@ local function spawnPatient()
 		samples = {},
 		analyzed = {},
 		labBonus = false,
+		chronicOf = chronicOf,
+		chronicDays = chronicDays,
 	}
 	patients[id] = patient
 	usedQueueSlots[slot] = true
@@ -12146,8 +12676,19 @@ function PatientFlow.discharge(player: Player)
 	-- Carpan HASTA GELDIGI an degil, TABURCU edildigi an okunuyor -
 	-- yani nobeti bitirmek de nobette calismak kadar onemli.
 	local shift = DayCycle.modifiers()
-	fee = math.floor(fee * shift.feeMultiplier + 0.5)
-	xpGain = math.floor(xpGain * shift.xpMultiplier + 0.5)
+	-- Vardiya olayi (salgin, yogun/sakin gun, denetim) gunduz/gece
+	-- carpaninin USTUNE biniyor: ikisi de ayni eksende, bu yuzden
+	-- carpiliyorlar.
+	local event = Events.modifiers()
+	fee = math.floor(fee * shift.feeMultiplier * event.feeMultiplier + 0.5)
+	xpGain = math.floor(xpGain * shift.xpMultiplier * event.xpMultiplier + 0.5)
+
+	-- Kontrol ziyareti tam ucret etmiyor: teshis zaten biliniyordu, is
+	-- daha kolaydi. Yoksa kronik vaka &quot;bedava para&quot; olurdu.
+	if patient.chronicOf ~= nil then
+		fee = math.floor(fee * economy.chronic.feeScale + 0.5)
+		xpGain = math.floor(xpGain * economy.chronic.xpScale + 0.5)
+	end
 
 	if patient.emergency then
 		fee = math.floor(fee * economy.emergency.feeMultiplier + 0.5)
@@ -12175,6 +12716,9 @@ function PatientFlow.discharge(player: Player)
 	data.stats.earned += fee + tip
 	data.stats.tips += tip
 	data.species[patient.animalId] = true
+	-- Vakayi gecmise yaz: kronik hastaliklarda bu hayvan gunler sonra
+	-- geri gelecek ve kartinda &quot;gecen sefer&quot; satiri cikacak.
+	Profile.remember(data, patient.animalId, patient.conditionId, DayCycle.dayNumber())
 
 	Tasks.bump(data, &quot;patients&quot;, 1)
 	Tasks.bump(data, &quot;earned&quot;, fee + tip)
@@ -12501,9 +13045,13 @@ function PatientFlow.start(built: Clinic.Built)
 			-- 1'in altinda). Uc carpan da ayni eksende oldugu icin
 			-- carpiliyor.
 			local levelEffects = ClinicLevel.effects(Players:GetPlayers())
+			local event = Events.modifiers()
 			task.wait(Economy.arrivalSeconds(
 				bestReputation(),
-				clinicEffects.arrivalScale * shift.arrivalScale * levelEffects.arrivalScale
+				clinicEffects.arrivalScale
+					* shift.arrivalScale
+					* levelEffects.arrivalScale
+					* event.arrivalScale
 			))
 		end
 	end)
@@ -12575,7 +13123,7 @@ return PatientFlow
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX45">
+				<Item class="ModuleScript" referent="RBX47">
 					<Properties>
 						<string name="Name">Profile</string>
 						<ProtectedString name="Source">--!strict
@@ -12662,6 +13210,12 @@ export type Daily = {
 	species: { [string]: boolean },
 }
 
+export type HistoryEntry = {
+	animalId: string,
+	conditionId: string,
+	day: number,
+}
+
 export type Data = {
 	version: number,
 	money: number,
@@ -12679,6 +13233,12 @@ export type Data = {
 	-- ORTAK klinik XP'si. Oyuncunun kendi XP'sinden ayri: bina bununla
 	-- seviye atliyor ve acilanlar odadaki herkese aciliyor.
 	clinicXp: number,
+	-- Son taburcu edilen vakalar (en yenisi basta, en fazla HISTORY_MAX).
+	-- KRONIK hastaliklarda ayni hayvan gunler sonra geri geliyor ve
+	-- hasta kartinda &quot;gecen sefer burada tedavi edilmisti&quot; satiri
+	-- cikiyor. Kayit OYUNCUNUN profilinde: gecmisi bilen, onu tutan
+	-- oyuncudur - baska bir veteriner ayni hayvani taniyamaz.
+	history: { HistoryEntry },
 	stats: Stats,
 	species: { [string]: boolean },
 	achievements: { [string]: boolean },
@@ -12756,6 +13316,36 @@ local function defaultSettings(): Settings
 	}
 end
 
+--- Gecmiste kac vaka tutuluyor? Sinirsiz olsaydi profil her taburcuda
+--- biraz daha buyur ve DataStore'un 4 MB siniri uzak bir gunde
+--- kayitlari bozardi.
+local HISTORY_MAX = 20
+
+--- Taburcu edilen vakayi gecmise yazar (en yenisi basta) ve tasani
+--- atar. Tek yerde olsun diye burada: cagiran taraf sinirlamayi
+--- unutamiyor.
+function Profile.remember(data: Data, animalId: string, conditionId: string, day: number)
+	table.insert(data.history, 1, { animalId = animalId, conditionId = conditionId, day = day })
+	while #data.history &gt; HISTORY_MAX do
+		table.remove(data.history)
+	end
+end
+
+--- Bu hayvan+hastalik daha once burada tedavi edildi mi? Edildiyse
+--- KAC GUN once oldugunu donuyor (bugunse 0), yoksa nil.
+function Profile.seenBefore(data: Data, animalId: string, conditionId: string, today: number): number?
+	for _, entry in data.history do
+		if entry.animalId == animalId and entry.conditionId == conditionId then
+			return math.max(0, today - entry.day)
+		end
+	end
+	return nil
+end
+
+function Profile.historyLimit(): number
+	return HISTORY_MAX
+end
+
 local function defaultData(): Data
 	return {
 		version = SCHEMA_VERSION,
@@ -12768,6 +13358,7 @@ local function defaultData(): Data
 		decor = starterDecor(),
 		staff = {},
 		clinicXp = 0,
+		history = {},
 		stats = defaultStats(),
 		species = {},
 		achievements = {},
@@ -12813,6 +13404,27 @@ local function migrate(raw: any): Data
 		end
 	end
 	result.clinicXp = if type(raw.clinicXp) == &quot;number&quot; then raw.clinicXp else fresh.clinicXp
+	-- Gecmis: bozuk/eksik satirlar SESSIZCE atlaniyor. Eski kayitlarda
+	-- bu alan hic yok ve bos gecmis gecerli bir durum - kronik vaka
+	-- yalnizca cikmiyor, hicbir sey bozulmuyor.
+	if type(raw.history) == &quot;table&quot; then
+		for _, entry in raw.history do
+			if #result.history &gt;= HISTORY_MAX then
+				break
+			end
+			if type(entry) == &quot;table&quot;
+				and type(entry.animalId) == &quot;string&quot;
+				and type(entry.conditionId) == &quot;string&quot;
+				and type(entry.day) == &quot;number&quot;
+			then
+				table.insert(result.history, {
+					animalId = entry.animalId,
+					conditionId = entry.conditionId,
+					day = entry.day,
+				})
+			end
+		end
+	end
 	if type(raw.staff) == &quot;table&quot; then
 		for id, hired in raw.staff do
 			if hired == true then
@@ -13109,7 +13721,7 @@ return Profile
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX46">
+				<Item class="ModuleScript" referent="RBX48">
 					<Properties>
 						<string name="Name">Staff</string>
 						<ProtectedString name="Source">--!strict
@@ -13338,7 +13950,7 @@ return Staff
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX47">
+				<Item class="ModuleScript" referent="RBX49">
 					<Properties>
 						<string name="Name">Surgery</string>
 						<ProtectedString name="Source">--!strict
@@ -13634,7 +14246,7 @@ return Surgery
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX48">
+				<Item class="ModuleScript" referent="RBX50">
 					<Properties>
 						<string name="Name">Tasks</string>
 						<ProtectedString name="Source">--!strict
@@ -13814,7 +14426,7 @@ return Tasks
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX49">
+				<Item class="ModuleScript" referent="RBX51">
 					<Properties>
 						<string name="Name">ToolGame</string>
 						<ProtectedString name="Source">--!strict
@@ -14081,7 +14693,7 @@ return ToolGame
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX50">
+				<Item class="ModuleScript" referent="RBX52">
 					<Properties>
 						<string name="Name">Treatment</string>
 						<ProtectedString name="Source">--!strict
@@ -14245,7 +14857,7 @@ return Treatment
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX51">
+				<Item class="ModuleScript" referent="RBX53">
 					<Properties>
 						<string name="Name">Upgrades</string>
 						<ProtectedString name="Source">--!strict
@@ -14521,7 +15133,7 @@ return Upgrades
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX52">
+				<Item class="ModuleScript" referent="RBX54">
 					<Properties>
 						<string name="Name">Ward</string>
 						<ProtectedString name="Source">--!strict
@@ -14772,11 +15384,11 @@ return Ward
 					</Properties>
 				</Item>
 			</Item>
-			<Item class="Folder" referent="RBX53">
+			<Item class="Folder" referent="RBX55">
 				<Properties>
 					<string name="Name">world</string>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX54">
+				<Item class="ModuleScript" referent="RBX56">
 					<Properties>
 						<string name="Name">AnimalAnimator</string>
 						<ProtectedString name="Source">--!strict
@@ -15443,7 +16055,7 @@ return Animator
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX55">
+				<Item class="ModuleScript" referent="RBX57">
 					<Properties>
 						<string name="Name">AnimalFactory</string>
 						<ProtectedString name="Source">--!strict
@@ -16470,7 +17082,7 @@ return AnimalFactory
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX56">
+				<Item class="ModuleScript" referent="RBX58">
 					<Properties>
 						<string name="Name">Clinic</string>
 						<ProtectedString name="Source">--!strict
@@ -16999,7 +17611,7 @@ return Clinic
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX57">
+				<Item class="ModuleScript" referent="RBX59">
 					<Properties>
 						<string name="Name">DayCycle</string>
 						<ProtectedString name="Source">--!strict
@@ -17228,7 +17840,7 @@ return DayCycle
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX58">
+				<Item class="ModuleScript" referent="RBX60">
 					<Properties>
 						<string name="Name">Decor</string>
 						<ProtectedString name="Source">--!strict
@@ -17469,7 +18081,7 @@ return Decor
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX59">
+				<Item class="ModuleScript" referent="RBX61">
 					<Properties>
 						<string name="Name">Doors</string>
 						<ProtectedString name="Source">--!strict
@@ -17715,7 +18327,7 @@ return Doors
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX60">
+				<Item class="ModuleScript" referent="RBX62">
 					<Properties>
 						<string name="Name">Effects</string>
 						<ProtectedString name="Source">--!strict
@@ -17899,7 +18511,7 @@ return Effects
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX61">
+				<Item class="ModuleScript" referent="RBX63">
 					<Properties>
 						<string name="Name">Lighting</string>
 						<ProtectedString name="Source">--!strict
@@ -18022,7 +18634,7 @@ return Sky
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX62">
+				<Item class="ModuleScript" referent="RBX64">
 					<Properties>
 						<string name="Name">Lobby</string>
 						<ProtectedString name="Source">--!strict
@@ -18281,7 +18893,7 @@ return Lobby
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX63">
+				<Item class="ModuleScript" referent="RBX65">
 					<Properties>
 						<string name="Name">OwnerFactory</string>
 						<ProtectedString name="Source">--!strict
@@ -18886,7 +19498,7 @@ return OwnerFactory
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX64">
+				<Item class="ModuleScript" referent="RBX66">
 					<Properties>
 						<string name="Name">Props</string>
 						<ProtectedString name="Source">--!strict
@@ -20177,7 +20789,7 @@ return Props
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX65">
+				<Item class="ModuleScript" referent="RBX67">
 					<Properties>
 						<string name="Name">StaffFactory</string>
 						<ProtectedString name="Source">--!strict
@@ -20348,15 +20960,15 @@ return StaffFactory
 			</Item>
 		</Item>
 	</Item>
-	<Item class="StarterPlayer" referent="RBX66">
+	<Item class="StarterPlayer" referent="RBX68">
 		<Properties>
 			<string name="Name">StarterPlayer</string>
 		</Properties>
-		<Item class="StarterPlayerScripts" referent="RBX67">
+		<Item class="StarterPlayerScripts" referent="RBX69">
 			<Properties>
 				<string name="Name">StarterPlayerScripts</string>
 			</Properties>
-			<Item class="LocalScript" referent="RBX68">
+			<Item class="LocalScript" referent="RBX70">
 				<Properties>
 					<string name="Name">VetClient</string>
 					<ProtectedString name="Source">--!strict
@@ -20622,7 +21234,7 @@ end)
 print(&quot;[Veteriner] istemci hazir.&quot;)
 </ProtectedString>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX69">
+				<Item class="ModuleScript" referent="RBX71">
 					<Properties>
 						<string name="Name">Camera</string>
 						<ProtectedString name="Source">--!strict
@@ -20873,7 +21485,7 @@ return Camera
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX70">
+				<Item class="ModuleScript" referent="RBX72">
 					<Properties>
 						<string name="Name">Chart</string>
 						<ProtectedString name="Source">--!strict
@@ -21224,11 +21836,64 @@ function Chart.update(chart: any)
 	-- dokunulmuyor. (Aksi halde kaydirma cubugu her guncellemede basa
 	-- donerdi ve liste titrerdi.)
 	local samples = chart.samples or {}
-	local listKey = (&quot;%d/%d/%d&quot;):format(#chart.revealed, #samples, chart.analyzed or 0)
+	local listKey = (&quot;%d/%d/%d/%s&quot;):format(
+		#chart.revealed,
+		#samples,
+		chart.analyzed or 0,
+		tostring(chart.returning == true) .. tostring(chart.returningKey)
+	)
 	if widgets.listKey ~= listKey then
 		widgets.listKey = listKey
 		widgets.list:ClearAllChildren()
 		Theme.list(widgets.list, Theme.space.xs)
+
+		-- KRONIK DONUS satiri en ustte: hastanin kim oldugu, ne
+		-- bulundugundan once gelir.
+		--
+		-- Hastaligin adini YALNIZCA o vakayi kendi gecmisinde tutan
+		-- oyuncu goruyor (sunucu `returningKey`i yalnizca ona
+		-- dolduruyor). Baska bir veteriner &quot;bu hayvan daha once
+		-- buradaydi&quot; satirini goruyor ama neyle geldigini bilmiyor -
+		-- kayit tutmanin karsiligi bu.
+		if chart.returning == true then
+			local row = Theme.frame({
+				name = &quot;Gecmis&quot;,
+				size = UDim2.new(1, -Theme.space.sm, 0, 24),
+				color = Theme.color.panelLight,
+				transparency = 0.2,
+				radius = Theme.radius.sm,
+				parent = widgets.list,
+				layoutOrder = -200,
+				zIndex = 2,
+			})
+			Theme.icon({
+				name = &quot;clock&quot;,
+				size = 10,
+				color = Theme.color.accentGlow,
+				position = UDim2.new(0, Theme.space.sm, 0.5, -5),
+				parent = row,
+				zIndex = 3,
+			})
+			local days = chart.returningDays or 0
+			local text
+			if chart.returningKey ~= nil then
+				text = if days &lt;= 0
+					then Loc.get(&quot;chart.returningToday&quot;)
+					else Loc.get(&quot;chart.returningKnown&quot;, days, Loc.get(chart.returningKey))
+			else
+				text = Loc.get(&quot;chart.returningOther&quot;)
+			end
+			Theme.label({
+				text = text,
+				size = UDim2.new(1, -26, 1, 0),
+				position = UDim2.fromOffset(22, 0),
+				textSize = Theme.size.micro,
+				bold = true,
+				color = Theme.color.accentGlow,
+				parent = row,
+				zIndex = 3,
+			})
+		end
 
 		-- Bekleyen numuneler EN USTTE: yapilacak is, yapilmis isin
 		-- ustunde durmali.
@@ -21263,7 +21928,7 @@ function Chart.update(chart: any)
 			})
 		end
 
-		if #chart.revealed == 0 and #samples == 0 then
+		if #chart.revealed == 0 and #samples == 0 and chart.returning ~= true then
 			Theme.label({
 				text = Loc.get(&quot;chart.noSymptoms&quot;),
 				size = UDim2.new(1, -Theme.space.sm, 0, 20),
@@ -21315,7 +21980,7 @@ return Chart
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX71">
+				<Item class="ModuleScript" referent="RBX73">
 					<Properties>
 						<string name="Name">Crosshair</string>
 						<ProtectedString name="Source">--!strict
@@ -21466,7 +22131,7 @@ return Crosshair
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX72">
+				<Item class="ModuleScript" referent="RBX74">
 					<Properties>
 						<string name="Name">DiagnosisPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -21658,7 +22323,7 @@ return DiagnosisPanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX73">
+				<Item class="ModuleScript" referent="RBX75">
 					<Properties>
 						<string name="Name">Fps</string>
 						<ProtectedString name="Source">--!strict
@@ -21777,7 +22442,7 @@ return Fps
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX74">
+				<Item class="ModuleScript" referent="RBX76">
 					<Properties>
 						<string name="Name">Hud</string>
 						<ProtectedString name="Source">--!strict
@@ -21796,6 +22461,9 @@ return Fps
 -- ziplarsa oyuncu kazandigini fark etmiyor; 0.45 saniyede sayarsa
 -- fark ediyor. Ayni sebeple kazanc ayrica ekranda yukselen bir yazi
 -- olarak da gosteriliyor.
+
+local RunService = game:GetService(&quot;RunService&quot;)
+local Workspace = game:GetService(&quot;Workspace&quot;)
 
 local ReplicatedStorage = game:GetService(&quot;ReplicatedStorage&quot;)
 local Shared = ReplicatedStorage:WaitForChild(&quot;VetShared&quot;)
@@ -22151,6 +22819,56 @@ function Hud.create(parent: ScreenGui)
 	})
 	contagion.Visible = false
 
+	-- ── Vardiya olayi seridi ──────────────────────────────────────────
+	-- Salgin, yogun/sakin gun, denetim. Bulasma uyarisinin ALTINDA
+	-- (ust orta sutun: hedef seridi 16..50, acil bandi 58..114,
+	-- bulasma 122..152, olay 160..194).
+	--
+	-- Geri sayimi ISTEMCI ciziyor: sunucu bitis anini MUTLAK zaman
+	-- olarak yolluyor (Workspace:GetServerTimeNow ile ayni saat), bu
+	-- yuzden saniyede bir paket yollamaya gerek yok.
+	local event = Theme.card({
+		name = &quot;VardiyaOlayi&quot;,
+		size = UDim2.fromOffset(300, 34),
+		position = UDim2.new(0.5, 0, 0, 160),
+		anchor = Vector2.new(0.5, 0),
+		color = Theme.color.panel,
+		parent = parent,
+	}, Theme.color.xp)
+	local eventIcon = Theme.icon({
+		name = &quot;clock&quot;,
+		size = 13,
+		color = Theme.color.xp,
+		position = UDim2.fromOffset(Theme.space.md, 10),
+		parent = event,
+		zIndex = 2,
+	})
+	local eventText = Theme.label({
+		name = &quot;Yazi&quot;,
+		text = &quot;&quot;,
+		size = UDim2.new(1, -Theme.space.md * 2 - 20 - 44, 1, 0),
+		position = UDim2.fromOffset(Theme.space.md + 20, 0),
+		textSize = Theme.size.micro,
+		bold = true,
+		color = Theme.color.text,
+		parent = event,
+		zIndex = 2,
+	})
+	local eventClock = Theme.label({
+		name = &quot;Sayac&quot;,
+		text = &quot;&quot;,
+		size = UDim2.fromOffset(44, 34),
+		position = UDim2.new(1, -Theme.space.md, 0, 0),
+		anchor = Vector2.new(1, 0),
+		textSize = Theme.size.micro,
+		bold = true,
+		align = Enum.TextXAlignment.Right,
+		color = Theme.color.xp,
+		parent = event,
+		zIndex = 2,
+	})
+	event.Visible = false
+
 	-- ── Kazanc yazilari ───────────────────────────────────────────────
 	local floaters = Theme.frame({
 		name = &quot;Kazanclar&quot;,
@@ -22200,7 +22918,28 @@ function Hud.create(parent: ScreenGui)
 		contagion = contagion,
 		contagionText = contagionText,
 		contagionPulse = nil,
+		event = event,
+		eventIcon = eventIcon,
+		eventText = eventText,
+		eventClock = eventClock,
+		eventEndsAt = 0,
+		eventShown = &quot;&quot;,
 	}
+
+	-- Olay geri sayimi her karede yeniden yaziliyor. Sunucu yalnizca
+	-- BITIS ANINI yolluyor (senkron sunucu saatiyle); saniyede bir
+	-- paket yollamak ayni bilgiyi tekrar tekrar tasimak olurdu.
+	RunService.RenderStepped:Connect(function()
+		if widgets == nil or not widgets.event.Visible then
+			return
+		end
+		local left = math.max(0, widgets.eventEndsAt - Workspace:GetServerTimeNow())
+		widgets.eventClock.Text = (&quot;%d:%02d&quot;):format(math.floor(left / 60), math.floor(left % 60))
+		if left &lt;= 0 then
+			widgets.event.Visible = false
+			widgets.eventShown = &quot;&quot;
+		end
+	end)
 
 	widgets.moneyCaption.Text = Loc.get(&quot;hud.capMoney&quot;)
 	widgets.levelCaption.Text = Loc.get(&quot;hud.capLevel&quot;)
@@ -22238,6 +22977,23 @@ function Hud.update(state: any)
 
 	widgets.warning.Visible = state.transient == true
 	widgets.queueText.Text = Loc.get(&quot;hud.queue&quot;, state.queueWaiting, state.queueSlots)
+
+	-- Vardiya olayi. Yeni bir olay basladiysa serit bir kez parliyor;
+	-- bildirim kayabilir, serit kacmaz.
+	local info = state.event
+	if info == nil then
+		widgets.event.Visible = false
+		widgets.eventShown = &quot;&quot;
+		widgets.eventEndsAt = 0
+	else
+		widgets.event.Visible = true
+		widgets.eventEndsAt = info.endsAt
+		if widgets.eventShown ~= info.id then
+			widgets.eventShown = info.id
+			widgets.eventText.Text = Loc.get(&quot;hud.eventLine&quot;, Loc.get(info.nameKey), Loc.get(info.descKey))
+			Theme.flash(widgets.event, Theme.color.xp)
+		end
+	end
 
 	-- Bulasma uyarisi: gorunurken nabiz atiyor. Sessiz bir kirmizi
 	-- kutu, ekranin sagindaki kartlarin arasinda kaybolurdu.
@@ -22385,7 +23141,7 @@ return Hud
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX75">
+				<Item class="ModuleScript" referent="RBX77">
 					<Properties>
 						<string name="Name">LobbyPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -22676,7 +23432,7 @@ return LobbyPanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX76">
+				<Item class="ModuleScript" referent="RBX78">
 					<Properties>
 						<string name="Name">Notify</string>
 						<ProtectedString name="Source">--!strict
@@ -22862,7 +23618,7 @@ return Notify
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX77">
+				<Item class="ModuleScript" referent="RBX79">
 					<Properties>
 						<string name="Name">ProgressPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -23146,7 +23902,7 @@ return ProgressPanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX78">
+				<Item class="ModuleScript" referent="RBX80">
 					<Properties>
 						<string name="Name">SettingsPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -23420,7 +24176,7 @@ return SettingsPanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX79">
+				<Item class="ModuleScript" referent="RBX81">
 					<Properties>
 						<string name="Name">ShopPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -23846,7 +24602,7 @@ return ShopPanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX80">
+				<Item class="ModuleScript" referent="RBX82">
 					<Properties>
 						<string name="Name">SurgeryPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -24374,7 +25130,7 @@ return SurgeryPanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX81">
+				<Item class="ModuleScript" referent="RBX83">
 					<Properties>
 						<string name="Name">Theme</string>
 						<ProtectedString name="Source">--!strict
@@ -25399,7 +26155,7 @@ return Theme
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX82">
+				<Item class="ModuleScript" referent="RBX84">
 					<Properties>
 						<string name="Name">ToolBar</string>
 						<ProtectedString name="Source">--!strict
@@ -25640,7 +26396,7 @@ return ToolBar
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX83">
+				<Item class="ModuleScript" referent="RBX85">
 					<Properties>
 						<string name="Name">ToolGamePanel</string>
 						<ProtectedString name="Source">--!strict
@@ -26098,7 +26854,7 @@ return ToolGamePanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX84">
+				<Item class="ModuleScript" referent="RBX86">
 					<Properties>
 						<string name="Name">TreatmentPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -26338,7 +27094,7 @@ return TreatmentPanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX85">
+				<Item class="ModuleScript" referent="RBX87">
 					<Properties>
 						<string name="Name">ViewModel</string>
 						<ProtectedString name="Source">--!strict
@@ -26723,7 +27479,7 @@ return ViewModel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX86">
+				<Item class="ModuleScript" referent="RBX88">
 					<Properties>
 						<string name="Name">WardPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -27003,19 +27759,19 @@ return WardPanel
 			</Item>
 		</Item>
 	</Item>
-	<Item class="StarterGui" referent="RBX87">
+	<Item class="StarterGui" referent="RBX89">
 		<Properties>
 			<string name="Name">StarterGui</string>
 			<bool name="ResetPlayerGuiOnSpawn">false</bool>
 		</Properties>
 	</Item>
-	<Item class="Players" referent="RBX88">
+	<Item class="Players" referent="RBX90">
 		<Properties>
 			<string name="Name">Players</string>
 			<bool name="CharacterAutoLoads">false</bool>
 		</Properties>
 	</Item>
-	<Item class="SoundService" referent="RBX89">
+	<Item class="SoundService" referent="RBX91">
 		<Properties>
 			<string name="Name">SoundService</string>
 		</Properties>

@@ -346,11 +346,64 @@ function Chart.update(chart: any)
 	-- dokunulmuyor. (Aksi halde kaydirma cubugu her guncellemede basa
 	-- donerdi ve liste titrerdi.)
 	local samples = chart.samples or {}
-	local listKey = ("%d/%d/%d"):format(#chart.revealed, #samples, chart.analyzed or 0)
+	local listKey = ("%d/%d/%d/%s"):format(
+		#chart.revealed,
+		#samples,
+		chart.analyzed or 0,
+		tostring(chart.returning == true) .. tostring(chart.returningKey)
+	)
 	if widgets.listKey ~= listKey then
 		widgets.listKey = listKey
 		widgets.list:ClearAllChildren()
 		Theme.list(widgets.list, Theme.space.xs)
+
+		-- KRONIK DONUS satiri en ustte: hastanin kim oldugu, ne
+		-- bulundugundan once gelir.
+		--
+		-- Hastaligin adini YALNIZCA o vakayi kendi gecmisinde tutan
+		-- oyuncu goruyor (sunucu `returningKey`i yalnizca ona
+		-- dolduruyor). Baska bir veteriner "bu hayvan daha once
+		-- buradaydi" satirini goruyor ama neyle geldigini bilmiyor -
+		-- kayit tutmanin karsiligi bu.
+		if chart.returning == true then
+			local row = Theme.frame({
+				name = "Gecmis",
+				size = UDim2.new(1, -Theme.space.sm, 0, 24),
+				color = Theme.color.panelLight,
+				transparency = 0.2,
+				radius = Theme.radius.sm,
+				parent = widgets.list,
+				layoutOrder = -200,
+				zIndex = 2,
+			})
+			Theme.icon({
+				name = "clock",
+				size = 10,
+				color = Theme.color.accentGlow,
+				position = UDim2.new(0, Theme.space.sm, 0.5, -5),
+				parent = row,
+				zIndex = 3,
+			})
+			local days = chart.returningDays or 0
+			local text
+			if chart.returningKey ~= nil then
+				text = if days <= 0
+					then Loc.get("chart.returningToday")
+					else Loc.get("chart.returningKnown", days, Loc.get(chart.returningKey))
+			else
+				text = Loc.get("chart.returningOther")
+			end
+			Theme.label({
+				text = text,
+				size = UDim2.new(1, -26, 1, 0),
+				position = UDim2.fromOffset(22, 0),
+				textSize = Theme.size.micro,
+				bold = true,
+				color = Theme.color.accentGlow,
+				parent = row,
+				zIndex = 3,
+			})
+		end
 
 		-- Bekleyen numuneler EN USTTE: yapilacak is, yapilmis isin
 		-- ustunde durmali.
@@ -385,7 +438,7 @@ function Chart.update(chart: any)
 			})
 		end
 
-		if #chart.revealed == 0 and #samples == 0 then
+		if #chart.revealed == 0 and #samples == 0 and chart.returning ~= true then
 			Theme.label({
 				text = Loc.get("chart.noSymptoms"),
 				size = UDim2.new(1, -Theme.space.sm, 0, 20),

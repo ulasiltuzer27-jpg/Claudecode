@@ -36,6 +36,7 @@ local Achievements = require(script.Parent.Achievements)
 local ClinicLevel = require(script.Parent.ClinicLevel)
 local Diagnosis = require(script.Parent.Diagnosis)
 local Economy = require(script.Parent.Economy)
+local Events = require(script.Parent.Events)
 local Leaderboard = require(script.Parent.Leaderboard)
 local Profile = require(script.Parent.Profile)
 local Staff = require(script.Parent.Staff)
@@ -85,6 +86,12 @@ export type Patient = {
 	-- Numunesi laboratuvarda incelenen hasta taburcu edilirken kucuk
 	-- bir ucret zammi aliyor: yuruyusun karsiligi.
 	labBonus: boolean,
+	-- KRONIK DONUS: bu hayvan daha once ayni hastalikla burada tedavi
+	-- edildi. Kac gun once oldugu hasta kartinda yaziyor. Gecmis
+	-- oyuncunun PROFILINDE oldugu icin kartta kimin ne gordugunu
+	-- `chartSnapshot` viewer'a gore belirliyor.
+	chronicOf: Player?,
+	chronicDays: number,
 }
 
 local clinic: Clinic.Built? = nil
@@ -388,6 +395,16 @@ local function chartSnapshot(patient: Patient?, viewer: Player): any
 		-- bir sey (hayvan gozunun onunde bolmede duruyor); kart bunu
 		-- yazili da soyluyor ki "neden yayilma durmadi" sorusu kalmasin.
 		quarantined = isQuarantineStation(patient.stationId),
+		-- KRONIK DONUS. Hasta gecmisten geldiyse herkes "bu hayvan daha
+		-- once buradaydi" satirini goruyor; HASTALIGIN ADINI ise
+		-- yalnizca o vakayi kendi gecmisinde tutan oyuncu goruyor.
+		-- Kayit tutmanin karsiligi bu; baska bir veteriner ayni hayvani
+		-- tanimiyor.
+		returning = patient.chronicOf ~= nil,
+		returningDays = patient.chronicDays,
+		returningKey = if patient.chronicOf == viewer and always ~= nil
+			then always.nameKey
+			else nil,
 		-- Bulasicilik ANCAK dogru teshisten sonra gidiyor: once
 		-- gitseydi aday listesini 35'ten 6'ya indirirdi.
 		contagious = patient.diagnosed and condition ~= nil and condition.contagious == true,
@@ -477,6 +494,9 @@ local function stateSnapshot(player: Player): any
 		-- Bulasma uyarisi: teshisi konmus bulasici bir hasta hala
 		-- karantina disinda. Hangi hasta oldugunu SOYLEMIYOR.
 		contagion = contagionAlert,
+		-- Vardiya olayi. Salginin HANGI hastalik oldugu burada YOK:
+		-- gitseydi teshis listesini bir anda daraltirdi.
+		event = Events.snapshot(),
 	}
 end
 
@@ -635,6 +655,70 @@ end
 --- `routine` true ise rutin islemler, degilse hastaliklar arasindan
 --- seciyor. Rutin listesi bossa (veri henuz eklenmemisse) sessizce
 --- hastaliklara dusuyor: kuyruk asla bos kalmamali.
+--- SALGIN VAKASI: olay boyunca gelen hastalarin bir kismi ayni
+--- hastalikla geliyor. Hastaligin hangi TURDE cikacagi da hastaligin
+--- kendi `species` listesinden seciliyor - "at nezlesi" diye bir salgin
+--- cikarmamak icin.
+local function outbreakCase(level: number): (string?, string?)
+	local conditionId = Events.outbreakCondition()
+	if conditionId == nil or math.random() >= Events.outbreakChance() then
+		return nil, nil
+	end
+	local condition = Diagnosis.condition(conditionId)
+	if condition == nil then
+		return nil, nil
+	end
+	local pool = {}
+	for _, animalId in condition.species do
+		local animal = AnimalFactory.spec(animalId)
+		if animal ~= nil and animal.unlockLevel <= level then
+			table.insert(pool, animalId)
+		end
+	end
+	if #pool == 0 then
+		return nil, nil
+	end
+	return pool[math.random(1, #pool)], conditionId
+end
+
+--- KRONIK DONUS: online oyunculardan birinin gecmisindeki kronik bir
+--- vaka geri geliyor. Hangi oyuncunun gecmisinden geldigini de donuyor;
+--- hasta kartindaki "gecen sefer" satirini YALNIZCA o oyuncu goruyor.
+---
+--- Neden birinin gecmisinden? Sunucunun kendi tuttugu bir liste sunucu
+--- kapaninca silinirdi ve kronik vaka yeniden baslatmadan sonra hic
+--- cikmazdi. Profil kalici; klinigin hafizasi oyuncularin hafizasi.
+local function chronicCase(level: number): (string?, string?, Player?, number)
+	local config = economy.chronic
+	if level < config.minLevel or math.random() >= config.chance then
+		return nil, nil, nil, 0
+	end
+	local today = DayCycle.dayNumber()
+	local pool = {}
+	for _, player in Players:GetPlayers() do
+		local entry = Profile.get(player)
+		if entry == nil then
+			continue
+		end
+		for _, record in entry.data.history do
+			local condition = Diagnosis.condition(record.conditionId)
+			if condition == nil or condition.chronic ~= true then
+				continue
+			end
+			local days = today - record.day
+			if days < config.minDaysApart then
+				continue
+			end
+			table.insert(pool, { record.animalId, record.conditionId, player, days })
+		end
+	end
+	if #pool == 0 then
+		return nil, nil, nil, 0
+	end
+	local pick = pool[math.random(1, #pool)]
+	return pick[1] :: string, pick[2] :: string, pick[3] :: Player, pick[4] :: number
+end
+
 local function pickCase(level: number, routine: boolean): (string?, string?)
 	local candidates = {}
 	for _, animalId in AnimalFactory.allIds() do
@@ -698,7 +782,24 @@ local function spawnPatient()
 		and math.random() < economy.emergency.chance + night.emergencyBonus
 	local isRoutine = not isEmergency and math.random() < economy.routineChance
 
-	local animalId, conditionId = pickCase(level, isRoutine)
+	-- Sira onemli: SALGIN > KRONIK > normal. Salgin vardiyasi o
+	-- vardiyanin KONUSU; kronik donus ise arka plandaki devamlilik.
+	-- Ikisi de rutin islemlerin onune geciyor cunku ikisinin de kendi
+	-- hastaligi var.
+	local chronicOf: Player? = nil
+	local chronicDays = 0
+	local animalId, conditionId = outbreakCase(level)
+	if animalId == nil then
+		local id, condition, owner, days = chronicCase(level)
+		if id ~= nil then
+			animalId, conditionId = id, condition
+			chronicOf, chronicDays = owner, days
+			isRoutine = false
+		end
+	end
+	if animalId == nil then
+		animalId, conditionId = pickCase(level, isRoutine)
+	end
 	if animalId == nil or conditionId == nil then
 		warn("[PatientFlow] bu seviyede uygun hasta bulunamadi - veri tablolarini kontrol edin")
 		return
@@ -750,6 +851,8 @@ local function spawnPatient()
 		samples = {},
 		analyzed = {},
 		labBonus = false,
+		chronicOf = chronicOf,
+		chronicDays = chronicDays,
 	}
 	patients[id] = patient
 	usedQueueSlots[slot] = true
@@ -1774,8 +1877,19 @@ function PatientFlow.discharge(player: Player)
 	-- Carpan HASTA GELDIGI an degil, TABURCU edildigi an okunuyor -
 	-- yani nobeti bitirmek de nobette calismak kadar onemli.
 	local shift = DayCycle.modifiers()
-	fee = math.floor(fee * shift.feeMultiplier + 0.5)
-	xpGain = math.floor(xpGain * shift.xpMultiplier + 0.5)
+	-- Vardiya olayi (salgin, yogun/sakin gun, denetim) gunduz/gece
+	-- carpaninin USTUNE biniyor: ikisi de ayni eksende, bu yuzden
+	-- carpiliyorlar.
+	local event = Events.modifiers()
+	fee = math.floor(fee * shift.feeMultiplier * event.feeMultiplier + 0.5)
+	xpGain = math.floor(xpGain * shift.xpMultiplier * event.xpMultiplier + 0.5)
+
+	-- Kontrol ziyareti tam ucret etmiyor: teshis zaten biliniyordu, is
+	-- daha kolaydi. Yoksa kronik vaka "bedava para" olurdu.
+	if patient.chronicOf ~= nil then
+		fee = math.floor(fee * economy.chronic.feeScale + 0.5)
+		xpGain = math.floor(xpGain * economy.chronic.xpScale + 0.5)
+	end
 
 	if patient.emergency then
 		fee = math.floor(fee * economy.emergency.feeMultiplier + 0.5)
@@ -1803,6 +1917,9 @@ function PatientFlow.discharge(player: Player)
 	data.stats.earned += fee + tip
 	data.stats.tips += tip
 	data.species[patient.animalId] = true
+	-- Vakayi gecmise yaz: kronik hastaliklarda bu hayvan gunler sonra
+	-- geri gelecek ve kartinda "gecen sefer" satiri cikacak.
+	Profile.remember(data, patient.animalId, patient.conditionId, DayCycle.dayNumber())
 
 	Tasks.bump(data, "patients", 1)
 	Tasks.bump(data, "earned", fee + tip)
@@ -2129,9 +2246,13 @@ function PatientFlow.start(built: Clinic.Built)
 			-- 1'in altinda). Uc carpan da ayni eksende oldugu icin
 			-- carpiliyor.
 			local levelEffects = ClinicLevel.effects(Players:GetPlayers())
+			local event = Events.modifiers()
 			task.wait(Economy.arrivalSeconds(
 				bestReputation(),
-				clinicEffects.arrivalScale * shift.arrivalScale * levelEffects.arrivalScale
+				clinicEffects.arrivalScale
+					* shift.arrivalScale
+					* levelEffects.arrivalScale
+					* event.arrivalScale
 			))
 		end
 	end)

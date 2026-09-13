@@ -15,6 +15,9 @@
 -- fark ediyor. Ayni sebeple kazanc ayrica ekranda yukselen bir yazi
 -- olarak da gosteriliyor.
 
+local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
+
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Shared = ReplicatedStorage:WaitForChild("VetShared")
 local Loc = require(Shared.Loc)
@@ -369,6 +372,56 @@ function Hud.create(parent: ScreenGui)
 	})
 	contagion.Visible = false
 
+	-- ── Vardiya olayi seridi ──────────────────────────────────────────
+	-- Salgin, yogun/sakin gun, denetim. Bulasma uyarisinin ALTINDA
+	-- (ust orta sutun: hedef seridi 16..50, acil bandi 58..114,
+	-- bulasma 122..152, olay 160..194).
+	--
+	-- Geri sayimi ISTEMCI ciziyor: sunucu bitis anini MUTLAK zaman
+	-- olarak yolluyor (Workspace:GetServerTimeNow ile ayni saat), bu
+	-- yuzden saniyede bir paket yollamaya gerek yok.
+	local event = Theme.card({
+		name = "VardiyaOlayi",
+		size = UDim2.fromOffset(300, 34),
+		position = UDim2.new(0.5, 0, 0, 160),
+		anchor = Vector2.new(0.5, 0),
+		color = Theme.color.panel,
+		parent = parent,
+	}, Theme.color.xp)
+	local eventIcon = Theme.icon({
+		name = "clock",
+		size = 13,
+		color = Theme.color.xp,
+		position = UDim2.fromOffset(Theme.space.md, 10),
+		parent = event,
+		zIndex = 2,
+	})
+	local eventText = Theme.label({
+		name = "Yazi",
+		text = "",
+		size = UDim2.new(1, -Theme.space.md * 2 - 20 - 44, 1, 0),
+		position = UDim2.fromOffset(Theme.space.md + 20, 0),
+		textSize = Theme.size.micro,
+		bold = true,
+		color = Theme.color.text,
+		parent = event,
+		zIndex = 2,
+	})
+	local eventClock = Theme.label({
+		name = "Sayac",
+		text = "",
+		size = UDim2.fromOffset(44, 34),
+		position = UDim2.new(1, -Theme.space.md, 0, 0),
+		anchor = Vector2.new(1, 0),
+		textSize = Theme.size.micro,
+		bold = true,
+		align = Enum.TextXAlignment.Right,
+		color = Theme.color.xp,
+		parent = event,
+		zIndex = 2,
+	})
+	event.Visible = false
+
 	-- ── Kazanc yazilari ───────────────────────────────────────────────
 	local floaters = Theme.frame({
 		name = "Kazanclar",
@@ -418,7 +471,28 @@ function Hud.create(parent: ScreenGui)
 		contagion = contagion,
 		contagionText = contagionText,
 		contagionPulse = nil,
+		event = event,
+		eventIcon = eventIcon,
+		eventText = eventText,
+		eventClock = eventClock,
+		eventEndsAt = 0,
+		eventShown = "",
 	}
+
+	-- Olay geri sayimi her karede yeniden yaziliyor. Sunucu yalnizca
+	-- BITIS ANINI yolluyor (senkron sunucu saatiyle); saniyede bir
+	-- paket yollamak ayni bilgiyi tekrar tekrar tasimak olurdu.
+	RunService.RenderStepped:Connect(function()
+		if widgets == nil or not widgets.event.Visible then
+			return
+		end
+		local left = math.max(0, widgets.eventEndsAt - Workspace:GetServerTimeNow())
+		widgets.eventClock.Text = ("%d:%02d"):format(math.floor(left / 60), math.floor(left % 60))
+		if left <= 0 then
+			widgets.event.Visible = false
+			widgets.eventShown = ""
+		end
+	end)
 
 	widgets.moneyCaption.Text = Loc.get("hud.capMoney")
 	widgets.levelCaption.Text = Loc.get("hud.capLevel")
@@ -456,6 +530,23 @@ function Hud.update(state: any)
 
 	widgets.warning.Visible = state.transient == true
 	widgets.queueText.Text = Loc.get("hud.queue", state.queueWaiting, state.queueSlots)
+
+	-- Vardiya olayi. Yeni bir olay basladiysa serit bir kez parliyor;
+	-- bildirim kayabilir, serit kacmaz.
+	local info = state.event
+	if info == nil then
+		widgets.event.Visible = false
+		widgets.eventShown = ""
+		widgets.eventEndsAt = 0
+	else
+		widgets.event.Visible = true
+		widgets.eventEndsAt = info.endsAt
+		if widgets.eventShown ~= info.id then
+			widgets.eventShown = info.id
+			widgets.eventText.Text = Loc.get("hud.eventLine", Loc.get(info.nameKey), Loc.get(info.descKey))
+			Theme.flash(widgets.event, Theme.color.xp)
+		end
+	end
 
 	-- Bulasma uyarisi: gorunurken nabiz atiyor. Sessiz bir kirmizi
 	-- kutu, ekranin sagindaki kartlarin arasinda kaybolurdu.

@@ -44,6 +44,7 @@ local Lobby = require(script.world.Lobby)
 local OwnerFactory = require(script.world.OwnerFactory)
 local SkyLighting = require(script.world.Lighting)
 
+local Events = require(script.game.Events)
 local Leaderboard = require(script.game.Leaderboard)
 local Matchmaking = require(script.game.Matchmaking)
 local PatientFlow = require(script.game.PatientFlow)
@@ -176,6 +177,9 @@ local function startClinic()
 		AnimalAnimator.start()
 		OwnerFactory.start()
 		PatientFlow.start(clinicBuilt :: Clinic.Built)
+		-- Vardiya olaylari klinik kurulduktan SONRA basliyor: bir
+		-- salgin, hasta gonderecek bir klinik olmadan anlamsiz olurdu.
+		Events.start()
 	end)
 	if not ok then
 		warn("[init] KLINIK KURULAMADI: " .. tostring(err))
@@ -322,6 +326,18 @@ local function payWages(day: number)
 end
 
 DayCycle.onDayEnded(payWages)
+
+-- Olay basladiginda/bittiginde herkese haber ver ve HUD seridini
+-- tazele. Duyuru TEK yerde: olayin kendisi Events'te, gorunur tarafi
+-- burada.
+Events.onChanged(function(active)
+	for _, player in Players:GetPlayers() do
+		if active ~= nil then
+			Net.toPlayer("Notify", player, "info", active.nameKey, {})
+		end
+		PatientFlow.pushState(player)
+	end
+end)
 
 local function onPlayerAdded(player: Player)
 	local entry = Profile.load(player)

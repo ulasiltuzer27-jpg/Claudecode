@@ -42,6 +42,7 @@ local Profile = require(script.Parent.game.Profile)
 local Tasks = require(script.Parent.game.Tasks)
 local Staff = require(script.Parent.game.Staff)
 local ClinicLevel = require(script.Parent.game.ClinicLevel)
+local Events = require(script.Parent.game.Events)
 local Surgery = require(script.Parent.game.Surgery)
 local Ward = require(script.Parent.game.Ward)
 local ToolGame = require(script.Parent.game.ToolGame)
@@ -737,6 +738,46 @@ do
 		ClinicLevel.levelForXp(ClinicLevel.xpForLevel(ClinicLevel.MAX) * 10) == ClinicLevel.MAX
 	)
 	check("klinik bos sunucuda 1. seviyede", ClinicLevel.activeLevel({}) == 1)
+
+	-- Vardiya olaylari: tablo tutarli mi ve baslangicta olay YOK mu?
+	-- Sunucu acilir acilmaz bir salginla baslamak, oyuncuyu daha ilk
+	-- saniyede anlamadigi bir seyin ortasina birakirdi.
+	check("olay tablosu en az 3 satir", #Events.all() >= 3)
+	check("baslangicta vardiya olayi yok", Events.active() == nil)
+	local idle = Events.modifiers()
+	check(
+		"olaysizken carpanlar 1",
+		idle.arrivalScale == 1 and idle.feeMultiplier == 1 and idle.xpMultiplier == 1
+	)
+	check("olaysizken salgin hastaligi yok", Events.outbreakCondition() == nil)
+	for _, kind in Events.kinds() do
+		check(("olay turu '%s' taniniyor"):format(kind), kind == "outbreak" or kind == "plain")
+	end
+	for _, entry in Events.all() do
+		check(("olay '%s' adi cevrili"):format(entry.id), Loc.has(entry.nameKey))
+		check(("olay '%s' aciklamasi cevrili"):format(entry.id), Loc.has(entry.descKey))
+	end
+
+	-- Kronik vaka gecmisi: sinir gercekten isliyor mu? Sinirsiz bir
+	-- gecmis profili her taburcuda buyutur ve uzak bir gunde
+	-- DataStore'un 4 MB sinirina carpardi.
+	do
+		local sandbox = { history = {} }
+		local limit = Profile.historyLimit()
+		for index = 1, limit + 5 do
+			Profile.remember(sandbox :: any, "dog", "arthritis", index)
+		end
+		check(("gecmis %d vakada kesiliyor"):format(limit), #sandbox.history == limit)
+		check("gecmiste en yeni vaka basta", sandbox.history[1].day == limit + 5)
+		check(
+			"gecmiste gorulen vaka bulunabiliyor",
+			Profile.seenBefore(sandbox :: any, "dog", "arthritis", limit + 7) == 2
+		)
+		check(
+			"gorulmemis vaka gecmiste yok",
+			Profile.seenBefore(sandbox :: any, "cat", "arthritis", limit + 7) == nil
+		)
+	end
 
 	-- Kogus: yataklar kurulmus mu ve padoklarin ici hastayi aliyor mu?
 	-- Eski kafeslerin ici (4,8 stud) en buyuk hastanin ayak izinden

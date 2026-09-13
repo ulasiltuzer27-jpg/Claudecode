@@ -1,0 +1,49 @@
+{
+  "_comment": "(VERI) VARDIYA OLAYLARI. Bir vardiyayi digerinden ayiran sey. Gunduz/gece dongusunun (daycycle.json) USTUNE biniyor; ikisi de ayni carpanlara dokunuyor ve carpanlar birbiriyle CARPILIYOR.",
+  "_neden_notu": "Her vardiya ayniydi: hasta geliyor, teshis, tedavi, taburcu. Olaylar o tekduzelige giriyor - salginda ayni hastaliktan seri hasta geliyor, yogun gunde kuyruk dolup tasiyor, sakin gunde hasta seyrek ama itibar kazanci yuksek.",
+  "_salgin_notu": "kind = 'outbreak' olan olay basladiginda BULASICI hastaliklardan biri seciliyor ve olay boyunca gelen hastalarin outbreakChance kadari o hastalikla geliyor. Yani salgin karantina kanadiyla dogrudan bagli: bulasicilari karantinaya almazsan kuyruk cokuyor.",
+  "_denge_notu": "Olaylar ancak minLevel'den sonra cikiyor: ilk dakikalarini oynayan bir oyuncuya salgin gondermek ogrenmeyi imkansiz kilardi. Iki olay arasinda en az minGapSeconds var ki vardiya surekli olaydan olaya kosmasin.",
+  "minLevel": 4,
+  "checkSeconds": 20,
+  "chance": 0.18,
+  "minGapSeconds": 210,
+  "outbreakChance": 0.55,
+  "events": [
+    {
+      "id": "outbreak",
+      "kind": "outbreak",
+      "nameKey": "event.outbreak",
+      "descKey": "event.outbreakDesc",
+      "weight": 3,
+      "seconds": 150,
+      "effect": { "arrivalScale": 0.78, "feeMultiplier": 1.22, "xpMultiplier": 1.15 }
+    },
+    {
+      "id": "busy",
+      "kind": "plain",
+      "nameKey": "event.busy",
+      "descKey": "event.busyDesc",
+      "weight": 4,
+      "seconds": 120,
+      "effect": { "arrivalScale": 0.7, "feeMultiplier": 1.0, "xpMultiplier": 1.1 }
+    },
+    {
+      "id": "calm",
+      "kind": "plain",
+      "nameKey": "event.calm",
+      "descKey": "event.calmDesc",
+      "weight": 3,
+      "seconds": 120,
+      "effect": { "arrivalScale": 1.45, "feeMultiplier": 1.15, "xpMultiplier": 1.0 }
+    },
+    {
+      "id": "inspection",
+      "kind": "plain",
+      "nameKey": "event.inspection",
+      "descKey": "event.inspectionDesc",
+      "weight": 2,
+      "seconds": 140,
+      "effect": { "arrivalScale": 1.0, "feeMultiplier": 1.0, "xpMultiplier": 1.35 }
+    }
+  ]
+}

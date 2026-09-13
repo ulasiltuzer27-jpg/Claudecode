@@ -478,7 +478,8 @@
       "xp": 82,
       "unlockLevel": 5,
       "wrongPenalty": 76,
-      "severity": 3
+      "severity": 3,
+      "chronic": true
     },
     {
       "id": "arthritis",
@@ -501,7 +502,8 @@
       "xp": 60,
       "unlockLevel": 4,
       "wrongPenalty": 58,
-      "severity": 2
+      "severity": 2,
+      "chronic": true
     },
     {
       "id": "heartMurmur",
@@ -524,7 +526,8 @@
       "xp": 86,
       "unlockLevel": 6,
       "wrongPenalty": 78,
-      "severity": 3
+      "severity": 3,
+      "chronic": true
     },
     {
       "id": "urinaryInfection",
@@ -596,7 +599,8 @@
       "xp": 78,
       "unlockLevel": 6,
       "wrongPenalty": 72,
-      "severity": 3
+      "severity": 3,
+      "chronic": true
     },
     {
       "id": "shedProblem",
@@ -744,7 +748,8 @@
       "xp": 84,
       "unlockLevel": 8,
       "wrongPenalty": 78,
-      "severity": 3
+      "severity": 3,
+      "chronic": true
     },
     {
       "id": "colic",
@@ -788,7 +793,8 @@
       "xp": 92,
       "unlockLevel": 9,
       "wrongPenalty": 84,
-      "severity": 3
+      "severity": 3,
+      "chronic": true
     },
     {
       "id": "vaccination",
@@ -901,5 +907,6 @@
   ],
   "_rutin_notu": "kind == 'routine' olan vakalar RUTIN KONTROL: belirti yok, teshis yok. Hasta masaya konunca zaten teshisli geliyor ve tek adimlik islem uygulaniyor. Hizli para, az XP. Kuyruga cesit katmak icin var: 31 hastaligin hepsi bulmaca olunca oyun tek ritimli kaliyordu. Orani data/economy.json -> routineChance.",
   "_ameliyat_notu": "`surgeryKind` ameliyat gerektiren hastaliklarda hangi ameliyat mini-oyununun acilacagini soyluyor (data/treatments.json -> surgeryTypes). Belirtilmezse 'rhythm'.",
-  "_bulasici_notu": "contagious = bu hastalik BEKLEME SIRASINDA digerlerine gecebiliyor. Bulasici hasta kuyrukta durdugu surece butun bekleyenlerin sagligi ve memnuniyeti dusuyor, klinigin itibari geriliyor. Durdurmanin tek yolu hastayi KARANTINA bolmesine almak - orada tedavinin tamami yapilabiliyor. Sayilar data/economy.json -> contagion icinde."
+  "_bulasici_notu": "contagious = bu hastalik BEKLEME SIRASINDA digerlerine gecebiliyor. Bulasici hasta kuyrukta durdugu surece butun bekleyenlerin sagligi ve memnuniyeti dusuyor, klinigin itibari geriliyor. Durdurmanin tek yolu hastayi KARANTINA bolmesine almak - orada tedavinin tamami yapilabiliyor. Sayilar data/economy.json -> contagion icinde.",
+  "_kronik_notu": "chronic = bu hastalik GECMEZ, yonetilir. Taburcu edilen hayvan gunler sonra ayni sikayetle geri geliyor ve hasta kartinda 'N gun once burada tedavi edildi' satiri cikiyor. Satiri yalnizca O VAKAYI GOREN oyuncu goruyor: gecmis profilde tutuluyor. Sayilar data/economy.json -> chronic icinde."
 }

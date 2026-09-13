@@ -73,6 +73,7 @@ SYMPTOMS = {s["id"]: s for s in load("symptoms.json")["symptoms"]}
 UPGRADES = load("upgrades.json")["upgrades"]
 STAFF = load("staff.json")["staff"]
 CLINIC_LEVELS = load("clinicLevels.json")
+EVENTS = load("events.json")
 DAYCYCLE = load("daycycle.json")
 SURGERY = load("treatments.json")["surgery"]
 
@@ -94,6 +95,17 @@ def level_for_xp(xp: float) -> int:
         else:
             break
     return level
+
+
+def pick_event(rng):
+    """Agirliga gore olay secimi — Events.luau'daki pickEvent ile ayni."""
+    total = sum(entry["weight"] for entry in EVENTS["events"])
+    roll = rng.random() * total
+    for entry in EVENTS["events"]:
+        roll -= entry["weight"]
+        if roll <= 0:
+            return entry
+    return EVENTS["events"][-1]
 
 
 def clinic_level_for_xp(clinic_xp: float) -> int:
@@ -241,6 +253,18 @@ def simulate(
     clinic_xp = 0.0
     clinic_share = CLINIC_LEVELS["xpShare"]
     clinic_at_patient = {1: 0}
+    # ── Vardiya olaylari ─────────────────────────────────────────────
+    # Olaylar ucreti, XP'yi ve hasta sikligini degistiriyor. Modele
+    # girmezlerse ilerleme egrisi oldugundan farkli cikar ve bunu kimse
+    # fark etmez - maas giderinde oldugu gibi.
+    event_until = 0.0
+    event_effect = {}
+    event_next_check = EVENTS["checkSeconds"]
+    event_eligible_at = EVENTS["minGapSeconds"]
+    event_seconds = 0.0
+    event_counts: dict[str, int] = {}
+    chronic_cfg = ECONOMY["chronic"]
+    chronic_seen = 0
     elapsed = 0.0
     min_money = money
     level_at_patient = {1: 0}
@@ -263,10 +287,28 @@ def simulate(
         needed_tools = {SYMPTOMS[s]["revealedBy"] for s in condition["symptoms"]}
         solvable = needed_tools <= owned_tools
 
+        # Olay penceresi: bitmisse kapaniyor, sirasi gelmisse aciliyor.
+        if elapsed >= event_until:
+            event_effect = {}
+        while elapsed >= event_next_check:
+            event_next_check += EVENTS["checkSeconds"]
+            if (
+                not event_effect
+                and event_next_check >= event_eligible_at
+                and level >= EVENTS["minLevel"]
+                and rng.random() < EVENTS["chance"]
+            ):
+                entry = pick_event(rng)
+                event_effect = entry["effect"]
+                event_until = elapsed + entry["seconds"]
+                event_eligible_at = event_until + EVENTS["minGapSeconds"]
+                event_seconds += entry["seconds"]
+                event_counts[entry["id"]] = event_counts.get(entry["id"], 0) + 1
+
         clinic_level, clinic_fee, clinic_arrival = clinic_effects(clinic_xp)
-        fee_bonus = clinic_fee
+        fee_bonus = clinic_fee * event_effect.get("feeMultiplier", 1)
         discount = 1.0
-        arrival_scale = clinic_arrival
+        arrival_scale = clinic_arrival * event_effect.get("arrivalScale", 1)
         for upgrade in UPGRADES:
             if upgrade["id"] in owned_upgrades:
                 fee_bonus *= upgrade["effect"].get("feeBonus", 1)
@@ -325,7 +367,16 @@ def simulate(
             reputation = clamp_reputation(reputation + ECONOMY["reputation"]["healthyDischarge"])
 
         earned = fee(animal["baseFee"], condition["feeMultiplier"], reputation, health, fee_bonus)
-        gained_xp = condition["xp"]
+        gained_xp = condition["xp"] * event_effect.get("xpMultiplier", 1)
+
+        # KRONIK DONUS: gecmisteki bir vaka geri geliyor. Teshis zaten
+        # biliniyor, is daha kolay - bu yuzden ucret ve XP kirpiliyor.
+        # Kirpmayi modellemezsek kronik vaka simulasyonda "bedava para"
+        # gorunur ve denge yanlis cikar.
+        if level >= chronic_cfg["minLevel"] and rng.random() < chronic_cfg["chance"]:
+            chronic_seen += 1
+            earned = math.floor(earned * chronic_cfg["feeScale"] + 0.5)
+            gained_xp = gained_xp * chronic_cfg["xpScale"]
 
         # Acil vakalar: daha yuksek ucret ve XP. Oyunda rastgele geliyor;
         # burada ayni olasilikla ornekleniyor.
@@ -414,6 +465,9 @@ def simulate(
         "clinicXp": clinic_xp,
         "clinicLevel": clinic_level_for_xp(clinic_xp),
         "clinic_at_patient": clinic_at_patient,
+        "event_seconds": event_seconds,
+        "event_counts": event_counts,
+        "chronic_seen": chronic_seen,
         "level_at_patient": level_at_patient,
         "level_at_time": level_at_time,
         "tool_bought_at": tool_bought_at,
@@ -489,6 +543,41 @@ def main() -> int:
         "klinik ucret zammi asiri degil (en fazla iki kat)",
         top_fee <= 2.0,
     )
+
+    # ── Vardiya olaylari ve kronik vakalar ────────────────────────────
+    #
+    # Iki yonlu denetim, personeldeki kalibin aynisi: ozellik gercekten
+    # ISLIYOR mu ve oyunu ELE GECIRIYOR mu?
+    check("vardiya olaylari gercekten cikiyor", good["event_seconds"] > 0)
+    event_share = good["event_seconds"] / max(1.0, good["elapsed"])
+    check(
+        f"vardiya normal kaliyor (zamanin %{event_share * 100:.0f}'i olayli)",
+        event_share <= 0.5,
+    )
+    # Her olay turu uzun kosuda en az bir kez cikmali: cikmayan bir
+    # olay, tabloda durup hicbir zaman oynanmayan olu bir satirdir.
+    for entry in EVENTS["events"]:
+        check(
+            f"olay '{entry['id']}' uzun kosuda en az bir kez cikiyor",
+            endless["event_counts"].get(entry["id"], 0) > 0,
+        )
+    check("kronik vaka gercekten geri geliyor", good["chronic_seen"] > 0)
+    chronic_share = good["chronic_seen"] / max(1, good["patients"])
+    check(
+        f"kronik vaka azinlikta (hastalarin %{chronic_share * 100:.0f}'i)",
+        chronic_share <= 0.35,
+    )
+    # Kontrol ziyareti daha az kazandirmali; aksi halde oyuncunun en
+    # karli hamlesi ayni hastayi tekrar tekrar gormek olurdu.
+    check(
+        "kronik kontrol normal vakadan az kazandiriyor",
+        ECONOMY["chronic"]["feeScale"] < 1 and ECONOMY["chronic"]["xpScale"] <= 1,
+    )
+    # Salgin ucreti artiriyor mu? (Karantina isini ustlenmenin
+    # karsiligi olmali.)
+    outbreak = next(e for e in EVENTS["events"] if e["kind"] == "outbreak")
+    check("salgin ucreti artiriyor", outbreak["effect"].get("feeMultiplier", 1) > 1)
+    check("salgin hastalari siklastiriyor", outbreak["effect"].get("arrivalScale", 1) < 1)
 
     # ── Personel ──────────────────────────────────────────────────────
     # Personel gec oyundaki para yigininin karsiligi. Iki yonlu denetim:
@@ -588,7 +677,8 @@ def main() -> int:
         f"{int(good['xp'])} XP · itibar {int(good['reputation'])} · "
         f"{good['elapsed'] / 3600:.1f} saat · "
         f"{len(good['staff'])}/{len(STAFF)} personel, {int(good['wages'])} TL maas, "
-        f"klinik {good['clinicLevel']}/{max_clinic}"
+        f"klinik {good['clinicLevel']}/{max_clinic}, "
+        f"{sum(good['event_counts'].values())} olay, {good['chronic_seen']} kronik kontrol"
     )
     print()
 
