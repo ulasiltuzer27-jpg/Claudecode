@@ -12,6 +12,7 @@ local TweenService = game:GetService("TweenService")
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Shared = ReplicatedStorage:WaitForChild("VetShared")
+local Audio = require(Shared.Audio)
 local Loc = require(Shared.Loc)
 
 local Theme = require(script.Parent.Theme)
@@ -39,9 +40,31 @@ end
 --- Bir bildirim gosterir. `args` icindeki `xxx.yyy` bicimindeki
 --- dizeler de ceviri anahtari sayilip cevriliyor: sunucu tur/hastalik
 --- adlarini anahtar olarak yolluyor.
+-- Bazi bildirimlerin kendi sesi var; geri kalani turune gore genel bir
+-- ses caliyor. Anahtar -> ses eslemesi burada, tek yerde.
+local CUE_FOR_KEY = {
+	["notify.levelUp"] = "levelUp",
+	["notify.achievement"] = "achievement",
+	["notify.taskDone"] = "taskDone",
+	["notify.discharged"] = "cash",
+	["notify.dischargedTip"] = "cash",
+	["notify.diagnosisCorrect"] = "diagnosisCorrect",
+	["notify.diagnosisWrong"] = "diagnosisWrong",
+	["shop.bought"] = "cash",
+}
+
 function Notify.push(kind: string, messageKey: string, args: { any })
 	if container == nil then
 		return
+	end
+
+	local cue = CUE_FOR_KEY[messageKey]
+	if cue ~= nil then
+		Audio.play(cue)
+	elseif kind == "bad" or kind == "warn" then
+		Audio.play("uiDeny")
+	else
+		Audio.play("notify")
 	end
 
 	local translated = {}

@@ -1,0 +1,46 @@
+{
+  "_comment": "(VERI) Lobi salonu ve eslestirme ayarlari.",
+  "_akis_notu": "Oyun TEK yer dosyasi. Herkese acik sunucu LOBI olarak aciliyor; ayrilmis (reserved) sunucu KLINIK olarak. Ayrim game.PrivateServerId ile yapiliyor - iki ayri place yayinlamak ve PlaceId yapistirmak gerekmiyor.",
+  "_studio_notu": "Studio isinlanmayi desteklemiyor ve yayinlanmamis yerde PlaceId 0. Isinlanma basarisiz olursa klinik AYNI sunucuda basliyor; boylece dosya Studio'da acildigi anda lobi -> mod secimi -> klinik akisi bastan sona oynanabiliyor.",
+
+  "soloFallbackSeconds": 30,
+  "countdownSeconds": 4,
+
+  "bounds": { "min": [-36, -26], "max": [36, 26] },
+  "wallHeight": 20,
+  "wallThickness": 1.2,
+  "groundSize": 220,
+  "spawn": { "at": [0, -19] },
+
+  "colors": {
+    "floor": [212, 206, 198],
+    "floorTile": [188, 182, 174],
+    "wall": [236, 240, 244],
+    "trim": [64, 84, 104],
+    "ceiling": [246, 249, 252],
+    "ground": [124, 166, 102],
+    "carpet": [58, 118, 124]
+  },
+
+  "_portal_notu": "Her portal bir mod. capacity kadar oyuncu birikince kadro dolar ve grup birlikte isinlanir.",
+  "portals": [
+    { "id": "solo",   "nameKey": "lobby.solo",   "capacity": 1, "at": [-25, 20], "color": [96, 176, 144] },
+    { "id": "duo",    "nameKey": "lobby.duo",    "capacity": 2, "at": [-8.5, 20], "color": [86, 158, 210] },
+    { "id": "triple", "nameKey": "lobby.triple", "capacity": 3, "at": [8.5, 20],  "color": [196, 146, 214] },
+    { "id": "quad",   "nameKey": "lobby.quad",   "capacity": 4, "at": [25, 20],   "color": [226, 150, 84] }
+  ],
+
+  "_esya_notu": "Lobi de klinigin esya kutuphanesini kullaniyor (Props.luau); ayri bir set yazmaya gerek yok.",
+  "props": [
+    { "id": "waitingBench", "at": [-26, -8], "rot": 0 },
+    { "id": "waitingBench", "at": [-14, -8], "rot": 0 },
+    { "id": "waitingBench", "at": [14, -8],  "rot": 0 },
+    { "id": "waitingBench", "at": [26, -8],  "rot": 0 },
+    { "id": "plant", "at": [-33, 12], "rot": 0 },
+    { "id": "plant", "at": [33, 12],  "rot": 0 },
+    { "id": "plant", "at": [-33, -20], "rot": 0 },
+    { "id": "plant", "at": [33, -20],  "rot": 0 },
+    { "id": "waterCooler", "at": [-33, 0], "rot": 90 },
+    { "id": "trashBin", "at": [33, 0], "rot": 0 }
+  ]
+}

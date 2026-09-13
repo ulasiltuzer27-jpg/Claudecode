@@ -19,6 +19,7 @@ local UserInputService = game:GetService("UserInputService")
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Shared = ReplicatedStorage:WaitForChild("VetShared")
+local Audio = require(Shared.Audio)
 local Loc = require(Shared.Loc)
 local Net = require(Shared.Net)
 
@@ -27,6 +28,7 @@ local Chart = require(script.Chart)
 local DiagnosisPanel = require(script.DiagnosisPanel)
 local Fps = require(script.Fps)
 local Hud = require(script.Hud)
+local LobbyPanel = require(script.LobbyPanel)
 local Notify = require(script.Notify)
 local ProgressPanel = require(script.ProgressPanel)
 local SettingsPanel = require(script.SettingsPanel)
@@ -39,12 +41,24 @@ local TreatmentPanel = require(script.TreatmentPanel)
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
+--- Iki ayri ScreenGui: oyun arayuzu ve lobi. Tek tek panel gizlemek
+--- yerine `Enabled` cevirmek, bir panelin unutulup ekranda kalmasini
+--- imkansiz kiliyor.
 local screen = Instance.new("ScreenGui")
 screen.Name = "VeterinerArayuz"
 screen.ResetOnSpawn = false
 screen.IgnoreGuiInset = true
 screen.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+screen.Enabled = false
 screen.Parent = playerGui
+
+local lobbyScreen = Instance.new("ScreenGui")
+lobbyScreen.Name = "VeterinerLobi"
+lobbyScreen.ResetOnSpawn = false
+lobbyScreen.IgnoreGuiInset = true
+lobbyScreen.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+lobbyScreen.Enabled = false
+lobbyScreen.Parent = playerGui
 
 Hud.create(screen)
 Chart.create(screen)
@@ -57,8 +71,16 @@ ProgressPanel.create(screen)
 Fps.create(screen)
 SettingsPanel.create(screen)
 Notify.create(screen)
+LobbyPanel.create(lobbyScreen)
 
 Camera.start()
+
+-- Butun hazir sesleri bir kez yukle ve tutmayanlari Output'a raporla.
+-- Bu depoyu ureten ortamda Roblox'a erisim yoktu; hangi rbxasset yolunun
+-- gecerli oldugu ancak burada ortaya cikiyor.
+Audio.preload()
+-- Muzik once lobi parcasi; klinige gecince degisiyor.
+Audio.music("lobby")
 
 -- Kisayol serisi ekranin altinda: oyuncunun tuslari tahmin etmesi
 -- gerekmesin.
@@ -87,7 +109,17 @@ local function redraw()
 	TreatmentPanel.update(lastChart, lastState)
 end
 
+Net.get("LobbyState").OnClientEvent:Connect(function(state: any)
+	lobbyScreen.Enabled = true
+	screen.Enabled = false
+	Audio.music("lobby")
+	LobbyPanel.update(state)
+end)
+
 Net.get("StateUpdate").OnClientEvent:Connect(function(state: any)
+	-- Ilk oyun durumu geldi: lobi bitti, klinik basladi.
+	lobbyScreen.Enabled = false
+	screen.Enabled = true
 	lastState = state
 	-- Kayitli kamera ayarlari durumla birlikte geliyor.
 	if state ~= nil and state.settings ~= nil then
@@ -98,6 +130,8 @@ end)
 
 Net.get("ChartUpdate").OnClientEvent:Connect(function(chart: any)
 	lastChart = chart
+	-- Acil vakada muzik gerilime geciyor, bitince geri donuyor.
+	Audio.music(if chart ~= nil and chart.emergency == true then "emergency" else "clinic")
 	redraw()
 end)
 
@@ -145,8 +179,6 @@ UserInputService.InputBegan:Connect(function(input: InputObject, processed: bool
 		ProgressPanel.toggle()
 	elseif key == Enum.KeyCode.O then
 		SettingsPanel.toggle()
-	elseif key == Enum.KeyCode.V then
-		SettingsPanel.quickTogglePerspective()
 	elseif key == Enum.KeyCode.E then
 		Net.toServer("CallNext")
 	elseif key == Enum.KeyCode.T then

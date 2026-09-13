@@ -12,6 +12,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Shared = ReplicatedStorage:WaitForChild("VetShared")
 
+local Audio = require(Shared.Audio)
 local Loc = require(Shared.Loc)
 local Net = require(Shared.Net)
 
@@ -258,6 +259,7 @@ function ProgressPanel.setOpen(value: boolean)
 	end
 	open = value
 	widgets.panel.Visible = value
+	Audio.play(if value then "uiOpen" else "uiClose")
 	if value then
 		-- Panel acilirken taze veri iste: kapaliyken gelen guncellemeler
 		-- cizilmiyor, o yuzden acilista bir kez sormak gerekiyor.

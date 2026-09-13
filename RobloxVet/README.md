@@ -13,9 +13,18 @@ asset'e bağımlı değil**
 
 1. `dist/VeterinerSimulatoru.rbxlx` dosyasına **çift tıkla** — Roblox Studio açılır.
 2. **Play**'e bas.
-3. Output penceresinde şu satırı gör:
+3. **Lobide** başlarsın: dört portal — Tek / İki / Üç / Dört kişilik.
+   Birini seç, sıraya gir; kadro dolunca kliniğe birlikte gidilir.
+4. Output penceresinde şu satırı gör:
    `[SELF-TEST] n/n geçti — veri tabloları ve oyun mantığı tutarlı.`
    (Bir denetim düşerse hangisi olduğunu tek tek yazar.)
+
+> **Studio'da ışınlanma çalışmaz** — Roblox Studio `TeleportService`'i
+> desteklemez ve yayınlanmamış bir yerin `PlaceId`'si 0'dır. Bu yüzden mod
+> seçince klinik **aynı sunucuda** açılır ve Output'a
+> `Işınlanma yapılamadı — klinik AYNI sunucuda açılıyor` yazar. Oyunu
+> yayınladığında gerçek ışınlanma devreye girer; bunun için ekstra bir ayar
+> ya da ikinci bir place gerekmez.
 
 Klinik, eşyalar, hayvanlar ve ışıklandırma Play'e basınca kurulur. Bu yüzden
 Studio'nun Explorer'ında Workspace **Play'e basana kadar boş görünür** —
@@ -37,7 +46,6 @@ normal, bozuk değil (neden böyle: aşağıda "Neden her şey kodda").
 | **B** | Mağaza — aletler ve klinik yükseltmeleri |
 | **G** | İlerleme — günlük görevler · başarımlar · istatistikler |
 | **O** | Ayarlar — kamera, sallanma, FOV, koşma, kare sayacı |
-| **V** | Birinci ↔ üçüncü şahıs kamera |
 | **Shift** (basılı) | Koş |
 | **Boşluk** | Ameliyat mini-oyununda kes |
 
@@ -76,6 +84,59 @@ yalnızca ameliyat masasında yapılır, yani hastayı oraya taşımak gerekir.
 
 ---
 
+## Lobi ve eşleştirme
+
+Oyun **tek bir yer dosyası**. Ayrım `game.PrivateServerId` ile yapılıyor:
+
+```
+PrivateServerId == ""   →  LOBİ    (herkese açık sunucu)
+PrivateServerId ~= ""   →  KLİNİK  (ayrılmış sunucu)
+```
+
+Bu yüzden iki ayrı place yayınlamak ve PlaceId yapıştırmak gerekmiyor —
+oyun yayınlandığı anda lobiden kliniğe ışınlanma çalışır.
+
+- **Tek kişilik** anında gider.
+- **İki/Üç/Dört kişilik** kadro dolana kadar bekler; dolunca seçilen
+  oyuncular `TeleportService:ReserveServer` ile açılan **yeni bir sunucuya
+  birlikte** ışınlanır.
+- Kimse gelmezse **30 saniye** sonra eldeki oyuncularla başlar
+  (`data/lobby.json: soloFallbackSeconds`) — oyun yeniyken kimse sırada
+  kilitli kalmaz.
+- Portalların üstünde sırada kaç kişi olduğu **canlı** yazar.
+
+## Ses ve müzik
+
+Ses sistemi tamamen kurulu: arayüz tıkları, alet başına ayrı ses, tedavi
+sesleri, ameliyat adım notları, taburcu, acil vaka sireni, klinik ortam
+uğultusu, tür başına hayvan sesi ve **çapraz geçişli müzik** (lobi · klinik ·
+acil vaka). Ayarlardan ana ses / müzik / efekt seviyeleri ayrı ayrı
+ayarlanır ve profile kaydedilir.
+
+**Efektler ilk açılışta duyulur.** Kullanılan sesler Roblox istemcisiyle
+birlikte gelen `rbxasset://` dosyaları — ID gerektirmezler, indirilmezler.
+
+**Müzik için ID gerekiyor.** Roblox hazır müzik parçası ile gelmiyor;
+`data/audio.json` içindeki `music` yuvaları boş. Creator Store'dan bir müzik
+ID'si bulup yapıştır, `python3 build.py` çalıştır — çalar:
+
+```json
+"music": { "lobby": { "assetId": 123456789, "volume": 0.5 }, ... }
+```
+
+**Kendi kendini teşhis eder.** Bu depoyu üreten ortamda Roblox'a erişim
+yoktu, yani `rbxasset://` yollarının hepsinin geçerli olduğu
+doğrulanamadı. `Audio.preload()` açılışta hepsini yükleyip **tutmayanları
+adıyla Output'a yazar**:
+
+```
+[SES] 49 ses hazır.
+[SES] 2/49 ses yüklenemedi - data/audio.json'dan değiştirilebilir:
+  toolXray, treatWash
+```
+
+Sessiz bir gizem değil, tek satırlık bir düzeltme.
+
 ## İçindekiler
 
 | | |
@@ -90,10 +151,29 @@ yalnızca ameliyat masasında yapılır, yani hastayı oraya taşımak gerekir.
 | **15 seviye** | Stajyer → Efsane Veteriner |
 | **7 oda** | Resepsiyon, eczane, 2 muayene, ameliyathane, koğuş, yıkama |
 
+### Görünüm
+
+Klinik ve 26 eşya, **eşya başına en az 8 parçadan** kuruluyor: pahlı
+kenarlar, iki tonlu paneller, kulplar, konik ayaklar, sarkan kablolar,
+tepside sıralı aletler, rafta şişeler, kafeste mandal ve etiket. Ortak
+detaylar `src/shared/Detail.luau` içinde tek yerde — 26 eşya aynı kalite
+dilinden konuşuyor.
+
+Bina artık kutu değil: **dış duvarlarda 11 pencere** (cam + çerçeve +
+denizlik), odalarda **dama desenli zemin**, duvarlarda süpürgelik ve
+tavan kornişi, kapılarda söve.
+
 Her tür kendi iskeletiyle kuruluyor: yılanın **eklemli gövdesi** (9 halka,
 kuyruğa doğru incelen, sürünme dalgasıyla kıvrılan), kirpinin **dikenleri**,
 iguananın **sırt yelesi**, atın **yelesi**. Animasyonlar prosedürel —
-nefes, kuyruk, kafa, yürüyüş, kanat çırpma ve hastada topallama.
+nefes, kuyruk, kafa, yürüyüş, kanat çırpma ve hastada topallama. Yüzlerinde
+göz bebeği ve parıltı, kulak içi, burun üstü, pati altı yastıkları ve
+bıyıklar var; gövdelerinde **desen** (benek, şerit, çorap, alın akıtması,
+maske, kabuk plakası, yılan halkası) — hepsi `data/animals.json`'dan.
+
+Yılan masaya **kıvrılarak** konuyor: 7 stud'luk gövdesi 3 stud'luk bir
+daireye toplanıyor. Bu yalnızca görsel değil, veri de bunu biliyor
+(`tableFootprint`) — ve **büyük bir hayvan küçük bir masaya konamıyor**.
 
 ---
 
@@ -137,12 +217,16 @@ Hepsi profile kaydediliyor.
 
 ## Kamera ve konfor
 
+Oyun **yalnızca birinci şahıs**. Üçüncü şahıs seçeneği bilerek yok: muayene
+masasına eğilip hayvana bakmak oyunun merkezinde ve o an kameranın omuz
+üstünde olması işi uzaklaştırıyor.
+
 **O** tuşundaki ayarlar paneli (ayarlar profile kaydediliyor, başka bir
 oturumda da aynı gelir):
 
 | Ayar | |
 |---|---|
-| Birinci şahıs kamera | **V** ile de anında değişir |
+| Ana ses · Müzik · Ses efektleri | üçü ayrı ayrı, %0 – %100 |
 | Kamera sallanması | 0 = tamamen kapalı, 2.0 = en yüksek |
 | Görüş açısı (FOV) | 55 – 100 |
 | Koşma (Shift) | hız + görüş açısının açılması |
@@ -167,6 +251,32 @@ gösteriyor: ortalama takılmaları gizler, 60 ortalamalı bir oyun arada 12'ye
 düşebilir.
 
 ---
+
+## Parlama neden kesildi
+
+İlk sürümde sahne göz yoruyordu. Suçlu tek bir sayıydı: `Bloom.Threshold`
+**1.05**. Bloom, eşiğin üstündeki her pikseli parlatır; 1.0 zaten "beyaz"
+demek olduğu için o eşikte beyaz duvar, beyaz dolap, beyaz önlük — hepsi
+parlıyordu.
+
+| | eski → yeni |
+|---|---|
+| `Bloom.Threshold` / `Intensity` | 1.05 / 0.55 → **2.0 / 0.12** |
+| `Lighting.Brightness` | 2.4 → 1.7 |
+| `ExposureCompensation` | 0.12 → 0 |
+| `Atmosphere.Glare` | 0.18 → 0.04 |
+| Tavan lambası | 1.6 → 0.75 |
+| Ameliyat lambası | 4.0 → 1.5 |
+| Sokak lambası | 2.2 → 1.1 |
+
+`Material.Neon` artık yalnızca **gerçekten ışık yayan** üç yerde: tavan
+lambası difüzörü, ameliyat lambası merceği, tabeladaki haç. Monitör ve
+röntgen **ekranları** artık parlamıyor — gerçek bir ekran karanlık odada
+etrafını aydınlatmaz.
+
+Bütün bu sayılar `data/lighting.json` içinde; hâlâ parlak geliyorsa oradan
+kısılır. `verify_data.py` eşiğin bir daha 1.8'in altına düşmemesini
+denetliyor.
 
 ## Neden her şey kodda — Creator Store meselesi
 
@@ -250,13 +360,14 @@ hedefleri.
 ## Doğrulama
 
 Studio'ya erişimimiz olmadığı için "çalışıyor" demek yerine **çalıştırılabilir
-denetim** yazıldı. Toplam **2.786 denetim**:
+denetim** yazıldı. Toplam **8.245 denetim**:
 
 ```bash
 python3 build.py
-python3 tools/verify_place.py       #   227  yer dosyası şeması + tazelik
-python3 tools/verify_data.py        # 1.710  veri tutarlılığı + çeviri anahtarları
-python3 tools/verify_luau.py        #   671  Luau statik denetimleri
+python3 tools/verify_place.py       #   263  yer dosyası şeması + tazelik
+python3 tools/verify_data.py        # 1.997  veri + ses + lobi + ışık + çeviri
+python3 tools/verify_luau.py        #   785  Luau statik denetimleri
+python3 tools/verify_layout.py      # 5.022  3B çakışma, kapı/pencere açıklığı
 python3 tools/simulate_economy.py   #   178  ilerleme/ekonomi eğrisi
 ```
 
@@ -271,7 +382,27 @@ sayaç/etki adlarını **kodun gerçekten okuduğu** adlarla karşılaştırıyo
 `verify_luau`'nun sıra denetimi ise bilerek bozulmuş bir örnek üzerinde
 kendini doğruluyor.
 
-**Bu denetimler işe yaradı.** Yazılırken beş gerçek hata yakaladılar:
+### Çakışan modeller: ölçülüp düzeltildi ve bir daha olamaz
+
+"İç içe giren modeller var" şikâyeti ölçüldü: **19 gerçek kesişme** vardı.
+Röntgen cihazı kuzey duvarından koğuşa taşıyordu, lavabo ile çöp kovası üst
+üsteydi, ağaçlar çalıların içindeydi, koğuşta bir bekleme noktası mama
+istasyonunun içinde kalıyordu.
+
+Çözüm yalnızca "düzelttim" değil, **sözleşme**:
+
+- `data/props.json` her eşyanın **yer bütçesini** bildiriyor ("bu eşya en
+  fazla bu kadar yer kaplar").
+- `tools/verify_layout.py` bütçelerin birbiriyle, duvarlarla, **kapı ve
+  pencere açıklıklarıyla** ve bekleme noktalarıyla çakışmadığını 3B olarak
+  denetliyor (Y ekseni dahil: tavan lambası masanın üstünde, çakışma değil).
+- `SelfTest.server.luau` eşyayı **gerçekten kurup** ölçüsünün bütçeye
+  sığdığını ve en az 8 parçadan oluştuğunu denetliyor.
+
+Yani veri ile model birbirinden kayamıyor — 10 kat detay eklerken en büyük
+risk buydu. Şu an: **0 kesişme**.
+
+**Bu denetimler işe yaradı.** Yazılırken yedi gerçek hata yakaladılar:
 
 1. `fleas` 1. seviyede geliyordu ama tedavisi `drops` 2. seviyede açılıyordu —
    yeni oyuncu o hastayı **iyileştiremezdi**.
@@ -287,6 +418,10 @@ kendini doğruluyor.
    `verify_luau.py`'ye kalıcı bir denetim olarak eklendi.
 5. Sahibin şikâyeti hasta kartında **ancak teşhisten sonra** görünüyordu —
    oysa bütün amacı teşhisten önce ipucu vermek.
+6. **19 model iç içe giriyordu** (yukarıda).
+7. `KNOWN_MARKINGS` tablosu, onu okuyan fonksiyondan **sonra** tanımlanmıştı —
+   4. maddedeki hatanın aynısı. `verify_luau.py`'nin sıra denetimi bu turda
+   yerel tabloları da kapsayacak şekilde genişletildi ve hatayı yakaladı.
 
 ---
 
@@ -305,26 +440,30 @@ RobloxVet/
 │   ├── tools.json · treatments.json · upgrades.json
 │   ├── achievements.json             18 başarım, sayaç adları
 │   ├── tasks.json                    10 günlük görev havuzu
-│   ├── settings.json                 kamera sallanması, FOV, koşma; sınırlar ve varsayılanlar
+│   ├── settings.json                 kamera, koşma, ses seviyeleri; sınırlar ve varsayılanlar
+│   ├── audio.json                    49 ses ipucu + 3 müzik yuvası
+│   ├── lighting.json                 ışık ve son-işlem (parlama buradan kısılır)
+│   ├── props.json                    her eşyanın yer bütçesi ve masa yüzeyi
+│   ├── lobby.json                    lobi salonu, 4 portal, eşleştirme ayarları
 │   ├── economy.json                  XP eğrisi, ücret, itibar, bahşiş, acil vaka, stres
 │   ├── clinic.json                   oda planı, duvarlar, kapılar, eşya yerleşimi
 │   ├── assetIds.json                 Creator Store yuvaları (boş)
 │   └── locale/tr.json                341 satır Türkçe metin
 │
-├── src/shared/                       Net · Validate · Loc · Assets · Build
+├── src/shared/                       Net · Validate · Loc · Assets · Build · Detail · Audio
 ├── src/server/
 │   ├── init.server.luau              tek giriş noktası, kurulum sırası
 │   ├── SelfTest.server.luau          açılış denetimleri → Output
 │   ├── world/                        Clinic · Props · Lighting · AnimalFactory
-│   │                                 AnimalAnimator · OwnerFactory
+│   │                                 AnimalAnimator · OwnerFactory · Lobby
 │   └── game/                         PatientFlow · Diagnosis · Treatment · Surgery
 │                                     Economy · Upgrades · Profile
-│                                     Achievements · Tasks · Leaderboard
+│                                     Achievements · Tasks · Leaderboard · Matchmaking
 ├── src/client/                       Hud · Chart · DiagnosisPanel · TreatmentPanel
 │                                     SurgeryPanel · ShopPanel · ProgressPanel
-│                                     SettingsPanel · Camera · Fps · ToolBar
+│                                     SettingsPanel · LobbyPanel · Camera · Fps · ToolBar
 │                                     Notify · Theme
-└── tools/                            rbxlx yazıcısı + 4 doğrulayıcı
+└── tools/                            rbxlx yazıcısı + 5 doğrulayıcı
 ```
 
 ### Mimarinin üç kuralı
@@ -352,8 +491,16 @@ bakılacak liste:
   ölçülerek hesaplandı ama gözle görülmedi. Özellikle at (en büyük tür) ve
   yılan (eklemli gövde) bakılmaya değer. Bir şey büyük/küçük durursa
   `data/clinic.json` ve `data/animals.json` içinden ayarlanır.
-- **Kamera sallanmasının şiddeti** kişiye göre değişir; varsayılan orta
-  seviyede bırakıldı ve panelden 0'a kadar indirilebiliyor.
+- **Kamera sallanmasının şiddeti** kişiye göre değişir; birinci şahısta
+  daha güçlü hissettirdiği için varsayılan 0.8'e düşürüldü ve panelden
+  0'a kadar indirilebiliyor.
+- **Işınlanma yayında denenmedi.** Studio bunu desteklemiyor; kod
+  `pcall` içinde ve başarısız olunca kliniği aynı sunucuda açıyor.
+  Gerçek davranışı ilk yayınladığında göreceksin.
+- **`rbxasset://` ses yolları doğrulanamadı.** Tutmayanlar sessiz kalır ve
+  açılışta adıyla Output'a yazılır.
+- **Müzik yok** — Roblox hazır müzik parçasıyla gelmiyor; `data/audio.json`
+  içindeki `music` yuvalarına bir ID yapıştırman gerekiyor.
 - **Hayvanlar ve sahip NPC'leri çarpışmasız yürüyor.** Yolları düz hatlar
   olduğu için duvarlardan geçmiyorlar, ama kalabalıkta birbirlerinin
   içinden geçebilirler.
@@ -369,4 +516,3 @@ bakılacak liste:
   geliyor. Daha uzun bir oyun istersen `data/economy.json` içindeki `levels`
   eşiklerini büyüt; `python3 tools/simulate_economy.py` yeni eğriyi anında
   gösterir.
-- **Ses yok.** `assetIds.json`'daki ses yuvaları boş; doldurulunca çalışır.

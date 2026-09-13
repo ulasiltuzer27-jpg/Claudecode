@@ -21,12 +21,14 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Shared = ReplicatedStorage:WaitForChild("VetShared")
 local Data = ReplicatedStorage:WaitForChild("VetData")
 
+local Audio = require(Shared.Audio)
 local Net = require(Shared.Net)
 
 local AnimalAnimator = require(script.Parent.Parent.world.AnimalAnimator)
 local AnimalFactory = require(script.Parent.Parent.world.AnimalFactory)
 local Clinic = require(script.Parent.Parent.world.Clinic)
 local OwnerFactory = require(script.Parent.Parent.world.OwnerFactory)
+local SkyLighting = require(script.Parent.Parent.world.Lighting)
 local Achievements = require(script.Parent.Achievements)
 local Diagnosis = require(script.Parent.Diagnosis)
 local Economy = require(script.Parent.Economy)
@@ -528,12 +530,14 @@ local function spawnPatient()
 
 	if emergency then
 		-- Acil vaka gorsel olarak bagirsin: kirmizi donen isik.
+		local lamp = SkyLighting.lamp("emergency")
 		local beacon = Instance.new("PointLight")
 		beacon.Name = "AcilIsigi"
-		beacon.Color = Color3.fromRGB(240, 72, 64)
-		beacon.Brightness = 4
-		beacon.Range = 22
+		beacon.Color = lamp.color
+		beacon.Brightness = lamp.brightness
+		beacon.Range = lamp.range
 		beacon.Parent = rig.root
+		Audio.ambience("emergencySiren", rig.root)
 		OwnerFactory.say(owner, "hint.emergency")
 	end
 
@@ -658,6 +662,30 @@ end
 
 -- ── Oyuncu eylemleri ──────────────────────────────────────────────────
 
+--- Hayvan bu masaya sigiyor mu? Ati kucuk bir yikama kuvetine koymak
+--- gercekci degil; kural oynanisin parcasi. Yilan kivrildigi icin
+--- govde uzunlugu degil `tableFootprint` kullaniliyor.
+local function fitsStation(animalId: string, stationId: string): boolean
+	if clinic == nil then
+		return false
+	end
+	local station = clinic.stations[stationId]
+	local spec = AnimalFactory.spec(animalId)
+	if station == nil or spec == nil then
+		return false
+	end
+	local length, width = AnimalFactory.tableFootprint(spec)
+	return length <= station.surface[1] + 1e-6 and width <= station.surface[2] + 1e-6
+end
+
+--- Hastayi bir istasyona yerlestirir: kivrilma ve ses dahil.
+local function placeOnStation(patient: Patient, stationId: string)
+	local station = (clinic :: Clinic.Built).stations[stationId]
+	AnimalAnimator.placeAt(patient.rig, station.cframe * CFrame.new(0, 3.6, 0))
+	AnimalAnimator.setCoiled(patient.rig, patient.rig.spec.rig == "serpentine")
+	Audio.play("patientArrive", patient.rig.root)
+end
+
 --- Siradaki hastayi masaya alir; oyuncunun elinde hasta varsa onu
 --- yakindaki baska istasyona tasir.
 function PatientFlow.callNext(player: Player)
@@ -682,13 +710,19 @@ function PatientFlow.callNext(player: Player)
 			notify(player, "warn", "notify.stationBusy")
 			return
 		end
+		if not fitsStation(existing.animalId, stationId) then
+			local animal = AnimalFactory.spec(existing.animalId)
+			notify(player, "warn", "notify.tooBigForStation", {
+				if animal ~= nil then animal.nameKey else existing.animalId,
+			})
+			return
+		end
 		if existing.stationId ~= nil then
 			occupiedStation[existing.stationId] = nil
 		end
 		occupiedStation[stationId] = existing.id
 		existing.stationId = stationId
-		local station = clinic.stations[stationId]
-		AnimalAnimator.placeAt(existing.rig, station.cframe * CFrame.new(0, 3.6, 0))
+		placeOnStation(existing, stationId)
 		notify(player, "info", "notify.patientMoved")
 		pushChart(player)
 		return
@@ -710,7 +744,7 @@ function PatientFlow.callNext(player: Player)
 	end
 
 	if chosen == nil then
-		notify(player, "info", "notify.queueEmpty")
+		notify(player, "info", if skipped then "notify.noneFitHere" else "notify.queueEmpty")
 		return
 	end
 
@@ -724,8 +758,7 @@ function PatientFlow.callNext(player: Player)
 	occupiedStation[stationId] = chosen.id
 	activeOf[player] = chosen.id
 
-	local station = clinic.stations[stationId]
-	AnimalAnimator.placeAt(chosen.rig, station.cframe * CFrame.new(0, 3.6, 0))
+	placeOnStation(chosen, stationId)
 
 	notify(player, "good", "notify.patientTaken")
 	pushState(player)
@@ -778,6 +811,7 @@ function PatientFlow.useTool(player: Player, toolId: string)
 		table.insert(names, if symptom ~= nil then symptom.nameKey else symptomId)
 	end
 
+	Audio.play("tool" .. toolId:sub(1, 1):upper() .. toolId:sub(2), patient.rig.root)
 	Net.toPlayer("ToolResult", player, toolId, names)
 	pushChart(player)
 end
@@ -828,6 +862,7 @@ function PatientFlow.submitDiagnosis(player: Player, conditionId: string)
 			OwnerFactory.updateSatisfaction(patient.owner, patient.satisfaction)
 			OwnerFactory.say(patient.owner, "hint.relieved")
 		end
+		Audio.play("animal" .. patient.animalId:sub(1, 1):upper() .. patient.animalId:sub(2), patient.rig.root)
 		notify(player, "good", "notify.diagnosisCorrect", { condition.nameKey })
 	else
 		data.reputation = Economy.clampReputation(data.reputation + economy.reputation.wrongDiagnosis)
@@ -861,6 +896,7 @@ local function finishTreatment(player: Player, patient: Patient, treatmentId: st
 	AnimalAnimator.setStress(patient.rig, patient.stress)
 
 	if outcome.correct then
+		Audio.play("treat" .. treatmentId:sub(1, 1):upper() .. treatmentId:sub(2), patient.rig.root)
 		patient.treatmentsDone[treatmentId] = true
 		-- Kirik iyilesince topallama biter: gorunur geri bildirim.
 		if treatmentId == "surgery" or treatmentId == "bandage" then
@@ -1103,6 +1139,7 @@ function PatientFlow.discharge(player: Player)
 
 	settleProgress(player, data)
 
+	Audio.play("discharge", patient.rig.root)
 	sendAway(patient, true)
 	pushState(player)
 	pushChart(player)
@@ -1213,6 +1250,18 @@ function PatientFlow.start(built: Clinic.Built)
 	folder.Name = "Hastalar"
 	folder.Parent = workspace
 	patientsFolder = folder
+
+	-- Klinigin ortam ugultusu: sessiz bir odadan cok daha yasayan bir yer.
+	local ambience = Instance.new("Part")
+	ambience.Name = "OrtamSesi"
+	ambience.Size = Vector3.new(1, 1, 1)
+	ambience.CFrame = CFrame.new(built.entranceInside)
+	ambience.Anchored = true
+	ambience.Transparency = 1
+	ambience.CanCollide = false
+	ambience.CanQuery = false
+	ambience.Parent = workspace
+	Audio.ambience("clinicAmbience", ambience)
 
 	-- Hasta gelisi
 	task.spawn(function()

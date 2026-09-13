@@ -94,6 +94,13 @@ def _out_of_order_calls(lines: list[str]) -> list[tuple[int, str, str, int]]:
         match = re.match(r"^local function (\w+)", line)
         if match:
             definitions.setdefault(match.group(1), number)
+            continue
+        # Yerel TABLOLAR da ayni tuzaga dusuyor: `local T = {...}` kendinden
+        # onceki koda gorunmez. (Gercek bir ornek: KNOWN_MARKINGS, onu
+        # okuyan fonksiyondan sonra tanimlanmisti.)
+        match = re.match(r"^local ([A-Z][A-Z0-9_]*) = \{", line)
+        if match:
+            definitions.setdefault(match.group(1), number)
 
     bodies: list[tuple[str, int, int]] = []
     for number, line in enumerate(lines, 1):
@@ -108,7 +115,9 @@ def _out_of_order_calls(lines: list[str]) -> list[tuple[int, str, str, int]]:
     found = []
     for name, start, stop in bodies:
         for index in range(start, min(stop, len(lines))):
-            for called in re.findall(r"(?<![\w.:])(\w+)\s*\(", lines[index]):
+            referenced = re.findall(r"(?<![\w.:])(\w+)\s*\(", lines[index])
+            referenced += re.findall(r"(?<![\w.:])([A-Z][A-Z0-9_]*)\s*\[", lines[index])
+            for called in referenced:
                 defined_at = definitions.get(called)
                 if defined_at is not None and defined_at > start:
                     found.append((index + 1, name, called, defined_at))

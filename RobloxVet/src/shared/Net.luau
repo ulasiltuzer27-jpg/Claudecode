@@ -33,6 +33,7 @@ Net.Schema = {
 	SurgeryBegin = { direction = "toClient", args = { "table" } },
 	SurgeryEnd = { direction = "toClient", args = { "boolean", "number" } },
 	ProgressUpdate = { direction = "toClient", args = { "table" } },
+	LobbyState = { direction = "toClient", args = { "table" } },
 
 	-- ── Istemci -> Sunucu ──────────────────────────────────────────────
 	CallNext = { direction = "toServer", args = {} },
@@ -46,6 +47,8 @@ Net.Schema = {
 	BuyUpgrade = { direction = "toServer", args = { "string" } },
 	SaveSettings = { direction = "toServer", args = { "table" } },
 	RequestProgress = { direction = "toServer", args = {} },
+	JoinQueue = { direction = "toServer", args = { "string" } },
+	LeaveQueue = { direction = "toServer", args = {} },
 }
 
 -- Istemcinin saniyede kac kez gonderebilecegi. Dogrulama sunucuda
@@ -65,6 +68,8 @@ Net.RateLimit = {
 	-- bekletiyor (SettingsPanel).
 	SaveSettings = 3,
 	RequestProgress = 3,
+	JoinQueue = 4,
+	LeaveQueue = 4,
 }
 
 local folderName = "VetRemotes"

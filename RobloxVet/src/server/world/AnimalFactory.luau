@@ -65,9 +65,37 @@ end
 
 local KNOWN_RIGS = { quadruped = true, bird = true, shelled = true, serpentine = true }
 
+-- Desen adlari. Veri tablosundaki `markings` bunlardan birini
+-- kullanmak zorunda; bilinmeyen ad Output'a dusuyor.
+local KNOWN_MARKINGS = {
+	spots = true,
+	stripes = true,
+	socks = true,
+	blaze = true,
+	mask = true,
+	shellPlates = true,
+	bands = true,
+}
+
+
 --- Iskelet adi taniniyor mu? verify_data.py ve SelfTest bunu soruyor.
 function AnimalFactory.knownRig(rig: string): boolean
 	return KNOWN_RIGS[rig] == true
+end
+
+--- Hayvanin MASADA kapladigi yer [uzunluk, genislik]. Yilan kivrildigi
+--- icin govde uzunlugundan cok daha kucuk; veri tablosu bunu
+--- `tableFootprint` ile bildiriyor.
+function AnimalFactory.tableFootprint(spec: any): (number, number)
+	if spec.tableFootprint ~= nil then
+		return spec.tableFootprint[1], spec.tableFootprint[2]
+	end
+	return spec.body.length, spec.body.width
+end
+
+--- Desen adi taniniyor mu?
+function AnimalFactory.knownMarking(marking: string): boolean
+	return KNOWN_MARKINGS[marking] == true
 end
 
 local function rigJoint(name: string, part0: BasePart, part1: BasePart, pivot: Vector3): Motor6D
@@ -191,6 +219,18 @@ local function buildHead(
 		rigidWeld(skull, snout)
 		parts.snout = snout
 
+		local bridge = Build.part({
+			name = "BurunUstu",
+			size = Vector3.new(head.size * 0.3, head.snoutHeight * 0.35, head.snoutLength * 0.9),
+			cf = CFrame.new(headPos + Vector3.new(0, head.size * 0.02, head.size * 0.42 + head.snoutLength * 0.5)),
+			color = Build.lighten(palette.belly, 0.1),
+			canCollide = false,
+			castShadow = false,
+			anchored = false,
+			parent = model,
+		})
+		rigidWeld(skull, bridge)
+
 		local nose = Build.ball({
 			name = "BurunUcu",
 			size = Vector3.new(head.snoutHeight * 0.55, head.snoutHeight * 0.55, head.snoutHeight * 0.55),
@@ -204,10 +244,11 @@ local function buildHead(
 	end
 
 	for _, side in { -1, 1 } do
+		local eyePos = headPos + Vector3.new(side * head.size * 0.26, head.size * 0.14, head.size * 0.4)
 		local eye = Build.ball({
 			name = "Goz",
-			size = Vector3.new(head.size * 0.2, head.size * 0.2, head.size * 0.2),
-			cf = CFrame.new(headPos + Vector3.new(side * head.size * 0.26, head.size * 0.14, head.size * 0.4)),
+			size = Vector3.new(head.size * 0.22, head.size * 0.22, head.size * 0.22),
+			cf = CFrame.new(eyePos),
 			color = palette.eye,
 			material = Enum.Material.Glass,
 			canCollide = false,
@@ -215,6 +256,57 @@ local function buildHead(
 			parent = model,
 		})
 		rigidWeld(skull, eye)
+
+		-- Goz bebegi ve parildama: iki kucuk kure, bakisi canlandiran sey.
+		local pupil = Build.ball({
+			name = "GozBebegi",
+			size = Vector3.new(head.size * 0.11, head.size * 0.11, head.size * 0.11),
+			cf = CFrame.new(eyePos + Vector3.new(0, 0, head.size * 0.07)),
+			color = Color3.fromRGB(18, 16, 16),
+			canCollide = false,
+			castShadow = false,
+			anchored = false,
+			parent = model,
+		})
+		rigidWeld(skull, pupil)
+		local glint = Build.ball({
+			name = "Parilti",
+			size = Vector3.new(head.size * 0.055, head.size * 0.055, head.size * 0.055),
+			cf = CFrame.new(eyePos + Vector3.new(side * head.size * 0.05, head.size * 0.05, head.size * 0.1)),
+			color = Color3.fromRGB(250, 250, 252),
+			canCollide = false,
+			castShadow = false,
+			anchored = false,
+			parent = model,
+		})
+		rigidWeld(skull, glint)
+	end
+
+	-- Biyiklar: ince cubuklar. Kedi/kopek/hamsteri bir anda "hayvan"
+	-- yapan detay.
+	if head.snoutLength > 0 and spec.rig == "quadruped" then
+		for _, side in { -1, 1 } do
+			for index = 1, 3 do
+				local whisker = Build.part({
+					name = "Biyik",
+					size = Vector3.new(head.size * 0.7, 0.04, 0.04),
+					cf = CFrame.new(
+						headPos
+							+ Vector3.new(
+								side * (head.size * 0.3 + head.size * 0.3),
+								-head.size * 0.08 + (index - 2) * head.size * 0.07,
+								head.size * 0.35 + head.snoutLength * 0.5
+							)
+					) * CFrame.Angles(0, 0, math.rad(side * (index - 2) * 12)),
+					color = Color3.fromRGB(236, 232, 226),
+					canCollide = false,
+					castShadow = false,
+					anchored = false,
+					parent = model,
+				})
+				rigidWeld(skull, whisker)
+			end
+		end
 	end
 
 	local ears = spec.ears
@@ -267,6 +359,21 @@ local function buildHead(
 			end
 			joints["ear" .. index] = rigJoint("Ear" .. index, skull, ear, rootPos)
 			parts["ear" .. index] = ear
+
+			-- Kulak ici: acik renk ic yuzey.
+			if ears.type ~= "none" then
+				local inner = Build.part({
+					name = "KulakIci",
+					size = ear.Size * Vector3.new(0.55, 0.7, 0.5),
+					cf = ear.CFrame * CFrame.new(0, 0, ear.Size.Z * 0.3),
+					color = Build.lighten(palette.ear, 0.35),
+					canCollide = false,
+					castShadow = false,
+					anchored = false,
+					parent = model,
+				})
+				rigidWeld(ear, inner)
+			end
 		end
 	end
 
@@ -312,6 +419,19 @@ local function buildLegs(
 				parent = model,
 			})
 			rigidWeld(leg, paw)
+
+			-- Pati alti yastigi: hayvan masaya kondugunda gorunuyor.
+			local pawPad = Build.part({
+				name = "PatiYastigi" .. index,
+				size = Vector3.new(legs.thickness * 0.8, legs.thickness * 0.2, legs.thickness * 0.9),
+				cf = paw.CFrame * CFrame.new(0, -legs.thickness * 0.4, 0),
+				color = Build.darken(palette.nose, 0.15),
+				canCollide = false,
+				castShadow = false,
+				anchored = false,
+				parent = model,
+			})
+			rigidWeld(paw, pawPad)
 
 			joints["leg" .. index] = rigJoint("Leg" .. index, torso, leg, hip)
 			parts["leg" .. index] = leg
@@ -497,6 +617,161 @@ local function buildMane(model: Model, torso: BasePart, head: BasePart, spec: an
 	end
 end
 
+--- Desenler. `markings` veri tablosunda yaziyor; burasi bilinen her
+--- deseni govdeye ince kaplama parcalari olarak ekliyor.
+---
+--- Neden veride? Ayni iskeleti paylasan iki tur (kedi ve kopek) desenle
+--- ayrisiyor; deseni koda gommek yeni bir tur eklerken kod degistirmek
+--- demek olurdu.
+
+local function applyMarkings(
+	model: Model,
+	spec: any,
+	palette: { [string]: Color3 },
+	parts: { [string]: BasePart }
+)
+	local torso = parts.torso
+	if torso == nil then
+		return
+	end
+	local body = spec.body
+	local accent = Build.darken(palette.body, 0.28)
+
+	for _, marking in spec.markings or {} do
+		if KNOWN_MARKINGS[marking] ~= true then
+			warn(("[AnimalFactory] '%s' bilinmeyen desen istiyor: '%s'"):format(spec.id, marking))
+			continue
+		end
+
+		if marking == "spots" then
+			-- Govdeye dagilmis yassi benekler. Konumlar sabit: rastgele
+			-- olsaydi ayni hasta her dogusunda farkli gorunurdu.
+			local spots = {
+				{ 0.28, 0.22, 0.18 }, { -0.3, 0.3, -0.1 }, { 0.1, 0.34, -0.3 },
+				{ -0.18, 0.18, 0.3 }, { 0.32, 0.28, -0.25 },
+			}
+			for index, spot in spots do
+				local mark = Build.part({
+					name = "Benek" .. index,
+					size = Vector3.new(body.width * 0.34, body.height * 0.3, body.length * 0.2),
+					cf = torso.CFrame
+						* CFrame.new(spot[1] * body.width, spot[2] * body.height, spot[3] * body.length),
+					color = accent,
+					canCollide = false,
+					castShadow = false,
+					anchored = false,
+					parent = model,
+				})
+				rigidWeld(torso, mark)
+			end
+		elseif marking == "stripes" then
+			for index = 1, 5 do
+				local along = (index - 3) * body.length * 0.17
+				local stripe = Build.part({
+					name = "Serit" .. index,
+					size = Vector3.new(body.width * 1.02, body.height * 0.75, body.length * 0.07),
+					cf = torso.CFrame * CFrame.new(0, body.height * 0.16, along),
+					color = accent,
+					canCollide = false,
+					castShadow = false,
+					anchored = false,
+					parent = model,
+				})
+				rigidWeld(torso, stripe)
+			end
+		elseif marking == "socks" then
+			for index = 1, 4 do
+				local leg = parts["leg" .. index]
+				if leg == nil then
+					continue
+				end
+				local sock = Build.part({
+					name = "Corap" .. index,
+					size = leg.Size * Vector3.new(1.12, 0.35, 1.12),
+					cf = leg.CFrame * CFrame.new(0, -leg.Size.Y * 0.32, 0),
+					color = Build.lighten(palette.belly, 0.2),
+					canCollide = false,
+					castShadow = false,
+					anchored = false,
+					parent = model,
+				})
+				rigidWeld(leg, sock)
+			end
+		elseif marking == "blaze" then
+			local head = parts.head
+			if head ~= nil then
+				local blaze = Build.part({
+					name = "Akitma",
+					size = Vector3.new(spec.head.size * 0.22, spec.head.size * 0.9, spec.head.size * 0.55),
+					cf = head.CFrame * CFrame.new(0, spec.head.size * 0.05, spec.head.size * 0.3),
+					color = Build.lighten(palette.belly, 0.25),
+					canCollide = false,
+					castShadow = false,
+					anchored = false,
+					parent = model,
+				})
+				rigidWeld(head, blaze)
+			end
+		elseif marking == "mask" then
+			local head = parts.head
+			if head ~= nil then
+				local mask = Build.part({
+					name = "Maske",
+					size = Vector3.new(spec.head.size * 0.95, spec.head.size * 0.42, spec.head.size * 0.6),
+					cf = head.CFrame * CFrame.new(0, spec.head.size * 0.14, spec.head.size * 0.2),
+					color = accent,
+					canCollide = false,
+					castShadow = false,
+					anchored = false,
+					parent = model,
+				})
+				rigidWeld(head, mask)
+			end
+		elseif marking == "shellPlates" then
+			local shell = parts.shell
+			if shell ~= nil then
+				for index = 1, 6 do
+					local angle = (index / 6) * math.pi * 2
+					local plate = Build.part({
+						name = "KabukPlakasi" .. index,
+						size = Vector3.new(body.width * 0.34, 0.14, body.length * 0.3),
+						cf = shell.CFrame
+							* CFrame.new(math.cos(angle) * body.width * 0.3, shell.Size.Y * 0.4, math.sin(angle) * body.length * 0.26),
+						color = Build.darken(palette.accent, 0.3),
+						canCollide = false,
+						castShadow = false,
+						anchored = false,
+						parent = model,
+					})
+					rigidWeld(shell, plate)
+				end
+			end
+		elseif marking == "bands" then
+			local index = 1
+			while true do
+				local segment = parts["segment" .. index]
+				if segment == nil then
+					break
+				end
+				if index % 2 == 1 then
+					local band = Build.part({
+						name = "Halka" .. index,
+						size = segment.Size * Vector3.new(1.06, 1.06, 0.35),
+						cf = segment.CFrame,
+						color = accent,
+						canCollide = false,
+						castShadow = false,
+						anchored = false,
+						parent = model,
+					})
+					rigidWeld(segment, band)
+				end
+				index += 1
+			end
+		end
+	end
+end
+
 --- Tam rigi kurar. `cframe` hayvanin ayaklarinin basacagi yer.
 function AnimalFactory.create(animalId: string, cframe: CFrame, parent: Instance): Rig?
 	local spec = byId[animalId]
@@ -620,6 +895,8 @@ function AnimalFactory.create(animalId: string, cframe: CFrame, parent: Instance
 		rigidWeld(torso, shell)
 		parts.shell = shell
 	end
+
+	applyMarkings(model, spec, palette, parts)
 
 	local nameplate = buildNameplate(root, spec.nameKey)
 

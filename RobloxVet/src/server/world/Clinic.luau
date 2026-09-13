@@ -15,14 +15,19 @@ local Shared = ReplicatedStorage:WaitForChild("VetShared")
 local Data = ReplicatedStorage:WaitForChild("VetData")
 
 local Build = require(Shared.Build)
+local Detail = require(Shared.Detail)
 local Loc = require(Shared.Loc)
 local Props = require(script.Parent.Props)
+local SkyLighting = require(script.Parent.Lighting)
 
 local plan = require(Data.clinic)
+local propData = require(Data.props)
 
 local Clinic = {}
 
-export type Stations = { [string]: { cframe: CFrame, model: Model } }
+-- surface = masanin uzerine hayvan konabilen yuzeyi [uzunluk, genislik].
+-- PatientFlow buyuk bir hayvani kucuk bir masaya koymayi reddediyor.
+export type Stations = { [string]: { cframe: CFrame, model: Model, surface: { number } } }
 
 export type Built = {
 	model: Model,
@@ -137,6 +142,53 @@ local function doorFrame(
 	piece(at, width + postWidth * 2, top + 0.25, 0.5)
 end
 
+--- Cam bosluğu: kapi ile AYNI mantik, farki alttan ve ustten duvarin
+--- devam etmesi. Icine cam ve cerceve konuyor.
+local function windowGlass(
+	parent: Instance,
+	horizontal: boolean,
+	fixed: number,
+	at: number,
+	width: number,
+	sill: number,
+	height: number,
+	frameColor: Color3
+)
+	local centerY = sill + height * 0.5
+	local function piece(name: string, axisCenter: number, axisSize: number, y: number, ySize: number, thickness: number, color: Color3, material: Enum.Material, transparency: number)
+		local size, position
+		if horizontal then
+			size = Vector3.new(axisSize, ySize, thickness)
+			position = Vector3.new(axisCenter, y, fixed)
+		else
+			size = Vector3.new(thickness, ySize, axisSize)
+			position = Vector3.new(fixed, y, axisCenter)
+		end
+		Build.part({
+			name = name,
+			size = size,
+			cf = CFrame.new(position),
+			color = color,
+			material = material,
+			transparency = transparency,
+			canCollide = transparency < 0.5,
+			castShadow = false,
+			parent = parent,
+		})
+	end
+
+	local glassColor = Build.color(plan.colors.glass)
+	piece("Cam", at, width - 0.5, centerY, height - 0.5, plan.wallThickness * 0.45, glassColor, Enum.Material.Glass, 0.72)
+	-- Cerceve: dort kenar + orta dikme
+	piece("PencereCercevesi", at, width, sill + 0.12, 0.28, plan.wallThickness + 0.1, frameColor, Enum.Material.SmoothPlastic, 0)
+	piece("PencereCercevesi", at, width, sill + height - 0.12, 0.28, plan.wallThickness + 0.1, frameColor, Enum.Material.SmoothPlastic, 0)
+	piece("PencereCercevesi", at - width * 0.5 + 0.14, 0.28, centerY, height, plan.wallThickness + 0.1, frameColor, Enum.Material.SmoothPlastic, 0)
+	piece("PencereCercevesi", at + width * 0.5 - 0.14, 0.28, centerY, height, plan.wallThickness + 0.1, frameColor, Enum.Material.SmoothPlastic, 0)
+	piece("PencereKayidi", at, 0.18, centerY, height - 0.4, plan.wallThickness + 0.06, frameColor, Enum.Material.SmoothPlastic, 0)
+	-- Denizlik: disariya tasan ince raf
+	piece("Denizlik", at, width + 0.6, sill - 0.1, 0.22, plan.wallThickness + 0.8, frameColor, Enum.Material.SmoothPlastic, 0)
+end
+
 local function buildWall(parent: Instance, wall: any, color: Color3, trim: Color3)
 	local from, to = wall.from, wall.to
 	local horizontal = math.abs(to[2] - from[2]) < EPSILON
@@ -152,19 +204,41 @@ local function buildWall(parent: Instance, wall: any, color: Color3, trim: Color
 		fixed = from[1]
 	end
 
-	local doors = table.clone(wall.doors or {})
-	table.sort(doors, function(a, b)
+	-- Kapi ve pencere ayni eksende siralaniyor; duvar ikisinin arasinda
+	-- kalan parcalardan kuruluyor.
+	local openings = {}
+	for _, door in wall.doors or {} do
+		table.insert(openings, { at = door.at, width = door.width, kind = "door" })
+	end
+	for _, window in wall.windows or {} do
+		table.insert(openings, {
+			at = window.at,
+			width = window.width,
+			kind = "window",
+			sill = window.sill,
+			height = window.height,
+		})
+	end
+	table.sort(openings, function(a, b)
 		return a.at < b.at
 	end)
 
+	local frameColor = Build.color(plan.colors.windowFrame)
 	local cursor = axisFrom
-	for _, door in doors do
-		local left = door.at - door.width * 0.5
-		local right = door.at + door.width * 0.5
+	for _, opening in openings do
+		local left = opening.at - opening.width * 0.5
+		local right = opening.at + opening.width * 0.5
 		wallSegment(parent, horizontal, fixed, cursor, left, 0, plan.wallHeight, color)
-		-- Kapinin ustundeki kiris
-		wallSegment(parent, horizontal, fixed, left, right, plan.doorHeight, plan.wallHeight, color)
-		doorFrame(parent, horizontal, fixed, door.at, door.width, trim)
+
+		if opening.kind == "door" then
+			wallSegment(parent, horizontal, fixed, left, right, plan.doorHeight, plan.wallHeight, color)
+			doorFrame(parent, horizontal, fixed, opening.at, opening.width, trim)
+		else
+			-- Pencerenin alti ve ustu duvar olarak devam ediyor.
+			wallSegment(parent, horizontal, fixed, left, right, 0, opening.sill, color)
+			wallSegment(parent, horizontal, fixed, left, right, opening.sill + opening.height, plan.wallHeight, color)
+			windowGlass(parent, horizontal, fixed, opening.at, opening.width, opening.sill, opening.height, frameColor)
+		end
 		cursor = right
 	end
 	wallSegment(parent, horizontal, fixed, cursor, axisTo, 0, plan.wallHeight, color)
@@ -172,6 +246,8 @@ local function buildWall(parent: Instance, wall: any, color: Color3, trim: Color
 	-- Supurgelik: duvarin dibinde ince bir serit. Tek renkli duvarlari
 	-- kirar, mekan daha bitmis gorunur.
 	wallSegment(parent, horizontal, fixed, axisFrom, axisTo, 0, 0.6, trim)
+	-- Tavan kornisi: ust kenarda ikinci serit.
+	wallSegment(parent, horizontal, fixed, axisFrom, axisTo, plan.wallHeight - 0.7, plan.wallHeight, trim)
 end
 
 --- Bahce, yol ve disarisi.
@@ -271,6 +347,16 @@ function Clinic.build(parent: Instance): Built
 	local wallColor = colorOf("wall")
 	local trimColor = colorOf("wallTrim")
 
+	-- Lamba ayari bir kez okunuyor: her oda icin yeniden aramanin anlami yok.
+	local ceilingLamp = SkyLighting.lamp("ceiling")
+
+	local surfaceOf: { [string]: { number } } = {}
+	for _, entry in propData.props do
+		if entry.surface ~= nil then
+			surfaceOf[entry.id] = entry.surface
+		end
+	end
+
 	local stations: Stations = {}
 	local queuePoints: { CFrame } = {}
 	local restPoints: { CFrame } = {}
@@ -290,6 +376,21 @@ function Clinic.build(parent: Instance): Built
 			"Doseme_" .. room.id
 		)
 
+		-- Dama deseni: tek renkli genis bir doseme en cok "bitmemis" duran
+		-- sey; iki tonlu kareler odayi bitiriyor.
+		if (room.floorTile or 0) > 0 then
+			Detail.tiles(
+				structure,
+				room.min,
+				room.max,
+				plan.floorY + 0.03,
+				room.floorTile,
+				Build.color(room.floorColor),
+				Build.color(room.floorTileColor),
+				materialOf(room.floorMaterial)
+			)
+		end
+
 		if plan.ceiling then
 			Build.slab(
 				room.min,
@@ -306,24 +407,30 @@ function Clinic.build(parent: Instance): Built
 		for _, position in room.lights or {} do
 			Build.ceilingLight(
 				Vector3.new(position[1], plan.wallHeight - 0.8, position[2]),
-				structure
+				structure,
+				ceilingLamp
 			)
 		end
 
 		-- Oda adi tabelasi: odanin orta noktasinin ustunde asili.
 		local centerX = (room.min[1] + room.max[1]) * 0.5
 		local centerZ = (room.min[2] + room.max[2]) * 0.5
-		local plate = Build.part({
-			name = "OdaTabelasi_" .. room.id,
-			size = Vector3.new(9, 1.8, 0.25),
-			cf = CFrame.new(centerX, plan.wallHeight - 2.6, centerZ),
-			color = trimColor,
-			material = Enum.Material.SmoothPlastic,
-			canCollide = false,
-			parent = structure,
-		})
-		Build.surfaceText(plate, Enum.NormalId.Front, Loc.get(room.nameKey), Color3.fromRGB(48, 54, 64))
-		Build.surfaceText(plate, Enum.NormalId.Back, Loc.get(room.nameKey), Color3.fromRGB(48, 54, 64))
+		local signCF = CFrame.new(centerX, plan.wallHeight - 2.6, centerZ)
+		Detail.plate(structure, signCF, 8.4, 1.6, Build.color(plan.colors.roof), trimColor, Loc.get(room.nameKey))
+		Detail.plate(structure, signCF * CFrame.Angles(0, math.pi, 0), 8.4, 1.6, Build.color(plan.colors.roof), trimColor, Loc.get(room.nameKey))
+		-- Tabelayi tavana asan ince cubuklar
+		for _, side in { -1, 1 } do
+			Build.part({
+				name = "TabelaAskisi",
+				size = Vector3.new(0.14, 2.2, 0.14),
+				cf = CFrame.new(centerX + side * 3.4, plan.wallHeight - 1.4, centerZ),
+				color = trimColor,
+				material = Enum.Material.Metal,
+				canCollide = false,
+				castShadow = false,
+				parent = structure,
+			})
+		end
 
 		for _, point in room.queuePoints or {} do
 			table.insert(queuePoints, CFrame.new(point[1], plan.floorY, point[2]))
@@ -339,7 +446,12 @@ function Clinic.build(parent: Instance): Built
 			if model ~= nil and spec.tag ~= nil then
 				local stationId = string.match(spec.tag, "^station:(.+)$")
 				if stationId ~= nil then
-					stations[stationId] = { cframe = origin, model = model }
+					local surface = surfaceOf[spec.id]
+					if surface == nil then
+						warn(("[Clinic] '%s' istasyonu yuzey bildirmiyor (data/props.json)"):format(spec.id))
+						surface = { 6, 4 }
+					end
+					stations[stationId] = { cframe = origin, model = model, surface = surface }
 				else
 					model:AddTag(spec.tag)
 				end

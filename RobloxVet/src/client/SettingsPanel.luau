@@ -23,6 +23,8 @@ local Data = ReplicatedStorage:WaitForChild("VetData")
 local Loc = require(Shared.Loc)
 local Net = require(Shared.Net)
 
+local Audio = require(Shared.Audio)
+
 local Camera = require(script.Parent.Camera)
 local Fps = require(script.Parent.Fps)
 local Theme = require(script.Parent.Theme)
@@ -52,17 +54,21 @@ end
 local function applyLocally()
 	Camera.apply(values)
 	Fps.setVisible(values.showFps)
+	Audio.setVolumes(values)
 end
 
 local function refresh()
 	if widgets == nil or values == nil then
 		return
 	end
-	widgets.rows.firstPerson.value.Text = Loc.get(if values.firstPerson then "set.on" else "set.off")
 	widgets.rows.sprintEnabled.value.Text = Loc.get(if values.sprintEnabled then "set.on" else "set.off")
 	widgets.rows.showFps.value.Text = Loc.get(if values.showFps then "set.on" else "set.off")
 	widgets.rows.bobbing.value.Text = ("%.2f"):format(values.bobbing)
 	widgets.rows.fieldOfView.value.Text = tostring(math.floor(values.fieldOfView + 0.5))
+	-- Ses seviyeleri yuzde olarak daha okunur.
+	for _, key in { "masterVolume", "musicVolume", "sfxVolume" } do
+		widgets.rows[key].value.Text = ("%%%d"):format(math.floor(values[key] * 100 + 0.5))
+	end
 end
 
 local function change(key: string, delta: number?)
@@ -163,16 +169,18 @@ end
 
 function SettingsPanel.create(parent: ScreenGui)
 	values = {
-		firstPerson = settingsData.defaults.firstPerson,
 		bobbing = settingsData.defaults.bobbing,
 		fieldOfView = settingsData.defaults.fieldOfView,
 		showFps = settingsData.defaults.showFps,
 		sprintEnabled = settingsData.defaults.sprintEnabled,
+		masterVolume = settingsData.defaults.masterVolume,
+		musicVolume = settingsData.defaults.musicVolume,
+		sfxVolume = settingsData.defaults.sfxVolume,
 	}
 
 	local panel = Theme.frame({
 		name = "Ayarlar",
-		size = UDim2.fromOffset(460, 404),
+		size = UDim2.fromOffset(470, 470),
 		position = UDim2.new(0.5, 0, 0.5, 0),
 		anchor = Vector2.new(0.5, 0.5),
 		transparency = 0.03,
@@ -204,11 +212,13 @@ function SettingsPanel.create(parent: ScreenGui)
 	Theme.list(list, 6)
 
 	local rows = {
-		firstPerson = row(list, 1, "firstPerson", "set.firstPerson", "set.firstPerson.desc"),
-		bobbing = row(list, 2, "bobbing", "set.bobbing", "set.bobbing.desc", "bobbing"),
-		fieldOfView = row(list, 3, "fieldOfView", "set.fov", "set.fov.desc", "fieldOfView"),
-		sprintEnabled = row(list, 4, "sprintEnabled", "set.sprint", "set.sprint.desc"),
-		showFps = row(list, 5, "showFps", "set.fps", "set.fps.desc"),
+		masterVolume = row(list, 1, "masterVolume", "set.master", "set.master.desc", "masterVolume"),
+		musicVolume = row(list, 2, "musicVolume", "set.music", "set.music.desc", "musicVolume"),
+		sfxVolume = row(list, 3, "sfxVolume", "set.sfx", "set.sfx.desc", "sfxVolume"),
+		bobbing = row(list, 4, "bobbing", "set.bobbing", "set.bobbing.desc", "bobbing"),
+		fieldOfView = row(list, 5, "fieldOfView", "set.fov", "set.fov.desc", "fieldOfView"),
+		sprintEnabled = row(list, 6, "sprintEnabled", "set.sprint", "set.sprint.desc"),
+		showFps = row(list, 7, "showFps", "set.fps", "set.fps.desc"),
 	}
 
 	widgets = { panel = panel, rows = rows }
@@ -240,20 +250,11 @@ function SettingsPanel.setOpen(value: boolean)
 	end
 	open = value
 	widgets.panel.Visible = value
+	Audio.play(if value then "uiOpen" else "uiClose")
 end
 
 function SettingsPanel.toggle()
 	SettingsPanel.setOpen(not open)
-end
-
---- V tusu: paneli acmadan birinci/ucuncu sahis arasinda gecis.
-function SettingsPanel.quickTogglePerspective()
-	if values == nil then
-		return
-	end
-	values.firstPerson = Camera.toggleFirstPerson()
-	refresh()
-	scheduleSave()
 end
 
 return SettingsPanel

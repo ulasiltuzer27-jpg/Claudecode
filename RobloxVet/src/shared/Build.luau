@@ -170,22 +170,42 @@ function Build.surfaceText(
 end
 
 --- Tavan/oda isigi. Govde + PointLight.
-function Build.ceilingLight(position: Vector3, parent: Instance, brightness: number?): Part
+---
+--- Parlaklik/menzil VERIDEN geliyor (data/lighting.json). Kod icine
+--- gomulu bir "1.6" degeri, sahne fazla parlayinca kullanicinin
+--- bulamayacagi bir sayi olurdu.
+export type LampConfig = { brightness: number, range: number, color: Color3, angle: number? }
+
+function Build.ceilingLight(position: Vector3, parent: Instance, lamp: LampConfig): Part
 	local housing = Build.part({
-		name = "Lamba",
-		size = Vector3.new(6, 0.35, 2.2),
+		name = "LambaKasasi",
+		size = Vector3.new(6.4, 0.5, 2.6),
 		cf = CFrame.new(position),
-		color = Color3.fromRGB(248, 250, 252),
-		material = Enum.Material.Neon,
+		color = Color3.fromRGB(214, 220, 228),
+		material = Enum.Material.Metal,
 		canCollide = false,
+		castShadow = false,
 		parent = parent,
 	})
+
+	-- Difuzor: gercekten isik yayan yuzey oldugu icin Neon burada hakli.
+	local diffuser = Build.part({
+		name = "Difuzor",
+		size = Vector3.new(5.8, 0.18, 2.1),
+		cf = CFrame.new(position - Vector3.new(0, 0.3, 0)),
+		color = lamp.color,
+		material = Enum.Material.Neon,
+		canCollide = false,
+		castShadow = false,
+		parent = parent,
+	})
+
 	local light = Instance.new("PointLight")
-	light.Brightness = brightness or 1.6
-	light.Range = 26
-	light.Color = Color3.fromRGB(255, 248, 232)
+	light.Brightness = lamp.brightness
+	light.Range = lamp.range
+	light.Color = lamp.color
 	light.Shadows = true
-	light.Parent = housing
+	light.Parent = diffuser
 	return housing
 end
 

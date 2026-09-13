@@ -30,6 +30,7 @@ type Entry = {
 	limpLeg: number,
 	limpStrength: number,
 	stressLevel: number,
+	coiled: boolean,
 	waypoints: { Vector3 },
 	onArrive: (() -> ())?,
 	facing: Vector3,
@@ -51,6 +52,7 @@ function Animator.register(rig: AnimalFactory.Rig)
 		limpLeg = 0,
 		limpStrength = 0,
 		stressLevel = 0,
+		coiled = false,
 		waypoints = {},
 		onArrive = nil,
 		facing = rig.root.CFrame.LookVector,
@@ -77,6 +79,16 @@ function Animator.setStress(rig: AnimalFactory.Rig, stress: number)
 	local entry = entryOf(rig)
 	if entry ~= nil then
 		entry.stressLevel = math.clamp(stress, 0, 100)
+	end
+end
+
+--- Yilani kivirir. Masaya konan bir yilan duz uzanmaz: 7 stud'luk
+--- govdesi 3 stud'luk bir daireye toplanir. `data/animals.json`'daki
+--- `tableFootprint` bu duruma gore yazili.
+function Animator.setCoiled(rig: AnimalFactory.Rig, coiled: boolean)
+	local entry = entryOf(rig)
+	if entry ~= nil then
+		entry.coiled = coiled
 	end
 end
 
@@ -109,6 +121,8 @@ function Animator.walkPath(rig: AnimalFactory.Rig, points: { Vector3 }, onArrive
 	entry.waypoints = table.clone(points)
 	entry.onArrive = onArrive
 	entry.state = if #entry.waypoints > 0 then "walk" else "idle"
+	-- Yurumeye baslayan yilan kivrilmasini cozer.
+	entry.coiled = false
 end
 
 --- Aninda konumlandirir (masaya koymak gibi). Yuruyusu iptal eder.
@@ -245,8 +259,14 @@ local function stepPose(entry: Entry, dt: number, movingSpeed: number)
 			if joint == nil then
 				break
 			end
-			local offset = (index - 1) * 0.7
-			joint.Transform = CFrame.Angles(0, math.sin(phase * 1.6 - offset) * amplitude, 0)
+			if entry.coiled then
+				-- Her halka sabit bir aciyla donunce govde daireye
+				-- kapaniyor; ustune kucuk bir nefes dalgasi biniyor.
+				joint.Transform = CFrame.Angles(0, 0.62 + math.sin(phase * 0.8 - index * 0.4) * 0.04, 0)
+			else
+				local offset = (index - 1) * 0.7
+				joint.Transform = CFrame.Angles(0, math.sin(phase * 1.6 - offset) * amplitude, 0)
+			end
 			index += 1
 		end
 	end

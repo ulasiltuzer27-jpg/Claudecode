@@ -20,6 +20,7 @@ local Shared = ReplicatedStorage:WaitForChild("VetShared")
 local Data = ReplicatedStorage:WaitForChild("VetData")
 
 local Assets = require(Shared.Assets)
+local Audio = require(Shared.Audio)
 local Loc = require(Shared.Loc)
 local Net = require(Shared.Net)
 
@@ -28,6 +29,7 @@ local Props = require(script.Parent.world.Props)
 
 local Achievements = require(script.Parent.game.Achievements)
 local Diagnosis = require(script.Parent.game.Diagnosis)
+local Matchmaking = require(script.Parent.game.Matchmaking)
 local Economy = require(script.Parent.game.Economy)
 local Profile = require(script.Parent.game.Profile)
 local Tasks = require(script.Parent.game.Tasks)
@@ -35,6 +37,8 @@ local Treatment = require(script.Parent.game.Treatment)
 local Upgrades = require(script.Parent.game.Upgrades)
 
 local clinicPlan = require(Data.clinic)
+local lobbyPlan = require(Data.lobby)
+local propData = require(Data.props)
 local settingsData = require(Data.settings)
 
 local passed = 0
@@ -398,6 +402,129 @@ do
 			and settings.fieldOfView <= settingsData.limits.fieldOfView.max
 	)
 	check("kosma hizi yurume hizindan buyuk", settingsData.movement.sprintSpeed > settingsData.movement.walkSpeed)
+end
+
+
+-- ── Esya butcesi: veri ile modelin birbirinden kaymasi ────────────────
+--
+-- data/props.json her esyanin YER BUTCESINI bildiriyor ("bu esya en
+-- fazla bu kadar yer kaplar"). Burasi esyayi GERCEKTEN kurup olcusunu
+-- o butceyle karsilastiriyor. 10 kat detay eklerken en buyuk risk
+-- buydu: modeller buyuyor, butceler eskiyor ve yerlesim denetimi
+-- yalan soylemeye basliyor.
+
+do
+	local budgets: { [string]: any } = {}
+	for _, entry in propData.props do
+		budgets[entry.id] = entry
+	end
+
+	local sandbox = Instance.new("Folder")
+	sandbox.Name = "SelfTestEsyalar"
+	sandbox.Parent = workspace
+
+	local totalParts = 0
+	for _, id in Props.allIds() do
+		local budget = budgets[id]
+		check(("esya '%s' props.json'da butce bildiriyor"):format(id), budget ~= nil)
+		if budget == nil then
+			continue
+		end
+
+		local model = Props.build(id, CFrame.new(0, 0, 0), sandbox)
+		check(("esya '%s' kurulabiliyor"):format(id), model ~= nil)
+		if model == nil then
+			continue
+		end
+
+		local parts = 0
+		for _, descendant in model:GetDescendants() do
+			if descendant:IsA("BasePart") then
+				parts += 1
+			end
+		end
+		totalParts += parts
+		check(
+			("esya '%s' en az %d parcadan olusuyor (%d)"):format(id, propData.minParts, parts),
+			parts >= propData.minParts
+		)
+
+		local size = model:GetExtentsSize()
+		local budgetSize = Vector3.new(budget.size[1], budget.size[3], budget.size[2])
+		-- Kucuk bir pay: kure ve silindirlerin sinir kutusu tam
+		-- oturmayabiliyor.
+		local slack = 0.6
+		check(
+			("esya '%s' butce genisligine siğiyor (%.1f <= %.1f)"):format(id, size.X, budgetSize.X),
+			size.X <= budgetSize.X + slack
+		)
+		check(
+			("esya '%s' butce derinligine siğiyor (%.1f <= %.1f)"):format(id, size.Z, budgetSize.Z),
+			size.Z <= budgetSize.Z + slack
+		)
+		check(
+			("esya '%s' butce yuksekligine siğiyor (%.1f <= %.1f)"):format(id, size.Y, budgetSize.Y),
+			size.Y <= budgetSize.Y + slack
+		)
+
+		model:Destroy()
+	end
+	sandbox:Destroy()
+	print(("[SELF-TEST] %d esya, toplam %d parca."):format(#Props.allIds(), totalParts))
+end
+
+-- ── Desenler, ses ve lobi ─────────────────────────────────────────────
+
+do
+	for _, animal in require(Data.animals).animals do
+		for _, marking in animal.markings or {} do
+			check(
+				("tur '%s' bilinen desen kullaniyor: %s"):format(animal.id, marking),
+				AnimalFactory.knownMarking(marking)
+			)
+		end
+		local length, width = AnimalFactory.tableFootprint(animal)
+		check(("tur '%s' masa ayak izi pozitif"):format(animal.id), length > 0 and width > 0)
+	end
+
+	-- Kodda cagrilan her ses ipucu veri tablosunda var mi? Olmayan bir
+	-- ipucu Output'u uyari yagmuruna cevirirdi.
+	for _, cue in {
+		"uiClick", "uiOpen", "uiClose", "uiConfirm", "uiDeny", "notify", "cash",
+		"levelUp", "achievement", "taskDone", "diagnosisCorrect", "diagnosisWrong",
+		"surgeryPerfect", "surgeryGood", "surgeryMiss", "patientArrive", "discharge",
+		"emergencySiren", "clinicAmbience", "queueJoin", "queueLeave",
+	} do
+		check(("ses ipucu '%s' tanimli"):format(cue), Audio.hasCue(cue))
+	end
+	for _, tool in Upgrades.allTools() do
+		local cue = "tool" .. tool.id:sub(1, 1):upper() .. tool.id:sub(2)
+		check(("alet '%s' icin ses ipucu var (%s)"):format(tool.id, cue), Audio.hasCue(cue))
+	end
+	for _, treatment in Treatment.all() do
+		local cue = "treat" .. treatment.id:sub(1, 1):upper() .. treatment.id:sub(2)
+		check(("tedavi '%s' icin ses ipucu var (%s)"):format(treatment.id, cue), Audio.hasCue(cue))
+	end
+	for _, animal in require(Data.animals).animals do
+		local cue = "animal" .. animal.id:sub(1, 1):upper() .. animal.id:sub(2)
+		check(("tur '%s' icin ses ipucu var (%s)"):format(animal.id, cue), Audio.hasCue(cue))
+	end
+	check("ses tablosu dolu", Audio.cueCount() > 30)
+
+	-- Lobi
+	check("lobide en az iki mod var", #lobbyPlan.portals >= 2)
+	local capacities = {}
+	for _, portal in lobbyPlan.portals do
+		check(("mod '%s' adi cevrili"):format(portal.id), Loc.has(portal.nameKey))
+		check(("mod '%s' kapasitesi pozitif"):format(portal.id), portal.capacity >= 1)
+		check(("mod '%s' kapasitesi benzersiz"):format(portal.id), capacities[portal.capacity] == nil)
+		capacities[portal.capacity] = true
+		check(("mod '%s' Matchmaking tarafindan biliniyor"):format(portal.id), Matchmaking.isMode(portal.id))
+	end
+	check("yedek sure makul", lobbyPlan.soloFallbackSeconds >= 5 and lobbyPlan.soloFallbackSeconds <= 300)
+	for _, spec in lobbyPlan.props do
+		check(("lobi esyasi '%s' biliniyor"):format(spec.id), Props.known(spec.id))
+	end
 end
 
 -- ── Rapor ─────────────────────────────────────────────────────────────

@@ -1,0 +1,389 @@
+{
+  "_comment": "(VERI) Her esyanin YER BUTCESI. size = [genislik, derinlik, yukseklik], offset = modelin merkezinin [x, z] kaymasi, base = kutunun yerden yuksekligi.",
+  "_sozlesme_notu": "Burasi olcum degil SOZLESME: 'bu esya en fazla bu kadar yer kaplayabilir'. tools/verify_layout.py butcelerin birbiriyle ve duvarlarla cakismadigini denetliyor; SelfTest.server.luau ise esyayi kurup GERCEK boyutunun butceye sigdigini denetliyor. Kod butceyi asarsa Studio'da Output'a dusuyor - veri ile model birbirinden kayamiyor.",
+  "_againstWall_notu": "againstWall = bu esya duvara DAYANMAK zorunda (afis, kafes, raf). Denetleyici bunlarin duvarla temasina izin veriyor ama ICINE gomulmesine izin vermiyor.",
+  "_minParts_notu": "SelfTest her esyanin en az 8 parcadan olustugunu denetliyor: 'model daha iyi olsun' istegi olculebilir bir sart haline geldi.",
+  "minParts": 8,
+  "wallTouchTolerance": 0.35,
+  "props": [
+    {
+      "id": "receptionDesk",
+      "size": [
+        11.4,
+        4.0,
+        5.4
+      ],
+      "offset": [
+        0,
+        0.3
+      ],
+      "base": 0,
+      "againstWall": false
+    },
+    {
+      "id": "waitingBench",
+      "size": [
+        7.2,
+        2.6,
+        4.0
+      ],
+      "offset": [
+        0,
+        0
+      ],
+      "base": 0,
+      "againstWall": false
+    },
+    {
+      "id": "outdoorBench",
+      "size": [
+        6.2,
+        2.4,
+        3.4
+      ],
+      "offset": [
+        0,
+        -0.1
+      ],
+      "base": 0,
+      "againstWall": false
+    },
+    {
+      "id": "waterCooler",
+      "size": [
+        2.6,
+        2.4,
+        6.8
+      ],
+      "offset": [
+        0.25,
+        0.15
+      ],
+      "base": 0,
+      "againstWall": false
+    },
+    {
+      "id": "trashBin",
+      "size": [
+        1.9,
+        2.2,
+        2.5
+      ],
+      "offset": [
+        0,
+        0.2
+      ],
+      "base": 0,
+      "againstWall": false
+    },
+    {
+      "id": "poster",
+      "size": [
+        5.6,
+        0.6,
+        4.5
+      ],
+      "offset": [
+        0,
+        0
+      ],
+      "base": 5.0,
+      "againstWall": true
+    },
+    {
+      "id": "medicineShelf",
+      "size": [
+        6.9,
+        2.0,
+        8.1
+      ],
+      "offset": [
+        0,
+        0
+      ],
+      "base": 0,
+      "againstWall": true
+    },
+    {
+      "id": "cabinet",
+      "size": [
+        4.9,
+        2.3,
+        6.3
+      ],
+      "offset": [
+        0,
+        0
+      ],
+      "base": 0,
+      "againstWall": true
+    },
+    {
+      "id": "towelShelf",
+      "size": [
+        4.4,
+        1.8,
+        5.2
+      ],
+      "offset": [
+        0,
+        0
+      ],
+      "base": 0,
+      "againstWall": true
+    },
+    {
+      "id": "dryerRack",
+      "size": [
+        5.5,
+        2.4,
+        5.0
+      ],
+      "offset": [
+        0,
+        0
+      ],
+      "base": 0,
+      "againstWall": false
+    },
+    {
+      "id": "examTable",
+      "size": [
+        10.0,
+        4.6,
+        4.0
+      ],
+      "offset": [
+        1.2,
+        0
+      ],
+      "base": 0,
+      "againstWall": false,
+      "surface": [
+        7.5,
+        4.2
+      ]
+    },
+    {
+      "id": "surgeryTable",
+      "size": [
+        11.6,
+        5.2,
+        4.5
+      ],
+      "offset": [
+        1.4,
+        0
+      ],
+      "base": 0,
+      "againstWall": false,
+      "surface": [
+        8.5,
+        4.8
+      ]
+    },
+    {
+      "id": "sink",
+      "size": [
+        4.9,
+        2.8,
+        7.3
+      ],
+      "offset": [
+        0,
+        0
+      ],
+      "base": 0,
+      "againstWall": true
+    },
+    {
+      "id": "monitor",
+      "size": [
+        4.6,
+        1.8,
+        6.2
+      ],
+      "offset": [
+        0,
+        0.1
+      ],
+      "base": 0,
+      "againstWall": false
+    },
+    {
+      "id": "ivStand",
+      "size": [
+        3.0,
+        2.4,
+        7.0
+      ],
+      "offset": [
+        0.2,
+        0
+      ],
+      "base": 0,
+      "againstWall": false
+    },
+    {
+      "id": "scale",
+      "size": [
+        4.2,
+        3.2,
+        4.2
+      ],
+      "offset": [
+        0,
+        -0.15
+      ],
+      "base": 0,
+      "againstWall": false
+    },
+    {
+      "id": "xrayMachine",
+      "size": [
+        5.4,
+        6.4,
+        9.3
+      ],
+      "offset": [
+        0.8,
+        1.3
+      ],
+      "base": 0,
+      "againstWall": false
+    },
+    {
+      "id": "surgeryLight",
+      "size": [
+        5.4,
+        5.4,
+        4.4
+      ],
+      "offset": [
+        0,
+        0
+      ],
+      "base": 8.7,
+      "againstWall": false
+    },
+    {
+      "id": "kennelCage",
+      "size": [
+        6.3,
+        5.0,
+        5.9
+      ],
+      "offset": [
+        0,
+        0
+      ],
+      "base": 0,
+      "againstWall": true
+    },
+    {
+      "id": "feedStation",
+      "size": [
+        5.4,
+        3.4,
+        2.0
+      ],
+      "offset": [
+        0,
+        -0.3
+      ],
+      "base": 0,
+      "againstWall": false
+    },
+    {
+      "id": "washTub",
+      "size": [
+        6.4,
+        4.4,
+        7.5
+      ],
+      "offset": [
+        0,
+        -0.05
+      ],
+      "base": 0,
+      "againstWall": false,
+      "surface": [
+        5.4,
+        3.4
+      ]
+    },
+    {
+      "id": "clinicSign",
+      "size": [
+        17.0,
+        1.6,
+        15.0
+      ],
+      "offset": [
+        0,
+        0
+      ],
+      "base": 0,
+      "againstWall": false,
+      "spansDoorway": true
+    },
+    {
+      "id": "lampPost",
+      "size": [
+        2.2,
+        2.2,
+        13.0
+      ],
+      "offset": [
+        0,
+        0
+      ],
+      "base": 0,
+      "againstWall": false
+    },
+    {
+      "id": "tree",
+      "size": [
+        9.6,
+        9.6,
+        17.0
+      ],
+      "offset": [
+        0,
+        0
+      ],
+      "base": 0,
+      "againstWall": false
+    },
+    {
+      "id": "bush",
+      "size": [
+        5.2,
+        4.8,
+        4.0
+      ],
+      "offset": [
+        0,
+        0
+      ],
+      "base": 0,
+      "againstWall": false
+    },
+    {
+      "id": "plant",
+      "size": [
+        3.6,
+        3.6,
+        7.0
+      ],
+      "offset": [
+        0,
+        0
+      ],
+      "base": 0,
+      "againstWall": false
+    }
+  ],
+  "_yuzey_notu": "surface = masanin uzerine hayvan konabilen yuzeyi [uzunluk, genislik]. Buyuk bir hayvan kucuk bir masaya konamaz; PatientFlow bunu denetliyor ve verify_layout her turun EN AZ BIR masaya sigdigini dogruluyor.",
+  "_gecit_notu": "spansDoorway = bu esya bilerek bir kapinin uzerinden geciyor (giris tabelasi bir kemer gibi yolun ustunde duruyor); kapi tikama denetiminden muaf."
+}

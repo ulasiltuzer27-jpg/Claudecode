@@ -58,11 +58,13 @@ export type Stats = {
 }
 
 export type Settings = {
-	firstPerson: boolean,
 	bobbing: number,
 	fieldOfView: number,
 	showFps: boolean,
 	sprintEnabled: boolean,
+	masterVolume: number,
+	musicVolume: number,
+	sfxVolume: number,
 }
 
 export type DailyTask = { id: string, progress: number, done: boolean }
@@ -137,11 +139,13 @@ end
 local function defaultSettings(): Settings
 	local defaults = settingsData.defaults
 	return {
-		firstPerson = defaults.firstPerson,
 		bobbing = defaults.bobbing,
 		fieldOfView = defaults.fieldOfView,
 		showFps = defaults.showFps,
 		sprintEnabled = defaults.sprintEnabled,
+		masterVolume = defaults.masterVolume,
+		musicVolume = defaults.musicVolume,
+		sfxVolume = defaults.sfxVolume,
 	}
 end
 
@@ -248,9 +252,8 @@ local function migrate(raw: any): Data
 	-- Ayarlarda TIP denetimi onemli: bozuk bir kayit istemcide kamerayi
 	-- kitleyebilir. Yanlis tipli alan sessizce varsayilana donuyor.
 	if type(raw.settings) == "table" then
-		if type(raw.settings.firstPerson) == "boolean" then
-			result.settings.firstPerson = raw.settings.firstPerson
-		end
+		-- Eski kayitlardaki `firstPerson` alani artik yok (oyun yalnizca
+		-- birinci sahis); sessizce yok sayiliyor, profil bozulmuyor.
 		if type(raw.settings.showFps) == "boolean" then
 			result.settings.showFps = raw.settings.showFps
 		end
@@ -270,6 +273,15 @@ local function migrate(raw: any): Data
 				settingsData.limits.fieldOfView.min,
 				settingsData.limits.fieldOfView.max
 			)
+		end
+		for _, key in { "masterVolume", "musicVolume", "sfxVolume" } do
+			if type(raw.settings[key]) == "number" then
+				result.settings[key] = math.clamp(
+					raw.settings[key],
+					settingsData.limits[key].min,
+					settingsData.limits[key].max
+				)
+			end
 		end
 	end
 

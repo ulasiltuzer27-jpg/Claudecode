@@ -9,6 +9,7 @@
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Shared = ReplicatedStorage:WaitForChild("VetShared")
+local Audio = require(Shared.Audio)
 local Loc = require(Shared.Loc)
 local Net = require(Shared.Net)
 
@@ -166,6 +167,7 @@ function ShopPanel.setOpen(value: boolean)
 	end
 	open = value
 	widgets.panel.Visible = value
+	Audio.play(if value then "uiOpen" else "uiClose")
 end
 
 function ShopPanel.toggle()

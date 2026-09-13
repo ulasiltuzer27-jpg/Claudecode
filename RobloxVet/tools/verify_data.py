@@ -321,6 +321,80 @@ def main() -> int:
     for condition in conditions:
         check(f"hastalik '{condition['id']}' sahip ipucu tanimliyor", "hintKey" in condition)
 
+    # ── Desenler, ses, lobi, isiklandirma ─────────────────────────────
+    audio = load("audio.json")
+    lobby = load("lobby.json")
+    lighting = load("lighting.json")
+    propBudgets = load("props.json")
+
+    # Desen adlari kodda taniniyor mu?
+    match_marks = re.search(r"local KNOWN_MARKINGS = \{([^}]*)\}", factory_src, re.S)
+    known_marks = set(re.findall(r"(\w+)\s*=\s*true", match_marks.group(1))) if match_marks else set()
+    check("AnimalFactory'de KNOWN_MARKINGS bulundu", bool(known_marks))
+    for animal in animals:
+        for marking in animal.get("markings", []):
+            check(f"tur '{animal['id']}' bilinen desen kullaniyor: {marking}", marking in known_marks)
+
+    # Ses tablosu
+    KINDS = {"ui", "world", "ambient"}
+    for cue_id, cue in audio["cues"].items():
+        check(f"ses '{cue_id}' bir kaynak bildiriyor", bool(cue.get("sound")) or cue.get("assetId", 0) != 0)
+        check(f"ses '{cue_id}' turu taniniyor ({cue['kind']})", cue["kind"] in KINDS)
+        check(f"ses '{cue_id}' seviyesi makul", 0 < cue["volume"] <= 2)
+        check(f"ses '{cue_id}' perdesi pozitif", cue["pitch"] > 0)
+    check("muzik yuvalari tanimli", len([k for k in audio["music"] if not k.startswith("_")]) >= 2)
+    check("capraz gecis suresi pozitif", audio["crossfadeSeconds"] > 0)
+
+    # Kodda cagrilan her ses ipucu tabloda var mi? (Olmayan bir ipucu
+    # Output'u uyari yagmuruna cevirir.)
+    # Yalnizca TAM dize sabitleri: `Audio.play("tool" .. toolId)` gibi
+    # birlestirmeler burada denetlenemez (calisma aninda olusuyorlar) -
+    # onlari SelfTest.server.luau alet/tedavi/tur listesine karsi
+    # denetliyor.
+    cue_pattern = re.compile(r'Audio\.(?:play|ambience)\(\s*"([A-Za-z][\w]*)"\s*[,)]')
+    for dirpath, _dirs, filenames in os.walk(os.path.join(ROOT, "src")):
+        for filename in sorted(filenames):
+            if not filename.endswith(".luau"):
+                continue
+            full = os.path.join(dirpath, filename)
+            with open(full, "r", encoding="utf-8") as handle:
+                text = handle.read()
+            for cue_id in sorted(set(cue_pattern.findall(text))):
+                check(
+                    f"'{os.path.relpath(full, ROOT)}' calistirdigi ses tabloda var: {cue_id}",
+                    cue_id in audio["cues"],
+                )
+
+    # Lobi
+    capacities = set()
+    for portal in lobby["portals"]:
+        check(f"mod '{portal['id']}' adi tr.json'da var", portal["nameKey"] in strings)
+        check(f"mod '{portal['id']}' kapasitesi pozitif", portal["capacity"] >= 1)
+        check(f"mod '{portal['id']}' kapasitesi benzersiz", portal["capacity"] not in capacities)
+        capacities.add(portal["capacity"])
+    check("lobide en az iki mod var", len(lobby["portals"]) >= 2)
+    check("yedek sure makul", 5 <= lobby["soloFallbackSeconds"] <= 300)
+    for entry in lobby["props"]:
+        check(f"lobi esyasi '{entry['id']}' props.json'da tanimli", entry["id"] in {b["id"] for b in propBudgets["props"]})
+    # Portallar birbirinin uzerine binmesin
+    for a, b in itertools.combinations(lobby["portals"], 2):
+        distance = abs(a["at"][0] - b["at"][0]) + abs(a["at"][1] - b["at"][1])
+        check(f"portal '{a['id']}' ile '{b['id']}' arasinda mesafe var", distance >= 10)
+
+    # Isiklandirma: parlama sikayetinin kalici cozumu SAYIYLA baglandi.
+    check(
+        f"bloom esigi 1.0'in belirgin uzerinde ({lighting['bloom']['threshold']}) — "
+        "dusuk esik her acik yuzeyi parlatir ve sahne goz yorar",
+        lighting["bloom"]["threshold"] >= 1.8,
+    )
+    check("bloom siddeti olculu", lighting["bloom"]["intensity"] <= 0.25)
+    check("pozlama telafisi asiri degil", abs(lighting["exposureCompensation"]) <= 0.05)
+    check("atmosfer parlamasi olculu", lighting["atmosphere"]["glare"] <= 0.1)
+    check("ortam parlakligi makul", 0.5 <= lighting["brightness"] <= 2.5)
+    for name, lamp in lighting["lights"].items():
+        check(f"lamba '{name}' parlakligi olculu", 0 < lamp["brightness"] <= 2.5)
+        check(f"lamba '{name}' menzili pozitif", lamp["range"] > 0)
+
     # 11. Ceviri anahtarlari
     def walk_keys(node, out: set[str]):
         if isinstance(node, dict):
@@ -407,7 +481,7 @@ def main() -> int:
         f"verify_data: {checks}/{checks} gecti  "
         f"({len(animals)} tur, {len(conditions)} hastalik, {len(symptoms)} semptom, "
         f"{len(treatments)} tedavi, {len(upgrades)} yukseltme, {len(achievements)} basarim, "
-        f"{len(tasks)} gorev, {len(strings)} ceviri satiri)"
+        f"{len(tasks)} gorev, {len(audio['cues'])} ses, {len(strings)} ceviri satiri)"
     )
     return 0
 

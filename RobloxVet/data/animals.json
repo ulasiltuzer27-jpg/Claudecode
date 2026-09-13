@@ -1,11 +1,13 @@
 {
   "_comment": "(VERI) Hasta turleri. Oranlar stud cinsinden, renkler [r,g,b]. AnimalFactory bu tabloyu okuyup rigi kuruyor - yeni bir tur eklemek icin kod degistirmek gerekmiyor.",
   "_rig_notu": "rig alani AnimalFactory'nin bildigi bir iskelet adi olmali: quadruped, bird, shelled, serpentine. verify_data.py bunu denetliyor.",
+  "_desen_notu": "markings = govdeye eklenen desen parcalari. AnimalFactory'nin bildigi turler: spots (benek), stripes (serit), socks (corap), blaze (alin akitmasi), mask (goz maskesi), shellPlates (kabuk plakasi), bands (yilan halkasi). Bilinmeyen ad Output'a dusuyor.",
   "_suslemeler_notu": "spines (kirpi dikeni), crest (iguana sirt yelesi), mane (at yelesi), segments (yilan govde halkalari) istege bagli; yalnizca tanimlandiklari turde kuruluyorlar.",
   "animals": [
     {
       "id": "dog",
       "nameKey": "animal.dog",
+      "markings": ["spots", "socks"],
       "rig": "quadruped",
       "unlockLevel": 1,
       "baseFee": 140,
@@ -28,6 +30,7 @@
     {
       "id": "cat",
       "nameKey": "animal.cat",
+      "markings": ["stripes"],
       "rig": "quadruped",
       "unlockLevel": 1,
       "baseFee": 120,
@@ -50,6 +53,7 @@
     {
       "id": "rabbit",
       "nameKey": "animal.rabbit",
+      "markings": ["socks"],
       "rig": "quadruped",
       "unlockLevel": 2,
       "baseFee": 95,
@@ -72,6 +76,7 @@
     {
       "id": "hamster",
       "nameKey": "animal.hamster",
+      "markings": ["stripes"],
       "rig": "quadruped",
       "unlockLevel": 3,
       "baseFee": 80,
@@ -94,6 +99,7 @@
     {
       "id": "parrot",
       "nameKey": "animal.parrot",
+      "markings": ["mask"],
       "rig": "bird",
       "unlockLevel": 4,
       "baseFee": 165,
@@ -117,6 +123,7 @@
     {
       "id": "turtle",
       "nameKey": "animal.turtle",
+      "markings": ["shellPlates"],
       "rig": "shelled",
       "unlockLevel": 5,
       "baseFee": 150,
@@ -140,6 +147,7 @@
     {
       "id": "hedgehog",
       "nameKey": "animal.hedgehog",
+      "markings": ["mask"],
       "rig": "quadruped",
       "unlockLevel": 6,
       "baseFee": 135,
@@ -163,6 +171,7 @@
     {
       "id": "snake",
       "nameKey": "animal.snake",
+      "markings": ["bands"],
       "rig": "serpentine",
       "unlockLevel": 7,
       "baseFee": 205,
@@ -181,11 +190,15 @@
       "legs": { "count": 0, "length": 0, "thickness": 0, "spreadX": 0, "spreadZ": 0 },
       "ears": { "type": "none", "length": 0, "width": 0 },
       "tail": { "type": "none", "length": 0, "thickness": 0 },
-      "segments": { "count": 9, "taper": 0.55 }
+      "segments": { "count": 9, "taper": 0.55 },
+      "_yerlesim_notu": "Yilan masaya duz degil KIVRILARAK konuyor; kapladigi yer govde uzunlugu degil bu.",
+      "placement": "coiled",
+      "tableFootprint": [3.0, 3.0]
     },
     {
       "id": "iguana",
       "nameKey": "animal.iguana",
+      "markings": ["stripes"],
       "rig": "quadruped",
       "unlockLevel": 8,
       "baseFee": 250,
@@ -209,6 +222,7 @@
     {
       "id": "horse",
       "nameKey": "animal.horse",
+      "markings": ["socks", "blaze"],
       "rig": "quadruped",
       "unlockLevel": 9,
       "baseFee": 420,

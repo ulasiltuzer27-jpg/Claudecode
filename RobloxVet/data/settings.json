@@ -2,26 +2,32 @@
   "_comment": "(VERI) Kamera ve arayuz ayarlari. defaults yeni oyuncunun basladigi degerler; limits ayar panelindeki kaydiricilarin siniri. Oyuncunun secimi profiline (DataStore) yaziliyor.",
   "_kamera_notu": "Sallanma (bobbing) matematigi: dikey bilesen adim frekansinin IKI KATINDA (her adimda bir inis-cikis), yatay bilesen adim frekansinda (agirlik saga-sola gecer). Bu oran dogru olmazsa yuruyus 'kayiyor' gibi hissettiriyor.",
 
+  "_birinci_sahis_notu": "Oyun YALNIZCA birinci sahis. Ucuncu sahis secenegi kaldirildi, o yuzden burada bir ayari da yok.",
   "defaults": {
-    "firstPerson": false,
-    "bobbing": 1.0,
+    "bobbing": 0.8,
     "fieldOfView": 70,
     "showFps": true,
-    "sprintEnabled": true
+    "sprintEnabled": true,
+    "masterVolume": 0.8,
+    "musicVolume": 0.5,
+    "sfxVolume": 0.8
   },
 
   "limits": {
-    "bobbing":     { "min": 0,  "max": 2.0, "step": 0.25 },
-    "fieldOfView": { "min": 55, "max": 100, "step": 5 }
+    "bobbing":      { "min": 0, "max": 2.0, "step": 0.2 },
+    "fieldOfView":  { "min": 55, "max": 100, "step": 5 },
+    "masterVolume": { "min": 0, "max": 1.0, "step": 0.1 },
+    "musicVolume":  { "min": 0, "max": 1.0, "step": 0.1 },
+    "sfxVolume":    { "min": 0, "max": 1.0, "step": 0.1 }
   },
 
   "camera": {
     "walkFrequency": 9.0,
     "sprintFrequency": 13.0,
-    "verticalAmplitude": 0.32,
-    "horizontalAmplitude": 0.2,
-    "rollDegrees": 0.85,
-    "landingDip": 1.6,
+    "verticalAmplitude": 0.24,
+    "horizontalAmplitude": 0.14,
+    "rollDegrees": 0.6,
+    "landingDip": 1.1,
     "landingRecover": 6.0,
     "smoothing": 12,
     "sprintFovBoost": 12,

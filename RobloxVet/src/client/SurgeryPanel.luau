@@ -16,6 +16,7 @@ local Workspace = game:GetService("Workspace")
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Shared = ReplicatedStorage:WaitForChild("VetShared")
+local Audio = require(Shared.Audio)
 local Loc = require(Shared.Loc)
 local Net = require(Shared.Net)
 
@@ -235,12 +236,15 @@ function SurgeryPanel.grade(grade: string)
 	if grade == "perfect" then
 		widgets.grade.Text = Loc.get("surgery.perfect")
 		widgets.grade.TextColor3 = Theme.color.good
+		Audio.play("surgeryPerfect")
 	elseif grade == "good" then
 		widgets.grade.Text = Loc.get("surgery.good")
 		widgets.grade.TextColor3 = Theme.color.accent
+		Audio.play("surgeryGood")
 	else
 		widgets.grade.Text = Loc.get("surgery.miss")
 		widgets.grade.TextColor3 = Theme.color.bad
+		Audio.play("surgeryMiss")
 	end
 end
 

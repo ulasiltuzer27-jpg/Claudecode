@@ -1,25 +1,42 @@
 --!strict
 -- Lighting.luau
 -- =============
--- Isiklandirma ve son-islem efektleri.
+-- Isiklandirma ve son-islem efektleri. Butun sayilar
+-- data/lighting.json'dan geliyor (konvansiyon 1: ayarlanabilir her sey
+-- veride).
+--
+-- Neden bu kadar kisik?
+-- ---------------------
+-- Ilk surumde sahne goz yoruyordu. Suclu tek bir sayiydi:
+-- `Bloom.Threshold = 1.05`. Bloom, esigin USTUNDEKI her pikseli
+-- parlatir; 1.0 zaten "beyaz" demek oldugu icin bu esikte beyaz duvar,
+-- beyaz dolap, beyaz onluk - hepsi parliyordu. Esik 2.0'a cikinca
+-- yalnizca GERCEKTEN isik yayan yuzeyler (Neon) parliyor.
+--
+-- Ayni sebeple `Material.Neon` yalnizca uc yerde: tavan lambasi
+-- difuzoru, ameliyat lambasi merceği ve tabeladaki hac. Monitor ve
+-- rontgen EKRANLARI Neon degil - gercek bir ekran karanlik odada bile
+-- etrafini aydinlatmaz.
 --
 -- Lighting.Technology neden burada yok?
 -- -------------------------------------
 -- Technology betikten yazilamiyor (scriptable degil); yer dosyasinin
--- XML'inde ayarlaniyor (tools/rbxlx/tree.py). Orasi Studio olmadan
--- dogrulayamadigimiz TEK deger; yanlis cikarsa isiklandirma baska bir
--- moda duser ve oyun calismaya devam eder. README kullaniciya tek
--- tiklik duzeltmeyi (Lighting -> Technology -> Future) soyluyor.
---
--- Buradaki her sey calisma aninda kurulabilen seyler: renkler, saat,
--- atmosfer ve efektler.
+-- XML'inde ayarlaniyor (tools/rbxlx/tree.py).
 
 local Lighting = game:GetService("Lighting")
 
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Shared = ReplicatedStorage:WaitForChild("VetShared")
+local Data = ReplicatedStorage:WaitForChild("VetData")
+
+local Build = require(Shared.Build)
+
+local config = require(Data.lighting)
+
 local Sky = {}
 
---- Ayni efekti iki kez eklemeyi onler (Play'e ikinci kez basildiginda
---- Studio Lighting'i sifirlamayabiliyor).
+--- Ayni efekti iki kez eklemeyi onler (Studio'da Play'e ikinci kez
+--- basildiginda Lighting sifirlanmayabiliyor).
 local function replace(className: string, name: string): Instance
 	local existing = Lighting:FindFirstChild(name)
 	if existing ~= nil then
@@ -31,56 +48,68 @@ local function replace(className: string, name: string): Instance
 	return instance
 end
 
+--- Bir lamba ayarini veriden getirir. Bilinmeyen ad sessizce yutulmaz.
+function Sky.lamp(name: string): { brightness: number, range: number, color: Color3, angle: number? }
+	local entry = config.lights[name]
+	if entry == nil then
+		warn(("[Lighting] bilinmeyen lamba ayari: '%s' (data/lighting.json)"):format(name))
+		return { brightness = 1, range = 16, color = Color3.new(1, 1, 1) }
+	end
+	return {
+		brightness = entry.brightness,
+		range = entry.range,
+		color = Build.color(entry.color),
+		angle = entry.angle,
+	}
+end
+
 function Sky.apply()
-	Lighting.Ambient = Color3.fromRGB(96, 100, 110)
-	Lighting.OutdoorAmbient = Color3.fromRGB(128, 136, 150)
-	Lighting.Brightness = 2.4
-	Lighting.ClockTime = 14.2
-	Lighting.GeographicLatitude = 38
-	Lighting.ExposureCompensation = 0.12
-	Lighting.EnvironmentDiffuseScale = 0.45
-	Lighting.EnvironmentSpecularScale = 0.35
+	Lighting.Ambient = Build.color(config.ambient)
+	Lighting.OutdoorAmbient = Build.color(config.outdoorAmbient)
+	Lighting.Brightness = config.brightness
+	Lighting.ClockTime = config.clockTime
+	Lighting.GeographicLatitude = config.geographicLatitude
+	Lighting.ExposureCompensation = config.exposureCompensation
+	Lighting.EnvironmentDiffuseScale = config.environmentDiffuseScale
+	Lighting.EnvironmentSpecularScale = config.environmentSpecularScale
 	Lighting.GlobalShadows = true
-	Lighting.ShadowSoftness = 0.35
-	Lighting.FogEnd = 1400
-	Lighting.FogStart = 320
-	Lighting.FogColor = Color3.fromRGB(196, 212, 226)
+	Lighting.ShadowSoftness = config.shadowSoftness
+	Lighting.FogStart = config.fogStart
+	Lighting.FogEnd = config.fogEnd
+	Lighting.FogColor = Build.color(config.fogColor)
 
 	local atmosphere = replace("Atmosphere", "Atmosfer") :: Atmosphere
-	atmosphere.Density = 0.32
-	atmosphere.Offset = 0.2
-	atmosphere.Color = Color3.fromRGB(202, 214, 228)
-	atmosphere.Decay = Color3.fromRGB(122, 140, 162)
-	atmosphere.Glare = 0.18
-	atmosphere.Haze = 1.1
+	atmosphere.Density = config.atmosphere.density
+	atmosphere.Offset = config.atmosphere.offset
+	atmosphere.Color = Build.color(config.atmosphere.color)
+	atmosphere.Decay = Build.color(config.atmosphere.decay)
+	atmosphere.Glare = config.atmosphere.glare
+	atmosphere.Haze = config.atmosphere.haze
 
 	local bloom = replace("BloomEffect", "Parlama") :: BloomEffect
-	bloom.Intensity = 0.55
-	bloom.Size = 22
-	bloom.Threshold = 1.05
+	bloom.Intensity = config.bloom.intensity
+	bloom.Size = config.bloom.size
+	bloom.Threshold = config.bloom.threshold
 
 	local color = replace("ColorCorrectionEffect", "RenkDuzeltme") :: ColorCorrectionEffect
-	color.Brightness = 0.015
-	color.Contrast = 0.09
-	color.Saturation = 0.1
-	color.TintColor = Color3.fromRGB(255, 252, 248)
+	color.Brightness = config.colorCorrection.brightness
+	color.Contrast = config.colorCorrection.contrast
+	color.Saturation = config.colorCorrection.saturation
+	color.TintColor = Build.color(config.colorCorrection.tint)
 
 	local sun = replace("SunRaysEffect", "GunesIsinlari") :: SunRaysEffect
-	sun.Intensity = 0.06
-	sun.Spread = 0.55
+	sun.Intensity = config.sunRays.intensity
+	sun.Spread = config.sunRays.spread
 
-	-- Alan derinligi bilincli olarak ZAYIF: klinikte oyuncu surekli
-	-- yakin nesnelere bakiyor, guclu bir bulaniklik arayuzu okunmaz
-	-- hale getirirdi.
 	local depth = replace("DepthOfFieldEffect", "AlanDerinligi") :: DepthOfFieldEffect
-	depth.FarIntensity = 0.08
-	depth.NearIntensity = 0
-	depth.FocusDistance = 26
-	depth.InFocusRadius = 42
+	depth.FarIntensity = config.depthOfField.farIntensity
+	depth.NearIntensity = config.depthOfField.nearIntensity
+	depth.FocusDistance = config.depthOfField.focusDistance
+	depth.InFocusRadius = config.depthOfField.inFocusRadius
 
 	local sky = replace("Sky", "Gokyuzu") :: Sky
-	sky.StarCount = 0
-	sky.SunAngularSize = 16
+	sky.StarCount = config.sky.starCount
+	sky.SunAngularSize = config.sky.sunAngularSize
 end
 
 return Sky

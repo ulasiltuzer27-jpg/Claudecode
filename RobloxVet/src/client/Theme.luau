@@ -7,6 +7,10 @@
 -- birinde farkli bir gri, farkli bir kose yaricapi olusuyor ve arayuz
 -- derme catma gorunuyor. Renk ve olcu kararlari burada, bir kez.
 
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Shared = ReplicatedStorage:WaitForChild("VetShared")
+local Audio = require(Shared.Audio)
+
 local Theme = {}
 
 Theme.color = {
@@ -168,8 +172,13 @@ function Theme.button(spec: ButtonSpec): TextButton
 	button.MouseLeave:Connect(function()
 		button.BackgroundColor3 = base
 	end)
+	-- Tik sesi TEK YERDE: butun dugmeler Theme.button'dan geciyor, o
+	-- yuzden her panele ayri ayri ses baglamak gerekmiyor.
 	if spec.onClick ~= nil then
-		button.Activated:Connect(spec.onClick)
+		button.Activated:Connect(function()
+			Audio.play("uiClick")
+			spec.onClick()
+		end)
 	end
 	return button
 end

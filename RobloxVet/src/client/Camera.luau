@@ -1,8 +1,14 @@
 --!strict
 -- Camera.luau
 -- ===========
--- Birinci/ucuncu sahis gecisi, kamera sallanmasi (bobbing), kosma ve
--- FOV. Butun sayilar data/settings.json'dan geliyor.
+-- Birinci sahis kamera: sallanma (bobbing), kosma ve FOV. Butun sayilar
+-- data/settings.json'dan geliyor.
+--
+-- Oyun YALNIZCA birinci sahis. Ucuncu sahis secenegi bilerek yok:
+-- muayene masasina egilip hayvana bakmak oyunun merkezinde ve o an
+-- kameranin omuz ustunde olmasi isi uzaklastiriyor. Sallanma genlikleri
+-- de buna gore DUSURULDU - birinci sahista ayni genlik ucuncu sahistan
+-- cok daha guclu hissettiriyor.
 --
 -- Sallanmanin matematigi
 -- ----------------------
@@ -40,7 +46,6 @@ local config = settingsData.camera
 local movement = settingsData.movement
 
 local current = {
-	firstPerson = settingsData.defaults.firstPerson,
 	bobbing = settingsData.defaults.bobbing,
 	fieldOfView = settingsData.defaults.fieldOfView,
 	sprintEnabled = settingsData.defaults.sprintEnabled,
@@ -68,19 +73,13 @@ local function humanoidOf(): (Humanoid?, BasePart?)
 	return humanoid, root
 end
 
---- Birinci/ucuncu sahis. Roblox'un kendi zoom sinirlarini kullaniyoruz:
---- kamerayi elle konumlandirmak yerine sinirlari kisitlamak, fare
---- tekerlegi ve carpisma davranisini bozmuyor.
+--- Oyun YALNIZCA birinci sahis. Kamerayi elle konumlandirmak yerine
+--- Roblox'un kendi kilidini kullaniyoruz: fare tekerlegi ve carpisma
+--- davranisi boylece bozulmuyor.
 local function applyPerspective()
-	if current.firstPerson then
-		player.CameraMode = Enum.CameraMode.LockFirstPerson
-		player.CameraMinZoomDistance = 0.5
-		player.CameraMaxZoomDistance = 0.5
-	else
-		player.CameraMode = Enum.CameraMode.Classic
-		player.CameraMinZoomDistance = 6
-		player.CameraMaxZoomDistance = 26
-	end
+	player.CameraMode = Enum.CameraMode.LockFirstPerson
+	player.CameraMinZoomDistance = 0.5
+	player.CameraMaxZoomDistance = 0.5
 end
 
 local function applyWalkSpeed()
@@ -156,9 +155,6 @@ function Camera.apply(settings: any)
 	if settings == nil then
 		return
 	end
-	if type(settings.firstPerson) == "boolean" then
-		current.firstPerson = settings.firstPerson
-	end
 	if type(settings.bobbing) == "number" then
 		current.bobbing = settings.bobbing
 	end
@@ -174,12 +170,6 @@ end
 
 function Camera.settings(): any
 	return table.clone(current)
-end
-
-function Camera.toggleFirstPerson(): boolean
-	current.firstPerson = not current.firstPerson
-	applyPerspective()
-	return current.firstPerson
 end
 
 function Camera.start()

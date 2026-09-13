@@ -1,0 +1,44 @@
+{
+  "_comment": "(VERI) Isiklandirma ve son-islem. Butun sayilar burada; sahne fazla parliyorsa ya da karanlik geliyorsa kod degil bu dosya duzenlenir.",
+  "_parlama_notu": "Bloom.threshold en onemli sayi: 1.0'a yakin bir esik HER acik yuzeyi parlatir ve sahne goz yorar. 2.0'da yalnizca gercekten isik yayan yuzeyler (Neon) parlar. Neon da bilerek yalnizca uc yerde kullaniliyor: tavan lambasi difuzoru, ameliyat lambasi merceği, tabeladaki hac. Ekranlar Neon DEGIL - ekran parlamaz.",
+
+  "ambient": [92, 96, 106],
+  "outdoorAmbient": [124, 132, 146],
+  "brightness": 1.7,
+  "clockTime": 14.2,
+  "geographicLatitude": 38,
+  "exposureCompensation": 0,
+  "environmentDiffuseScale": 0.4,
+  "environmentSpecularScale": 0.25,
+  "shadowSoftness": 0.4,
+  "fogStart": 340,
+  "fogEnd": 1400,
+  "fogColor": [200, 214, 228],
+
+  "atmosphere": {
+    "density": 0.28,
+    "offset": 0.15,
+    "color": [204, 216, 230],
+    "decay": [124, 142, 164],
+    "glare": 0.04,
+    "haze": 0.55
+  },
+
+  "bloom": { "intensity": 0.12, "size": 20, "threshold": 2.0 },
+  "colorCorrection": { "brightness": 0, "contrast": 0.05, "saturation": 0.05, "tint": [255, 253, 250] },
+  "sunRays": { "intensity": 0.015, "spread": 0.4 },
+
+  "_derinlik_notu": "Alan derinligi bilincli olarak ZAYIF: klinikte oyuncu surekli yakin nesnelere bakiyor, guclu bir bulaniklik arayuzu okunmaz hale getirirdi.",
+  "depthOfField": { "farIntensity": 0.05, "nearIntensity": 0, "focusDistance": 26, "inFocusRadius": 48 },
+
+  "sky": { "starCount": 0, "sunAngularSize": 14 },
+
+  "_lamba_notu": "Oda ve esya isiklarinin parlakligi. Onceki degerler (tavan 1.6, ameliyat 4.0, sokak 2.2) sahneyi yakiyordu.",
+  "lights": {
+    "ceiling":      { "brightness": 0.75, "range": 20, "color": [255, 248, 236] },
+    "surgeryLamp":  { "brightness": 1.5,  "range": 24, "color": [255, 251, 240], "angle": 75 },
+    "lampPost":     { "brightness": 1.1,  "range": 22, "color": [255, 238, 198] },
+    "xrayLens":     { "brightness": 0.45, "range": 9,  "color": [168, 208, 238] },
+    "emergency":    { "brightness": 2.0,  "range": 18, "color": [240, 84, 74] }
+  }
+}
