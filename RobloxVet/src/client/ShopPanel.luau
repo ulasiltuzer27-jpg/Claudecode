@@ -161,6 +161,7 @@ end
 function ShopPanel.create(parent: ScreenGui)
 	local panel = Theme.card({
 		name = "Magaza",
+		-- ui:ustluk — HUD'un uzerine acilan kipli panel.
 		size = UDim2.fromOffset(600, 470),
 		position = UDim2.new(0.5, 0, 0.5, 0),
 		anchor = Vector2.new(0.5, 0.5),

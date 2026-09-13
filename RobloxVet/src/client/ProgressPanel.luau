@@ -185,6 +185,7 @@ end
 function ProgressPanel.create(parent: ScreenGui)
 	local panel = Theme.card({
 		name = "Ilerleme",
+		-- ui:ustluk — HUD'un uzerine acilan kipli panel.
 		size = UDim2.fromOffset(520, 452),
 		position = UDim2.new(0.5, 0, 0.5, 0),
 		anchor = Vector2.new(0.5, 0.5),

@@ -66,6 +66,9 @@ Net.Schema = {
 	ToolGameProbe = { direction = "toServer", args = { "number", "number" } },
 	ToolGameSubmit = { direction = "toServer", args = { "number", "number" } },
 	GiveMedicine = { direction = "toServer", args = { "number" } },
+	-- Numune incelemesi: istemci yalnizca "incele" diyor, hangi
+	-- numunenin bekledigini ve sonucun ne oldugunu sunucu biliyor.
+	AnalyzeSample = { direction = "toServer", args = {} },
 }
 
 -- Istemcinin saniyede kac kez gonderebilecegi. Dogrulama sunucuda
@@ -96,6 +99,7 @@ Net.RateLimit = {
 	ToolGameProbe = 12,
 	ToolGameSubmit = 6,
 	GiveMedicine = 6,
+	AnalyzeSample = 4,
 }
 
 local folderName = "VetRemotes"

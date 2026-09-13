@@ -250,6 +250,11 @@ UserInputService.InputBegan:Connect(function(input: InputObject, processed: bool
 		Net.toServer("CallNext")
 	elseif key == Enum.KeyCode.T then
 		Net.toServer("Discharge")
+	elseif key == Enum.KeyCode.R then
+		-- Numune incelemesi: laboratuvar tezgahinin basinda calisiyor.
+		-- Yakinlik SUNUCUDA olculuyor; istemcinin "oradayim" demesine
+		-- guvenilmiyor, bu yuzden burada hicbir denetim yok.
+		Net.toServer("AnalyzeSample")
 	end
 end)
 

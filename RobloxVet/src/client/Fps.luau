@@ -40,8 +40,11 @@ function Fps.create(parent: ScreenGui)
 	local panel = Theme.frame({
 		name = "Fps",
 		size = UDim2.fromOffset(146, 46),
-		position = UDim2.new(1, -16, 0, 78),
-		anchor = Vector2.new(1, 0),
+		-- Sol altta, kogus kartinin hemen ustunde. Eskiden sag ustteydi
+		-- ve kuyruk ile vardiya kartlarinin UZERINE biniyordu; sag sutun
+		-- zaten dolu.
+		position = UDim2.new(0, Theme.space.lg, 1, -236),
+		anchor = Vector2.new(0, 0),
 		transparency = 0.25,
 		radius = 8,
 		parent = parent,

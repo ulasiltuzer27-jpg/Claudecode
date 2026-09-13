@@ -164,5 +164,18 @@
     "boardingFee": 280,
     "boardingXp": 34,
     "radius": 14
+  },
+  "lab": {
+    "_comment": "Numune incelemesi. Kan ve idrar tahlili masada sonuc vermiyor; numune laboratuvara goturuluyor.",
+    "analysisSeconds": 3.5,
+    "xpBonus": 6,
+    "feeBonus": 1.05
+  },
+  "contagion": {
+    "_comment": "Bulasici hasta kuyrukta beklerken digerlerine olan bedel. Karantinaya alinca duruyor.",
+    "tickSeconds": 4,
+    "healthDrain": -1.2,
+    "satisfactionDrain": -1.5,
+    "reputationDrain": -0.35
   }
 }

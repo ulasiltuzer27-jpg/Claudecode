@@ -33,6 +33,9 @@ local RING_ACTIVE = 26
 function Crosshair.create(parent: ScreenGui)
 	local root = Theme.frame({
 		name = "Nisangah",
+		-- ui:katman — saydam, ekranin tam ortasinda duran nisan
+		-- katmani. Bir yuva kaplamiyor; acilan paneller onun
+		-- uzerine geliyor ve nisangah zaten o sirada gizleniyor.
 		size = UDim2.fromOffset(160, 80),
 		position = UDim2.fromScale(0.5, 0.5),
 		anchor = Vector2.new(0.5, 0.5),

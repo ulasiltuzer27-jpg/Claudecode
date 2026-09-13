@@ -643,6 +643,173 @@ builders.kennelPen = function(model, origin)
 	d("SerumTorbasi", Vector3.new(0.8, 1.2, 0.3), Vector3.new(-3.5, 3.9, 2.4), C.water, Enum.Material.Glass)
 end
 
+-- ── Laboratuvar ve karantina ──────────────────────────────────────────
+-- Kuzey kanadi. Buradaki esyalarin hepsi gorunusten fazlasi: mikroskop
+-- numune incelemenin YERI, karantina bolmesi de bulasici hastanin
+-- kuyruktan cikarildigi yer. Ikisinin de konumu `data/clinic.json`
+-- icinde (`spots.lab`, `podPoints`) ve yerlesim denetiminden geciyor.
+
+builders.microscope = function(model, origin)
+	local p, d = maker(model, origin), makerDecor(model, origin)
+	-- Tezgah: mikroskop havada duramaz, altinda bir laboratuvar
+	-- tezgahi var. Olcu butcesi (props.json) ikisini birlikte sayiyor.
+	p("Tezgah", Vector3.new(4.4, 0.35, 3.0), Vector3.new(0, 2.6, 0), C.white)
+	Detail.trim(model, origin * CFrame.new(0, 2.6, 0), Vector3.new(4.4, 0.35, 3.0), 0.12, C.steel)
+	p("TezgahGovdesi", Vector3.new(4.2, 2.45, 2.8), Vector3.new(0, 1.22, 0), C.offWhite)
+	Detail.drawer(model, origin * CFrame.new(0, 1.9, 1.42), 3.4, 0.8, C.shadowWhite, C.darkSteel)
+	Detail.drawer(model, origin * CFrame.new(0, 0.95, 1.42), 3.4, 0.8, C.shadowWhite, C.darkSteel)
+
+	-- Mikroskobun kendisi: ayak, kol, tup, objektif tablasi, ayna.
+	d("Ayak", Vector3.new(1.5, 0.3, 1.1), Vector3.new(-0.7, 2.92, -0.3), C.darkSteel, Enum.Material.Metal)
+	d("Kol", Vector3.new(0.34, 1.9, 0.34), Vector3.new(-1.15, 3.9, -0.45), C.darkSteel,
+		Enum.Material.Metal, CFrame.Angles(math.rad(-12), 0, 0))
+	d("Tabla", Vector3.new(1.3, 0.16, 1.0), Vector3.new(-0.6, 3.62, -0.2), C.black, Enum.Material.Metal)
+	d("Lam", Vector3.new(0.7, 0.05, 0.45), Vector3.new(-0.6, 3.72, -0.16), C.glass, Enum.Material.Glass)
+	d("Tup", Vector3.new(0.42, 1.15, 0.42), Vector3.new(-0.62, 4.55, -0.32), C.chrome,
+		Enum.Material.Metal, CFrame.Angles(math.rad(14), 0, 0))
+	d("Objektif", Vector3.new(0.3, 0.5, 0.3), Vector3.new(-0.6, 3.95, -0.2), C.steel, Enum.Material.Metal)
+	d("Goz", Vector3.new(0.34, 0.5, 0.34), Vector3.new(-0.68, 5.18, -0.5), C.black,
+		Enum.Material.Metal, CFrame.Angles(math.rad(14), 0, 0))
+	d("Ayarvidasi", Vector3.new(0.4, 0.4, 0.22), Vector3.new(-1.42, 3.5, -0.45), C.chrome, Enum.Material.Metal)
+
+	-- Tezgahin ustunde numune siseleri: laboratuvarin "calisiyor"
+	-- gorunmesini saglayan sey renkli sivilardir.
+	for index, tint in { C.accent, C.water, C.leaf } do
+		Build.pillar({
+			name = "Numune", size = Vector3.new(0.45, 0.9, 0.45),
+			cf = origin * CFrame.new(0.6 + (index - 1) * 0.62, 3.25, 0.8),
+			color = tint, material = Enum.Material.Glass,
+			canCollide = false, castShadow = false, parent = model,
+		})
+	end
+	Detail.plate(model, origin * CFrame.new(0, 3.1, -1.52), 2.2, 0.6, C.deepTeal, C.white, Loc.get("prop.microscope"))
+end
+
+builders.centrifuge = function(model, origin)
+	local p, d = maker(model, origin), makerDecor(model, origin)
+	p("Tezgah", Vector3.new(3.8, 0.32, 3.8), Vector3.new(0, 2.4, 0), C.white)
+	p("TezgahGovdesi", Vector3.new(3.6, 2.3, 3.6), Vector3.new(0, 1.15, 0), C.offWhite)
+	Detail.trim(model, origin * CFrame.new(0, 2.4, 0), Vector3.new(3.8, 0.32, 3.8), 0.12, C.steel)
+
+	-- Santrifujun govdesi silindir; kapagi ayri bir parca ki aralik
+	-- gorunsun ve makine "acilabilir" dursun.
+	Build.pillar({
+		name = "Govde", size = Vector3.new(2.6, 1.5, 2.6),
+		cf = origin * CFrame.new(0, 3.3, 0), color = C.shadowWhite, parent = model,
+	})
+	Build.pillar({
+		name = "Kapak", size = Vector3.new(2.7, 0.35, 2.7),
+		cf = origin * CFrame.new(0, 4.16, 0), color = C.darkSteel,
+		material = Enum.Material.Metal, canCollide = false, castShadow = false, parent = model,
+	})
+	Build.pillar({
+		name = "Pencere", size = Vector3.new(1.5, 0.12, 1.5),
+		cf = origin * CFrame.new(0, 4.35, 0), color = C.glass,
+		material = Enum.Material.Glass, canCollide = false, castShadow = false, parent = model,
+	})
+	-- Rotor gozleri: kapagin altindan gorunen tup yuvalari.
+	for index = 1, 6 do
+		local angle = (index / 6) * math.pi * 2
+		d("TupYuvasi", Vector3.new(0.34, 0.7, 0.34), Vector3.new(math.cos(angle) * 0.8, 3.85, math.sin(angle) * 0.8),
+			C.accent, Enum.Material.Glass, CFrame.Angles(math.rad(18), -angle, 0))
+	end
+	d("Panel", Vector3.new(1.1, 0.6, 0.12), Vector3.new(0, 3.1, 1.32), C.black)
+	d("Dugme", Vector3.new(0.22, 0.22, 0.1), Vector3.new(-0.32, 3.1, 1.4), C.teal)
+	d("Dugme", Vector3.new(0.22, 0.22, 0.1), Vector3.new(0.32, 3.1, 1.4), C.accent)
+	Detail.cable(model, (origin * CFrame.new(0, 2.5, -1.7)).Position, (origin * CFrame.new(1.4, 0.2, -1.9)).Position, 0.1, C.black)
+end
+
+builders.sampleRack = function(model, origin)
+	local p, d = maker(model, origin), makerDecor(model, origin)
+	p("Govde", Vector3.new(5.0, 4.2, 1.9), Vector3.new(0, 2.1, 0), C.offWhite)
+	Detail.trim(model, origin * CFrame.new(0, 2.1, 0), Vector3.new(5.0, 4.2, 1.9), 0.14, C.steel)
+	-- Uc raf, her rafta bir sira numune tupu. Tuplerin rengi degisiyor:
+	-- tek renk bir sira, uzaktan tek bir blok gibi gorunuyordu.
+	local tints = { C.accent, C.water, C.leaf, C.gold, C.paleTeal, C.blossom }
+	for shelf = 0, 2 do
+		local y = 0.9 + shelf * 1.35
+		d("Raf", Vector3.new(4.7, 0.14, 1.6), Vector3.new(0, y, 0.1), C.shadowWhite)
+		for index = 1, 6 do
+			Build.pillar({
+				name = "Tup", size = Vector3.new(0.34, 0.95, 0.34),
+				cf = origin * CFrame.new(-1.9 + (index - 1) * 0.76, y + 0.55, 0.1),
+				color = tints[((shelf * 6 + index - 1) % #tints) + 1],
+				material = Enum.Material.Glass,
+				canCollide = false, castShadow = false, parent = model,
+			})
+		end
+	end
+	d("TasimaKolu", Vector3.new(4.2, 0.16, 0.16), Vector3.new(0, 4.34, 0.1), C.chrome, Enum.Material.Metal)
+	Detail.plate(model, origin * CFrame.new(0, 4.0, 0.98), 2.6, 0.6, C.navy, C.white, Loc.get("prop.sampleRack"))
+end
+
+builders.quarantinePod = function(model, origin)
+	local p, d = maker(model, origin), makerDecor(model, origin)
+	-- KARANTINA BOLMESI
+	--
+	-- Kogus padogundan farki cam on yuzu: bulasici hastayi gormen
+	-- gerekiyor ama havasi ayri. Ic olcu `props.json` -> `shelter`
+	-- (9,4 x 7,0) ve en buyuk hasta oraya siginca yerlesim denetimi
+	-- geciyor; padoktaki kural burada da isliyor.
+	p("Taban", Vector3.new(9.8, 0.4, 7.4), Vector3.new(0, 0.2, 0), C.white)
+	d("TabanPahi", Vector3.new(10, 0.16, 7.6), Vector3.new(0, 0.42, 0), C.shadowWhite)
+	d("Yatak", Vector3.new(6.6, 0.45, 4.8), Vector3.new(0, 0.64, -0.3), C.pad, Enum.Material.Fabric)
+	d("Battaniye", Vector3.new(4.6, 0.12, 3.2), Vector3.new(0.5, 0.88, -0.1), C.towel, Enum.Material.Fabric)
+
+	p("ArkaDuvar", Vector3.new(9.8, 6.2, 0.24), Vector3.new(0, 3.3, -3.7), C.white)
+	p("YanDuvar", Vector3.new(0.24, 6.2, 7.4), Vector3.new(-4.8, 3.3, 0), C.white)
+	p("YanDuvar", Vector3.new(0.24, 6.2, 7.4), Vector3.new(4.8, 3.3, 0), C.white)
+	p("Tavan", Vector3.new(9.8, 0.3, 7.4), Vector3.new(0, 6.55, 0), C.offWhite)
+
+	-- On yuz: parmaklik degil CAM. Karantinanin anlami havanin
+	-- ayrilmasi; parmaklikli bir bolme bunu anlatmazdi.
+	d("CamKanat", Vector3.new(4.5, 5.6, 0.16), Vector3.new(-2.5, 3.3, 3.7), C.glass, Enum.Material.Glass)
+	d("CamKanat", Vector3.new(4.5, 5.6, 0.16), Vector3.new(2.5, 3.3, 3.7), C.glass, Enum.Material.Glass)
+	d("CamCercevesi", Vector3.new(9.8, 0.3, 0.3), Vector3.new(0, 6.2, 3.7), C.deepTeal, Enum.Material.Metal)
+	d("CamCercevesi", Vector3.new(9.8, 0.3, 0.3), Vector3.new(0, 0.5, 3.7), C.deepTeal, Enum.Material.Metal)
+	d("CamDikmesi", Vector3.new(0.3, 5.6, 0.3), Vector3.new(0, 3.3, 3.7), C.deepTeal, Enum.Material.Metal)
+	d("Kulp", Vector3.new(0.22, 1.4, 0.22), Vector3.new(0.6, 3.3, 3.9), C.chrome, Enum.Material.Metal)
+
+	-- Hava kilidi: ustteki filtre kutusu ve borusu. Bolmenin neden
+	-- "karantina" oldugunu anlatan parca bu.
+	d("FiltreKutusu", Vector3.new(2.6, 1.1, 1.8), Vector3.new(-2.6, 7.2, -1), C.darkSteel, Enum.Material.Metal)
+	d("FiltreIzgarasi", Vector3.new(2.2, 0.16, 1.4), Vector3.new(-2.6, 6.66, -1), C.steel, Enum.Material.Metal)
+	Build.pillar({
+		name = "HavaBorusu", size = Vector3.new(0.9, 1.4, 0.9),
+		cf = origin * CFrame.new(-2.6, 7.9, -1), color = C.steel,
+		material = Enum.Material.Metal, canCollide = false, castShadow = false, parent = model,
+	})
+	d("UyariSeridi", Vector3.new(9.8, 0.4, 0.12), Vector3.new(0, 6.85, 3.6), C.gold)
+	Detail.plate(model, origin * CFrame.new(2.8, 6.9, 3.6), 3.0, 0.8, C.accent, C.white, Loc.get("prop.quarantinePod"))
+	Build.pillar({
+		name = "SuKabi", size = Vector3.new(1.3, 0.45, 1.3),
+		cf = origin * CFrame.new(3.2, 0.62, 1.9), color = C.water,
+		canCollide = false, castShadow = false, parent = model,
+	})
+end
+
+builders.uvLamp = function(model, origin)
+	local p, d = maker(model, origin), makerDecor(model, origin)
+	-- Duvara asili dezenfeksiyon lambasi. Isik KAYNAGI degil: klinikte
+	-- isik sayisi bilerek az tutuluyor, bu yuzden mor parlaklik
+	-- parcanin kendi `Neon` yuzeyinden geliyor.
+	p("Govde", Vector3.new(2.8, 0.9, 0.7), Vector3.new(0, 0, -0.5), C.offWhite)
+	Detail.trim(model, origin * CFrame.new(0, 0, -0.5), Vector3.new(2.8, 0.9, 0.7), 0.1, C.steel)
+	d("Reflektor", Vector3.new(2.6, 0.7, 0.5), Vector3.new(0, -0.05, -0.1), C.chrome, Enum.Material.Metal)
+	for index = 0, 1 do
+		Build.pillar({
+			name = "Tup", size = Vector3.new(0.3, 2.3, 0.3),
+			cf = origin * CFrame.new(-0.45 + index * 0.9, -0.2, 0.05) * CFrame.Angles(0, 0, math.rad(90)),
+			color = Color3.fromRGB(176, 150, 232), material = Enum.Material.Neon,
+			canCollide = false, castShadow = false, parent = model,
+		})
+	end
+	d("Aski", Vector3.new(0.4, 0.5, 0.5), Vector3.new(-1.2, 0.5, -0.6), C.darkSteel, Enum.Material.Metal)
+	d("Aski", Vector3.new(0.4, 0.5, 0.5), Vector3.new(1.2, 0.5, -0.6), C.darkSteel, Enum.Material.Metal)
+	d("Anahtar", Vector3.new(0.3, 0.45, 0.16), Vector3.new(1.15, -0.5, 0.1), C.teal)
+	Detail.cable(model, (origin * CFrame.new(-1.3, 0.3, -0.6)).Position, (origin * CFrame.new(-1.3, 1.4, -0.7)).Position, 0.08, C.black)
+end
+
 builders.feedStation = function(model, origin)
 	local p, d = maker(model, origin), makerDecor(model, origin)
 	p("Paspas", Vector3.new(5, 0.18, 3), Vector3.new(0, 0.09, 0), C.deepTeal, Enum.Material.Fabric)

@@ -442,6 +442,88 @@
       ],
       "base": 0,
       "againstWall": false
+    },
+    {
+      "id": "microscope",
+      "size": [
+        4.6,
+        3.2,
+        5.4
+      ],
+      "offset": [
+        0,
+        0
+      ],
+      "base": 0,
+      "againstWall": false,
+      "surface": [
+        3.4,
+        2.6
+      ]
+    },
+    {
+      "id": "centrifuge",
+      "size": [
+        4.0,
+        4.0,
+        4.6
+      ],
+      "offset": [
+        0,
+        0
+      ],
+      "base": 0,
+      "againstWall": false
+    },
+    {
+      "id": "sampleRack",
+      "size": [
+        5.2,
+        2.2,
+        4.4
+      ],
+      "offset": [
+        0,
+        0
+      ],
+      "base": 0,
+      "againstWall": true
+    },
+    {
+      "id": "quarantinePod",
+      "size": [
+        10.0,
+        7.6,
+        7.2
+      ],
+      "offset": [
+        0,
+        0
+      ],
+      "base": 0,
+      "againstWall": false,
+      "shelter": [
+        9.4,
+        7.0
+      ],
+      "surface": [
+        9.0,
+        6.6
+      ]
+    },
+    {
+      "id": "uvLamp",
+      "size": [
+        3.0,
+        1.2,
+        4.0
+      ],
+      "offset": [
+        0,
+        0
+      ],
+      "base": 6.5,
+      "againstWall": true
     }
   ],
   "_yuzey_notu": "surface = masanin uzerine hayvan konabilen yuzeyi [uzunluk, genislik]. Buyuk bir hayvan kucuk bir masaya konamaz; PatientFlow bunu denetliyor ve verify_layout her turun EN AZ BIR masaya sigdigini dogruluyor.",

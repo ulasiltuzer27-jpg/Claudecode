@@ -184,6 +184,7 @@ function SettingsPanel.create(parent: ScreenGui)
 
 	local panel = Theme.card({
 		name = "Ayarlar",
+		-- ui:ustluk — HUD'un uzerine acilan kipli panel.
 		size = UDim2.fromOffset(470, 470),
 		position = UDim2.new(0.5, 0, 0.5, 0),
 		anchor = Vector2.new(0.5, 0.5),

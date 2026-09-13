@@ -93,7 +93,7 @@ function ToolBar.create(parent: ScreenGui)
 	local frame = Theme.card({
 		name = "AletCubugu",
 		size = UDim2.fromOffset(760, 84),
-		position = UDim2.new(0.5, 0, 1, -Theme.space.lg),
+		position = UDim2.new(0.5, -(330 + Theme.space.lg) / 2, 1, -Theme.space.lg),
 		anchor = Vector2.new(0.5, 1),
 		parent = parent,
 	})

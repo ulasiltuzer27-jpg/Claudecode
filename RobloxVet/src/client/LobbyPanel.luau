@@ -44,6 +44,7 @@ function LobbyPanel.create(parent: ScreenGui)
 
 	local panel = Theme.card({
 		name = "Lobi",
+		-- ui:ustluk — HUD'un uzerine acilan kipli panel.
 		size = UDim2.fromOffset(760, 360),
 		position = UDim2.new(0.5, 0, 1, -32),
 		anchor = Vector2.new(0.5, 1),

@@ -129,9 +129,13 @@ function Hud.create(parent: ScreenGui)
 	local rep = statCard(stats, 3, "reputation", Theme.color.rep, 78)
 
 	-- ── XP cubugu ─────────────────────────────────────────────────────
+	-- Kart iki ilerlemeyi birlikte tasiyor: ustte OYUNCUNUN XP'si,
+	-- altta ORTAK klinik seviyesi. Ayri bir karta konsaydi ekranda yer
+	-- yoktu (sag sutun hasta kartiyla dolu); yan yana durmalari ayrica
+	-- dogru: ikisi de "ilerleme", biri kisisel biri binanin.
 	local xpCard = Theme.card({
 		name = "XpKart",
-		size = UDim2.fromOffset(306, 42),
+		size = UDim2.fromOffset(306, 78),
 		position = UDim2.fromOffset(Theme.space.lg, Theme.space.lg + 72),
 		parent = parent,
 	})
@@ -155,12 +159,43 @@ function Hud.create(parent: ScreenGui)
 	xpBar.track.ZIndex = 2
 	xpBar.fill.ZIndex = 3
 
+	Theme.divider(xpCard, 0).Position = UDim2.new(0, Theme.space.md, 0, 38)
+
+	local clinicIcon = Theme.icon({
+		name = "clinic",
+		size = 12,
+		color = Theme.color.accentGlow,
+		position = UDim2.fromOffset(Theme.space.md, 44),
+		parent = xpCard,
+		zIndex = 2,
+	})
+	local clinicLabel = Theme.label({
+		name = "KlinikYazi",
+		text = "",
+		size = UDim2.new(1, -Theme.space.md * 2 - 18, 0, 14),
+		position = UDim2.fromOffset(Theme.space.md + 18, 43),
+		textSize = Theme.size.micro,
+		bold = true,
+		color = Theme.color.textDim,
+		parent = xpCard,
+		zIndex = 2,
+	})
+	local clinicBar = Theme.bar(
+		xpCard,
+		UDim2.new(1, -Theme.space.md * 2, 0, 8),
+		UDim2.fromOffset(Theme.space.md, 62),
+		Theme.color.accentGlow,
+		{ segments = 6 }
+	)
+	clinicBar.track.ZIndex = 2
+	clinicBar.fill.ZIndex = 3
+
 	-- Kalici kayit kapaliysa bunu SOYLE. Sessizce bellekte oynatmak,
 	-- oyuncunun ilerlemesini kaybettiginde sebebini bilememesi demek.
 	local warning = Theme.card({
 		name = "KayitUyarisi",
 		size = UDim2.fromOffset(306, 26),
-		position = UDim2.fromOffset(Theme.space.lg, Theme.space.lg + 122),
+		position = UDim2.fromOffset(Theme.space.lg, Theme.space.lg + 158),
 		color = Theme.color.panel,
 		parent = parent,
 		visible = false,
@@ -295,82 +330,50 @@ function Hud.create(parent: ScreenGui)
 		zIndex = 2,
 	})
 
-	-- ── Ortak klinik seviyesi ─────────────────────────────────────────
-	-- Sol ustteki XP cubugu OYUNCUNUN kendi ilerlemesi; bu ise BINANIN
-	-- ve herkeste ayni deger gorunuyor. Ayri renkte (accent) ve ayri
-	-- kosede duruyor ki ikisi birbirine karismasin.
-	local clinic = Theme.card({
-		name = "Klinik",
-		size = UDim2.fromOffset(228, 78),
-		position = UDim2.new(1, -Theme.space.lg, 0, Theme.space.lg + 124),
-		anchor = Vector2.new(1, 0),
+	-- ── Bulasma uyarisi ───────────────────────────────────────────────
+	-- Yalnizca TESHISI KONMUS bulasici bir hasta karantina disindayken
+	-- goruluyor. Teshis oncesi bir uyari, hastalik listesini 35'ten
+	-- 6'ya indiren bir bilgi sizdirirdi; sunucu bayragi ancak
+	-- teshisten sonra kaldiriyor.
+	--
+	-- Yeri ortada: sag ve sol sutunlar dolu, ve bir uyarinin zaten
+	-- gozun dustugu yerde durmasi gerekiyor.
+	local contagion = Theme.card({
+		name = "BulasmaUyarisi",
+		size = UDim2.fromOffset(276, 30),
+		-- Acil bandi (Chart.luau) ekranin ust ortasinda 58..114
+		-- arasinda duruyor; uyari onun ALTINDA.
+		position = UDim2.new(0.5, 0, 0, 122),
+		anchor = Vector2.new(0.5, 0),
+		color = Theme.color.panel,
 		parent = parent,
-	})
-	local clinicIcon = Theme.icon({
-		name = "clinic",
-		size = 14,
-		color = Theme.color.accentGlow,
-		position = UDim2.fromOffset(Theme.space.md, 9),
-		parent = clinic,
+	}, Theme.color.bad)
+	Theme.icon({
+		name = "alert",
+		size = 13,
+		color = Theme.color.bad,
+		position = UDim2.fromOffset(Theme.space.md, 8),
+		parent = contagion,
 		zIndex = 2,
 	})
-	local clinicCap = Theme.label({
-		name = "Baslik",
-		text = "",
-		size = UDim2.fromOffset(60, 14),
-		position = UDim2.fromOffset(Theme.space.md + 20, 9),
+	local contagionText = Theme.label({
+		name = "Yazi",
+		text = Loc.get("hud.contagion"),
+		size = UDim2.new(1, -Theme.space.md * 2 - 20, 1, 0),
+		position = UDim2.fromOffset(Theme.space.md + 20, 0),
 		textSize = Theme.size.micro,
 		bold = true,
-		color = Theme.color.textDim,
-		parent = clinic,
+		color = Theme.color.bad,
+		parent = contagion,
 		zIndex = 2,
 	})
-	local clinicLevel = Theme.label({
-		name = "Seviye",
-		text = "",
-		size = UDim2.new(1, -Theme.space.md * 2 - 80, 0, 14),
-		position = UDim2.fromOffset(Theme.space.md + 80, 9),
-		textSize = Theme.size.micro,
-		bold = true,
-		align = Enum.TextXAlignment.Right,
-		color = Theme.color.accentGlow,
-		parent = clinic,
-		zIndex = 2,
-	})
-	local clinicName = Theme.label({
-		name = "Ad",
-		text = "",
-		size = UDim2.new(1, -Theme.space.md * 2, 0, 16),
-		position = UDim2.fromOffset(Theme.space.md, 24),
-		textSize = Theme.size.small,
-		bold = true,
-		parent = clinic,
-		zIndex = 2,
-	})
-	local clinicBar = Theme.bar(
-		clinic,
-		UDim2.new(1, -Theme.space.md * 2, 0, 8),
-		UDim2.fromOffset(Theme.space.md, 44),
-		Theme.color.accentGlow,
-		{ segments = 6 }
-	)
-	clinicBar.track.ZIndex = 2
-	clinicBar.fill.ZIndex = 3
-	local clinicHint = Theme.label({
-		name = "Ipucu",
-		text = "",
-		size = UDim2.new(1, -Theme.space.md * 2, 0, 14),
-		position = UDim2.fromOffset(Theme.space.md, 56),
-		textSize = Theme.size.micro,
-		color = Theme.color.textDim,
-		align = Enum.TextXAlignment.Right,
-		parent = clinic,
-		zIndex = 2,
-	})
+	contagion.Visible = false
 
 	-- ── Kazanc yazilari ───────────────────────────────────────────────
 	local floaters = Theme.frame({
 		name = "Kazanclar",
+		-- ui:katman — saydam kapsayici: kazanc yazilari HUD'un
+		-- UZERINDE yukseliyor, bir yuva kaplamiyor.
 		size = UDim2.fromOffset(180, 160),
 		position = UDim2.fromOffset(Theme.space.lg + 132, Theme.space.lg + 70),
 		transparency = 1,
@@ -393,6 +396,7 @@ function Hud.create(parent: ScreenGui)
 		repCaption = rep.caption,
 		repRoot = rep.root,
 		xpBar = xpBar,
+		xpCard = xpCard,
 		xpText = xpText,
 		warning = warning,
 		queueText = queueText,
@@ -408,18 +412,17 @@ function Hud.create(parent: ScreenGui)
 		shiftNight = false,
 		clinic = clinic,
 		clinicIcon = clinicIcon,
-		clinicCap = clinicCap,
-		clinicLevel = clinicLevel,
-		clinicName = clinicName,
+		clinicLabel = clinicLabel,
 		clinicBar = clinicBar,
-		clinicHint = clinicHint,
 		clinicShown = -1,
+		contagion = contagion,
+		contagionText = contagionText,
+		contagionPulse = nil,
 	}
 
 	widgets.moneyCaption.Text = Loc.get("hud.capMoney")
 	widgets.levelCaption.Text = Loc.get("hud.capLevel")
 	widgets.repCaption.Text = Loc.get("hud.capReputation")
-	widgets.clinicCap.Text = Loc.get("hud.clinicCap")
 	objective.Visible = false
 end
 
@@ -454,22 +457,40 @@ function Hud.update(state: any)
 	widgets.warning.Visible = state.transient == true
 	widgets.queueText.Text = Loc.get("hud.queue", state.queueWaiting, state.queueSlots)
 
+	-- Bulasma uyarisi: gorunurken nabiz atiyor. Sessiz bir kirmizi
+	-- kutu, ekranin sagindaki kartlarin arasinda kaybolurdu.
+	local risky = state.contagion == true
+	if risky ~= widgets.contagion.Visible then
+		widgets.contagion.Visible = risky
+		if risky then
+			widgets.contagionPulse = Theme.pulse(widgets.contagionText, "TextTransparency", 0.55)
+		elseif widgets.contagionPulse ~= nil then
+			widgets.contagionPulse.stop()
+			widgets.contagionPulse = nil
+		end
+	end
+
 	-- Ortak klinik seviyesi. `state.clinic` sunucudan geliyor ve HERKESTE
 	-- ayni: online oyuncularin en yuksek klinik XP'si. Istemci burada
 	-- hicbir sey HESAPLAMIYOR, yalnizca ciziyor.
 	if state.clinic ~= nil then
 		local info = state.clinic
-		widgets.clinicLevel.Text = ("%d / %d"):format(info.level, info.maxLevel)
-		widgets.clinicName.Text = Loc.get(info.nameKey)
-		Theme.setBar(widgets.clinicBar, info.progress, firstDraw)
-		widgets.clinicHint.Text = if info.level >= info.maxLevel
+		local tail = if info.level >= info.maxLevel
 			then Loc.get("hud.clinicMax")
 			else Loc.get("hud.clinicNext", math.floor(info.progress * 100 + 0.5))
+		widgets.clinicLabel.Text = Loc.get(
+			"hud.clinicLine",
+			info.level,
+			info.maxLevel,
+			Loc.get(info.nameKey),
+			tail
+		)
+		Theme.setBar(widgets.clinicBar, info.progress, firstDraw)
 
 		-- Seviye ATLAYINCA kart bir kez parliyor. Duyuru bildirimi
 		-- kayabilir; kartin kendisi kacmaz.
 		if widgets.clinicShown >= 0 and info.level > widgets.clinicShown then
-			Theme.flash(widgets.clinic, Theme.color.accentGlow)
+			Theme.flash(widgets.xpCard, Theme.color.accentGlow)
 		end
 		widgets.clinicShown = info.level
 	end

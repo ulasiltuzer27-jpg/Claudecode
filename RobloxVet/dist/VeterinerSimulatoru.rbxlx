@@ -1103,6 +1103,9 @@ Net.Schema = {
 	ToolGameProbe = { direction = &quot;toServer&quot;, args = { &quot;number&quot;, &quot;number&quot; } },
 	ToolGameSubmit = { direction = &quot;toServer&quot;, args = { &quot;number&quot;, &quot;number&quot; } },
 	GiveMedicine = { direction = &quot;toServer&quot;, args = { &quot;number&quot; } },
+	-- Numune incelemesi: istemci yalnizca &quot;incele&quot; diyor, hangi
+	-- numunenin bekledigini ve sonucun ne oldugunu sunucu biliyor.
+	AnalyzeSample = { direction = &quot;toServer&quot;, args = {} },
 }
 
 -- Istemcinin saniyede kac kez gonderebilecegi. Dogrulama sunucuda
@@ -1133,6 +1136,7 @@ Net.RateLimit = {
 	ToolGameProbe = 12,
 	ToolGameSubmit = 6,
 	GiveMedicine = 6,
+	AnalyzeSample = 4,
 }
 
 local folderName = &quot;VetRemotes&quot;
@@ -2747,7 +2751,7 @@ return {
 		},
 		[&quot;max&quot;] = {
 			40,
-			30,
+			46,
 		},
 	},
 	[&quot;groundSize&quot;] = 260,
@@ -3495,7 +3499,7 @@ return {
 					[&quot;id&quot;] = &quot;dryerRack&quot;,
 					[&quot;at&quot;] = {
 						31,
-						28,
+						21,
 					},
 					[&quot;rot&quot;] = 0,
 				},
@@ -3521,6 +3525,175 @@ return {
 				182,
 				202,
 				212,
+			},
+		},
+		{
+			[&quot;id&quot;] = &quot;lab&quot;,
+			[&quot;nameKey&quot;] = &quot;room.lab&quot;,
+			[&quot;min&quot;] = {
+				0,
+				30,
+			},
+			[&quot;max&quot;] = {
+				40,
+				46,
+			},
+			[&quot;floorColor&quot;] = {
+				212,
+				220,
+				224,
+			},
+			[&quot;floorMaterial&quot;] = &quot;Concrete&quot;,
+			[&quot;lights&quot;] = {
+				{
+					12,
+					38,
+				},
+				{
+					30,
+					38,
+				},
+			},
+			[&quot;props&quot;] = {
+				{
+					[&quot;id&quot;] = &quot;microscope&quot;,
+					[&quot;at&quot;] = {
+						8,
+						43,
+					},
+					[&quot;rot&quot;] = 180,
+					[&quot;tag&quot;] = &quot;lab&quot;,
+				},
+				{
+					[&quot;id&quot;] = &quot;centrifuge&quot;,
+					[&quot;at&quot;] = {
+						16,
+						43,
+					},
+					[&quot;rot&quot;] = 0,
+				},
+				{
+					[&quot;id&quot;] = &quot;sampleRack&quot;,
+					[&quot;at&quot;] = {
+						22,
+						44.5,
+					},
+					[&quot;rot&quot;] = 0,
+				},
+				{
+					[&quot;id&quot;] = &quot;cabinet&quot;,
+					[&quot;at&quot;] = {
+						37.5,
+						38,
+					},
+					[&quot;rot&quot;] = 270,
+				},
+				{
+					[&quot;id&quot;] = &quot;monitor&quot;,
+					[&quot;at&quot;] = {
+						34,
+						44,
+					},
+					[&quot;rot&quot;] = 180,
+				},
+				{
+					[&quot;id&quot;] = &quot;trashBin&quot;,
+					[&quot;at&quot;] = {
+						2,
+						44,
+					},
+					[&quot;rot&quot;] = 0,
+				},
+			},
+			[&quot;floorTile&quot;] = 4,
+			[&quot;floorTileColor&quot;] = {
+				198,
+				208,
+				214,
+			},
+			[&quot;spots&quot;] = {
+				[&quot;lab&quot;] = {
+					8,
+					39,
+				},
+			},
+		},
+		{
+			[&quot;id&quot;] = &quot;quarantine&quot;,
+			[&quot;nameKey&quot;] = &quot;room.quarantine&quot;,
+			[&quot;min&quot;] = {
+				-40,
+				30,
+			},
+			[&quot;max&quot;] = {
+				0,
+				46,
+			},
+			[&quot;floorColor&quot;] = {
+				216,
+				210,
+				198,
+			},
+			[&quot;floorMaterial&quot;] = &quot;Concrete&quot;,
+			[&quot;lights&quot;] = {
+				{
+					-30,
+					38,
+				},
+				{
+					-12,
+					38,
+				},
+			},
+			[&quot;props&quot;] = {
+				{
+					[&quot;id&quot;] = &quot;quarantinePod&quot;,
+					[&quot;at&quot;] = {
+						-30.5,
+						38,
+					},
+					[&quot;rot&quot;] = 0,
+					[&quot;tag&quot;] = &quot;station:quarantine1&quot;,
+				},
+				{
+					[&quot;id&quot;] = &quot;quarantinePod&quot;,
+					[&quot;at&quot;] = {
+						-16,
+						38,
+					},
+					[&quot;rot&quot;] = 0,
+					[&quot;tag&quot;] = &quot;station:quarantine2&quot;,
+				},
+				{
+					[&quot;id&quot;] = &quot;uvLamp&quot;,
+					[&quot;at&quot;] = {
+						-10,
+						45.5,
+					},
+					[&quot;rot&quot;] = 0,
+				},
+				{
+					[&quot;id&quot;] = &quot;sink&quot;,
+					[&quot;at&quot;] = {
+						-37.5,
+						33,
+					},
+					[&quot;rot&quot;] = 90,
+				},
+				{
+					[&quot;id&quot;] = &quot;trashBin&quot;,
+					[&quot;at&quot;] = {
+						-6,
+						44,
+					},
+					[&quot;rot&quot;] = 0,
+				},
+			},
+			[&quot;floorTile&quot;] = 4,
+			[&quot;floorTileColor&quot;] = {
+				202,
+				196,
+				184,
 			},
 		},
 	},
@@ -3570,33 +3743,13 @@ return {
 				40,
 				30,
 			},
-			[&quot;doors&quot;] = {},
-			[&quot;windows&quot;] = {
+			[&quot;doors&quot;] = {
 				{
-					[&quot;at&quot;] = -32,
-					[&quot;width&quot;] = 6,
-					[&quot;sill&quot;] = 6.5,
-					[&quot;height&quot;] = 4.5,
-				},
-				{
-					[&quot;at&quot;] = -20,
-					[&quot;width&quot;] = 6,
-					[&quot;sill&quot;] = 6.5,
-					[&quot;height&quot;] = 4.5,
-				},
-				{
-					[&quot;at&quot;] = 8,
-					[&quot;width&quot;] = 7,
-					[&quot;sill&quot;] = 6.5,
-					[&quot;height&quot;] = 4.5,
-				},
-				{
-					[&quot;at&quot;] = 20,
-					[&quot;width&quot;] = 6,
-					[&quot;sill&quot;] = 6.5,
-					[&quot;height&quot;] = 4.5,
+					[&quot;at&quot;] = 30,
+					[&quot;width&quot;] = 8,
 				},
 			},
+			[&quot;windows&quot;] = {},
 		},
 		{
 			[&quot;from&quot;] = {
@@ -3605,7 +3758,7 @@ return {
 			},
 			[&quot;to&quot;] = {
 				-40,
-				30,
+				46,
 			},
 			[&quot;doors&quot;] = {},
 			[&quot;windows&quot;] = {
@@ -3621,6 +3774,12 @@ return {
 					[&quot;sill&quot;] = 5,
 					[&quot;height&quot;] = 5,
 				},
+				{
+					[&quot;at&quot;] = 41,
+					[&quot;width&quot;] = 6,
+					[&quot;sill&quot;] = 5,
+					[&quot;height&quot;] = 5,
+				},
 			},
 		},
 		{
@@ -3630,7 +3789,7 @@ return {
 			},
 			[&quot;to&quot;] = {
 				40,
-				30,
+				46,
 			},
 			[&quot;doors&quot;] = {},
 			[&quot;windows&quot;] = {
@@ -3643,6 +3802,12 @@ return {
 				{
 					[&quot;at&quot;] = 7,
 					[&quot;width&quot;] = 6,
+					[&quot;sill&quot;] = 5,
+					[&quot;height&quot;] = 5,
+				},
+				{
+					[&quot;at&quot;] = 43,
+					[&quot;width&quot;] = 5,
 					[&quot;sill&quot;] = 5,
 					[&quot;height&quot;] = 5,
 				},
@@ -3758,6 +3923,60 @@ return {
 				{
 					[&quot;at&quot;] = 24,
 					[&quot;width&quot;] = 6,
+				},
+			},
+			[&quot;windows&quot;] = {},
+		},
+		{
+			[&quot;from&quot;] = {
+				-40,
+				46,
+			},
+			[&quot;to&quot;] = {
+				40,
+				46,
+			},
+			[&quot;doors&quot;] = {},
+			[&quot;windows&quot;] = {
+				{
+					[&quot;at&quot;] = -30,
+					[&quot;width&quot;] = 6,
+					[&quot;sill&quot;] = 6.5,
+					[&quot;height&quot;] = 4.5,
+				},
+				{
+					[&quot;at&quot;] = -2.5,
+					[&quot;width&quot;] = 4,
+					[&quot;sill&quot;] = 6.5,
+					[&quot;height&quot;] = 4.5,
+				},
+				{
+					[&quot;at&quot;] = 8,
+					[&quot;width&quot;] = 6,
+					[&quot;sill&quot;] = 6.5,
+					[&quot;height&quot;] = 4.5,
+				},
+				{
+					[&quot;at&quot;] = 28,
+					[&quot;width&quot;] = 6,
+					[&quot;sill&quot;] = 6.5,
+					[&quot;height&quot;] = 4.5,
+				},
+			},
+		},
+		{
+			[&quot;from&quot;] = {
+				0,
+				30,
+			},
+			[&quot;to&quot;] = {
+				0,
+				46,
+			},
+			[&quot;doors&quot;] = {
+				{
+					[&quot;at&quot;] = 38,
+					[&quot;width&quot;] = 8,
 				},
 			},
 			[&quot;windows&quot;] = {},
@@ -4025,6 +4244,7 @@ return {
 			[&quot;unlockLevel&quot;] = 2,
 			[&quot;wrongPenalty&quot;] = 35,
 			[&quot;severity&quot;] = 1,
+			[&quot;contagious&quot;] = true,
 		},
 		{
 			[&quot;id&quot;] = &quot;earMites&quot;,
@@ -4049,6 +4269,7 @@ return {
 			[&quot;unlockLevel&quot;] = 3,
 			[&quot;wrongPenalty&quot;] = 30,
 			[&quot;severity&quot;] = 1,
+			[&quot;contagious&quot;] = true,
 		},
 		{
 			[&quot;id&quot;] = &quot;fleas&quot;,
@@ -4074,6 +4295,7 @@ return {
 			[&quot;unlockLevel&quot;] = 1,
 			[&quot;wrongPenalty&quot;] = 25,
 			[&quot;severity&quot;] = 1,
+			[&quot;contagious&quot;] = true,
 		},
 		{
 			[&quot;id&quot;] = &quot;dehydration&quot;,
@@ -4181,6 +4403,7 @@ return {
 			[&quot;unlockLevel&quot;] = 5,
 			[&quot;wrongPenalty&quot;] = 48,
 			[&quot;severity&quot;] = 2,
+			[&quot;contagious&quot;] = true,
 		},
 		{
 			[&quot;id&quot;] = &quot;featherPlucking&quot;,
@@ -4255,6 +4478,7 @@ return {
 			[&quot;unlockLevel&quot;] = 5,
 			[&quot;wrongPenalty&quot;] = 50,
 			[&quot;severity&quot;] = 2,
+			[&quot;contagious&quot;] = true,
 		},
 		{
 			[&quot;id&quot;] = &quot;brokenBone&quot;,
@@ -4450,6 +4674,7 @@ return {
 			[&quot;unlockLevel&quot;] = 4,
 			[&quot;wrongPenalty&quot;] = 68,
 			[&quot;severity&quot;] = 3,
+			[&quot;contagious&quot;] = true,
 		},
 		{
 			[&quot;id&quot;] = &quot;kidneyTrouble&quot;,
@@ -5327,6 +5552,17 @@ return {
 		[&quot;boardingXp&quot;] = 34,
 		[&quot;radius&quot;] = 14,
 	},
+	[&quot;lab&quot;] = {
+		[&quot;analysisSeconds&quot;] = 3.5,
+		[&quot;xpBonus&quot;] = 6,
+		[&quot;feeBonus&quot;] = 1.05,
+	},
+	[&quot;contagion&quot;] = {
+		[&quot;tickSeconds&quot;] = 4,
+		[&quot;healthDrain&quot;] = -1.2,
+		[&quot;satisfactionDrain&quot;] = -1.5,
+		[&quot;reputationDrain&quot;] = -0.35,
+	},
 }
 </ProtectedString>
 				</Properties>
@@ -5688,8 +5924,24 @@ return {
 	[&quot;name&quot;] = &quot;Türkçe&quot;,
 	[&quot;strings&quot;] = {
 		[&quot;clinic.name&quot;] = &quot;PATİ VETERİNER KLİNİĞİ&quot;,
+		[&quot;notify.sampleTaken&quot;] = &quot;{1} numunesi alındı — laboratuvarda incele (R)&quot;,
+		[&quot;notify.sampleAnalyzed&quot;] = &quot;Laboratuvar sonucu geldi ({1} numune)&quot;,
+		[&quot;notify.noSample&quot;] = &quot;İncelenecek numune yok&quot;,
+		[&quot;notify.notAtLab&quot;] = &quot;Laboratuvar tezgâhının başında değilsin&quot;,
+		[&quot;notify.contagionAlert&quot;] = &quot;BULAŞICI HASTA BEKLİYOR — karantina bölmesine al!&quot;,
+		[&quot;chart.samples&quot;] = &quot;Laboratuvar&quot;,
+		[&quot;chart.samplePending&quot;] = &quot;{1} — sonuç bekliyor&quot;,
+		[&quot;chart.sampleDone&quot;] = &quot;{1} numune incelendi&quot;,
+		[&quot;chart.contagious&quot;] = &quot;BULAŞICI&quot;,
+		[&quot;chart.quarantined&quot;] = &quot;karantinada&quot;,
+		[&quot;hud.contagion&quot;] = &quot;BULAŞMA RİSKİ&quot;,
+		[&quot;room.lab&quot;] = &quot;LABORATUVAR&quot;,
+		[&quot;room.quarantine&quot;] = &quot;KARANTİNA&quot;,
+		[&quot;prop.microscope&quot;] = &quot;MİKROSKOP&quot;,
+		[&quot;prop.sampleRack&quot;] = &quot;NUMUNELER&quot;,
+		[&quot;prop.quarantinePod&quot;] = &quot;KARANTİNA&quot;,
 		[&quot;notify.clinicLevelUp&quot;] = &quot;KLİNİK {1}. SEVİYEYE ÇIKTI — {2}&quot;,
-		[&quot;hud.clinicCap&quot;] = &quot;KLİNİK&quot;,
+		[&quot;hud.clinicLine&quot;] = &quot;KLİNİK {1}/{2} · {3} · {4}&quot;,
 		[&quot;hud.clinicMax&quot;] = &quot;en üst seviye&quot;,
 		[&quot;hud.clinicNext&quot;] = &quot;sonraki seviye %{1}&quot;,
 		[&quot;clinicLevel.1&quot;] = &quot;Mahalle Muayenehanesi&quot;,
@@ -5705,7 +5957,7 @@ return {
 		[&quot;hud.reputation&quot;] = &quot;İtibar {1}/100&quot;,
 		[&quot;hud.queue&quot;] = &quot;Bekleyen hasta: {1}/{2}&quot;,
 		[&quot;hud.hints&quot;] = &quot;E ile hastayı masaya al&quot;,
-		[&quot;hud.keys&quot;] = &quot;E hastayı al · 1-8 alet · T taburcu · B mağaza · G ilerleme · O ayarlar · Shift koş&quot;,
+		[&quot;hud.keys&quot;] = &quot;E hastayı al · 1-8 alet · R numune · T taburcu · B mağaza · G ilerleme · O ayarlar · Shift koş&quot;,
 		[&quot;hud.transient&quot;] = &quot;Kayıt kapalı — ilerleme saklanmıyor&quot;,
 		[&quot;hud.capMoney&quot;] = &quot;Kasa&quot;,
 		[&quot;hud.capLevel&quot;] = &quot;Seviye&quot;,
@@ -6617,6 +6869,88 @@ return {
 			[&quot;base&quot;] = 0,
 			[&quot;againstWall&quot;] = false,
 		},
+		{
+			[&quot;id&quot;] = &quot;microscope&quot;,
+			[&quot;size&quot;] = {
+				4.6,
+				3.2,
+				5.4,
+			},
+			[&quot;offset&quot;] = {
+				0,
+				0,
+			},
+			[&quot;base&quot;] = 0,
+			[&quot;againstWall&quot;] = false,
+			[&quot;surface&quot;] = {
+				3.4,
+				2.6,
+			},
+		},
+		{
+			[&quot;id&quot;] = &quot;centrifuge&quot;,
+			[&quot;size&quot;] = {
+				4,
+				4,
+				4.6,
+			},
+			[&quot;offset&quot;] = {
+				0,
+				0,
+			},
+			[&quot;base&quot;] = 0,
+			[&quot;againstWall&quot;] = false,
+		},
+		{
+			[&quot;id&quot;] = &quot;sampleRack&quot;,
+			[&quot;size&quot;] = {
+				5.2,
+				2.2,
+				4.4,
+			},
+			[&quot;offset&quot;] = {
+				0,
+				0,
+			},
+			[&quot;base&quot;] = 0,
+			[&quot;againstWall&quot;] = true,
+		},
+		{
+			[&quot;id&quot;] = &quot;quarantinePod&quot;,
+			[&quot;size&quot;] = {
+				10,
+				7.6,
+				7.2,
+			},
+			[&quot;offset&quot;] = {
+				0,
+				0,
+			},
+			[&quot;base&quot;] = 0,
+			[&quot;againstWall&quot;] = false,
+			[&quot;shelter&quot;] = {
+				9.4,
+				7,
+			},
+			[&quot;surface&quot;] = {
+				9,
+				6.6,
+			},
+		},
+		{
+			[&quot;id&quot;] = &quot;uvLamp&quot;,
+			[&quot;size&quot;] = {
+				3,
+				1.2,
+				4,
+			},
+			[&quot;offset&quot;] = {
+				0,
+				0,
+			},
+			[&quot;base&quot;] = 6.5,
+			[&quot;againstWall&quot;] = true,
+		},
 	},
 }
 </ProtectedString>
@@ -7399,6 +7733,7 @@ return {
 				[&quot;motion&quot;] = &quot;press&quot;,
 			},
 			[&quot;minigame&quot;] = &quot;range&quot;,
+			[&quot;sample&quot;] = true,
 		},
 		{
 			[&quot;id&quot;] = &quot;urinalysis&quot;,
@@ -7432,6 +7767,7 @@ return {
 				[&quot;motion&quot;] = &quot;twist&quot;,
 			},
 			[&quot;minigame&quot;] = &quot;&quot;,
+			[&quot;sample&quot;] = true,
 		},
 		{
 			[&quot;id&quot;] = &quot;ultrasound&quot;,
@@ -8179,6 +8515,9 @@ bind(&quot;ToolGameSubmit&quot;, function(player: Player, x: number, y: number)
 end)
 bind(&quot;GiveMedicine&quot;, function(player: Player, bed: number)
 	PatientFlow.giveMedicine(player, bed)
+end)
+bind(&quot;AnalyzeSample&quot;, function(player: Player)
+	PatientFlow.analyzeSample(player)
 end)
 bind(&quot;SurgeryAssist&quot;, function(player: Player)
 	PatientFlow.surgeryAssist(player)
@@ -10109,6 +10448,15 @@ export type Patient = {
 	arrivedAt: number,
 	busyUntil: number,
 	queueSlot: number?,
+	-- Laboratuvar: alinmis ama HENUZ INCELENMEMIS numuneler ve
+	-- incelenmis olanlar. Numunenin kendisi bir nesne degil; hastanin
+	-- dosyasinda duran bir kayit - oyuncu numuneyi elinde tasimiyor,
+	-- laboratuvara gidip hastanin numunesini inceliyor.
+	samples: { [string]: boolean },
+	analyzed: { [string]: boolean },
+	-- Numunesi laboratuvarda incelenen hasta taburcu edilirken kucuk
+	-- bir ucret zammi aliyor: yuruyusun karsiligi.
+	labBonus: boolean,
 }
 
 local clinic: Clinic.Built? = nil
@@ -10118,6 +10466,10 @@ local patients: { [number]: Patient } = {}
 local activeOf: { [Player]: number } = {}
 local occupiedStation: { [string]: number } = {}
 local usedQueueSlots: { [number]: boolean } = {}
+-- Teshisi konmus, bulasici ve HALA karantinaya alinmamis bir hasta var
+-- mi? Yalnizca teshisten sonra true oluyor; teshis oncesi bir uyari,
+-- hastalik listesini daraltan bir bilgi sizdirirdi.
+local contagionAlert = false
 
 local nextPatientId = 1
 local started = false
@@ -10212,6 +10564,36 @@ local function nearStation(player: Player, stationId: string): boolean
 	local flat = Vector3.new(root.Position.X, 0, root.Position.Z)
 	local target = Vector3.new(station.cframe.Position.X, 0, station.cframe.Position.Z)
 	return (flat - target).Magnitude &lt;= STATION_RADIUS
+end
+
+--- Oyuncu bu ADLI NOKTAYA yakin mi? Istasyondan farki: burada hasta
+--- degil OYUNCU duruyor (laboratuvar tezgahi).
+local function nearSpot(player: Player, name: string): boolean
+	if clinic == nil then
+		return false
+	end
+	local spot = clinic.spots[name]
+	if spot == nil then
+		return false
+	end
+	local character = player.Character
+	if character == nil then
+		return false
+	end
+	local root = character:FindFirstChild(&quot;HumanoidRootPart&quot;)
+	if root == nil or not root:IsA(&quot;BasePart&quot;) then
+		return false
+	end
+	local flat = Vector3.new(root.Position.X, 0, root.Position.Z)
+	local target = Vector3.new(spot.Position.X, 0, spot.Position.Z)
+	return (flat - target).Magnitude &lt;= STATION_RADIUS
+end
+
+--- Bu istasyon bir karantina bolmesi mi? Bolmeler `station:quarantine1`
+--- diye etiketli; ad ONEKTEN okunuyor ki yeni bir bolme eklemek kod
+--- degisikligi gerektirmesin.
+local function isQuarantineStation(stationId: string?): boolean
+	return stationId ~= nil and string.sub(stationId, 1, 10) == &quot;quarantine&quot;
 end
 
 --- Oyuncuya en yakin istasyon. Hicbiri menzilde degilse nil.
@@ -10331,6 +10713,23 @@ local function chartSnapshot(patient: Patient?, viewer: Player): any
 		table.insert(done, treatmentId)
 	end
 
+	local samples = {}
+	local analyzedCount = 0
+	for toolId in patient.samples do
+		if patient.analyzed[toolId] == true then
+			analyzedCount += 1
+		else
+			local tool = Upgrades.tool(toolId)
+			table.insert(samples, {
+				id = toolId,
+				nameKey = if tool ~= nil then tool.nameKey else toolId,
+			})
+		end
+	end
+	table.sort(samples, function(a, b)
+		return a.id &lt; b.id
+	end)
+
 	local condition = if patient.diagnosed then Diagnosis.condition(patient.conditionId) else nil
 	-- Sahibin sikayeti HER ZAMAN gidiyor: NPC zaten yuksek sesle
 	-- soyluyor ve bilerek teshisi ele vermeyen bir cumle. Hastaligin
@@ -10353,6 +10752,17 @@ local function chartSnapshot(patient: Patient?, viewer: Player): any
 		required = required,
 		done = done,
 		stationId = patient.stationId,
+		-- Bekleyen numuneler: alindi, HENUZ incelenmedi. Numunenin
+		-- SONUCU burada yok - yalnizca &quot;laboratuvara git&quot; bilgisi.
+		samples = samples,
+		analyzed = analyzedCount,
+		-- Hastanin karantinada olup olmadigi istemcinin zaten gordugu
+		-- bir sey (hayvan gozunun onunde bolmede duruyor); kart bunu
+		-- yazili da soyluyor ki &quot;neden yayilma durmadi&quot; sorusu kalmasin.
+		quarantined = isQuarantineStation(patient.stationId),
+		-- Bulasicilik ANCAK dogru teshisten sonra gidiyor: once
+		-- gitseydi aday listesini 35'ten 6'ya indirirdi.
+		contagious = patient.diagnosed and condition ~= nil and condition.contagious == true,
 		complete = patient.diagnosed and Treatment.isComplete(patient.treatmentsDone, patient.conditionId),
 		dischargeHealth = economy.patient.dischargeHealth,
 		emergency = patient.emergency,
@@ -10436,6 +10846,9 @@ local function stateSnapshot(player: Player): any
 		-- XP'sinden cikiyor, yani herkeste AYNI deger gorunuyor. Kendi
 		-- seviyesi (`level`) kisisel, bu ise binanin.
 		clinic = ClinicLevel.snapshot(Players:GetPlayers()),
+		-- Bulasma uyarisi: teshisi konmus bulasici bir hasta hala
+		-- karantina disinda. Hangi hasta oldugunu SOYLEMIYOR.
+		contagion = contagionAlert,
 	}
 end
 
@@ -10706,6 +11119,9 @@ local function spawnPatient()
 		arrivedAt = os.clock(),
 		busyUntil = 0,
 		queueSlot = slot,
+		samples = {},
+		analyzed = {},
+		labBonus = false,
 	}
 	patients[id] = patient
 	usedQueueSlots[slot] = true
@@ -11073,7 +11489,31 @@ end
 --- Aletin bulduklarini aciyor ve istemciye bildiriyor. Mini-oyunlu
 --- aletlerde ancak mini-oyun KAZANILINCA cagriliyor; mini-oyunsuz
 --- aletlerde dogrudan.
-local function revealFindings(player: Player, patient: Patient, toolId: string)
+--- Bu alet numune mi aliyor? (data/tools.json -&gt; sample)
+local function takesSample(toolId: string): boolean
+	local tool = Upgrades.tool(toolId)
+	return tool ~= nil and tool.sample == true
+end
+
+--- Aletin bulgulari. `fromLab` numune incelemesinden geliyorsa true:
+--- o zaman numune kuyruga alinmiyor, DOGRUDAN aciliyor.
+---
+--- Kan ve idrar tahlilinin masa basinda aninda sonuc vermesi zaten
+--- gercekci degildi; artik alet numuneyi aliyor, sonucu laboratuvar
+--- veriyor. Bulgunun KENDISI degismiyor - yalnizca nerede aciklandigi
+--- degisiyor, yani hicbir hastalik cozulemez hale gelmiyor.
+local function revealFindings(player: Player, patient: Patient, toolId: string, fromLab: boolean?)
+	if fromLab ~= true and takesSample(toolId) then
+		patient.toolsUsed[toolId] = true
+		patient.samples[toolId] = true
+		AnimalAnimator.react(patient.rig, &quot;flinch&quot;)
+		Audio.play(&quot;tool&quot; .. toolId:sub(1, 1):upper() .. toolId:sub(2), patient.rig.root)
+		local tool = Upgrades.tool(toolId)
+		notify(player, &quot;info&quot;, &quot;notify.sampleTaken&quot;, { if tool ~= nil then tool.nameKey else toolId })
+		pushChart(player)
+		return
+	end
+
 	local found = Diagnosis.revealWith(patient.revealed, patient.conditionId, toolId)
 	for _, symptomId in found do
 		patient.revealed[symptomId] = true
@@ -11162,6 +11602,60 @@ function PatientFlow.useTool(player: Player, toolId: string)
 	end
 
 	revealFindings(player, patient, toolId)
+end
+
+--- NUMUNE INCELEMESI
+---
+--- Oyuncu laboratuvar tezgahinin basinda &quot;incele&quot; diyor; bekleyen
+--- butun numuneler ayni anda aciliyor. Hasta muayene masasinda
+--- kalabiliyor - numuneyi tasiyan bir nesne yok, dosyada duran bir
+--- kayit var. Hangi numunenin bekledigini ve ne cikacagini SUNUCU
+--- biliyor; istemci yalnizca niyet yolluyor.
+function PatientFlow.analyzeSample(player: Player)
+	local entry = Profile.get(player)
+	if entry == nil then
+		return
+	end
+	local patient = patientOf(player)
+	if patient == nil then
+		notify(player, &quot;warn&quot;, &quot;notify.noPatient&quot;)
+		return
+	end
+	if not nearSpot(player, &quot;lab&quot;) then
+		notify(player, &quot;warn&quot;, &quot;notify.notAtLab&quot;)
+		return
+	end
+	if os.clock() &lt; patient.busyUntil then
+		return
+	end
+
+	local pending = {}
+	for toolId in patient.samples do
+		if patient.analyzed[toolId] ~= true then
+			table.insert(pending, toolId)
+		end
+	end
+	if #pending == 0 then
+		notify(player, &quot;info&quot;, &quot;notify.noSample&quot;)
+		return
+	end
+	-- Sira her incelemede ayni olsun: alet kimligine gore siralaniyor.
+	table.sort(pending)
+
+	patient.busyUntil = os.clock() + economy.lab.analysisSeconds
+	local data = entry.data
+	local previousLevel = data.level
+	for _, toolId in pending do
+		patient.analyzed[toolId] = true
+		revealFindings(player, patient, toolId, true)
+	end
+	patient.labBonus = true
+	data.xp += economy.lab.xpBonus
+	awardClinicXp(data, economy.lab.xpBonus)
+	applyLevel(player, data, previousLevel)
+	Profile.markDirty(player)
+	notify(player, &quot;good&quot;, &quot;notify.sampleAnalyzed&quot;, { #pending })
+	pushState(player)
 end
 
 --- Ultrason probunun konumu: sunucu yalnizca &quot;ne kadar yakinsin&quot;
@@ -11635,7 +12129,11 @@ function PatientFlow.discharge(player: Player)
 		feeMultiplier = condition.feeMultiplier,
 		reputation = data.reputation,
 		health = patient.health,
-		feeBonus = effects.feeBonus * clinicBonus.feeBonus,
+		-- Laboratuvarda incelenen numune kucuk bir zam getiriyor:
+		-- kuzey kanadina yurumenin karsiligi.
+		feeBonus = effects.feeBonus
+			* clinicBonus.feeBonus
+			* (if patient.labBonus then economy.lab.feeBonus else 1),
 	})
 
 	-- Seviye, XP eklenmeden ONCE okunmali: sonra okunursa atlama hic
@@ -11747,6 +12245,94 @@ function PatientFlow.playerLeft(player: Player)
 end
 
 -- ── Dongu ─────────────────────────────────────────────────────────────
+
+--- BULASMA
+---
+--- Bulasici bir hasta karantinaya alinmadan klinikte durdugu surece
+--- BEKLEYEN butun hayvanlarin sagligi ve memnuniyeti geriliyor,
+--- klinigin itibari dusuyor.
+---
+--- Neden hasta kendisi &quot;bulasici&quot; diye isaretlenmiyor da bekleyenler
+--- eziliyor? Cunku bir hastanin KIMLIGI istemciye teshisten once
+--- gitmiyor ve gitmemeli. &quot;Su hasta bulasici&quot; demek, hastalik
+--- listesini 35'ten 6'ya indirmek olurdu. Bunun yerine bulasma
+--- OLCULEBILIR bir etki olarak gorunuyor: bekleyenlerin sagligi
+--- dusuyor, hayvanlar oksuruyor. Oyuncu sebebini muayene ederek
+--- buluyor - yani oyunun kendisini oynayarak.
+---
+--- Karantina bolmesi bir ISTASYON: hasta oraya yatirilinca yayilma
+--- duruyor ve tedavinin tamami orada yapilabiliyor. Yani karantina
+--- &quot;hastayi bir kenara koy&quot; cezasi degil, akisin icinde bir yer.
+local function tickContagion()
+	local config = economy.contagion
+	local sources = {}
+	local waiting = {}
+	for _, patient in patients do
+		if patient.state == &quot;leaving&quot; or patient.state == &quot;ward&quot; then
+			continue
+		end
+		if patient.state == &quot;waiting&quot; or patient.state == &quot;arriving&quot; then
+			table.insert(waiting, patient)
+		end
+		local condition = Diagnosis.condition(patient.conditionId)
+		if condition ~= nil and condition.contagious == true and not isQuarantineStation(patient.stationId) then
+			table.insert(sources, patient)
+		end
+	end
+	if #sources == 0 then
+		return false
+	end
+
+	-- Kaynagin kendisi kurbanlardan sayilmiyor: hayvan kendine
+	-- bulastirmaz.
+	local hurt = 0
+	for _, victim in waiting do
+		local isSource = false
+		for _, source in sources do
+			if source.id == victim.id then
+				isSource = true
+				break
+			end
+		end
+		if isSource then
+			continue
+		end
+		victim.health = math.clamp(victim.health + config.healthDrain, 0, 100)
+		victim.satisfaction = math.clamp(victim.satisfaction + config.satisfactionDrain, 0, 100)
+		if victim.owner ~= nil then
+			OwnerFactory.updateSatisfaction(victim.owner, victim.satisfaction)
+		end
+		updateNameplate(victim)
+		hurt += 1
+	end
+
+	-- Oksuruk: bulasmanin GORUNUR tarafi. Ekranda bir yazi cikmiyor;
+	-- hayvanlar oksuruyor ve oyuncu bunu fark ediyor.
+	for _, source in sources do
+		AnimalAnimator.react(source.rig, &quot;shake&quot;)
+	end
+	if hurt &gt; 0 and #waiting &gt; 0 then
+		AnimalAnimator.react(waiting[math.random(#waiting)].rig, &quot;shake&quot;)
+		for _, player in Players:GetPlayers() do
+			local entry = Profile.get(player)
+			if entry ~= nil then
+				entry.data.reputation = Economy.clampReputation(
+					entry.data.reputation + config.reputationDrain * Staff.effectsOf(entry.data).penaltyScale
+				)
+				Profile.markDirty(player)
+			end
+		end
+	end
+
+	-- Uyari ancak TESHIS KONMUSSA veriliyor: o noktada hastaligin
+	-- bulasici oldugunu oyuncu zaten biliyor, yani sizan bir bilgi yok.
+	for _, source in sources do
+		if source.diagnosed then
+			return true
+		end
+	end
+	return false
+end
 
 local function tickVitals(dt: number)
 	local config = economy.patient
@@ -11929,10 +12515,27 @@ function PatientFlow.start(built: Clinic.Built)
 		-- Vitals hiziyla (4/sn) yayin yapmak bosuna paket olurdu.
 		local assistTick = 0
 		local assistWasActive = false
+		-- Bulasma kendi hizinda: vitals 4/sn donuyor, bulasmanin o
+		-- sikligta islemesi sayilari anlamsiz kilardi.
+		local contagionTick = 0
+		local contagionEvery = math.max(1, math.floor(economy.contagion.tickSeconds / VITALS_TICK + 0.5))
 		while true do
 			task.wait(VITALS_TICK)
 			tickVitals(VITALS_TICK)
 			tickWard()
+
+			contagionTick += 1
+			if contagionTick &gt;= contagionEvery then
+				contagionTick = 0
+				local alert = tickContagion()
+				if alert ~= contagionAlert then
+					contagionAlert = alert
+					if alert then
+						notifyAll(&quot;bad&quot;, &quot;notify.contagionAlert&quot;)
+					end
+				end
+				pushStateAll()
+			end
 
 			assistTick += 1
 			if assistTick &gt;= 4 then
@@ -15910,6 +16513,11 @@ export type Built = {
 	ownerPoints: { CFrame },
 	-- Kogus yataklari: yatan hastanin duracagi yerler (Ward.luau).
 	bedPoints: { CFrame },
+	-- Adli noktalar: OYUNCUNUN durdugu yerler (hastanin degil). Su an
+	-- yalnizca laboratuvar tezgahi. Istasyon olarak tanimlanamazdi:
+	-- `callNext` butun istasyonlari tariyor ve laboratuvara hasta
+	-- yatirilmasi anlamsiz olurdu.
+	spots: { [string]: CFrame },
 	entranceOutside: Vector3,
 	entranceInside: Vector3,
 	roomOf: { [string]: { min: { number }, max: { number } } },
@@ -16241,6 +16849,7 @@ function Clinic.build(parent: Instance): Built
 	local queuePoints: { CFrame } = {}
 	local ownerPoints: { CFrame } = {}
 	local bedPoints: { CFrame } = {}
+	local spots: { [string]: CFrame } = {}
 	local roomOf = {}
 
 	for _, room in plan.rooms do
@@ -16326,6 +16935,10 @@ function Clinic.build(parent: Instance): Built
 			table.insert(bedPoints, CFrame.new(point[1], plan.floorY, point[2]))
 		end
 
+		for name, point in room.spots or {} do
+			spots[name] = CFrame.new(point[1], plan.floorY, point[2])
+		end
+
 		for _, spec in room.props do
 			local origin = CFrame.new(spec.at[1], plan.floorY, spec.at[2])
 				* CFrame.Angles(0, math.rad(spec.rot or 0), 0)
@@ -16375,6 +16988,7 @@ function Clinic.build(parent: Instance): Built
 		queuePoints = queuePoints,
 		ownerPoints = ownerPoints,
 		bedPoints = bedPoints,
+		spots = spots,
 		entranceOutside = Vector3.new(plan.entrance.outside[1], plan.floorY, plan.entrance.outside[2]),
 		entranceInside = Vector3.new(plan.entrance.inside[1], plan.floorY, plan.entrance.inside[2]),
 		roomOf = roomOf,
@@ -18920,6 +19534,173 @@ builders.kennelPen = function(model, origin)
 	d(&quot;SerumTorbasi&quot;, Vector3.new(0.8, 1.2, 0.3), Vector3.new(-3.5, 3.9, 2.4), C.water, Enum.Material.Glass)
 end
 
+-- ── Laboratuvar ve karantina ──────────────────────────────────────────
+-- Kuzey kanadi. Buradaki esyalarin hepsi gorunusten fazlasi: mikroskop
+-- numune incelemenin YERI, karantina bolmesi de bulasici hastanin
+-- kuyruktan cikarildigi yer. Ikisinin de konumu `data/clinic.json`
+-- icinde (`spots.lab`, `podPoints`) ve yerlesim denetiminden geciyor.
+
+builders.microscope = function(model, origin)
+	local p, d = maker(model, origin), makerDecor(model, origin)
+	-- Tezgah: mikroskop havada duramaz, altinda bir laboratuvar
+	-- tezgahi var. Olcu butcesi (props.json) ikisini birlikte sayiyor.
+	p(&quot;Tezgah&quot;, Vector3.new(4.4, 0.35, 3.0), Vector3.new(0, 2.6, 0), C.white)
+	Detail.trim(model, origin * CFrame.new(0, 2.6, 0), Vector3.new(4.4, 0.35, 3.0), 0.12, C.steel)
+	p(&quot;TezgahGovdesi&quot;, Vector3.new(4.2, 2.45, 2.8), Vector3.new(0, 1.22, 0), C.offWhite)
+	Detail.drawer(model, origin * CFrame.new(0, 1.9, 1.42), 3.4, 0.8, C.shadowWhite, C.darkSteel)
+	Detail.drawer(model, origin * CFrame.new(0, 0.95, 1.42), 3.4, 0.8, C.shadowWhite, C.darkSteel)
+
+	-- Mikroskobun kendisi: ayak, kol, tup, objektif tablasi, ayna.
+	d(&quot;Ayak&quot;, Vector3.new(1.5, 0.3, 1.1), Vector3.new(-0.7, 2.92, -0.3), C.darkSteel, Enum.Material.Metal)
+	d(&quot;Kol&quot;, Vector3.new(0.34, 1.9, 0.34), Vector3.new(-1.15, 3.9, -0.45), C.darkSteel,
+		Enum.Material.Metal, CFrame.Angles(math.rad(-12), 0, 0))
+	d(&quot;Tabla&quot;, Vector3.new(1.3, 0.16, 1.0), Vector3.new(-0.6, 3.62, -0.2), C.black, Enum.Material.Metal)
+	d(&quot;Lam&quot;, Vector3.new(0.7, 0.05, 0.45), Vector3.new(-0.6, 3.72, -0.16), C.glass, Enum.Material.Glass)
+	d(&quot;Tup&quot;, Vector3.new(0.42, 1.15, 0.42), Vector3.new(-0.62, 4.55, -0.32), C.chrome,
+		Enum.Material.Metal, CFrame.Angles(math.rad(14), 0, 0))
+	d(&quot;Objektif&quot;, Vector3.new(0.3, 0.5, 0.3), Vector3.new(-0.6, 3.95, -0.2), C.steel, Enum.Material.Metal)
+	d(&quot;Goz&quot;, Vector3.new(0.34, 0.5, 0.34), Vector3.new(-0.68, 5.18, -0.5), C.black,
+		Enum.Material.Metal, CFrame.Angles(math.rad(14), 0, 0))
+	d(&quot;Ayarvidasi&quot;, Vector3.new(0.4, 0.4, 0.22), Vector3.new(-1.42, 3.5, -0.45), C.chrome, Enum.Material.Metal)
+
+	-- Tezgahin ustunde numune siseleri: laboratuvarin &quot;calisiyor&quot;
+	-- gorunmesini saglayan sey renkli sivilardir.
+	for index, tint in { C.accent, C.water, C.leaf } do
+		Build.pillar({
+			name = &quot;Numune&quot;, size = Vector3.new(0.45, 0.9, 0.45),
+			cf = origin * CFrame.new(0.6 + (index - 1) * 0.62, 3.25, 0.8),
+			color = tint, material = Enum.Material.Glass,
+			canCollide = false, castShadow = false, parent = model,
+		})
+	end
+	Detail.plate(model, origin * CFrame.new(0, 3.1, -1.52), 2.2, 0.6, C.deepTeal, C.white, Loc.get(&quot;prop.microscope&quot;))
+end
+
+builders.centrifuge = function(model, origin)
+	local p, d = maker(model, origin), makerDecor(model, origin)
+	p(&quot;Tezgah&quot;, Vector3.new(3.8, 0.32, 3.8), Vector3.new(0, 2.4, 0), C.white)
+	p(&quot;TezgahGovdesi&quot;, Vector3.new(3.6, 2.3, 3.6), Vector3.new(0, 1.15, 0), C.offWhite)
+	Detail.trim(model, origin * CFrame.new(0, 2.4, 0), Vector3.new(3.8, 0.32, 3.8), 0.12, C.steel)
+
+	-- Santrifujun govdesi silindir; kapagi ayri bir parca ki aralik
+	-- gorunsun ve makine &quot;acilabilir&quot; dursun.
+	Build.pillar({
+		name = &quot;Govde&quot;, size = Vector3.new(2.6, 1.5, 2.6),
+		cf = origin * CFrame.new(0, 3.3, 0), color = C.shadowWhite, parent = model,
+	})
+	Build.pillar({
+		name = &quot;Kapak&quot;, size = Vector3.new(2.7, 0.35, 2.7),
+		cf = origin * CFrame.new(0, 4.16, 0), color = C.darkSteel,
+		material = Enum.Material.Metal, canCollide = false, castShadow = false, parent = model,
+	})
+	Build.pillar({
+		name = &quot;Pencere&quot;, size = Vector3.new(1.5, 0.12, 1.5),
+		cf = origin * CFrame.new(0, 4.35, 0), color = C.glass,
+		material = Enum.Material.Glass, canCollide = false, castShadow = false, parent = model,
+	})
+	-- Rotor gozleri: kapagin altindan gorunen tup yuvalari.
+	for index = 1, 6 do
+		local angle = (index / 6) * math.pi * 2
+		d(&quot;TupYuvasi&quot;, Vector3.new(0.34, 0.7, 0.34), Vector3.new(math.cos(angle) * 0.8, 3.85, math.sin(angle) * 0.8),
+			C.accent, Enum.Material.Glass, CFrame.Angles(math.rad(18), -angle, 0))
+	end
+	d(&quot;Panel&quot;, Vector3.new(1.1, 0.6, 0.12), Vector3.new(0, 3.1, 1.32), C.black)
+	d(&quot;Dugme&quot;, Vector3.new(0.22, 0.22, 0.1), Vector3.new(-0.32, 3.1, 1.4), C.teal)
+	d(&quot;Dugme&quot;, Vector3.new(0.22, 0.22, 0.1), Vector3.new(0.32, 3.1, 1.4), C.accent)
+	Detail.cable(model, (origin * CFrame.new(0, 2.5, -1.7)).Position, (origin * CFrame.new(1.4, 0.2, -1.9)).Position, 0.1, C.black)
+end
+
+builders.sampleRack = function(model, origin)
+	local p, d = maker(model, origin), makerDecor(model, origin)
+	p(&quot;Govde&quot;, Vector3.new(5.0, 4.2, 1.9), Vector3.new(0, 2.1, 0), C.offWhite)
+	Detail.trim(model, origin * CFrame.new(0, 2.1, 0), Vector3.new(5.0, 4.2, 1.9), 0.14, C.steel)
+	-- Uc raf, her rafta bir sira numune tupu. Tuplerin rengi degisiyor:
+	-- tek renk bir sira, uzaktan tek bir blok gibi gorunuyordu.
+	local tints = { C.accent, C.water, C.leaf, C.gold, C.paleTeal, C.blossom }
+	for shelf = 0, 2 do
+		local y = 0.9 + shelf * 1.35
+		d(&quot;Raf&quot;, Vector3.new(4.7, 0.14, 1.6), Vector3.new(0, y, 0.1), C.shadowWhite)
+		for index = 1, 6 do
+			Build.pillar({
+				name = &quot;Tup&quot;, size = Vector3.new(0.34, 0.95, 0.34),
+				cf = origin * CFrame.new(-1.9 + (index - 1) * 0.76, y + 0.55, 0.1),
+				color = tints[((shelf * 6 + index - 1) % #tints) + 1],
+				material = Enum.Material.Glass,
+				canCollide = false, castShadow = false, parent = model,
+			})
+		end
+	end
+	d(&quot;TasimaKolu&quot;, Vector3.new(4.2, 0.16, 0.16), Vector3.new(0, 4.34, 0.1), C.chrome, Enum.Material.Metal)
+	Detail.plate(model, origin * CFrame.new(0, 4.0, 0.98), 2.6, 0.6, C.navy, C.white, Loc.get(&quot;prop.sampleRack&quot;))
+end
+
+builders.quarantinePod = function(model, origin)
+	local p, d = maker(model, origin), makerDecor(model, origin)
+	-- KARANTINA BOLMESI
+	--
+	-- Kogus padogundan farki cam on yuzu: bulasici hastayi gormen
+	-- gerekiyor ama havasi ayri. Ic olcu `props.json` -&gt; `shelter`
+	-- (9,4 x 7,0) ve en buyuk hasta oraya siginca yerlesim denetimi
+	-- geciyor; padoktaki kural burada da isliyor.
+	p(&quot;Taban&quot;, Vector3.new(9.8, 0.4, 7.4), Vector3.new(0, 0.2, 0), C.white)
+	d(&quot;TabanPahi&quot;, Vector3.new(10, 0.16, 7.6), Vector3.new(0, 0.42, 0), C.shadowWhite)
+	d(&quot;Yatak&quot;, Vector3.new(6.6, 0.45, 4.8), Vector3.new(0, 0.64, -0.3), C.pad, Enum.Material.Fabric)
+	d(&quot;Battaniye&quot;, Vector3.new(4.6, 0.12, 3.2), Vector3.new(0.5, 0.88, -0.1), C.towel, Enum.Material.Fabric)
+
+	p(&quot;ArkaDuvar&quot;, Vector3.new(9.8, 6.2, 0.24), Vector3.new(0, 3.3, -3.7), C.white)
+	p(&quot;YanDuvar&quot;, Vector3.new(0.24, 6.2, 7.4), Vector3.new(-4.8, 3.3, 0), C.white)
+	p(&quot;YanDuvar&quot;, Vector3.new(0.24, 6.2, 7.4), Vector3.new(4.8, 3.3, 0), C.white)
+	p(&quot;Tavan&quot;, Vector3.new(9.8, 0.3, 7.4), Vector3.new(0, 6.55, 0), C.offWhite)
+
+	-- On yuz: parmaklik degil CAM. Karantinanin anlami havanin
+	-- ayrilmasi; parmaklikli bir bolme bunu anlatmazdi.
+	d(&quot;CamKanat&quot;, Vector3.new(4.5, 5.6, 0.16), Vector3.new(-2.5, 3.3, 3.7), C.glass, Enum.Material.Glass)
+	d(&quot;CamKanat&quot;, Vector3.new(4.5, 5.6, 0.16), Vector3.new(2.5, 3.3, 3.7), C.glass, Enum.Material.Glass)
+	d(&quot;CamCercevesi&quot;, Vector3.new(9.8, 0.3, 0.3), Vector3.new(0, 6.2, 3.7), C.deepTeal, Enum.Material.Metal)
+	d(&quot;CamCercevesi&quot;, Vector3.new(9.8, 0.3, 0.3), Vector3.new(0, 0.5, 3.7), C.deepTeal, Enum.Material.Metal)
+	d(&quot;CamDikmesi&quot;, Vector3.new(0.3, 5.6, 0.3), Vector3.new(0, 3.3, 3.7), C.deepTeal, Enum.Material.Metal)
+	d(&quot;Kulp&quot;, Vector3.new(0.22, 1.4, 0.22), Vector3.new(0.6, 3.3, 3.9), C.chrome, Enum.Material.Metal)
+
+	-- Hava kilidi: ustteki filtre kutusu ve borusu. Bolmenin neden
+	-- &quot;karantina&quot; oldugunu anlatan parca bu.
+	d(&quot;FiltreKutusu&quot;, Vector3.new(2.6, 1.1, 1.8), Vector3.new(-2.6, 7.2, -1), C.darkSteel, Enum.Material.Metal)
+	d(&quot;FiltreIzgarasi&quot;, Vector3.new(2.2, 0.16, 1.4), Vector3.new(-2.6, 6.66, -1), C.steel, Enum.Material.Metal)
+	Build.pillar({
+		name = &quot;HavaBorusu&quot;, size = Vector3.new(0.9, 1.4, 0.9),
+		cf = origin * CFrame.new(-2.6, 7.9, -1), color = C.steel,
+		material = Enum.Material.Metal, canCollide = false, castShadow = false, parent = model,
+	})
+	d(&quot;UyariSeridi&quot;, Vector3.new(9.8, 0.4, 0.12), Vector3.new(0, 6.85, 3.6), C.gold)
+	Detail.plate(model, origin * CFrame.new(2.8, 6.9, 3.6), 3.0, 0.8, C.accent, C.white, Loc.get(&quot;prop.quarantinePod&quot;))
+	Build.pillar({
+		name = &quot;SuKabi&quot;, size = Vector3.new(1.3, 0.45, 1.3),
+		cf = origin * CFrame.new(3.2, 0.62, 1.9), color = C.water,
+		canCollide = false, castShadow = false, parent = model,
+	})
+end
+
+builders.uvLamp = function(model, origin)
+	local p, d = maker(model, origin), makerDecor(model, origin)
+	-- Duvara asili dezenfeksiyon lambasi. Isik KAYNAGI degil: klinikte
+	-- isik sayisi bilerek az tutuluyor, bu yuzden mor parlaklik
+	-- parcanin kendi `Neon` yuzeyinden geliyor.
+	p(&quot;Govde&quot;, Vector3.new(2.8, 0.9, 0.7), Vector3.new(0, 0, -0.5), C.offWhite)
+	Detail.trim(model, origin * CFrame.new(0, 0, -0.5), Vector3.new(2.8, 0.9, 0.7), 0.1, C.steel)
+	d(&quot;Reflektor&quot;, Vector3.new(2.6, 0.7, 0.5), Vector3.new(0, -0.05, -0.1), C.chrome, Enum.Material.Metal)
+	for index = 0, 1 do
+		Build.pillar({
+			name = &quot;Tup&quot;, size = Vector3.new(0.3, 2.3, 0.3),
+			cf = origin * CFrame.new(-0.45 + index * 0.9, -0.2, 0.05) * CFrame.Angles(0, 0, math.rad(90)),
+			color = Color3.fromRGB(176, 150, 232), material = Enum.Material.Neon,
+			canCollide = false, castShadow = false, parent = model,
+		})
+	end
+	d(&quot;Aski&quot;, Vector3.new(0.4, 0.5, 0.5), Vector3.new(-1.2, 0.5, -0.6), C.darkSteel, Enum.Material.Metal)
+	d(&quot;Aski&quot;, Vector3.new(0.4, 0.5, 0.5), Vector3.new(1.2, 0.5, -0.6), C.darkSteel, Enum.Material.Metal)
+	d(&quot;Anahtar&quot;, Vector3.new(0.3, 0.45, 0.16), Vector3.new(1.15, -0.5, 0.1), C.teal)
+	Detail.cable(model, (origin * CFrame.new(-1.3, 0.3, -0.6)).Position, (origin * CFrame.new(-1.3, 1.4, -0.7)).Position, 0.08, C.black)
+end
+
 builders.feedStation = function(model, origin)
 	local p, d = maker(model, origin), makerDecor(model, origin)
 	p(&quot;Paspas&quot;, Vector3.new(5, 0.18, 3), Vector3.new(0, 0.09, 0), C.deepTeal, Enum.Material.Fabric)
@@ -19830,6 +20611,11 @@ UserInputService.InputBegan:Connect(function(input: InputObject, processed: bool
 		Net.toServer(&quot;CallNext&quot;)
 	elseif key == Enum.KeyCode.T then
 		Net.toServer(&quot;Discharge&quot;)
+	elseif key == Enum.KeyCode.R then
+		-- Numune incelemesi: laboratuvar tezgahinin basinda calisiyor.
+		-- Yakinlik SUNUCUDA olculuyor; istemcinin &quot;oradayim&quot; demesine
+		-- guvenilmiyor, bu yuzden burada hicbir denetim yok.
+		Net.toServer(&quot;AnalyzeSample&quot;)
 	end
 end)
 
@@ -20331,7 +21117,7 @@ function Chart.create(parent: ScreenGui)
 		satisfaction = satisfaction,
 		list = list,
 		discharge = discharge,
-		symptomCount = -1,
+		listKey = &quot;&quot;,
 	}
 end
 
@@ -20363,7 +21149,7 @@ function Chart.update(chart: any)
 		end
 		widgets.list:ClearAllChildren()
 		Theme.list(widgets.list, Theme.space.xs)
-		widgets.symptomCount = -1
+		widgets.listKey = &quot;&quot;
 		widgets.discharge.Visible = false
 		widgets.banner.Visible = false
 		if emergencyPulse ~= nil then
@@ -20384,6 +21170,22 @@ function Chart.update(chart: any)
 			then Loc.get(&quot;chart.diagnosed&quot;, Loc.get(chart.conditionNameKey))
 			else Loc.get(&quot;chart.undiagnosed&quot;)
 		widgets.condition.TextColor3 = if chart.diagnosed then Theme.color.good else Theme.color.warn
+
+		-- BULASICILIK teshisten sonra karta yaziliyor. Karantinaya
+		-- alinmissa yesil, alinmamissa kirmizi: &quot;yapilacak is var mi&quot;
+		-- sorusunun cevabi tek bakista gorunsun.
+		if chart.contagious == true then
+			if chart.quarantined == true then
+				widgets.condition.Text = widgets.condition.Text
+					.. &quot; \u{00B7} &quot; .. Loc.get(&quot;chart.contagious&quot;)
+					.. &quot; (&quot; .. Loc.get(&quot;chart.quarantined&quot;) .. &quot;)&quot;
+				widgets.condition.TextColor3 = Theme.color.good
+			else
+				widgets.condition.Text = widgets.condition.Text
+					.. &quot; \u{00B7} &quot; .. Loc.get(&quot;chart.contagious&quot;)
+				widgets.condition.TextColor3 = Theme.color.bad
+			end
+		end
 	end
 
 	widgets.quote.Visible = chart.hintKey ~= nil
@@ -20421,12 +21223,47 @@ function Chart.update(chart: any)
 	-- Belirti listesi her karede yeniden kurulmuyor: sayi degismediyse
 	-- dokunulmuyor. (Aksi halde kaydirma cubugu her guncellemede basa
 	-- donerdi ve liste titrerdi.)
-	if widgets.symptomCount ~= #chart.revealed then
-		widgets.symptomCount = #chart.revealed
+	local samples = chart.samples or {}
+	local listKey = (&quot;%d/%d/%d&quot;):format(#chart.revealed, #samples, chart.analyzed or 0)
+	if widgets.listKey ~= listKey then
+		widgets.listKey = listKey
 		widgets.list:ClearAllChildren()
 		Theme.list(widgets.list, Theme.space.xs)
 
-		if #chart.revealed == 0 then
+		-- Bekleyen numuneler EN USTTE: yapilacak is, yapilmis isin
+		-- ustunde durmali.
+		for index, sample in samples do
+			local row = Theme.frame({
+				name = &quot;Numune&quot;,
+				size = UDim2.new(1, -Theme.space.sm, 0, 24),
+				color = Theme.color.panelLight,
+				transparency = 0.2,
+				radius = Theme.radius.sm,
+				parent = widgets.list,
+				layoutOrder = -100 + index,
+				zIndex = 2,
+			})
+			Theme.icon({
+				name = &quot;bloodtest&quot;,
+				size = 10,
+				color = Theme.color.warn,
+				position = UDim2.new(0, Theme.space.sm, 0.5, -5),
+				parent = row,
+				zIndex = 3,
+			})
+			Theme.label({
+				text = Loc.get(&quot;chart.samplePending&quot;, Loc.get(sample.nameKey)),
+				size = UDim2.new(1, -26, 1, 0),
+				position = UDim2.fromOffset(22, 0),
+				textSize = Theme.size.micro,
+				bold = true,
+				color = Theme.color.warn,
+				parent = row,
+				zIndex = 3,
+			})
+		end
+
+		if #chart.revealed == 0 and #samples == 0 then
 			Theme.label({
 				text = Loc.get(&quot;chart.noSymptoms&quot;),
 				size = UDim2.new(1, -Theme.space.sm, 0, 20),
@@ -20516,6 +21353,9 @@ local RING_ACTIVE = 26
 function Crosshair.create(parent: ScreenGui)
 	local root = Theme.frame({
 		name = &quot;Nisangah&quot;,
+		-- ui:katman — saydam, ekranin tam ortasinda duran nisan
+		-- katmani. Bir yuva kaplamiyor; acilan paneller onun
+		-- uzerine geliyor ve nisangah zaten o sirada gizleniyor.
 		size = UDim2.fromOffset(160, 80),
 		position = UDim2.fromScale(0.5, 0.5),
 		anchor = Vector2.new(0.5, 0.5),
@@ -20665,6 +21505,8 @@ local lastSignature = &quot;&quot;
 function DiagnosisPanel.create(parent: ScreenGui)
 	local panel = Theme.card({
 		name = &quot;TeshisPaneli&quot;,
+		-- ui:grup=sagAlt — tedavi paneliyle AYNI yuva: teshis konmadan
+		-- once bu, konduktan sonra oteki goruluyor.
 		size = UDim2.fromOffset(330, 258),
 		position = UDim2.new(1, -Theme.space.lg, 0, 496),
 		anchor = Vector2.new(1, 0),
@@ -20861,8 +21703,11 @@ function Fps.create(parent: ScreenGui)
 	local panel = Theme.frame({
 		name = &quot;Fps&quot;,
 		size = UDim2.fromOffset(146, 46),
-		position = UDim2.new(1, -16, 0, 78),
-		anchor = Vector2.new(1, 0),
+		-- Sol altta, kogus kartinin hemen ustunde. Eskiden sag ustteydi
+		-- ve kuyruk ile vardiya kartlarinin UZERINE biniyordu; sag sutun
+		-- zaten dolu.
+		position = UDim2.new(0, Theme.space.lg, 1, -236),
+		anchor = Vector2.new(0, 0),
 		transparency = 0.25,
 		radius = 8,
 		parent = parent,
@@ -21066,9 +21911,13 @@ function Hud.create(parent: ScreenGui)
 	local rep = statCard(stats, 3, &quot;reputation&quot;, Theme.color.rep, 78)
 
 	-- ── XP cubugu ─────────────────────────────────────────────────────
+	-- Kart iki ilerlemeyi birlikte tasiyor: ustte OYUNCUNUN XP'si,
+	-- altta ORTAK klinik seviyesi. Ayri bir karta konsaydi ekranda yer
+	-- yoktu (sag sutun hasta kartiyla dolu); yan yana durmalari ayrica
+	-- dogru: ikisi de &quot;ilerleme&quot;, biri kisisel biri binanin.
 	local xpCard = Theme.card({
 		name = &quot;XpKart&quot;,
-		size = UDim2.fromOffset(306, 42),
+		size = UDim2.fromOffset(306, 78),
 		position = UDim2.fromOffset(Theme.space.lg, Theme.space.lg + 72),
 		parent = parent,
 	})
@@ -21092,12 +21941,43 @@ function Hud.create(parent: ScreenGui)
 	xpBar.track.ZIndex = 2
 	xpBar.fill.ZIndex = 3
 
+	Theme.divider(xpCard, 0).Position = UDim2.new(0, Theme.space.md, 0, 38)
+
+	local clinicIcon = Theme.icon({
+		name = &quot;clinic&quot;,
+		size = 12,
+		color = Theme.color.accentGlow,
+		position = UDim2.fromOffset(Theme.space.md, 44),
+		parent = xpCard,
+		zIndex = 2,
+	})
+	local clinicLabel = Theme.label({
+		name = &quot;KlinikYazi&quot;,
+		text = &quot;&quot;,
+		size = UDim2.new(1, -Theme.space.md * 2 - 18, 0, 14),
+		position = UDim2.fromOffset(Theme.space.md + 18, 43),
+		textSize = Theme.size.micro,
+		bold = true,
+		color = Theme.color.textDim,
+		parent = xpCard,
+		zIndex = 2,
+	})
+	local clinicBar = Theme.bar(
+		xpCard,
+		UDim2.new(1, -Theme.space.md * 2, 0, 8),
+		UDim2.fromOffset(Theme.space.md, 62),
+		Theme.color.accentGlow,
+		{ segments = 6 }
+	)
+	clinicBar.track.ZIndex = 2
+	clinicBar.fill.ZIndex = 3
+
 	-- Kalici kayit kapaliysa bunu SOYLE. Sessizce bellekte oynatmak,
 	-- oyuncunun ilerlemesini kaybettiginde sebebini bilememesi demek.
 	local warning = Theme.card({
 		name = &quot;KayitUyarisi&quot;,
 		size = UDim2.fromOffset(306, 26),
-		position = UDim2.fromOffset(Theme.space.lg, Theme.space.lg + 122),
+		position = UDim2.fromOffset(Theme.space.lg, Theme.space.lg + 158),
 		color = Theme.color.panel,
 		parent = parent,
 		visible = false,
@@ -21232,82 +22112,50 @@ function Hud.create(parent: ScreenGui)
 		zIndex = 2,
 	})
 
-	-- ── Ortak klinik seviyesi ─────────────────────────────────────────
-	-- Sol ustteki XP cubugu OYUNCUNUN kendi ilerlemesi; bu ise BINANIN
-	-- ve herkeste ayni deger gorunuyor. Ayri renkte (accent) ve ayri
-	-- kosede duruyor ki ikisi birbirine karismasin.
-	local clinic = Theme.card({
-		name = &quot;Klinik&quot;,
-		size = UDim2.fromOffset(228, 78),
-		position = UDim2.new(1, -Theme.space.lg, 0, Theme.space.lg + 124),
-		anchor = Vector2.new(1, 0),
+	-- ── Bulasma uyarisi ───────────────────────────────────────────────
+	-- Yalnizca TESHISI KONMUS bulasici bir hasta karantina disindayken
+	-- goruluyor. Teshis oncesi bir uyari, hastalik listesini 35'ten
+	-- 6'ya indiren bir bilgi sizdirirdi; sunucu bayragi ancak
+	-- teshisten sonra kaldiriyor.
+	--
+	-- Yeri ortada: sag ve sol sutunlar dolu, ve bir uyarinin zaten
+	-- gozun dustugu yerde durmasi gerekiyor.
+	local contagion = Theme.card({
+		name = &quot;BulasmaUyarisi&quot;,
+		size = UDim2.fromOffset(276, 30),
+		-- Acil bandi (Chart.luau) ekranin ust ortasinda 58..114
+		-- arasinda duruyor; uyari onun ALTINDA.
+		position = UDim2.new(0.5, 0, 0, 122),
+		anchor = Vector2.new(0.5, 0),
+		color = Theme.color.panel,
 		parent = parent,
-	})
-	local clinicIcon = Theme.icon({
-		name = &quot;clinic&quot;,
-		size = 14,
-		color = Theme.color.accentGlow,
-		position = UDim2.fromOffset(Theme.space.md, 9),
-		parent = clinic,
+	}, Theme.color.bad)
+	Theme.icon({
+		name = &quot;alert&quot;,
+		size = 13,
+		color = Theme.color.bad,
+		position = UDim2.fromOffset(Theme.space.md, 8),
+		parent = contagion,
 		zIndex = 2,
 	})
-	local clinicCap = Theme.label({
-		name = &quot;Baslik&quot;,
-		text = &quot;&quot;,
-		size = UDim2.fromOffset(60, 14),
-		position = UDim2.fromOffset(Theme.space.md + 20, 9),
+	local contagionText = Theme.label({
+		name = &quot;Yazi&quot;,
+		text = Loc.get(&quot;hud.contagion&quot;),
+		size = UDim2.new(1, -Theme.space.md * 2 - 20, 1, 0),
+		position = UDim2.fromOffset(Theme.space.md + 20, 0),
 		textSize = Theme.size.micro,
 		bold = true,
-		color = Theme.color.textDim,
-		parent = clinic,
+		color = Theme.color.bad,
+		parent = contagion,
 		zIndex = 2,
 	})
-	local clinicLevel = Theme.label({
-		name = &quot;Seviye&quot;,
-		text = &quot;&quot;,
-		size = UDim2.new(1, -Theme.space.md * 2 - 80, 0, 14),
-		position = UDim2.fromOffset(Theme.space.md + 80, 9),
-		textSize = Theme.size.micro,
-		bold = true,
-		align = Enum.TextXAlignment.Right,
-		color = Theme.color.accentGlow,
-		parent = clinic,
-		zIndex = 2,
-	})
-	local clinicName = Theme.label({
-		name = &quot;Ad&quot;,
-		text = &quot;&quot;,
-		size = UDim2.new(1, -Theme.space.md * 2, 0, 16),
-		position = UDim2.fromOffset(Theme.space.md, 24),
-		textSize = Theme.size.small,
-		bold = true,
-		parent = clinic,
-		zIndex = 2,
-	})
-	local clinicBar = Theme.bar(
-		clinic,
-		UDim2.new(1, -Theme.space.md * 2, 0, 8),
-		UDim2.fromOffset(Theme.space.md, 44),
-		Theme.color.accentGlow,
-		{ segments = 6 }
-	)
-	clinicBar.track.ZIndex = 2
-	clinicBar.fill.ZIndex = 3
-	local clinicHint = Theme.label({
-		name = &quot;Ipucu&quot;,
-		text = &quot;&quot;,
-		size = UDim2.new(1, -Theme.space.md * 2, 0, 14),
-		position = UDim2.fromOffset(Theme.space.md, 56),
-		textSize = Theme.size.micro,
-		color = Theme.color.textDim,
-		align = Enum.TextXAlignment.Right,
-		parent = clinic,
-		zIndex = 2,
-	})
+	contagion.Visible = false
 
 	-- ── Kazanc yazilari ───────────────────────────────────────────────
 	local floaters = Theme.frame({
 		name = &quot;Kazanclar&quot;,
+		-- ui:katman — saydam kapsayici: kazanc yazilari HUD'un
+		-- UZERINDE yukseliyor, bir yuva kaplamiyor.
 		size = UDim2.fromOffset(180, 160),
 		position = UDim2.fromOffset(Theme.space.lg + 132, Theme.space.lg + 70),
 		transparency = 1,
@@ -21330,6 +22178,7 @@ function Hud.create(parent: ScreenGui)
 		repCaption = rep.caption,
 		repRoot = rep.root,
 		xpBar = xpBar,
+		xpCard = xpCard,
 		xpText = xpText,
 		warning = warning,
 		queueText = queueText,
@@ -21345,18 +22194,17 @@ function Hud.create(parent: ScreenGui)
 		shiftNight = false,
 		clinic = clinic,
 		clinicIcon = clinicIcon,
-		clinicCap = clinicCap,
-		clinicLevel = clinicLevel,
-		clinicName = clinicName,
+		clinicLabel = clinicLabel,
 		clinicBar = clinicBar,
-		clinicHint = clinicHint,
 		clinicShown = -1,
+		contagion = contagion,
+		contagionText = contagionText,
+		contagionPulse = nil,
 	}
 
 	widgets.moneyCaption.Text = Loc.get(&quot;hud.capMoney&quot;)
 	widgets.levelCaption.Text = Loc.get(&quot;hud.capLevel&quot;)
 	widgets.repCaption.Text = Loc.get(&quot;hud.capReputation&quot;)
-	widgets.clinicCap.Text = Loc.get(&quot;hud.clinicCap&quot;)
 	objective.Visible = false
 end
 
@@ -21391,22 +22239,40 @@ function Hud.update(state: any)
 	widgets.warning.Visible = state.transient == true
 	widgets.queueText.Text = Loc.get(&quot;hud.queue&quot;, state.queueWaiting, state.queueSlots)
 
+	-- Bulasma uyarisi: gorunurken nabiz atiyor. Sessiz bir kirmizi
+	-- kutu, ekranin sagindaki kartlarin arasinda kaybolurdu.
+	local risky = state.contagion == true
+	if risky ~= widgets.contagion.Visible then
+		widgets.contagion.Visible = risky
+		if risky then
+			widgets.contagionPulse = Theme.pulse(widgets.contagionText, &quot;TextTransparency&quot;, 0.55)
+		elseif widgets.contagionPulse ~= nil then
+			widgets.contagionPulse.stop()
+			widgets.contagionPulse = nil
+		end
+	end
+
 	-- Ortak klinik seviyesi. `state.clinic` sunucudan geliyor ve HERKESTE
 	-- ayni: online oyuncularin en yuksek klinik XP'si. Istemci burada
 	-- hicbir sey HESAPLAMIYOR, yalnizca ciziyor.
 	if state.clinic ~= nil then
 		local info = state.clinic
-		widgets.clinicLevel.Text = (&quot;%d / %d&quot;):format(info.level, info.maxLevel)
-		widgets.clinicName.Text = Loc.get(info.nameKey)
-		Theme.setBar(widgets.clinicBar, info.progress, firstDraw)
-		widgets.clinicHint.Text = if info.level &gt;= info.maxLevel
+		local tail = if info.level &gt;= info.maxLevel
 			then Loc.get(&quot;hud.clinicMax&quot;)
 			else Loc.get(&quot;hud.clinicNext&quot;, math.floor(info.progress * 100 + 0.5))
+		widgets.clinicLabel.Text = Loc.get(
+			&quot;hud.clinicLine&quot;,
+			info.level,
+			info.maxLevel,
+			Loc.get(info.nameKey),
+			tail
+		)
+		Theme.setBar(widgets.clinicBar, info.progress, firstDraw)
 
 		-- Seviye ATLAYINCA kart bir kez parliyor. Duyuru bildirimi
 		-- kayabilir; kartin kendisi kacmaz.
 		if widgets.clinicShown &gt;= 0 and info.level &gt; widgets.clinicShown then
-			Theme.flash(widgets.clinic, Theme.color.accentGlow)
+			Theme.flash(widgets.xpCard, Theme.color.accentGlow)
 		end
 		widgets.clinicShown = info.level
 	end
@@ -21568,6 +22434,7 @@ function LobbyPanel.create(parent: ScreenGui)
 
 	local panel = Theme.card({
 		name = &quot;Lobi&quot;,
+		-- ui:ustluk — HUD'un uzerine acilan kipli panel.
 		size = UDim2.fromOffset(760, 360),
 		position = UDim2.new(0.5, 0, 1, -32),
 		anchor = Vector2.new(0.5, 1),
@@ -21840,7 +22707,7 @@ function Notify.create(parent: ScreenGui)
 	local frame = Theme.frame({
 		name = &quot;Bildirimler&quot;,
 		size = UDim2.new(0, 340, 0, 260),
-		position = UDim2.new(0, Theme.space.lg, 0, 186),
+		position = UDim2.new(0, Theme.space.lg, 0, 210),
 		anchor = Vector2.new(0, 0),
 		transparency = 1,
 		radius = 0,
@@ -22185,6 +23052,7 @@ end
 function ProgressPanel.create(parent: ScreenGui)
 	local panel = Theme.card({
 		name = &quot;Ilerleme&quot;,
+		-- ui:ustluk — HUD'un uzerine acilan kipli panel.
 		size = UDim2.fromOffset(520, 452),
 		position = UDim2.new(0.5, 0, 0.5, 0),
 		anchor = Vector2.new(0.5, 0.5),
@@ -22467,6 +23335,7 @@ function SettingsPanel.create(parent: ScreenGui)
 
 	local panel = Theme.card({
 		name = &quot;Ayarlar&quot;,
+		-- ui:ustluk — HUD'un uzerine acilan kipli panel.
 		size = UDim2.fromOffset(470, 470),
 		position = UDim2.new(0.5, 0, 0.5, 0),
 		anchor = Vector2.new(0.5, 0.5),
@@ -22717,6 +23586,7 @@ end
 function ShopPanel.create(parent: ScreenGui)
 	local panel = Theme.card({
 		name = &quot;Magaza&quot;,
+		-- ui:ustluk — HUD'un uzerine acilan kipli panel.
 		size = UDim2.fromOffset(600, 470),
 		position = UDim2.new(0.5, 0, 0.5, 0),
 		anchor = Vector2.new(0.5, 0.5),
@@ -24627,7 +25497,7 @@ function ToolBar.create(parent: ScreenGui)
 	local frame = Theme.card({
 		name = &quot;AletCubugu&quot;,
 		size = UDim2.fromOffset(760, 84),
-		position = UDim2.new(0.5, 0, 1, -Theme.space.lg),
+		position = UDim2.new(0.5, -(330 + Theme.space.lg) / 2, 1, -Theme.space.lg),
 		anchor = Vector2.new(0.5, 1),
 		parent = parent,
 	})
@@ -25266,7 +26136,8 @@ local CELL = UDim2.fromOffset(96, 64)
 function TreatmentPanel.create(parent: ScreenGui)
 	local panel = Theme.card({
 		name = &quot;TedaviPaneli&quot;,
-		size = UDim2.fromOffset(330, 276),
+		-- ui:grup=sagAlt — teshis paneliyle AYNI yuva.
+		size = UDim2.fromOffset(330, 258),
 		position = UDim2.new(1, -Theme.space.lg, 0, 496),
 		anchor = Vector2.new(1, 0),
 		parent = parent,

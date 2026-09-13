@@ -239,7 +239,7 @@ function Chart.create(parent: ScreenGui)
 		satisfaction = satisfaction,
 		list = list,
 		discharge = discharge,
-		symptomCount = -1,
+		listKey = "",
 	}
 end
 
@@ -271,7 +271,7 @@ function Chart.update(chart: any)
 		end
 		widgets.list:ClearAllChildren()
 		Theme.list(widgets.list, Theme.space.xs)
-		widgets.symptomCount = -1
+		widgets.listKey = ""
 		widgets.discharge.Visible = false
 		widgets.banner.Visible = false
 		if emergencyPulse ~= nil then
@@ -292,6 +292,22 @@ function Chart.update(chart: any)
 			then Loc.get("chart.diagnosed", Loc.get(chart.conditionNameKey))
 			else Loc.get("chart.undiagnosed")
 		widgets.condition.TextColor3 = if chart.diagnosed then Theme.color.good else Theme.color.warn
+
+		-- BULASICILIK teshisten sonra karta yaziliyor. Karantinaya
+		-- alinmissa yesil, alinmamissa kirmizi: "yapilacak is var mi"
+		-- sorusunun cevabi tek bakista gorunsun.
+		if chart.contagious == true then
+			if chart.quarantined == true then
+				widgets.condition.Text = widgets.condition.Text
+					.. " \u{00B7} " .. Loc.get("chart.contagious")
+					.. " (" .. Loc.get("chart.quarantined") .. ")"
+				widgets.condition.TextColor3 = Theme.color.good
+			else
+				widgets.condition.Text = widgets.condition.Text
+					.. " \u{00B7} " .. Loc.get("chart.contagious")
+				widgets.condition.TextColor3 = Theme.color.bad
+			end
+		end
 	end
 
 	widgets.quote.Visible = chart.hintKey ~= nil
@@ -329,12 +345,47 @@ function Chart.update(chart: any)
 	-- Belirti listesi her karede yeniden kurulmuyor: sayi degismediyse
 	-- dokunulmuyor. (Aksi halde kaydirma cubugu her guncellemede basa
 	-- donerdi ve liste titrerdi.)
-	if widgets.symptomCount ~= #chart.revealed then
-		widgets.symptomCount = #chart.revealed
+	local samples = chart.samples or {}
+	local listKey = ("%d/%d/%d"):format(#chart.revealed, #samples, chart.analyzed or 0)
+	if widgets.listKey ~= listKey then
+		widgets.listKey = listKey
 		widgets.list:ClearAllChildren()
 		Theme.list(widgets.list, Theme.space.xs)
 
-		if #chart.revealed == 0 then
+		-- Bekleyen numuneler EN USTTE: yapilacak is, yapilmis isin
+		-- ustunde durmali.
+		for index, sample in samples do
+			local row = Theme.frame({
+				name = "Numune",
+				size = UDim2.new(1, -Theme.space.sm, 0, 24),
+				color = Theme.color.panelLight,
+				transparency = 0.2,
+				radius = Theme.radius.sm,
+				parent = widgets.list,
+				layoutOrder = -100 + index,
+				zIndex = 2,
+			})
+			Theme.icon({
+				name = "bloodtest",
+				size = 10,
+				color = Theme.color.warn,
+				position = UDim2.new(0, Theme.space.sm, 0.5, -5),
+				parent = row,
+				zIndex = 3,
+			})
+			Theme.label({
+				text = Loc.get("chart.samplePending", Loc.get(sample.nameKey)),
+				size = UDim2.new(1, -26, 1, 0),
+				position = UDim2.fromOffset(22, 0),
+				textSize = Theme.size.micro,
+				bold = true,
+				color = Theme.color.warn,
+				parent = row,
+				zIndex = 3,
+			})
+		end
+
+		if #chart.revealed == 0 and #samples == 0 then
 			Theme.label({
 				text = Loc.get("chart.noSymptoms"),
 				size = UDim2.new(1, -Theme.space.sm, 0, 20),

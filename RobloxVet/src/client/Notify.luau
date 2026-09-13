@@ -26,7 +26,7 @@ function Notify.create(parent: ScreenGui)
 	local frame = Theme.frame({
 		name = "Bildirimler",
 		size = UDim2.new(0, 340, 0, 260),
-		position = UDim2.new(0, Theme.space.lg, 0, 186),
+		position = UDim2.new(0, Theme.space.lg, 0, 210),
 		anchor = Vector2.new(0, 0),
 		transparency = 1,
 		radius = 0,

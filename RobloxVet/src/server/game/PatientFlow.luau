@@ -76,6 +76,15 @@ export type Patient = {
 	arrivedAt: number,
 	busyUntil: number,
 	queueSlot: number?,
+	-- Laboratuvar: alinmis ama HENUZ INCELENMEMIS numuneler ve
+	-- incelenmis olanlar. Numunenin kendisi bir nesne degil; hastanin
+	-- dosyasinda duran bir kayit - oyuncu numuneyi elinde tasimiyor,
+	-- laboratuvara gidip hastanin numunesini inceliyor.
+	samples: { [string]: boolean },
+	analyzed: { [string]: boolean },
+	-- Numunesi laboratuvarda incelenen hasta taburcu edilirken kucuk
+	-- bir ucret zammi aliyor: yuruyusun karsiligi.
+	labBonus: boolean,
 }
 
 local clinic: Clinic.Built? = nil
@@ -85,6 +94,10 @@ local patients: { [number]: Patient } = {}
 local activeOf: { [Player]: number } = {}
 local occupiedStation: { [string]: number } = {}
 local usedQueueSlots: { [number]: boolean } = {}
+-- Teshisi konmus, bulasici ve HALA karantinaya alinmamis bir hasta var
+-- mi? Yalnizca teshisten sonra true oluyor; teshis oncesi bir uyari,
+-- hastalik listesini daraltan bir bilgi sizdirirdi.
+local contagionAlert = false
 
 local nextPatientId = 1
 local started = false
@@ -179,6 +192,36 @@ local function nearStation(player: Player, stationId: string): boolean
 	local flat = Vector3.new(root.Position.X, 0, root.Position.Z)
 	local target = Vector3.new(station.cframe.Position.X, 0, station.cframe.Position.Z)
 	return (flat - target).Magnitude <= STATION_RADIUS
+end
+
+--- Oyuncu bu ADLI NOKTAYA yakin mi? Istasyondan farki: burada hasta
+--- degil OYUNCU duruyor (laboratuvar tezgahi).
+local function nearSpot(player: Player, name: string): boolean
+	if clinic == nil then
+		return false
+	end
+	local spot = clinic.spots[name]
+	if spot == nil then
+		return false
+	end
+	local character = player.Character
+	if character == nil then
+		return false
+	end
+	local root = character:FindFirstChild("HumanoidRootPart")
+	if root == nil or not root:IsA("BasePart") then
+		return false
+	end
+	local flat = Vector3.new(root.Position.X, 0, root.Position.Z)
+	local target = Vector3.new(spot.Position.X, 0, spot.Position.Z)
+	return (flat - target).Magnitude <= STATION_RADIUS
+end
+
+--- Bu istasyon bir karantina bolmesi mi? Bolmeler `station:quarantine1`
+--- diye etiketli; ad ONEKTEN okunuyor ki yeni bir bolme eklemek kod
+--- degisikligi gerektirmesin.
+local function isQuarantineStation(stationId: string?): boolean
+	return stationId ~= nil and string.sub(stationId, 1, 10) == "quarantine"
 end
 
 --- Oyuncuya en yakin istasyon. Hicbiri menzilde degilse nil.
@@ -298,6 +341,23 @@ local function chartSnapshot(patient: Patient?, viewer: Player): any
 		table.insert(done, treatmentId)
 	end
 
+	local samples = {}
+	local analyzedCount = 0
+	for toolId in patient.samples do
+		if patient.analyzed[toolId] == true then
+			analyzedCount += 1
+		else
+			local tool = Upgrades.tool(toolId)
+			table.insert(samples, {
+				id = toolId,
+				nameKey = if tool ~= nil then tool.nameKey else toolId,
+			})
+		end
+	end
+	table.sort(samples, function(a, b)
+		return a.id < b.id
+	end)
+
 	local condition = if patient.diagnosed then Diagnosis.condition(patient.conditionId) else nil
 	-- Sahibin sikayeti HER ZAMAN gidiyor: NPC zaten yuksek sesle
 	-- soyluyor ve bilerek teshisi ele vermeyen bir cumle. Hastaligin
@@ -320,6 +380,17 @@ local function chartSnapshot(patient: Patient?, viewer: Player): any
 		required = required,
 		done = done,
 		stationId = patient.stationId,
+		-- Bekleyen numuneler: alindi, HENUZ incelenmedi. Numunenin
+		-- SONUCU burada yok - yalnizca "laboratuvara git" bilgisi.
+		samples = samples,
+		analyzed = analyzedCount,
+		-- Hastanin karantinada olup olmadigi istemcinin zaten gordugu
+		-- bir sey (hayvan gozunun onunde bolmede duruyor); kart bunu
+		-- yazili da soyluyor ki "neden yayilma durmadi" sorusu kalmasin.
+		quarantined = isQuarantineStation(patient.stationId),
+		-- Bulasicilik ANCAK dogru teshisten sonra gidiyor: once
+		-- gitseydi aday listesini 35'ten 6'ya indirirdi.
+		contagious = patient.diagnosed and condition ~= nil and condition.contagious == true,
 		complete = patient.diagnosed and Treatment.isComplete(patient.treatmentsDone, patient.conditionId),
 		dischargeHealth = economy.patient.dischargeHealth,
 		emergency = patient.emergency,
@@ -403,6 +474,9 @@ local function stateSnapshot(player: Player): any
 		-- XP'sinden cikiyor, yani herkeste AYNI deger gorunuyor. Kendi
 		-- seviyesi (`level`) kisisel, bu ise binanin.
 		clinic = ClinicLevel.snapshot(Players:GetPlayers()),
+		-- Bulasma uyarisi: teshisi konmus bulasici bir hasta hala
+		-- karantina disinda. Hangi hasta oldugunu SOYLEMIYOR.
+		contagion = contagionAlert,
 	}
 end
 
@@ -673,6 +747,9 @@ local function spawnPatient()
 		arrivedAt = os.clock(),
 		busyUntil = 0,
 		queueSlot = slot,
+		samples = {},
+		analyzed = {},
+		labBonus = false,
 	}
 	patients[id] = patient
 	usedQueueSlots[slot] = true
@@ -1040,7 +1117,31 @@ end
 --- Aletin bulduklarini aciyor ve istemciye bildiriyor. Mini-oyunlu
 --- aletlerde ancak mini-oyun KAZANILINCA cagriliyor; mini-oyunsuz
 --- aletlerde dogrudan.
-local function revealFindings(player: Player, patient: Patient, toolId: string)
+--- Bu alet numune mi aliyor? (data/tools.json -> sample)
+local function takesSample(toolId: string): boolean
+	local tool = Upgrades.tool(toolId)
+	return tool ~= nil and tool.sample == true
+end
+
+--- Aletin bulgulari. `fromLab` numune incelemesinden geliyorsa true:
+--- o zaman numune kuyruga alinmiyor, DOGRUDAN aciliyor.
+---
+--- Kan ve idrar tahlilinin masa basinda aninda sonuc vermesi zaten
+--- gercekci degildi; artik alet numuneyi aliyor, sonucu laboratuvar
+--- veriyor. Bulgunun KENDISI degismiyor - yalnizca nerede aciklandigi
+--- degisiyor, yani hicbir hastalik cozulemez hale gelmiyor.
+local function revealFindings(player: Player, patient: Patient, toolId: string, fromLab: boolean?)
+	if fromLab ~= true and takesSample(toolId) then
+		patient.toolsUsed[toolId] = true
+		patient.samples[toolId] = true
+		AnimalAnimator.react(patient.rig, "flinch")
+		Audio.play("tool" .. toolId:sub(1, 1):upper() .. toolId:sub(2), patient.rig.root)
+		local tool = Upgrades.tool(toolId)
+		notify(player, "info", "notify.sampleTaken", { if tool ~= nil then tool.nameKey else toolId })
+		pushChart(player)
+		return
+	end
+
 	local found = Diagnosis.revealWith(patient.revealed, patient.conditionId, toolId)
 	for _, symptomId in found do
 		patient.revealed[symptomId] = true
@@ -1129,6 +1230,60 @@ function PatientFlow.useTool(player: Player, toolId: string)
 	end
 
 	revealFindings(player, patient, toolId)
+end
+
+--- NUMUNE INCELEMESI
+---
+--- Oyuncu laboratuvar tezgahinin basinda "incele" diyor; bekleyen
+--- butun numuneler ayni anda aciliyor. Hasta muayene masasinda
+--- kalabiliyor - numuneyi tasiyan bir nesne yok, dosyada duran bir
+--- kayit var. Hangi numunenin bekledigini ve ne cikacagini SUNUCU
+--- biliyor; istemci yalnizca niyet yolluyor.
+function PatientFlow.analyzeSample(player: Player)
+	local entry = Profile.get(player)
+	if entry == nil then
+		return
+	end
+	local patient = patientOf(player)
+	if patient == nil then
+		notify(player, "warn", "notify.noPatient")
+		return
+	end
+	if not nearSpot(player, "lab") then
+		notify(player, "warn", "notify.notAtLab")
+		return
+	end
+	if os.clock() < patient.busyUntil then
+		return
+	end
+
+	local pending = {}
+	for toolId in patient.samples do
+		if patient.analyzed[toolId] ~= true then
+			table.insert(pending, toolId)
+		end
+	end
+	if #pending == 0 then
+		notify(player, "info", "notify.noSample")
+		return
+	end
+	-- Sira her incelemede ayni olsun: alet kimligine gore siralaniyor.
+	table.sort(pending)
+
+	patient.busyUntil = os.clock() + economy.lab.analysisSeconds
+	local data = entry.data
+	local previousLevel = data.level
+	for _, toolId in pending do
+		patient.analyzed[toolId] = true
+		revealFindings(player, patient, toolId, true)
+	end
+	patient.labBonus = true
+	data.xp += economy.lab.xpBonus
+	awardClinicXp(data, economy.lab.xpBonus)
+	applyLevel(player, data, previousLevel)
+	Profile.markDirty(player)
+	notify(player, "good", "notify.sampleAnalyzed", { #pending })
+	pushState(player)
 end
 
 --- Ultrason probunun konumu: sunucu yalnizca "ne kadar yakinsin"
@@ -1602,7 +1757,11 @@ function PatientFlow.discharge(player: Player)
 		feeMultiplier = condition.feeMultiplier,
 		reputation = data.reputation,
 		health = patient.health,
-		feeBonus = effects.feeBonus * clinicBonus.feeBonus,
+		-- Laboratuvarda incelenen numune kucuk bir zam getiriyor:
+		-- kuzey kanadina yurumenin karsiligi.
+		feeBonus = effects.feeBonus
+			* clinicBonus.feeBonus
+			* (if patient.labBonus then economy.lab.feeBonus else 1),
 	})
 
 	-- Seviye, XP eklenmeden ONCE okunmali: sonra okunursa atlama hic
@@ -1714,6 +1873,94 @@ function PatientFlow.playerLeft(player: Player)
 end
 
 -- ── Dongu ─────────────────────────────────────────────────────────────
+
+--- BULASMA
+---
+--- Bulasici bir hasta karantinaya alinmadan klinikte durdugu surece
+--- BEKLEYEN butun hayvanlarin sagligi ve memnuniyeti geriliyor,
+--- klinigin itibari dusuyor.
+---
+--- Neden hasta kendisi "bulasici" diye isaretlenmiyor da bekleyenler
+--- eziliyor? Cunku bir hastanin KIMLIGI istemciye teshisten once
+--- gitmiyor ve gitmemeli. "Su hasta bulasici" demek, hastalik
+--- listesini 35'ten 6'ya indirmek olurdu. Bunun yerine bulasma
+--- OLCULEBILIR bir etki olarak gorunuyor: bekleyenlerin sagligi
+--- dusuyor, hayvanlar oksuruyor. Oyuncu sebebini muayene ederek
+--- buluyor - yani oyunun kendisini oynayarak.
+---
+--- Karantina bolmesi bir ISTASYON: hasta oraya yatirilinca yayilma
+--- duruyor ve tedavinin tamami orada yapilabiliyor. Yani karantina
+--- "hastayi bir kenara koy" cezasi degil, akisin icinde bir yer.
+local function tickContagion()
+	local config = economy.contagion
+	local sources = {}
+	local waiting = {}
+	for _, patient in patients do
+		if patient.state == "leaving" or patient.state == "ward" then
+			continue
+		end
+		if patient.state == "waiting" or patient.state == "arriving" then
+			table.insert(waiting, patient)
+		end
+		local condition = Diagnosis.condition(patient.conditionId)
+		if condition ~= nil and condition.contagious == true and not isQuarantineStation(patient.stationId) then
+			table.insert(sources, patient)
+		end
+	end
+	if #sources == 0 then
+		return false
+	end
+
+	-- Kaynagin kendisi kurbanlardan sayilmiyor: hayvan kendine
+	-- bulastirmaz.
+	local hurt = 0
+	for _, victim in waiting do
+		local isSource = false
+		for _, source in sources do
+			if source.id == victim.id then
+				isSource = true
+				break
+			end
+		end
+		if isSource then
+			continue
+		end
+		victim.health = math.clamp(victim.health + config.healthDrain, 0, 100)
+		victim.satisfaction = math.clamp(victim.satisfaction + config.satisfactionDrain, 0, 100)
+		if victim.owner ~= nil then
+			OwnerFactory.updateSatisfaction(victim.owner, victim.satisfaction)
+		end
+		updateNameplate(victim)
+		hurt += 1
+	end
+
+	-- Oksuruk: bulasmanin GORUNUR tarafi. Ekranda bir yazi cikmiyor;
+	-- hayvanlar oksuruyor ve oyuncu bunu fark ediyor.
+	for _, source in sources do
+		AnimalAnimator.react(source.rig, "shake")
+	end
+	if hurt > 0 and #waiting > 0 then
+		AnimalAnimator.react(waiting[math.random(#waiting)].rig, "shake")
+		for _, player in Players:GetPlayers() do
+			local entry = Profile.get(player)
+			if entry ~= nil then
+				entry.data.reputation = Economy.clampReputation(
+					entry.data.reputation + config.reputationDrain * Staff.effectsOf(entry.data).penaltyScale
+				)
+				Profile.markDirty(player)
+			end
+		end
+	end
+
+	-- Uyari ancak TESHIS KONMUSSA veriliyor: o noktada hastaligin
+	-- bulasici oldugunu oyuncu zaten biliyor, yani sizan bir bilgi yok.
+	for _, source in sources do
+		if source.diagnosed then
+			return true
+		end
+	end
+	return false
+end
 
 local function tickVitals(dt: number)
 	local config = economy.patient
@@ -1896,10 +2143,27 @@ function PatientFlow.start(built: Clinic.Built)
 		-- Vitals hiziyla (4/sn) yayin yapmak bosuna paket olurdu.
 		local assistTick = 0
 		local assistWasActive = false
+		-- Bulasma kendi hizinda: vitals 4/sn donuyor, bulasmanin o
+		-- sikligta islemesi sayilari anlamsiz kilardi.
+		local contagionTick = 0
+		local contagionEvery = math.max(1, math.floor(economy.contagion.tickSeconds / VITALS_TICK + 0.5))
 		while true do
 			task.wait(VITALS_TICK)
 			tickVitals(VITALS_TICK)
 			tickWard()
+
+			contagionTick += 1
+			if contagionTick >= contagionEvery then
+				contagionTick = 0
+				local alert = tickContagion()
+				if alert ~= contagionAlert then
+					contagionAlert = alert
+					if alert then
+						notifyAll("bad", "notify.contagionAlert")
+					end
+				end
+				pushStateAll()
+			end
 
 			assistTick += 1
 			if assistTick >= 4 then

@@ -38,6 +38,11 @@ export type Built = {
 	ownerPoints: { CFrame },
 	-- Kogus yataklari: yatan hastanin duracagi yerler (Ward.luau).
 	bedPoints: { CFrame },
+	-- Adli noktalar: OYUNCUNUN durdugu yerler (hastanin degil). Su an
+	-- yalnizca laboratuvar tezgahi. Istasyon olarak tanimlanamazdi:
+	-- `callNext` butun istasyonlari tariyor ve laboratuvara hasta
+	-- yatirilmasi anlamsiz olurdu.
+	spots: { [string]: CFrame },
 	entranceOutside: Vector3,
 	entranceInside: Vector3,
 	roomOf: { [string]: { min: { number }, max: { number } } },
@@ -369,6 +374,7 @@ function Clinic.build(parent: Instance): Built
 	local queuePoints: { CFrame } = {}
 	local ownerPoints: { CFrame } = {}
 	local bedPoints: { CFrame } = {}
+	local spots: { [string]: CFrame } = {}
 	local roomOf = {}
 
 	for _, room in plan.rooms do
@@ -454,6 +460,10 @@ function Clinic.build(parent: Instance): Built
 			table.insert(bedPoints, CFrame.new(point[1], plan.floorY, point[2]))
 		end
 
+		for name, point in room.spots or {} do
+			spots[name] = CFrame.new(point[1], plan.floorY, point[2])
+		end
+
 		for _, spec in room.props do
 			local origin = CFrame.new(spec.at[1], plan.floorY, spec.at[2])
 				* CFrame.Angles(0, math.rad(spec.rot or 0), 0)
@@ -503,6 +513,7 @@ function Clinic.build(parent: Instance): Built
 		queuePoints = queuePoints,
 		ownerPoints = ownerPoints,
 		bedPoints = bedPoints,
+		spots = spots,
 		entranceOutside = Vector3.new(plan.entrance.outside[1], plan.floorY, plan.entrance.outside[2]),
 		entranceInside = Vector3.new(plan.entrance.inside[1], plan.floorY, plan.entrance.inside[2]),
 		roomOf = roomOf,

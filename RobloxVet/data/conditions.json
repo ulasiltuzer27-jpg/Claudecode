@@ -22,7 +22,8 @@
       "xp": 30,
       "unlockLevel": 2,
       "wrongPenalty": 35,
-      "severity": 1
+      "severity": 1,
+      "contagious": true
     },
     {
       "id": "earMites",
@@ -46,7 +47,8 @@
       "xp": 28,
       "unlockLevel": 3,
       "wrongPenalty": 30,
-      "severity": 1
+      "severity": 1,
+      "contagious": true
     },
     {
       "id": "fleas",
@@ -71,7 +73,8 @@
       "xp": 22,
       "unlockLevel": 1,
       "wrongPenalty": 25,
-      "severity": 1
+      "severity": 1,
+      "contagious": true
     },
     {
       "id": "dehydration",
@@ -178,7 +181,8 @@
       "xp": 44,
       "unlockLevel": 5,
       "wrongPenalty": 48,
-      "severity": 2
+      "severity": 2,
+      "contagious": true
     },
     {
       "id": "featherPlucking",
@@ -252,7 +256,8 @@
       "xp": 46,
       "unlockLevel": 5,
       "wrongPenalty": 50,
-      "severity": 2
+      "severity": 2,
+      "contagious": true
     },
     {
       "id": "brokenBone",
@@ -447,7 +452,8 @@
       "xp": 72,
       "unlockLevel": 4,
       "wrongPenalty": 68,
-      "severity": 3
+      "severity": 3,
+      "contagious": true
     },
     {
       "id": "kidneyTrouble",
@@ -894,5 +900,6 @@
     }
   ],
   "_rutin_notu": "kind == 'routine' olan vakalar RUTIN KONTROL: belirti yok, teshis yok. Hasta masaya konunca zaten teshisli geliyor ve tek adimlik islem uygulaniyor. Hizli para, az XP. Kuyruga cesit katmak icin var: 31 hastaligin hepsi bulmaca olunca oyun tek ritimli kaliyordu. Orani data/economy.json -> routineChance.",
-  "_ameliyat_notu": "`surgeryKind` ameliyat gerektiren hastaliklarda hangi ameliyat mini-oyununun acilacagini soyluyor (data/treatments.json -> surgeryTypes). Belirtilmezse 'rhythm'."
+  "_ameliyat_notu": "`surgeryKind` ameliyat gerektiren hastaliklarda hangi ameliyat mini-oyununun acilacagini soyluyor (data/treatments.json -> surgeryTypes). Belirtilmezse 'rhythm'.",
+  "_bulasici_notu": "contagious = bu hastalik BEKLEME SIRASINDA digerlerine gecebiliyor. Bulasici hasta kuyrukta durdugu surece butun bekleyenlerin sagligi ve memnuniyeti dusuyor, klinigin itibari geriliyor. Durdurmanin tek yolu hastayi KARANTINA bolmesine almak - orada tedavinin tamami yapilabiliyor. Sayilar data/economy.json -> contagion icinde."
 }

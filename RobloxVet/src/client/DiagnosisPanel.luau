@@ -34,6 +34,8 @@ local lastSignature = ""
 function DiagnosisPanel.create(parent: ScreenGui)
 	local panel = Theme.card({
 		name = "TeshisPaneli",
+		-- ui:grup=sagAlt — tedavi paneliyle AYNI yuva: teshis konmadan
+		-- once bu, konduktan sonra oteki goruluyor.
 		size = UDim2.fromOffset(330, 258),
 		position = UDim2.new(1, -Theme.space.lg, 0, 496),
 		anchor = Vector2.new(1, 0),

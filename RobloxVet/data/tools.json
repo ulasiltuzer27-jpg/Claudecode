@@ -198,7 +198,8 @@
         ],
         "motion": "press"
       },
-      "minigame": "range"
+      "minigame": "range",
+      "sample": true
     },
     {
       "id": "urinalysis",
@@ -231,7 +232,8 @@
         ],
         "motion": "twist"
       },
-      "minigame": ""
+      "minigame": "",
+      "sample": true
     },
     {
       "id": "ultrasound",
@@ -284,5 +286,6 @@
       "seconds": 14.0,
       "radius": 0.12
     }
-  }
+  },
+  "_numune_notu": "sample = bu alet masada belirtiyi ACMIYOR, NUMUNE aliyor. Sonuc ancak numune laboratuvara goturulup incelenince cikiyor. Boylece kuzey kanadi bir dekor olmaktan cikip akisin parcasi oluyor; kan ve idrar tahlilinin aninda sonuc vermesi zaten gercekci degildi."
 }
