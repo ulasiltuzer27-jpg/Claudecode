@@ -46,6 +46,7 @@ export type Session = {
 	rangeHigh: number,
 	startTime: number,
 	deadline: number,
+	windowScale: number,
 	done: boolean,
 	onFinish: (ok: boolean, reasonKey: string) -> (),
 }
@@ -105,17 +106,22 @@ end
 --- Mini-oyunu baslatir; istemciye yollanacak tabloyu doner.
 --- `onFinish(ok, reasonKey)` basari, basarisizlik ya da sure dolunca
 --- TAM BIR KEZ cagriliyor.
+--- `windowScale` pencereleri genisletiyor (teknisyen personeli).
+--- 1 = degisiklik yok. Hedefin KENDISI degismiyor, yalnizca kabul
+--- yaricapi ve sure - yani mini-oyun kolaylasiyor ama basitlesmiyor.
 function ToolGame.begin(
 	player: Player,
 	patientId: number,
 	toolId: string,
 	kind: string,
+	windowScale: number,
 	onFinish: (ok: boolean, reasonKey: string) -> ()
 ): any?
 	local settings = config[kind]
 	if settings == nil then
 		return nil
 	end
+	local scale = math.clamp(if windowScale > 0 then windowScale else 1, 1, 2)
 	ToolGame.cancel(player)
 
 	local now = Workspace:GetServerTimeNow()
@@ -131,13 +137,14 @@ function ToolGame.begin(
 		rangeLow = 0,
 		rangeHigh = 0,
 		startTime = now + 0.6, -- istemcinin paneli kurmasi icin pay
-		deadline = now + 0.6 + settings.seconds,
+		deadline = now + 0.6 + settings.seconds * scale,
+		windowScale = scale,
 		done = false,
 		onFinish = onFinish,
 	}
 
 	if kind == "range" then
-		local width = config.range.width
+		local width = math.min(config.range.width * scale, 0.6)
 		session.rangeLow = 0.08 + math.random() * (0.84 - width)
 		session.rangeHigh = session.rangeLow + width
 	end
@@ -160,7 +167,7 @@ function ToolGame.begin(
 	local payload: any = {
 		toolId = toolId,
 		kind = kind,
-		seconds = settings.seconds,
+		seconds = settings.seconds * scale,
 		startTime = session.startTime,
 	}
 	if kind == "spot" then
@@ -169,7 +176,7 @@ function ToolGame.begin(
 		-- goruntu cikmasin.
 		payload.targetX = session.targetX
 		payload.targetY = session.targetY
-		payload.radius = settings.radius
+		payload.radius = settings.radius * scale
 		local decoys = {}
 		for _ = 1, settings.decoys do
 			table.insert(decoys, { math.random(), math.random() })
@@ -180,7 +187,7 @@ function ToolGame.begin(
 		payload.high = session.rangeHigh
 		payload.sweepSeconds = config.range.sweepSeconds
 	elseif kind == "probe" then
-		payload.radius = settings.radius
+		payload.radius = settings.radius * scale
 	end
 	return payload
 end
@@ -235,7 +242,7 @@ function ToolGame.submit(player: Player, x: number, y: number): boolean
 
 	local dx = math.clamp(x, 0, 1) - session.targetX
 	local dy = math.clamp(y, 0, 1) - session.targetY
-	local ok = math.sqrt(dx * dx + dy * dy) <= settings.radius
+	local ok = math.sqrt(dx * dx + dy * dy) <= settings.radius * session.windowScale
 	finish(session, ok, if ok then "toolgame.success" else "toolgame.failed")
 	return ok
 end

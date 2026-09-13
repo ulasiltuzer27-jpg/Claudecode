@@ -32,6 +32,7 @@ local Doors = require(script.Parent.world.Doors)
 local Effects = require(script.Parent.world.Effects)
 local OwnerFactory = require(script.Parent.world.OwnerFactory)
 local Props = require(script.Parent.world.Props)
+local StaffFactory = require(script.Parent.world.StaffFactory)
 
 local Achievements = require(script.Parent.game.Achievements)
 local Diagnosis = require(script.Parent.game.Diagnosis)
@@ -39,6 +40,7 @@ local Matchmaking = require(script.Parent.game.Matchmaking)
 local Economy = require(script.Parent.game.Economy)
 local Profile = require(script.Parent.game.Profile)
 local Tasks = require(script.Parent.game.Tasks)
+local Staff = require(script.Parent.game.Staff)
 local Ward = require(script.Parent.game.Ward)
 local ToolGame = require(script.Parent.game.ToolGame)
 local Treatment = require(script.Parent.game.Treatment)
@@ -47,6 +49,7 @@ local Upgrades = require(script.Parent.game.Upgrades)
 local clinicPlan = require(Data.clinic)
 local dayCycleData = require(Data.daycycle)
 local decorData = require(Data.decor)
+local staffData = require(Data.staff)
 local toolData = require(Data.tools)
 local lobbyPlan = require(Data.lobby)
 local propData = require(Data.props)
@@ -656,6 +659,21 @@ do
 		end
 	end
 	scratch:Destroy()
+
+	-- Personel: veri ile kodun tanidigi kume ayni mi, metinler var mi.
+	for _, member in staffData.staff do
+		check(("personel '%s' Staff tarafindan biliniyor"):format(member.id), Staff.known(member.id))
+		check(("personel '%s' adi cevrili"):format(member.id), Loc.has(member.nameKey))
+		check(("personel '%s' aciklamasi cevrili"):format(member.id), Loc.has(member.descKey))
+		for key in member.effect do
+			check(
+				("personel '%s' bilinen etki kullaniyor: %s"):format(member.id, key),
+				Staff.knownEffect(key)
+			)
+		end
+	end
+	check("devriye rotasi tanimli", #Staff.patrol() >= 3)
+	check("klinik bastan personelsiz", StaffFactory.count() == 0)
 
 	-- Kogus: yataklar kurulmus mu ve padoklarin ici hastayi aliyor mu?
 	-- Eski kafeslerin ici (4,8 stud) en buyuk hastanin ayak izinden

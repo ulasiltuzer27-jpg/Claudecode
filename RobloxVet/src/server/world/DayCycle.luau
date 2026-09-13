@@ -42,6 +42,10 @@ local streetLamps: { PointLight } = {}
 local baseBrightness: { [PointLight]: number } = {}
 local lampHeads: { [PointLight]: BasePart } = {}
 local lampHeadColor: { [PointLight]: Color3 } = {}
+-- Gun sonu dinleyicileri. Personel maasi bunun uzerinden kesiliyor:
+-- "gun" tanimini iki yerde tutmamak icin tek kaynak burasi.
+local dayListeners: { (day: number) -> () } = {}
+local dayCount = 0
 
 --- Saatin 0..24 araligina sarmasi.
 local function wrap(hour: number): number
@@ -103,6 +107,17 @@ local function applyBlend(blend: number)
 			head.Color = color:Lerp(Color3.fromRGB(52, 56, 66), 1 - blend)
 		end
 	end
+end
+
+--- Gun sonunda cagrilacak bir dinleyici ekler. Gun, saatin 24'u
+--- gecip bastan basmasiyla biter.
+function DayCycle.onDayEnded(listener: (day: number) -> ())
+	table.insert(dayListeners, listener)
+end
+
+--- Gecen gun sayisi (SelfTest ve hata ayiklama icin).
+function DayCycle.dayNumber(): number
+	return dayCount
 end
 
 --- Kayitli sokak lambasi sayisi (SelfTest olcuyor: sifirsa ad
@@ -185,7 +200,17 @@ function DayCycle.start()
 	RunService.Heartbeat:Connect(function(dt: number)
 		-- dt tavanlaniyor: Studio duraklatilip devam ettirildiginde tek
 		-- karede saatlerce zaman gecmesin.
-		clock = wrap(clock + math.min(dt, 0.25) * hoursPerSecond)
+		local advanced = clock + math.min(dt, 0.25) * hoursPerSecond
+		if advanced >= 24 then
+			-- Gun dondu: dinleyiciler ayri bir is parcaciginda cagriliyor
+			-- ki biri hata verirse dongu durmasin.
+			dayCount += 1
+			local day = dayCount
+			for _, listener in dayListeners do
+				task.spawn(listener, day)
+			end
+		end
+		clock = wrap(advanced)
 		accumulator += dt
 		if accumulator < 0.25 then
 			return

@@ -66,7 +66,7 @@ KEY_NAMESPACES = (
     # DENETLENMIYOR demek: eksik anahtar ekranda "[toolgame.spot]" diye
     # gorunur ve ancak Studio'da fark edilirdi.
     "toolgame", "decor", "set", "lobby", "stat", "progress", "hint", "ward",
-    "ach", "task", "fps", "board",
+    "ach", "task", "fps", "board", "staff",
 )
 KEY_RE = re.compile(r'"((?:%s)\.[A-Za-z0-9_.]+)"' % "|".join(KEY_NAMESPACES))
 

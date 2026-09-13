@@ -1091,6 +1091,7 @@ Net.Schema = {
 	BuyTool = { direction = &quot;toServer&quot;, args = { &quot;string&quot; } },
 	BuyUpgrade = { direction = &quot;toServer&quot;, args = { &quot;string&quot; } },
 	BuyDecor = { direction = &quot;toServer&quot;, args = { &quot;string&quot; } },
+	HireStaff = { direction = &quot;toServer&quot;, args = { &quot;string&quot; } },
 	SaveSettings = { direction = &quot;toServer&quot;, args = { &quot;table&quot; } },
 	RequestProgress = { direction = &quot;toServer&quot;, args = {} },
 	JoinQueue = { direction = &quot;toServer&quot;, args = { &quot;string&quot; } },
@@ -1113,6 +1114,7 @@ Net.RateLimit = {
 	BuyTool = 4,
 	BuyUpgrade = 4,
 	BuyDecor = 4,
+	HireStaff = 4,
 	-- Ayar kaydetme seyrek olmali: her kaydirici hareketinde DataStore'a
 	-- yazmak hem gereksiz hem de kota yakar. Istemci de kendi tarafinda
 	-- bekletiyor (SettingsPanel).
@@ -5776,6 +5778,21 @@ return {
 		[&quot;shop.decor&quot;] = &quot;DEKORASYON&quot;,
 		[&quot;shop.price&quot;] = &quot;{1} TL&quot;,
 		[&quot;shop.emptyTab&quot;] = &quot;Bu sekmede henüz bir şey yok.&quot;,
+		[&quot;shop.staff&quot;] = &quot;PERSONEL&quot;,
+		[&quot;staff.wage&quot;] = &quot;Günlük {1} TL maaş&quot;,
+		[&quot;staff.hired&quot;] = &quot;{1} işe alındı.&quot;,
+		[&quot;staff.alreadyHired&quot;] = &quot;O kişi zaten ekibinde.&quot;,
+		[&quot;staff.keepReserve&quot;] = &quot;Kasada en az {1} TL kalmalı — ilk günün maaşı da lazım.&quot;,
+		[&quot;staff.wagesPaid&quot;] = &quot;{2}. günün maaşları ödendi: {1} TL.&quot;,
+		[&quot;staff.quit&quot;] = &quot;{1} maaşını alamadığı için işten ayrıldı.&quot;,
+		[&quot;staff.janitor&quot;] = &quot;Temizlik Görevlisi&quot;,
+		[&quot;staff.janitor.desc&quot;] = &quot;Klinik derli toplu: hatalarda itibar kaybı %30 azalır.&quot;,
+		[&quot;staff.receptionist&quot;] = &quot;Resepsiyonist&quot;,
+		[&quot;staff.receptionist.desc&quot;] = &quot;Kayıtları o alıyor: bekleme odasına 1 hasta daha sığar.&quot;,
+		[&quot;staff.nurse&quot;] = &quot;Veteriner Hemşiresi&quot;,
+		[&quot;staff.nurse.desc&quot;] = &quot;Bütün kliniği sakinleştirir: hayvanların stresi daha hızlı düşer.&quot;,
+		[&quot;staff.technician&quot;] = &quot;Laboratuvar Teknisyeni&quot;,
+		[&quot;staff.technician.desc&quot;] = &quot;Alet mini-oyunlarında pencereler %35 genişler.&quot;,
 		[&quot;decor.themeClassic&quot;] = &quot;Klasik Beyaz&quot;,
 		[&quot;decor.themeClassic.desc&quot;] = &quot;Kliniğin standart duvar ve zemin rengi.&quot;,
 		[&quot;decor.themeWarm&quot;] = &quot;Sıcak Ahşap&quot;,
@@ -6597,6 +6614,140 @@ return {
 			</Item>
 			<Item class="ModuleScript" referent="RBX27">
 				<Properties>
+					<string name="Name">staff</string>
+					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
+-- Kaynak: data/staff.json
+-- Uretici: tools/jsontolua.py  (python3 build.py)
+-- (VERI) Ise alinabilen personel. Gec oyunda biriken paraya bir yer aciyor ve GUNLUK MAASLA ekonomiye bir musluk koyuyor.
+return {
+	[&quot;effectKeys&quot;] = {
+		[&quot;queueSlots&quot;] = {
+			[&quot;kind&quot;] = &quot;additive&quot;,
+			[&quot;scope&quot;] = &quot;clinic&quot;,
+		},
+		[&quot;stressRelief&quot;] = {
+			[&quot;kind&quot;] = &quot;additive&quot;,
+			[&quot;scope&quot;] = &quot;clinic&quot;,
+		},
+		[&quot;minigameScale&quot;] = {
+			[&quot;kind&quot;] = &quot;multiplicative&quot;,
+			[&quot;scope&quot;] = &quot;player&quot;,
+		},
+		[&quot;penaltyScale&quot;] = {
+			[&quot;kind&quot;] = &quot;multiplicative&quot;,
+			[&quot;scope&quot;] = &quot;player&quot;,
+		},
+	},
+	[&quot;staff&quot;] = {
+		{
+			[&quot;id&quot;] = &quot;janitor&quot;,
+			[&quot;nameKey&quot;] = &quot;staff.janitor&quot;,
+			[&quot;descKey&quot;] = &quot;staff.janitor.desc&quot;,
+			[&quot;order&quot;] = 1,
+			[&quot;hireCost&quot;] = 1500,
+			[&quot;dailyWage&quot;] = 120,
+			[&quot;unlockLevel&quot;] = 3,
+			[&quot;coat&quot;] = {
+				92,
+				132,
+				168,
+			},
+			[&quot;effect&quot;] = {
+				[&quot;penaltyScale&quot;] = 0.7,
+			},
+		},
+		{
+			[&quot;id&quot;] = &quot;receptionist&quot;,
+			[&quot;nameKey&quot;] = &quot;staff.receptionist&quot;,
+			[&quot;descKey&quot;] = &quot;staff.receptionist.desc&quot;,
+			[&quot;order&quot;] = 2,
+			[&quot;hireCost&quot;] = 2600,
+			[&quot;dailyWage&quot;] = 190,
+			[&quot;unlockLevel&quot;] = 4,
+			[&quot;coat&quot;] = {
+				206,
+				158,
+				96,
+			},
+			[&quot;effect&quot;] = {
+				[&quot;queueSlots&quot;] = 1,
+			},
+		},
+		{
+			[&quot;id&quot;] = &quot;nurse&quot;,
+			[&quot;nameKey&quot;] = &quot;staff.nurse&quot;,
+			[&quot;descKey&quot;] = &quot;staff.nurse.desc&quot;,
+			[&quot;order&quot;] = 3,
+			[&quot;hireCost&quot;] = 4200,
+			[&quot;dailyWage&quot;] = 280,
+			[&quot;unlockLevel&quot;] = 6,
+			[&quot;coat&quot;] = {
+				118,
+				190,
+				176,
+			},
+			[&quot;effect&quot;] = {
+				[&quot;stressRelief&quot;] = 0.8,
+			},
+		},
+		{
+			[&quot;id&quot;] = &quot;technician&quot;,
+			[&quot;nameKey&quot;] = &quot;staff.technician&quot;,
+			[&quot;descKey&quot;] = &quot;staff.technician.desc&quot;,
+			[&quot;order&quot;] = 4,
+			[&quot;hireCost&quot;] = 6200,
+			[&quot;dailyWage&quot;] = 360,
+			[&quot;unlockLevel&quot;] = 8,
+			[&quot;coat&quot;] = {
+				168,
+				156,
+				208,
+			},
+			[&quot;effect&quot;] = {
+				[&quot;minigameScale&quot;] = 1.35,
+			},
+		},
+	},
+	[&quot;patrol&quot;] = {
+		{
+			-20,
+			-12,
+		},
+		{
+			-4,
+			-8,
+		},
+		{
+			14,
+			-14,
+		},
+		{
+			24,
+			6,
+		},
+		{
+			0,
+			8,
+		},
+		{
+			-26,
+			6,
+		},
+		{
+			-20,
+			22,
+		},
+		{
+			10,
+			22,
+		},
+	},
+}
+</ProtectedString>
+				</Properties>
+			</Item>
+			<Item class="ModuleScript" referent="RBX28">
+				<Properties>
 					<string name="Name">symptoms</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
 -- Kaynak: data/symptoms.json
@@ -6807,7 +6958,7 @@ return {
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX28">
+			<Item class="ModuleScript" referent="RBX29">
 				<Properties>
 					<string name="Name">tasks</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -6931,7 +7082,7 @@ return {
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX29">
+			<Item class="ModuleScript" referent="RBX30">
 				<Properties>
 					<string name="Name">tools</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -7225,7 +7376,7 @@ return {
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX30">
+			<Item class="ModuleScript" referent="RBX31">
 				<Properties>
 					<string name="Name">treatments</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -7344,7 +7495,7 @@ return {
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX31">
+			<Item class="ModuleScript" referent="RBX32">
 				<Properties>
 					<string name="Name">upgrades</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -7469,11 +7620,11 @@ return {
 			</Item>
 		</Item>
 	</Item>
-	<Item class="ServerScriptService" referent="RBX32">
+	<Item class="ServerScriptService" referent="RBX33">
 		<Properties>
 			<string name="Name">ServerScriptService</string>
 		</Properties>
-		<Item class="Script" referent="RBX33">
+		<Item class="Script" referent="RBX34">
 			<Properties>
 				<string name="Name">VetServer</string>
 				<ProtectedString name="Source">--!strict
@@ -7516,6 +7667,7 @@ local AnimalAnimator = require(script.world.AnimalAnimator)
 local Clinic = require(script.world.Clinic)
 local DayCycle = require(script.world.DayCycle)
 local Decor = require(script.world.Decor)
+local StaffFactory = require(script.world.StaffFactory)
 local Doors = require(script.world.Doors)
 local Lobby = require(script.world.Lobby)
 local OwnerFactory = require(script.world.OwnerFactory)
@@ -7525,6 +7677,7 @@ local Leaderboard = require(script.game.Leaderboard)
 local Matchmaking = require(script.game.Matchmaking)
 local PatientFlow = require(script.game.PatientFlow)
 local Profile = require(script.game.Profile)
+local Staff = require(script.game.Staff)
 local Surgery = require(script.game.Surgery)
 local Tasks = require(script.game.Tasks)
 local ToolGame = require(script.game.ToolGame)
@@ -7648,6 +7801,7 @@ local function startClinic()
 		-- basliyor. Ters sirada ilk gecede hicbir lamba yanmazdi.
 		DayCycle.collectLamps((clinicBuilt :: Clinic.Built).model)
 		DayCycle.start()
+		StaffFactory.start((clinicBuilt :: Clinic.Built).model)
 		AnimalAnimator.start()
 		OwnerFactory.start()
 		PatientFlow.start(clinicBuilt :: Clinic.Built)
@@ -7743,6 +7897,61 @@ local function refreshDecor()
 	Decor.refresh(bags)
 end
 
+--- Klinikteki personeli online oyuncularin ise aldiklarina gore
+--- tazeler. Dekorasyondaki kuralin aynisi: bina ORTAK, bir
+--- resepsiyonist ya vardir ya yoktur.
+local function refreshStaff()
+	if mode ~= &quot;clinic&quot; or clinicBuilt == nil then
+		return
+	end
+	local wanted: { [string]: boolean } = {}
+	for _, player in Players:GetPlayers() do
+		local entry = Profile.get(player)
+		if entry == nil then
+			continue
+		end
+		for id, hired in entry.data.staff do
+			if hired == true then
+				wanted[id] = true
+			end
+		end
+	end
+	StaffFactory.sync(wanted)
+end
+
+--- Gun sonu bordrosu. Maasi odenemeyen personel ISTEN AYRILIYOR ve
+--- oyuncuya bildiriliyor - sessizce bedava calismaya devam etmek,
+--- gunluk maasi anlamsiz kilardi.
+local function payWages(day: number)
+	if mode ~= &quot;clinic&quot; then
+		return
+	end
+	for _, player in Players:GetPlayers() do
+		local entry = Profile.get(player)
+		if entry == nil then
+			continue
+		end
+		local payroll = Staff.payWages(entry.data)
+		if payroll.paid &gt; 0 then
+			Net.toPlayer(&quot;Notify&quot;, player, &quot;info&quot;, &quot;staff.wagesPaid&quot;, { payroll.paid, day })
+			Profile.markDirty(player)
+		end
+		for _, id in payroll.quit do
+			local member = Staff.get(id)
+			Net.toPlayer(&quot;Notify&quot;, player, &quot;bad&quot;, &quot;staff.quit&quot;, {
+				if member ~= nil then member.nameKey else id,
+			})
+			Profile.markDirty(player)
+		end
+		if payroll.paid &gt; 0 or #payroll.quit &gt; 0 then
+			PatientFlow.pushState(player)
+		end
+	end
+	refreshStaff()
+end
+
+DayCycle.onDayEnded(payWages)
+
 local function onPlayerAdded(player: Player)
 	local entry = Profile.load(player)
 	Leaderboard.attach(player)
@@ -7751,8 +7960,9 @@ local function onPlayerAdded(player: Player)
 	task.defer(function()
 		if mode == &quot;clinic&quot; then
 			PatientFlow.pushState(player)
-			-- Giren oyuncunun dekoru de klinige isliyor.
+			-- Giren oyuncunun dekoru ve personeli de klinige isliyor.
 			refreshDecor()
+			refreshStaff()
 		else
 			pushLobby(player)
 		end
@@ -7766,8 +7976,9 @@ Players.PlayerRemoving:Connect(function(player: Player)
 	ToolGame.cancel(player)
 	Matchmaking.leave(player)
 	Validate.forget(player)
-	-- Cikan oyuncunun dekoru da kalkiyor; kalanlarinki duruyor.
+	-- Cikan oyuncunun dekoru ve personeli de kalkiyor.
 	task.defer(refreshDecor)
+	task.defer(refreshStaff)
 end)
 
 for _, player in Players:GetPlayers() do
@@ -7879,6 +8090,20 @@ local function sanitizeSettings(raw: any, current: any): any
 	return result
 end
 
+bind(&quot;HireStaff&quot;, function(player: Player, staffId: string)
+	local entry = Profile.get(player)
+	if entry == nil then
+		return
+	end
+	local result = Staff.hire(entry.data, staffId)
+	Net.toPlayer(&quot;Notify&quot;, player, if result.ok then &quot;good&quot; else &quot;warn&quot;, result.reasonKey, result.args)
+	if result.ok then
+		Profile.markDirty(player)
+		-- Personel KLINIGE isliyor: ise alan kisi degil, bina degisiyor.
+		refreshStaff()
+	end
+	PatientFlow.pushState(player)
+end)
 bind(&quot;SaveSettings&quot;, function(player: Player, raw: any)
 	local entry = Profile.get(player)
 	if entry == nil then
@@ -7924,7 +8149,7 @@ end
 print((&quot;[Veteriner] sunucu hazir — mod: %s&quot;):format(mode))
 </ProtectedString>
 			</Properties>
-			<Item class="Script" referent="RBX34">
+			<Item class="Script" referent="RBX35">
 				<Properties>
 					<string name="Name">SelfTest</string>
 					<ProtectedString name="Source">--!strict
@@ -7961,6 +8186,7 @@ local Doors = require(script.Parent.world.Doors)
 local Effects = require(script.Parent.world.Effects)
 local OwnerFactory = require(script.Parent.world.OwnerFactory)
 local Props = require(script.Parent.world.Props)
+local StaffFactory = require(script.Parent.world.StaffFactory)
 
 local Achievements = require(script.Parent.game.Achievements)
 local Diagnosis = require(script.Parent.game.Diagnosis)
@@ -7968,6 +8194,7 @@ local Matchmaking = require(script.Parent.game.Matchmaking)
 local Economy = require(script.Parent.game.Economy)
 local Profile = require(script.Parent.game.Profile)
 local Tasks = require(script.Parent.game.Tasks)
+local Staff = require(script.Parent.game.Staff)
 local Ward = require(script.Parent.game.Ward)
 local ToolGame = require(script.Parent.game.ToolGame)
 local Treatment = require(script.Parent.game.Treatment)
@@ -7976,6 +8203,7 @@ local Upgrades = require(script.Parent.game.Upgrades)
 local clinicPlan = require(Data.clinic)
 local dayCycleData = require(Data.daycycle)
 local decorData = require(Data.decor)
+local staffData = require(Data.staff)
 local toolData = require(Data.tools)
 local lobbyPlan = require(Data.lobby)
 local propData = require(Data.props)
@@ -8586,6 +8814,21 @@ do
 	end
 	scratch:Destroy()
 
+	-- Personel: veri ile kodun tanidigi kume ayni mi, metinler var mi.
+	for _, member in staffData.staff do
+		check((&quot;personel '%s' Staff tarafindan biliniyor&quot;):format(member.id), Staff.known(member.id))
+		check((&quot;personel '%s' adi cevrili&quot;):format(member.id), Loc.has(member.nameKey))
+		check((&quot;personel '%s' aciklamasi cevrili&quot;):format(member.id), Loc.has(member.descKey))
+		for key in member.effect do
+			check(
+				(&quot;personel '%s' bilinen etki kullaniyor: %s&quot;):format(member.id, key),
+				Staff.knownEffect(key)
+			)
+		end
+	end
+	check(&quot;devriye rotasi tanimli&quot;, #Staff.patrol() &gt;= 3)
+	check(&quot;klinik bastan personelsiz&quot;, StaffFactory.count() == 0)
+
 	-- Kogus: yataklar kurulmus mu ve padoklarin ici hastayi aliyor mu?
 	-- Eski kafeslerin ici (4,8 stud) en buyuk hastanin ayak izinden
 	-- (6,4) kucuktu; sayilar bir daha oyle kaymasin diye olculuyor.
@@ -8663,11 +8906,11 @@ end
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="Folder" referent="RBX35">
+			<Item class="Folder" referent="RBX36">
 				<Properties>
 					<string name="Name">game</string>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX36">
+				<Item class="ModuleScript" referent="RBX37">
 					<Properties>
 						<string name="Name">Achievements</string>
 						<ProtectedString name="Source">--!strict
@@ -8827,7 +9070,7 @@ return Achievements
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX37">
+				<Item class="ModuleScript" referent="RBX38">
 					<Properties>
 						<string name="Name">Diagnosis</string>
 						<ProtectedString name="Source">--!strict
@@ -8989,7 +9232,7 @@ return Diagnosis
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX38">
+				<Item class="ModuleScript" referent="RBX39">
 					<Properties>
 						<string name="Name">Economy</string>
 						<ProtectedString name="Source">--!strict
@@ -9106,7 +9349,7 @@ return Economy
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX39">
+				<Item class="ModuleScript" referent="RBX40">
 					<Properties>
 						<string name="Name">Leaderboard</string>
 						<ProtectedString name="Source">--!strict
@@ -9182,7 +9425,7 @@ return Leaderboard
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX40">
+				<Item class="ModuleScript" referent="RBX41">
 					<Properties>
 						<string name="Name">Matchmaking</string>
 						<ProtectedString name="Source">--!strict
@@ -9420,7 +9663,7 @@ return Matchmaking
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX41">
+				<Item class="ModuleScript" referent="RBX42">
 					<Properties>
 						<string name="Name">PatientFlow</string>
 						<ProtectedString name="Source">--!strict
@@ -9462,6 +9705,7 @@ local Diagnosis = require(script.Parent.Diagnosis)
 local Economy = require(script.Parent.Economy)
 local Leaderboard = require(script.Parent.Leaderboard)
 local Profile = require(script.Parent.Profile)
+local Staff = require(script.Parent.Staff)
 local Surgery = require(script.Parent.Surgery)
 local Tasks = require(script.Parent.Tasks)
 local ToolGame = require(script.Parent.ToolGame)
@@ -9547,8 +9791,11 @@ local function highestLevel(): number
 end
 
 local function queueSlotCount(): number
-	local clinicEffects = Upgrades.clinicEffects(Players:GetPlayers())
-	local total = economy.arrival.queueSlots + clinicEffects.queueSlots
+	local players = Players:GetPlayers()
+	local clinicEffects = Upgrades.clinicEffects(players)
+	-- Resepsiyonist de bekleme yeri aciyor: yukseltmeyle ayni kanal.
+	local staffEffects = Staff.clinicEffects(players)
+	local total = economy.arrival.queueSlots + clinicEffects.queueSlots + staffEffects.queueSlots
 	local available = if clinic ~= nil then #clinic.queuePoints else 0
 	return math.min(total, available)
 end
@@ -9769,6 +10016,11 @@ local function stateSnapshot(player: Player): any
 		return a.order &lt; b.order
 	end)
 
+	-- Magaza goruntusu: aletler/yukseltmeler/dekor Upgrades'ten,
+	-- personel Staff'tan. Upgrades'in personeli tanimasi gerekmiyor.
+	local shopSnapshot = Upgrades.shopSnapshot(data)
+	shopSnapshot.staff = Staff.shopSnapshot(data)
+
 	local effects = Upgrades.effectsOf(data)
 	local treatments = {}
 	for _, treatment in Treatment.all() do
@@ -9801,7 +10053,7 @@ local function stateSnapshot(player: Player): any
 		treatments = treatments,
 		queueWaiting = waitingCount(),
 		queueSlots = queueSlotCount(),
-		shop = Upgrades.shopSnapshot(data),
+		shop = shopSnapshot,
 		-- Ayarlar profilde saklaniyor; istemci acilista bunlari alip
 		-- kamerayi ona gore kuruyor.
 		settings = data.settings,
@@ -10442,7 +10694,10 @@ function PatientFlow.useTool(player: Player, toolId: string)
 			return -- bir mini-oyun zaten acik
 		end
 		local patientId = patient.id
-		local payload = ToolGame.begin(player, patientId, toolId, kind, function(ok: boolean, reasonKey: string)
+		-- Teknisyen mini-oyun pencerelerini genisletiyor: aleti kullanan
+		-- OYUNCUYA isliyor, klinige degil.
+		local scale = Staff.effectsOf(entry.data).minigameScale
+		local payload = ToolGame.begin(player, patientId, toolId, kind, scale, function(ok: boolean, reasonKey: string)
 			Net.toPlayer(&quot;ToolGameEnd&quot;, player, ok, reasonKey)
 			local current = patients[patientId]
 			if current == nil or current.vet ~= player then
@@ -10530,7 +10785,12 @@ function PatientFlow.submitDiagnosis(player: Player, conditionId: string)
 		Audio.play(&quot;animal&quot; .. patient.animalId:sub(1, 1):upper() .. patient.animalId:sub(2), patient.rig.root)
 		notify(player, &quot;good&quot;, &quot;notify.diagnosisCorrect&quot;, { condition.nameKey })
 	else
-		data.reputation = Economy.clampReputation(data.reputation + economy.reputation.wrongDiagnosis)
+		-- Temizlikci itibar cezasini yumusatiyor: hata yine hata ama
+		-- klinigin adi o kadar hizli dusmuyor.
+		local penaltyScale = Staff.effectsOf(data).penaltyScale
+		data.reputation = Economy.clampReputation(
+			data.reputation + economy.reputation.wrongDiagnosis * penaltyScale
+		)
 		data.stats.wrong += 1
 		-- Seri tek yanlista sifirlaniyor: &quot;kusursuz&quot; basarimlarinin
 		-- anlami olsun.
@@ -10742,7 +11002,8 @@ local function tickWard()
 			local profile = Profile.get(vet)
 			if profile ~= nil then
 				profile.data.reputation = Economy.clampReputation(
-					profile.data.reputation + ward.missedDoseReputation
+					profile.data.reputation
+						+ ward.missedDoseReputation * Staff.effectsOf(profile.data).penaltyScale
 				)
 				Profile.markDirty(vet)
 			end
@@ -10976,6 +11237,9 @@ end
 
 local function tickVitals(dt: number)
 	local config = economy.patient
+	-- Hemsire butun klinigin stresini dusuruyor: tek bir hastaya degil,
+	-- odadaki herkese isliyor.
+	local staffEffects = Staff.clinicEffects(Players:GetPlayers())
 	for _, patient in patients do
 		if patient.state == &quot;leaving&quot; then
 			continue
@@ -10997,7 +11261,8 @@ local function tickVitals(dt: number)
 
 		-- Stres kendiliginden yavas yavas duser.
 		if patient.stress &gt; 0 then
-			patient.stress = math.clamp(patient.stress - config.stressDecayPerSecond * dt, 0, 100)
+			local decay = config.stressDecayPerSecond + staffEffects.stressRelief
+			patient.stress = math.clamp(patient.stress - decay * dt, 0, 100)
 			AnimalAnimator.setStress(patient.rig, patient.stress)
 		end
 
@@ -11173,7 +11438,7 @@ return PatientFlow
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX42">
+				<Item class="ModuleScript" referent="RBX43">
 					<Properties>
 						<string name="Name">Profile</string>
 						<ProtectedString name="Source">--!strict
@@ -11210,9 +11475,9 @@ local toolData = require(Data.tools)
 
 local Profile = {}
 
-local SCHEMA_VERSION = 3
+local SCHEMA_VERSION = 4
 local STORE_NAME = &quot;VetProfile_v1&quot;
--- STORE_NAME degismiyor: sema surumu 3'e ciksa da ESKI KAYITLAR OKUNMAYA
+-- STORE_NAME degismiyor: sema surumu 4'e ciksa da ESKI KAYITLAR OKUNMAYA
 -- devam etsin. migrate() eksik alanlari varsayilanla dolduruyor; store'u
 -- degistirmek herkesin ilerlemesini silmek demek olurdu.
 local KEY_PREFIX = &quot;player_&quot;
@@ -11271,6 +11536,9 @@ export type Data = {
 	-- Satin alinmis dekorasyon (tema + sus esyasi). Sema 3 ile geldi;
 	-- eski kayitlarda bulunmuyor, migrate() bos tabloyla dolduruyor.
 	decor: { [string]: boolean },
+	-- Ise alinmis personel. Sema 4 ile geldi; eski kayitlarda yok,
+	-- migrate() bos tabloyla dolduruyor.
+	staff: { [string]: boolean },
 	stats: Stats,
 	species: { [string]: boolean },
 	achievements: { [string]: boolean },
@@ -11358,6 +11626,7 @@ local function defaultData(): Data
 		tools = starterTools(),
 		upgrades = {},
 		decor = starterDecor(),
+		staff = {},
 		stats = defaultStats(),
 		species = {},
 		achievements = {},
@@ -11399,6 +11668,13 @@ local function migrate(raw: any): Data
 		for id, owned in raw.decor do
 			if owned == true then
 				result.decor[id] = true
+			end
+		end
+	end
+	if type(raw.staff) == &quot;table&quot; then
+		for id, hired in raw.staff do
+			if hired == true then
+				result.staff[id] = true
 			end
 		end
 	end
@@ -11691,7 +11967,236 @@ return Profile
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX43">
+				<Item class="ModuleScript" referent="RBX44">
+					<Properties>
+						<string name="Name">Staff</string>
+						<ProtectedString name="Source">--!strict
+-- Staff.luau
+-- ==========
+-- Ise alinan personel: satin alma, etkiler ve GUNLUK MAAS.
+--
+-- Neden var?
+-- ----------
+-- Ekonomi simulasyonu (tools/simulate_economy.py) sunu gosteriyordu:
+-- oyuncu 15. seviyeyi ~176.000 TL ile bitiriyor ve harcayacak yer
+-- bulamiyor. Yukseltmeler tek seferlik; alinanlar bitince para yigiliyor.
+-- Personel hem o yigina bir yer aciyor hem de SUREKLI BIR GIDER
+-- (gunluk maas) koyuyor - yani para bir kez degil, her gun anlam
+-- kazaniyor.
+--
+-- Maasi odeyemezsen ne olur?
+-- --------------------------
+-- Personel ISTEN AYRILIYOR ve bildirim gidiyor. Sessizce bedava
+-- calismaya devam etmek, maasi anlamsiz kilardi; oyuncuyu eksi bakiyeye
+-- dusurmek ise oyunu kilitlerdi.
+--
+-- Etkiler nasil birlesiyor?
+-- -------------------------
+-- Upgrades.luau ile AYNI kalip: `additive` toplaniyor, `multiplicative`
+-- carpiliyor; `clinic` kapsamlilar cok oyunculuda ONLINE oyuncularin en
+-- iyisini aliyor. Kume `data/staff.json` -&gt; effectKeys ile ayni olmak
+-- zorunda ve verify_data.py ikisini karsilastiriyor.
+
+local ReplicatedStorage = game:GetService(&quot;ReplicatedStorage&quot;)
+local Data = ReplicatedStorage:WaitForChild(&quot;VetData&quot;)
+
+local Economy = require(script.Parent.Economy)
+local Profile = require(script.Parent.Profile)
+
+local staffData = require(Data.staff)
+
+local Staff = {}
+
+-- Etki kumeleri. data/staff.json -&gt; effectKeys ile AYNI olmak zorunda.
+local ADDITIVE = { queueSlots = true, stressRelief = true }
+local MULTIPLICATIVE = { minigameScale = true, penaltyScale = true }
+local CLINIC_WIDE = { queueSlots = true, stressRelief = true }
+
+local byId: { [string]: any } = {}
+for _, entry in staffData.staff do
+	byId[entry.id] = entry
+end
+
+function Staff.get(id: string): any?
+	return byId[id]
+end
+
+function Staff.all(): { any }
+	return staffData.staff
+end
+
+function Staff.known(id: string): boolean
+	return byId[id] ~= nil
+end
+
+--- Devriye rotasi (StaffFactory kullaniyor).
+function Staff.patrol(): { { number } }
+	return staffData.patrol
+end
+
+--- Bir etki anahtari taniniyor mu? (verify_data ve SelfTest icin.)
+function Staff.knownEffect(key: string): boolean
+	return ADDITIVE[key] == true or MULTIPLICATIVE[key] == true
+end
+
+local function blank(): { [string]: number }
+	local effects = {}
+	for key in ADDITIVE do
+		effects[key] = 0
+	end
+	for key in MULTIPLICATIVE do
+		effects[key] = 1
+	end
+	return effects
+end
+
+--- Bir oyuncunun personelinden gelen KISISEL etkiler.
+function Staff.effectsOf(data: Profile.Data): { [string]: number }
+	local effects = blank()
+	for id, hired in data.staff do
+		if hired ~= true then
+			continue
+		end
+		local entry = byId[id]
+		if entry == nil then
+			continue
+		end
+		for key, value in entry.effect do
+			if ADDITIVE[key] then
+				effects[key] += value
+			elseif MULTIPLICATIVE[key] then
+				effects[key] *= value
+			end
+		end
+	end
+	return effects
+end
+
+--- Binaya isleyen etkiler: online oyunculardan EN IYISI.
+function Staff.clinicEffects(players: { Player }): { [string]: number }
+	local best = blank()
+	for _, player in players do
+		local entry = Profile.get(player)
+		if entry == nil then
+			continue
+		end
+		local effects = Staff.effectsOf(entry.data)
+		for key in CLINIC_WIDE do
+			best[key] = math.max(best[key], effects[key])
+		end
+	end
+	return best
+end
+
+export type HireResult = { ok: boolean, reasonKey: string, args: { any } }
+
+--- Personel ise alir. Fiyat, seviye ve kasa rezervi denetimi burada;
+--- magazadaki &quot;kilitli&quot; gorunum yalnizca kolaylik.
+function Staff.hire(data: Profile.Data, id: string): HireResult
+	local entry = byId[id]
+	if entry == nil then
+		return { ok = false, reasonKey = &quot;shop.unknown&quot;, args = {} }
+	end
+	if data.staff[id] == true then
+		return { ok = false, reasonKey = &quot;staff.alreadyHired&quot;, args = {} }
+	end
+	if data.level &lt; entry.unlockLevel then
+		return { ok = false, reasonKey = &quot;shop.levelTooLow&quot;, args = { entry.unlockLevel } }
+	end
+	if data.money &lt; entry.hireCost then
+		return { ok = false, reasonKey = &quot;shop.notEnoughMoney&quot;, args = {} }
+	end
+
+	-- Kasa rezervi: butun parasini ise alima yatiran oyuncu sarf
+	-- malzemesi alamaz ve oyun kilitlenir (yukseltmelerdeki kuralin
+	-- aynisi). Ustune ILK GUNUN MAASI da ayriliyor: ertesi gun hemen
+	-- isten cikarilan bir personel, para harcatip hicbir sey vermezdi.
+	local economy = Economy.table()
+	local reserve = economy.minimumReserve + entry.dailyWage
+	if data.money - entry.hireCost &lt; reserve then
+		return { ok = false, reasonKey = &quot;staff.keepReserve&quot;, args = { reserve } }
+	end
+
+	data.money -= entry.hireCost
+	data.staff[id] = true
+	return { ok = true, reasonKey = &quot;staff.hired&quot;, args = { entry.nameKey } }
+end
+
+--- Isten cikarir. Maas odenemedigi icin de cagriliyor.
+function Staff.dismiss(data: Profile.Data, id: string): boolean
+	if data.staff[id] ~= true then
+		return false
+	end
+	data.staff[id] = nil
+	return true
+end
+
+--- Gunluk toplam maas.
+function Staff.dailyWage(data: Profile.Data): number
+	local total = 0
+	for id, hired in data.staff do
+		local entry = byId[id]
+		if hired == true and entry ~= nil then
+			total += entry.dailyWage
+		end
+	end
+	return total
+end
+
+export type Payroll = { paid: number, quit: { string } }
+
+--- Gun sonu bordrosu. Parasi yetmeyenin personeli isten ayriliyor;
+--- once EN PAHALI olan gidiyor, cunku ucuz olanlari tutmak oyuncunun
+--- elinde daha cok sey birakiyor.
+function Staff.payWages(data: Profile.Data): Payroll
+	local quit: { string } = {}
+	local order: { any } = {}
+	for id, hired in data.staff do
+		local entry = byId[id]
+		if hired == true and entry ~= nil then
+			table.insert(order, entry)
+		end
+	end
+	table.sort(order, function(a, b)
+		return a.dailyWage &gt; b.dailyWage
+	end)
+
+	local paid = 0
+	for _, entry in order do
+		if data.money &gt;= entry.dailyWage then
+			data.money -= entry.dailyWage
+			paid += entry.dailyWage
+		else
+			data.staff[entry.id] = nil
+			table.insert(quit, entry.id)
+		end
+	end
+	return { paid = paid, quit = quit }
+end
+
+--- Magaza listesi (istemciye yollanan bicim).
+function Staff.shopSnapshot(data: Profile.Data): any
+	local list = {}
+	for _, entry in staffData.staff do
+		table.insert(list, {
+			id = entry.id,
+			nameKey = entry.nameKey,
+			descKey = entry.descKey,
+			price = entry.hireCost,
+			wage = entry.dailyWage,
+			unlockLevel = entry.unlockLevel,
+			owned = data.staff[entry.id] == true,
+			locked = data.level &lt; entry.unlockLevel,
+		})
+	end
+	return list
+end
+
+return Staff
+</ProtectedString>
+					</Properties>
+				</Item>
+				<Item class="ModuleScript" referent="RBX45">
 					<Properties>
 						<string name="Name">Surgery</string>
 						<ProtectedString name="Source">--!strict
@@ -11848,7 +12353,7 @@ return Surgery
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX44">
+				<Item class="ModuleScript" referent="RBX46">
 					<Properties>
 						<string name="Name">Tasks</string>
 						<ProtectedString name="Source">--!strict
@@ -12028,7 +12533,7 @@ return Tasks
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX45">
+				<Item class="ModuleScript" referent="RBX47">
 					<Properties>
 						<string name="Name">ToolGame</string>
 						<ProtectedString name="Source">--!strict
@@ -12079,6 +12584,7 @@ export type Session = {
 	rangeHigh: number,
 	startTime: number,
 	deadline: number,
+	windowScale: number,
 	done: boolean,
 	onFinish: (ok: boolean, reasonKey: string) -&gt; (),
 }
@@ -12138,17 +12644,22 @@ end
 --- Mini-oyunu baslatir; istemciye yollanacak tabloyu doner.
 --- `onFinish(ok, reasonKey)` basari, basarisizlik ya da sure dolunca
 --- TAM BIR KEZ cagriliyor.
+--- `windowScale` pencereleri genisletiyor (teknisyen personeli).
+--- 1 = degisiklik yok. Hedefin KENDISI degismiyor, yalnizca kabul
+--- yaricapi ve sure - yani mini-oyun kolaylasiyor ama basitlesmiyor.
 function ToolGame.begin(
 	player: Player,
 	patientId: number,
 	toolId: string,
 	kind: string,
+	windowScale: number,
 	onFinish: (ok: boolean, reasonKey: string) -&gt; ()
 ): any?
 	local settings = config[kind]
 	if settings == nil then
 		return nil
 	end
+	local scale = math.clamp(if windowScale &gt; 0 then windowScale else 1, 1, 2)
 	ToolGame.cancel(player)
 
 	local now = Workspace:GetServerTimeNow()
@@ -12164,13 +12675,14 @@ function ToolGame.begin(
 		rangeLow = 0,
 		rangeHigh = 0,
 		startTime = now + 0.6, -- istemcinin paneli kurmasi icin pay
-		deadline = now + 0.6 + settings.seconds,
+		deadline = now + 0.6 + settings.seconds * scale,
+		windowScale = scale,
 		done = false,
 		onFinish = onFinish,
 	}
 
 	if kind == &quot;range&quot; then
-		local width = config.range.width
+		local width = math.min(config.range.width * scale, 0.6)
 		session.rangeLow = 0.08 + math.random() * (0.84 - width)
 		session.rangeHigh = session.rangeLow + width
 	end
@@ -12193,7 +12705,7 @@ function ToolGame.begin(
 	local payload: any = {
 		toolId = toolId,
 		kind = kind,
-		seconds = settings.seconds,
+		seconds = settings.seconds * scale,
 		startTime = session.startTime,
 	}
 	if kind == &quot;spot&quot; then
@@ -12202,7 +12714,7 @@ function ToolGame.begin(
 		-- goruntu cikmasin.
 		payload.targetX = session.targetX
 		payload.targetY = session.targetY
-		payload.radius = settings.radius
+		payload.radius = settings.radius * scale
 		local decoys = {}
 		for _ = 1, settings.decoys do
 			table.insert(decoys, { math.random(), math.random() })
@@ -12213,7 +12725,7 @@ function ToolGame.begin(
 		payload.high = session.rangeHigh
 		payload.sweepSeconds = config.range.sweepSeconds
 	elseif kind == &quot;probe&quot; then
-		payload.radius = settings.radius
+		payload.radius = settings.radius * scale
 	end
 	return payload
 end
@@ -12268,7 +12780,7 @@ function ToolGame.submit(player: Player, x: number, y: number): boolean
 
 	local dx = math.clamp(x, 0, 1) - session.targetX
 	local dy = math.clamp(y, 0, 1) - session.targetY
-	local ok = math.sqrt(dx * dx + dy * dy) &lt;= settings.radius
+	local ok = math.sqrt(dx * dx + dy * dy) &lt;= settings.radius * session.windowScale
 	finish(session, ok, if ok then &quot;toolgame.success&quot; else &quot;toolgame.failed&quot;)
 	return ok
 end
@@ -12288,7 +12800,7 @@ return ToolGame
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX46">
+				<Item class="ModuleScript" referent="RBX48">
 					<Properties>
 						<string name="Name">Treatment</string>
 						<ProtectedString name="Source">--!strict
@@ -12448,7 +12960,7 @@ return Treatment
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX47">
+				<Item class="ModuleScript" referent="RBX49">
 					<Properties>
 						<string name="Name">Upgrades</string>
 						<ProtectedString name="Source">--!strict
@@ -12724,7 +13236,7 @@ return Upgrades
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX48">
+				<Item class="ModuleScript" referent="RBX50">
 					<Properties>
 						<string name="Name">Ward</string>
 						<ProtectedString name="Source">--!strict
@@ -12975,11 +13487,11 @@ return Ward
 					</Properties>
 				</Item>
 			</Item>
-			<Item class="Folder" referent="RBX49">
+			<Item class="Folder" referent="RBX51">
 				<Properties>
 					<string name="Name">world</string>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX50">
+				<Item class="ModuleScript" referent="RBX52">
 					<Properties>
 						<string name="Name">AnimalAnimator</string>
 						<ProtectedString name="Source">--!strict
@@ -13646,7 +14158,7 @@ return Animator
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX51">
+				<Item class="ModuleScript" referent="RBX53">
 					<Properties>
 						<string name="Name">AnimalFactory</string>
 						<ProtectedString name="Source">--!strict
@@ -14673,7 +15185,7 @@ return AnimalFactory
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX52">
+				<Item class="ModuleScript" referent="RBX54">
 					<Properties>
 						<string name="Name">Clinic</string>
 						<ProtectedString name="Source">--!strict
@@ -15191,7 +15703,7 @@ return Clinic
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX53">
+				<Item class="ModuleScript" referent="RBX55">
 					<Properties>
 						<string name="Name">DayCycle</string>
 						<ProtectedString name="Source">--!strict
@@ -15238,6 +15750,10 @@ local streetLamps: { PointLight } = {}
 local baseBrightness: { [PointLight]: number } = {}
 local lampHeads: { [PointLight]: BasePart } = {}
 local lampHeadColor: { [PointLight]: Color3 } = {}
+-- Gun sonu dinleyicileri. Personel maasi bunun uzerinden kesiliyor:
+-- &quot;gun&quot; tanimini iki yerde tutmamak icin tek kaynak burasi.
+local dayListeners: { (day: number) -&gt; () } = {}
+local dayCount = 0
 
 --- Saatin 0..24 araligina sarmasi.
 local function wrap(hour: number): number
@@ -15299,6 +15815,17 @@ local function applyBlend(blend: number)
 			head.Color = color:Lerp(Color3.fromRGB(52, 56, 66), 1 - blend)
 		end
 	end
+end
+
+--- Gun sonunda cagrilacak bir dinleyici ekler. Gun, saatin 24'u
+--- gecip bastan basmasiyla biter.
+function DayCycle.onDayEnded(listener: (day: number) -&gt; ())
+	table.insert(dayListeners, listener)
+end
+
+--- Gecen gun sayisi (SelfTest ve hata ayiklama icin).
+function DayCycle.dayNumber(): number
+	return dayCount
 end
 
 --- Kayitli sokak lambasi sayisi (SelfTest olcuyor: sifirsa ad
@@ -15381,7 +15908,17 @@ function DayCycle.start()
 	RunService.Heartbeat:Connect(function(dt: number)
 		-- dt tavanlaniyor: Studio duraklatilip devam ettirildiginde tek
 		-- karede saatlerce zaman gecmesin.
-		clock = wrap(clock + math.min(dt, 0.25) * hoursPerSecond)
+		local advanced = clock + math.min(dt, 0.25) * hoursPerSecond
+		if advanced &gt;= 24 then
+			-- Gun dondu: dinleyiciler ayri bir is parcaciginda cagriliyor
+			-- ki biri hata verirse dongu durmasin.
+			dayCount += 1
+			local day = dayCount
+			for _, listener in dayListeners do
+				task.spawn(listener, day)
+			end
+		end
+		clock = wrap(advanced)
 		accumulator += dt
 		if accumulator &lt; 0.25 then
 			return
@@ -15395,7 +15932,7 @@ return DayCycle
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX54">
+				<Item class="ModuleScript" referent="RBX56">
 					<Properties>
 						<string name="Name">Decor</string>
 						<ProtectedString name="Source">--!strict
@@ -15636,7 +16173,7 @@ return Decor
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX55">
+				<Item class="ModuleScript" referent="RBX57">
 					<Properties>
 						<string name="Name">Doors</string>
 						<ProtectedString name="Source">--!strict
@@ -15882,7 +16419,7 @@ return Doors
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX56">
+				<Item class="ModuleScript" referent="RBX58">
 					<Properties>
 						<string name="Name">Effects</string>
 						<ProtectedString name="Source">--!strict
@@ -16066,7 +16603,7 @@ return Effects
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX57">
+				<Item class="ModuleScript" referent="RBX59">
 					<Properties>
 						<string name="Name">Lighting</string>
 						<ProtectedString name="Source">--!strict
@@ -16189,7 +16726,7 @@ return Sky
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX58">
+				<Item class="ModuleScript" referent="RBX60">
 					<Properties>
 						<string name="Name">Lobby</string>
 						<ProtectedString name="Source">--!strict
@@ -16448,7 +16985,7 @@ return Lobby
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX59">
+				<Item class="ModuleScript" referent="RBX61">
 					<Properties>
 						<string name="Name">OwnerFactory</string>
 						<ProtectedString name="Source">--!strict
@@ -16607,10 +17144,15 @@ local function buildBubble(root: BasePart): (BillboardGui, TextLabel, Frame)
 end
 
 --- Sahibi kurar. `cframe` ayaklarinin basacagi yer.
-function OwnerFactory.create(cframe: CFrame, hintKey: string, parent: Instance): Owner
+--- Insan rigi kurar.
+---
+--- `coat` verilirse ustu o renge boyaniyor: PERSONEL de ayni rigi
+--- kullaniyor (StaffFactory), yalnizca onlugunun rengi sabit. Ikinci
+--- bir insan rigi yazmak, ayni 40 satiri iki yerde tutmak olurdu.
+function OwnerFactory.create(cframe: CFrame, hintKey: string, parent: Instance, coat: Color3?): Owner
 	local model = Build.model(&quot;Sahip&quot;, parent)
 	local skin = pick(SKIN)
-	local shirt = pick(SHIRT)
+	local shirt = if coat ~= nil then coat else pick(SHIRT)
 	local trousers = pick(TROUSERS)
 	local hair = pick(HAIR)
 
@@ -17048,7 +17590,7 @@ return OwnerFactory
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX60">
+				<Item class="ModuleScript" referent="RBX62">
 					<Properties>
 						<string name="Name">Props</string>
 						<ProtectedString name="Source">--!strict
@@ -18172,18 +18714,186 @@ return Props
 </ProtectedString>
 					</Properties>
 				</Item>
+				<Item class="ModuleScript" referent="RBX63">
+					<Properties>
+						<string name="Name">StaffFactory</string>
+						<ProtectedString name="Source">--!strict
+-- StaffFactory.luau
+-- =================
+-- Ise alinan personelin klinikteki NPC'si.
+--
+-- Neden yeni bir rig yazilmadi?
+-- -----------------------------
+-- `OwnerFactory` zaten bir insan rigi kuruyor: govde, kafa, iki kol,
+-- iki bacak, eklemler, yuruyus ve bakis. Ikinci bir insan rigi yazmak
+-- ayni 200 satiri iki yerde tutmak olurdu; hata da iki yerde
+-- duzeltilmek zorunda kalirdi. Personel ayni rigi kullaniyor, tek farki
+-- ONLUGUNUN RENGI (data/staff.json -&gt; coat) ve basindaki yaziyla
+-- gorevi.
+--
+-- Ne yapiyorlar?
+-- --------------
+-- Klinikte devriye geziyorlar. Etkileri Staff.luau'da ve NPC'den
+-- BAGIMSIZ: NPC yok edilse bile etki devam eder. NPC gorsel bir
+-- karsilik - oyuncu parasinin nereye gittigini gorsun diye var.
+
+local ReplicatedStorage = game:GetService(&quot;ReplicatedStorage&quot;)
+local Shared = ReplicatedStorage:WaitForChild(&quot;VetShared&quot;)
+local Data = ReplicatedStorage:WaitForChild(&quot;VetData&quot;)
+
+local Build = require(Shared.Build)
+
+local OwnerFactory = require(script.Parent.OwnerFactory)
+
+local staffData = require(Data.staff)
+local clinicPlan = require(Data.clinic)
+
+local StaffFactory = {}
+
+type Member = {
+	id: string,
+	owner: OwnerFactory.Owner,
+	waypoint: number,
+}
+
+local members: { [string]: Member } = {}
+local folder: Folder? = nil
+local running = false
+
+local byId: { [string]: any } = {}
+for _, entry in staffData.staff do
+	byId[entry.id] = entry
+end
+
+--- Devriye noktalarini dunya koordinatina cevirir.
+local function patrolPoints(): { Vector3 }
+	local points: { Vector3 } = {}
+	for _, point in staffData.patrol do
+		table.insert(points, Vector3.new(point[1], clinicPlan.floorY, point[2]))
+	end
+	return points
+end
+
+local waypoints: { Vector3 } = {}
+
+--- Bir sonraki noktaya yurut. Varinca kendini tekrar cagiriyor, yani
+--- devriye kesintisiz donuyor.
+local function sendToNext(member: Member)
+	if #waypoints == 0 then
+		return
+	end
+	member.waypoint = member.waypoint % #waypoints + 1
+	local target = waypoints[member.waypoint]
+	OwnerFactory.walkPath(member.owner, { target }, function()
+		if members[member.id] ~= member then
+			return -- bu arada isten ayrildi
+		end
+		-- Noktada kisa bir mola: durmadan yuruyen bir NPC huzursuz
+		-- gorunuyor.
+		task.delay(1.5 + math.random() * 2.5, function()
+			if members[member.id] == member then
+				sendToNext(member)
+			end
+		end)
+	end)
+end
+
+--- Klinik kurulunca cagriliyor: devriye rotasini ve klasoru hazirlar.
+function StaffFactory.start(parent: Instance)
+	waypoints = patrolPoints()
+	if folder == nil then
+		local created = Instance.new(&quot;Folder&quot;)
+		created.Name = &quot;Personel&quot;
+		created.Parent = parent
+		folder = created
+	end
+	if running then
+		return
+	end
+	-- Personel de sahipler gibi OwnerFactory'nin kendi dongusunde
+	-- animasyon aliyor; burada ayri bir Heartbeat'e gerek yok.
+	running = true
+end
+
+--- Personeli klinige ekler. Zaten varsa hicbir sey yapmiyor.
+function StaffFactory.hire(id: string): boolean
+	if members[id] ~= nil or folder == nil then
+		return false
+	end
+	local entry = byId[id]
+	if entry == nil then
+		return false
+	end
+
+	local spawnAt = if #waypoints &gt; 0 then waypoints[1] else Vector3.new(0, clinicPlan.floorY, 0)
+	local owner = OwnerFactory.create(
+		CFrame.new(spawnAt),
+		entry.nameKey,
+		folder,
+		Build.color(entry.coat)
+	)
+	-- Personelin memnuniyet olcusu yok: o cubuk sahibin sabri icin.
+	owner.meter.Visible = false
+	OwnerFactory.register(owner)
+
+	local member: Member = { id = id, owner = owner, waypoint = 1 }
+	members[id] = member
+	sendToNext(member)
+	return true
+end
+
+--- Personeli klinikten cikarir (isten ayrilma ya da oyuncu ayrilmasi).
+function StaffFactory.dismiss(id: string): boolean
+	local member = members[id]
+	if member == nil then
+		return false
+	end
+	members[id] = nil
+	OwnerFactory.unregister(member.owner)
+	member.owner.model:Destroy()
+	return true
+end
+
+--- Klinikte olmasi gereken personeli getirir, gerekmeyeni gonderir.
+--- Cok oyunculuda kimin ise aldigi onemli degil: klinikte bir
+--- resepsiyonist ya vardir ya yoktur.
+function StaffFactory.sync(wanted: { [string]: boolean })
+	for id in byId do
+		local shouldExist = wanted[id] == true
+		local exists = members[id] ~= nil
+		if shouldExist and not exists then
+			StaffFactory.hire(id)
+		elseif not shouldExist and exists then
+			StaffFactory.dismiss(id)
+		end
+	end
+end
+
+--- Klinikteki personel sayisi (SelfTest olcuyor).
+function StaffFactory.count(): number
+	local total = 0
+	for _ in members do
+		total += 1
+	end
+	return total
+end
+
+return StaffFactory
+</ProtectedString>
+					</Properties>
+				</Item>
 			</Item>
 		</Item>
 	</Item>
-	<Item class="StarterPlayer" referent="RBX61">
+	<Item class="StarterPlayer" referent="RBX64">
 		<Properties>
 			<string name="Name">StarterPlayer</string>
 		</Properties>
-		<Item class="StarterPlayerScripts" referent="RBX62">
+		<Item class="StarterPlayerScripts" referent="RBX65">
 			<Properties>
 				<string name="Name">StarterPlayerScripts</string>
 			</Properties>
-			<Item class="LocalScript" referent="RBX63">
+			<Item class="LocalScript" referent="RBX66">
 				<Properties>
 					<string name="Name">VetClient</string>
 					<ProtectedString name="Source">--!strict
@@ -18440,7 +19150,7 @@ end)
 print(&quot;[Veteriner] istemci hazir.&quot;)
 </ProtectedString>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX64">
+				<Item class="ModuleScript" referent="RBX67">
 					<Properties>
 						<string name="Name">Camera</string>
 						<ProtectedString name="Source">--!strict
@@ -18691,7 +19401,7 @@ return Camera
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX65">
+				<Item class="ModuleScript" referent="RBX68">
 					<Properties>
 						<string name="Name">Chart</string>
 						<ProtectedString name="Source">--!strict
@@ -19082,7 +19792,7 @@ return Chart
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX66">
+				<Item class="ModuleScript" referent="RBX69">
 					<Properties>
 						<string name="Name">Crosshair</string>
 						<ProtectedString name="Source">--!strict
@@ -19230,7 +19940,7 @@ return Crosshair
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX67">
+				<Item class="ModuleScript" referent="RBX70">
 					<Properties>
 						<string name="Name">DiagnosisPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -19420,7 +20130,7 @@ return DiagnosisPanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX68">
+				<Item class="ModuleScript" referent="RBX71">
 					<Properties>
 						<string name="Name">Fps</string>
 						<ProtectedString name="Source">--!strict
@@ -19536,7 +20246,7 @@ return Fps
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX69">
+				<Item class="ModuleScript" referent="RBX72">
 					<Properties>
 						<string name="Name">Hud</string>
 						<ProtectedString name="Source">--!strict
@@ -20021,7 +20731,7 @@ return Hud
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX70">
+				<Item class="ModuleScript" referent="RBX73">
 					<Properties>
 						<string name="Name">LobbyPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -20311,7 +21021,7 @@ return LobbyPanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX71">
+				<Item class="ModuleScript" referent="RBX74">
 					<Properties>
 						<string name="Name">Notify</string>
 						<ProtectedString name="Source">--!strict
@@ -20497,7 +21207,7 @@ return Notify
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX72">
+				<Item class="ModuleScript" referent="RBX75">
 					<Properties>
 						<string name="Name">ProgressPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -20780,7 +21490,7 @@ return ProgressPanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX73">
+				<Item class="ModuleScript" referent="RBX76">
 					<Properties>
 						<string name="Name">SettingsPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -21053,7 +21763,7 @@ return SettingsPanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX74">
+				<Item class="ModuleScript" referent="RBX77">
 					<Properties>
 						<string name="Name">ShopPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -21100,7 +21810,7 @@ type Entry = {
 }
 
 --- Tek bir magaza satiri: ikon, ad, aciklama, durum/fiyat.
-local function entryCard(parent: Instance, order: number, entry: Entry)
+local function entryCard(parent: Instance, order: number, entry: Entry): Frame
 	local dim = entry.locked or entry.owned
 	local card = Theme.card({
 		name = entry.id,
@@ -21177,6 +21887,8 @@ local function entryCard(parent: Instance, order: number, entry: Entry)
 			onClick = entry.onBuy,
 		})
 	end
+
+	return card
 end
 
 --- Sekme dugmesi. Secili sekme dolgulu, digerleri saydam.
@@ -21184,7 +21896,7 @@ local function tabButton(parent: Instance, id: string, labelKey: string, iconNam
 	local button = Theme.button({
 		name = id,
 		text = &quot;&quot;,
-		size = UDim2.fromOffset(168, 34),
+		size = UDim2.fromOffset(128, 34),
 		color = Theme.color.panelLight,
 		layoutOrder = order,
 		parent = parent,
@@ -21271,6 +21983,7 @@ function ShopPanel.create(parent: ScreenGui)
 		tools = tabButton(tabRow, &quot;tools&quot;, &quot;shop.tools&quot;, &quot;tool&quot;, 1),
 		upgrades = tabButton(tabRow, &quot;upgrades&quot;, &quot;shop.upgrades&quot;, &quot;shop&quot;, 2),
 		decor = tabButton(tabRow, &quot;decor&quot;, &quot;shop.decor&quot;, &quot;decor&quot;, 3),
+		staff = tabButton(tabRow, &quot;staff&quot;, &quot;shop.staff&quot;, &quot;queue&quot;, 4),
 	}
 
 	Theme.divider(panel, 0).Position = UDim2.new(0, Theme.space.lg, 0, 92)
@@ -21318,7 +22031,10 @@ function ShopPanel.setTab(id: string)
 	for tabId, tab in widgets.tabs do
 		local active = tabId == id
 		tab.icon = Theme.icon({
-			name = if tabId == &quot;tools&quot; then &quot;tool&quot; elseif tabId == &quot;upgrades&quot; then &quot;shop&quot; else &quot;decor&quot;,
+			name = if tabId == &quot;tools&quot; then &quot;tool&quot;
+				elseif tabId == &quot;upgrades&quot; then &quot;shop&quot;
+				elseif tabId == &quot;staff&quot; then &quot;queue&quot;
+				else &quot;decor&quot;,
 			size = 14,
 			color = if active then Theme.color.accentGlow else Theme.color.textFaint,
 			position = UDim2.fromOffset(Theme.space.md, 10),
@@ -21362,6 +22078,9 @@ function ShopPanel.update(state: any)
 		signature ..= upgrade.id .. (if upgrade.owned then &quot;1&quot; else &quot;0&quot;) .. (if upgrade.locked then &quot;L&quot; else &quot;-&quot;)
 	end
 	for _, item in state.shop.decor or {} do
+		signature ..= item.id .. (if item.owned then &quot;1&quot; else &quot;0&quot;) .. (if item.locked then &quot;L&quot; else &quot;-&quot;)
+	end
+	for _, item in state.shop.staff or {} do
 		signature ..= item.id .. (if item.owned then &quot;1&quot; else &quot;0&quot;) .. (if item.locked then &quot;L&quot; else &quot;-&quot;)
 	end
 	if signature == lastSignature then
@@ -21409,7 +22128,7 @@ function ShopPanel.update(state: any)
 				end,
 			})
 		end
-	else
+	elseif activeTab == &quot;decor&quot; then
 		for index, item in state.shop.decor or {} do
 			local id = item.id
 			count += 1
@@ -21427,6 +22146,39 @@ function ShopPanel.update(state: any)
 				end,
 			})
 		end
+	else
+		for index, item in state.shop.staff or {} do
+			local id = item.id
+			count += 1
+			local card = entryCard(widgets.list, index, {
+				id = id,
+				nameKey = item.nameKey,
+				descKey = item.descKey,
+				price = item.price,
+				owned = item.owned,
+				locked = item.locked,
+				unlockLevel = item.unlockLevel,
+				icon = &quot;queue&quot;,
+				onBuy = function()
+					Net.toServer(&quot;HireStaff&quot;, id)
+				end,
+			})
+			-- GUNLUK MAAS kartin uzerinde yaziyor: personel tek seferlik
+			-- bir yukseltme degil, surekli bir gider. Bunu satin alma
+			-- anindan sonra ogrenmek kotu bir surpriz olurdu.
+			local wage = Theme.label({
+				name = &quot;Maas&quot;,
+				text = Loc.get(&quot;staff.wage&quot;, item.wage),
+				size = UDim2.new(0, 140, 0, 14),
+				position = UDim2.new(0, 44, 1, -18),
+				textSize = Theme.size.micro,
+				bold = true,
+				color = Theme.color.warn,
+				parent = card,
+				zIndex = 3,
+			})
+			wage.TextXAlignment = Enum.TextXAlignment.Left
+		end
 	end
 
 	widgets.empty.Visible = count == 0
@@ -21436,7 +22188,7 @@ return ShopPanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX75">
+				<Item class="ModuleScript" referent="RBX78">
 					<Properties>
 						<string name="Name">SurgeryPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -21797,7 +22549,7 @@ return SurgeryPanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX76">
+				<Item class="ModuleScript" referent="RBX79">
 					<Properties>
 						<string name="Name">Theme</string>
 						<ProtectedString name="Source">--!strict
@@ -22795,7 +23547,7 @@ return Theme
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX77">
+				<Item class="ModuleScript" referent="RBX80">
 					<Properties>
 						<string name="Name">ToolBar</string>
 						<ProtectedString name="Source">--!strict
@@ -23036,7 +23788,7 @@ return ToolBar
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX78">
+				<Item class="ModuleScript" referent="RBX81">
 					<Properties>
 						<string name="Name">ToolGamePanel</string>
 						<ProtectedString name="Source">--!strict
@@ -23494,7 +24246,7 @@ return ToolGamePanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX79">
+				<Item class="ModuleScript" referent="RBX82">
 					<Properties>
 						<string name="Name">TreatmentPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -23733,7 +24485,7 @@ return TreatmentPanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX80">
+				<Item class="ModuleScript" referent="RBX83">
 					<Properties>
 						<string name="Name">ViewModel</string>
 						<ProtectedString name="Source">--!strict
@@ -24118,7 +24870,7 @@ return ViewModel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX81">
+				<Item class="ModuleScript" referent="RBX84">
 					<Properties>
 						<string name="Name">WardPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -24398,19 +25150,19 @@ return WardPanel
 			</Item>
 		</Item>
 	</Item>
-	<Item class="StarterGui" referent="RBX82">
+	<Item class="StarterGui" referent="RBX85">
 		<Properties>
 			<string name="Name">StarterGui</string>
 			<bool name="ResetPlayerGuiOnSpawn">false</bool>
 		</Properties>
 	</Item>
-	<Item class="Players" referent="RBX83">
+	<Item class="Players" referent="RBX86">
 		<Properties>
 			<string name="Name">Players</string>
 			<bool name="CharacterAutoLoads">false</bool>
 		</Properties>
 	</Item>
-	<Item class="SoundService" referent="RBX84">
+	<Item class="SoundService" referent="RBX87">
 		<Properties>
 			<string name="Name">SoundService</string>
 		</Properties>

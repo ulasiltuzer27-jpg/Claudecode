@@ -71,6 +71,8 @@ TREATMENTS = {t["id"]: t for t in load("treatments.json")["treatments"]}
 TOOLS = load("tools.json")["tools"]
 SYMPTOMS = {s["id"]: s for s in load("symptoms.json")["symptoms"]}
 UPGRADES = load("upgrades.json")["upgrades"]
+STAFF = load("staff.json")["staff"]
+DAYCYCLE = load("daycycle.json")
 SURGERY = load("treatments.json")["surgery"]
 
 LEVELS = ECONOMY["levels"]
@@ -195,6 +197,12 @@ def simulate(competent: bool, buy_things: bool, patients: int = 4000, seed: int 
     reputation = float(ECONOMY["startingReputation"])
     owned_tools = {t["id"] for t in TOOLS if t["price"] == 0 and t["unlockLevel"] <= 1}
     owned_upgrades: set[str] = set()
+    owned_staff: set[str] = set()
+    # Maas GUNLUK kesiliyor; simulasyon gecen sureyi zaten tutuyor, bu
+    # yuzden "kac gun gecti" oradan cikiyor.
+    day_seconds = DAYCYCLE["dayMinutes"] * 60
+    wages_paid = 0.0
+    paid_days = 0
     elapsed = 0.0
     min_money = money
     level_at_patient = {1: 0}
@@ -228,6 +236,24 @@ def simulate(competent: bool, buy_things: bool, patients: int = 4000, seed: int 
 
         service = service_seconds(condition, owned_tools)
         elapsed += max(arrival_seconds(reputation, arrival_scale), service)
+
+        # ── Gunluk maas ───────────────────────────────────────────────
+        # Personel tek seferlik bir yukseltme DEGIL, surekli bir gider.
+        # Modellenmezse ilerleme egrisi oldugundan iyi cikar ve kimse
+        # fark etmez.
+        while elapsed >= (paid_days + 1) * day_seconds:
+            paid_days += 1
+            for member in sorted(
+                (s for s in STAFF if s["id"] in owned_staff),
+                key=lambda s: -s["dailyWage"],
+            ):
+                if money >= member["dailyWage"]:
+                    money -= member["dailyWage"]
+                    wages_paid += member["dailyWage"]
+                else:
+                    # Maasi odenemeyen personel isten ayriliyor
+                    # (Staff.payWages ile ayni kural).
+                    owned_staff.discard(member["id"])
 
         if not solvable:
             reputation = clamp_reputation(reputation + ECONOMY["reputation"]["timeout"])
@@ -305,6 +331,17 @@ def simulate(competent: bool, buy_things: bool, patients: int = 4000, seed: int 
                     money -= upgrade["cost"]
                     owned_upgrades.add(upgrade["id"])
 
+            # Personel en son: aletler ve yukseltmeler bittikten sonra
+            # biriken paraya yer aciyor. Ise alirken ILK GUNUN MAASI da
+            # ayriliyor (Staff.hire ile ayni kural).
+            for member in sorted(STAFF, key=lambda s: s["hireCost"]):
+                if member["id"] in owned_staff or member["unlockLevel"] > level:
+                    continue
+                needed = reserve + saving_for + member["dailyWage"]
+                if money - member["hireCost"] >= needed:
+                    money -= member["hireCost"]
+                    owned_staff.add(member["id"])
+
         if (
             level >= MAX_LEVEL
             and len(owned_tools) == len(TOOLS)
@@ -322,6 +359,8 @@ def simulate(competent: bool, buy_things: bool, patients: int = 4000, seed: int 
         "patients": index,
         "tools": owned_tools,
         "upgrades": owned_upgrades,
+        "staff": owned_staff,
+        "wages": wages_paid,
         "level_at_patient": level_at_patient,
         "level_at_time": level_at_time,
         "tool_bought_at": tool_bought_at,
@@ -363,6 +402,28 @@ def main() -> int:
     check("duzgun oynayanin parasi negatife dusmuyor", good["min_money"] >= 0)
     check("butun aletler satin alinabiliyor", len(good["tools"]) == len(TOOLS))
     check("butun yukseltmeler satin alinabiliyor", len(good["upgrades"]) == len(UPGRADES))
+
+    # ── Personel ──────────────────────────────────────────────────────
+    # Personel gec oyundaki para yigininin karsiligi. Iki yonlu denetim:
+    # (a) hepsi ise alinabilmeli - alinamayan personel olu icerik olur;
+    # (b) maaslar GERCEKTEN kesilmeli - kesilmiyorsa personel bedava bir
+    # yukseltmeye donusmus demektir ve musluk calismiyor.
+    check("butun personel ise alinabiliyor", len(good["staff"]) == len(STAFF))
+    check("maaslar gercekten kesiliyor", good["wages"] > 0)
+    check("maaslar oyuncuyu batirmiyor", good["min_money"] >= 0)
+    check(
+        "maas gideri kazancin tamamini yemiyor",
+        good["wages"] < good["money"] + good["wages"],
+    )
+    for member in STAFF:
+        check(
+            f"personel '{member['id']}' gunluk maasi ise alma bedelinin altinda",
+            0 < member["dailyWage"] < member["hireCost"],
+        )
+        check(
+            f"personel '{member['id']}' acilis seviyesi egrinin icinde",
+            1 <= member["unlockLevel"] <= MAX_LEVEL,
+        )
 
     for tool in TOOLS:
         if tool["price"] == 0:
@@ -438,7 +499,8 @@ def main() -> int:
     print(
         f"Sonuc: {good['patients']} hasta · {int(good['money'])} TL · "
         f"{int(good['xp'])} XP · itibar {int(good['reputation'])} · "
-        f"{good['elapsed'] / 3600:.1f} saat"
+        f"{good['elapsed'] / 3600:.1f} saat · "
+        f"{len(good['staff'])}/{len(STAFF)} personel, {int(good['wages'])} TL maas"
     )
     print()
 

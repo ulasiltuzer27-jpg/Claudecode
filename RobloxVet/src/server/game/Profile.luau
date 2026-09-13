@@ -32,9 +32,9 @@ local toolData = require(Data.tools)
 
 local Profile = {}
 
-local SCHEMA_VERSION = 3
+local SCHEMA_VERSION = 4
 local STORE_NAME = "VetProfile_v1"
--- STORE_NAME degismiyor: sema surumu 3'e ciksa da ESKI KAYITLAR OKUNMAYA
+-- STORE_NAME degismiyor: sema surumu 4'e ciksa da ESKI KAYITLAR OKUNMAYA
 -- devam etsin. migrate() eksik alanlari varsayilanla dolduruyor; store'u
 -- degistirmek herkesin ilerlemesini silmek demek olurdu.
 local KEY_PREFIX = "player_"
@@ -93,6 +93,9 @@ export type Data = {
 	-- Satin alinmis dekorasyon (tema + sus esyasi). Sema 3 ile geldi;
 	-- eski kayitlarda bulunmuyor, migrate() bos tabloyla dolduruyor.
 	decor: { [string]: boolean },
+	-- Ise alinmis personel. Sema 4 ile geldi; eski kayitlarda yok,
+	-- migrate() bos tabloyla dolduruyor.
+	staff: { [string]: boolean },
 	stats: Stats,
 	species: { [string]: boolean },
 	achievements: { [string]: boolean },
@@ -180,6 +183,7 @@ local function defaultData(): Data
 		tools = starterTools(),
 		upgrades = {},
 		decor = starterDecor(),
+		staff = {},
 		stats = defaultStats(),
 		species = {},
 		achievements = {},
@@ -221,6 +225,13 @@ local function migrate(raw: any): Data
 		for id, owned in raw.decor do
 			if owned == true then
 				result.decor[id] = true
+			end
+		end
+	end
+	if type(raw.staff) == "table" then
+		for id, hired in raw.staff do
+			if hired == true then
+				result.staff[id] = true
 			end
 		end
 	end

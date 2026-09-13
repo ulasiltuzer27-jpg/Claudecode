@@ -286,6 +286,67 @@ def main() -> int:
         for key in upgrade["effect"]:
             check(f"yukseltme '{upgrade['id']}' bilinen etki kullaniyor: {key}", key in declared)
 
+    # 9a2. Personel (data/staff.json)
+    #
+    # Yukseltmelerdeki kalibin aynisi: veri ile KODUN OKUDUGU etki
+    # kumesi ayni olmak zorunda. Biri digerinden kayarsa etki sessizce
+    # uygulanmaz ve oyuncu parasini bosa vermis olur.
+    staff_file = load("staff.json")
+    staff_list = staff_file["staff"]
+    staff_keys = set(staff_file["effectKeys"].keys())
+    with open(os.path.join(ROOT, "src", "server", "game", "Staff.luau"), "r", encoding="utf-8") as handle:
+        staff_src = handle.read()
+    staff_code_keys: set[str] = set()
+    for table_name in ("ADDITIVE", "MULTIPLICATIVE"):
+        found = re.search(rf"local {table_name} = \{{([^}}]*)\}}", staff_src)
+        if found:
+            staff_code_keys |= set(re.findall(r"(\w+)\s*=\s*true", found.group(1)))
+    check("staff.json effectKeys ile Staff.luau ayni kumeyi tanimliyor", staff_keys == staff_code_keys)
+
+    clinic_scoped = {
+        key for key, spec in staff_file["effectKeys"].items() if spec["scope"] == "clinic"
+    }
+    code_clinic = set()
+    found = re.search(r"local CLINIC_WIDE = \{([^}]*)\}", staff_src)
+    if found:
+        code_clinic = set(re.findall(r"(\w+)\s*=\s*true", found.group(1)))
+    check("staff.json 'clinic' kapsami Staff.luau ile ayni", clinic_scoped == code_clinic)
+
+    staff_ids: set[str] = set()
+    for member in staff_list:
+        identifier = member["id"]
+        check(f"personel '{identifier}' kimligi tekil", identifier not in staff_ids)
+        staff_ids.add(identifier)
+        check(f"personel '{identifier}' adi tr.json'da var", member["nameKey"] in strings)
+        check(f"personel '{identifier}' aciklamasi tr.json'da var", member["descKey"] in strings)
+        check(f"personel '{identifier}' ise alma bedeli pozitif", member["hireCost"] > 0)
+        check(
+            f"personel '{identifier}' gunluk maasi ise alma bedelinden kucuk",
+            0 < member["dailyWage"] < member["hireCost"],
+        )
+        check(
+            f"personel '{identifier}' acilis seviyesi egrinin icinde",
+            1 <= member["unlockLevel"] <= level_max,
+        )
+        check(f"personel '{identifier}' en az bir etki tanimliyor", len(member["effect"]) > 0)
+        for key in member["effect"]:
+            check(f"personel '{identifier}' bilinen etki kullaniyor: {key}", key in staff_keys)
+        check(
+            f"personel '{identifier}' onluk rengi 3 kanal, 0-255",
+            len(member["coat"]) == 3 and all(0 <= value <= 255 for value in member["coat"]),
+        )
+
+    # Devriye noktalari binanin icinde olmali: disarida kalan bir nokta
+    # personeli duvardan gecirip bahceye yollardi.
+    bounds = clinic["bounds"]
+    for point in staff_file["patrol"]:
+        check(
+            f"devriye noktasi {point} binanin icinde",
+            bounds["min"][0] <= point[0] <= bounds["max"][0]
+            and bounds["min"][1] <= point[1] <= bounds["max"][1],
+        )
+    check("devriye rotasi en az uc noktali", len(staff_file["patrol"]) >= 3)
+
     # 9b. Dekorasyon (data/decor.json)
     #
     # Dekor iki kaynaga birden bagli: metinleri tr.json'da, sus esyalarinin

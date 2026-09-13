@@ -1,0 +1,68 @@
+{
+  "_comment": "(VERI) Ise alinabilen personel. Gec oyunda biriken paraya bir yer aciyor ve GUNLUK MAASLA ekonomiye bir musluk koyuyor.",
+  "_maas_notu": "Maas her oyun gunu (data/daycycle.json -> dayMinutes) sonunda kesiliyor. Parasi yetmeyen oyuncunun personeli ISTEN AYRILIYOR ve bildirim gidiyor - sessizce calismaya devam etmiyor. Bu, personelin bedava bir yukseltme degil SUREKLI BIR GIDER olmasini sagliyor.",
+  "_etki_notu": "effectKeys, Staff.luau'nun okudugu kume ile AYNI olmak zorunda; tools/verify_data.py ikisini karsilastiriyor. 'clinic' isaretli etkiler binaya isliyor ve cok oyunculuda ONLINE oyuncularin en iyisi kazaniyor (yukseltmelerdeki CLINIC_WIDE kuralinin aynisi); digerleri yalnizca o oyuncuya isliyor.",
+  "effectKeys": {
+    "queueSlots": { "kind": "additive", "scope": "clinic" },
+    "stressRelief": { "kind": "additive", "scope": "clinic" },
+    "minigameScale": { "kind": "multiplicative", "scope": "player" },
+    "penaltyScale": { "kind": "multiplicative", "scope": "player" }
+  },
+  "staff": [
+    {
+      "id": "janitor",
+      "nameKey": "staff.janitor",
+      "descKey": "staff.janitor.desc",
+      "order": 1,
+      "hireCost": 1500,
+      "dailyWage": 120,
+      "unlockLevel": 3,
+      "coat": [92, 132, 168],
+      "effect": { "penaltyScale": 0.7 }
+    },
+    {
+      "id": "receptionist",
+      "nameKey": "staff.receptionist",
+      "descKey": "staff.receptionist.desc",
+      "order": 2,
+      "hireCost": 2600,
+      "dailyWage": 190,
+      "unlockLevel": 4,
+      "coat": [206, 158, 96],
+      "effect": { "queueSlots": 1 }
+    },
+    {
+      "id": "nurse",
+      "nameKey": "staff.nurse",
+      "descKey": "staff.nurse.desc",
+      "order": 3,
+      "hireCost": 4200,
+      "dailyWage": 280,
+      "unlockLevel": 6,
+      "coat": [118, 190, 176],
+      "effect": { "stressRelief": 0.8 }
+    },
+    {
+      "id": "technician",
+      "nameKey": "staff.technician",
+      "descKey": "staff.technician.desc",
+      "order": 4,
+      "hireCost": 6200,
+      "dailyWage": 360,
+      "unlockLevel": 8,
+      "coat": [168, 156, 208],
+      "effect": { "minigameScale": 1.35 }
+    }
+  ],
+  "_devriye_notu": "Personelin klinikte dolastigi rota. Noktalar odalarin ortasindan geciyor; carpisma yok, duz hatlarla yuruyorlar (hayvanlarla ayni kural).",
+  "patrol": [
+    [-20, -12],
+    [-4, -8],
+    [14, -14],
+    [24, 6],
+    [0, 8],
+    [-26, 6],
+    [-20, 22],
+    [10, 22]
+  ]
+}

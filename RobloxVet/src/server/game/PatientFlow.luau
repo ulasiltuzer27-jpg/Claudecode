@@ -37,6 +37,7 @@ local Diagnosis = require(script.Parent.Diagnosis)
 local Economy = require(script.Parent.Economy)
 local Leaderboard = require(script.Parent.Leaderboard)
 local Profile = require(script.Parent.Profile)
+local Staff = require(script.Parent.Staff)
 local Surgery = require(script.Parent.Surgery)
 local Tasks = require(script.Parent.Tasks)
 local ToolGame = require(script.Parent.ToolGame)
@@ -122,8 +123,11 @@ local function highestLevel(): number
 end
 
 local function queueSlotCount(): number
-	local clinicEffects = Upgrades.clinicEffects(Players:GetPlayers())
-	local total = economy.arrival.queueSlots + clinicEffects.queueSlots
+	local players = Players:GetPlayers()
+	local clinicEffects = Upgrades.clinicEffects(players)
+	-- Resepsiyonist de bekleme yeri aciyor: yukseltmeyle ayni kanal.
+	local staffEffects = Staff.clinicEffects(players)
+	local total = economy.arrival.queueSlots + clinicEffects.queueSlots + staffEffects.queueSlots
 	local available = if clinic ~= nil then #clinic.queuePoints else 0
 	return math.min(total, available)
 end
@@ -344,6 +348,11 @@ local function stateSnapshot(player: Player): any
 		return a.order < b.order
 	end)
 
+	-- Magaza goruntusu: aletler/yukseltmeler/dekor Upgrades'ten,
+	-- personel Staff'tan. Upgrades'in personeli tanimasi gerekmiyor.
+	local shopSnapshot = Upgrades.shopSnapshot(data)
+	shopSnapshot.staff = Staff.shopSnapshot(data)
+
 	local effects = Upgrades.effectsOf(data)
 	local treatments = {}
 	for _, treatment in Treatment.all() do
@@ -376,7 +385,7 @@ local function stateSnapshot(player: Player): any
 		treatments = treatments,
 		queueWaiting = waitingCount(),
 		queueSlots = queueSlotCount(),
-		shop = Upgrades.shopSnapshot(data),
+		shop = shopSnapshot,
 		-- Ayarlar profilde saklaniyor; istemci acilista bunlari alip
 		-- kamerayi ona gore kuruyor.
 		settings = data.settings,
@@ -1017,7 +1026,10 @@ function PatientFlow.useTool(player: Player, toolId: string)
 			return -- bir mini-oyun zaten acik
 		end
 		local patientId = patient.id
-		local payload = ToolGame.begin(player, patientId, toolId, kind, function(ok: boolean, reasonKey: string)
+		-- Teknisyen mini-oyun pencerelerini genisletiyor: aleti kullanan
+		-- OYUNCUYA isliyor, klinige degil.
+		local scale = Staff.effectsOf(entry.data).minigameScale
+		local payload = ToolGame.begin(player, patientId, toolId, kind, scale, function(ok: boolean, reasonKey: string)
 			Net.toPlayer("ToolGameEnd", player, ok, reasonKey)
 			local current = patients[patientId]
 			if current == nil or current.vet ~= player then
@@ -1105,7 +1117,12 @@ function PatientFlow.submitDiagnosis(player: Player, conditionId: string)
 		Audio.play("animal" .. patient.animalId:sub(1, 1):upper() .. patient.animalId:sub(2), patient.rig.root)
 		notify(player, "good", "notify.diagnosisCorrect", { condition.nameKey })
 	else
-		data.reputation = Economy.clampReputation(data.reputation + economy.reputation.wrongDiagnosis)
+		-- Temizlikci itibar cezasini yumusatiyor: hata yine hata ama
+		-- klinigin adi o kadar hizli dusmuyor.
+		local penaltyScale = Staff.effectsOf(data).penaltyScale
+		data.reputation = Economy.clampReputation(
+			data.reputation + economy.reputation.wrongDiagnosis * penaltyScale
+		)
 		data.stats.wrong += 1
 		-- Seri tek yanlista sifirlaniyor: "kusursuz" basarimlarinin
 		-- anlami olsun.
@@ -1317,7 +1334,8 @@ local function tickWard()
 			local profile = Profile.get(vet)
 			if profile ~= nil then
 				profile.data.reputation = Economy.clampReputation(
-					profile.data.reputation + ward.missedDoseReputation
+					profile.data.reputation
+						+ ward.missedDoseReputation * Staff.effectsOf(profile.data).penaltyScale
 				)
 				Profile.markDirty(vet)
 			end
@@ -1551,6 +1569,9 @@ end
 
 local function tickVitals(dt: number)
 	local config = economy.patient
+	-- Hemsire butun klinigin stresini dusuruyor: tek bir hastaya degil,
+	-- odadaki herkese isliyor.
+	local staffEffects = Staff.clinicEffects(Players:GetPlayers())
 	for _, patient in patients do
 		if patient.state == "leaving" then
 			continue
@@ -1572,7 +1593,8 @@ local function tickVitals(dt: number)
 
 		-- Stres kendiliginden yavas yavas duser.
 		if patient.stress > 0 then
-			patient.stress = math.clamp(patient.stress - config.stressDecayPerSecond * dt, 0, 100)
+			local decay = config.stressDecayPerSecond + staffEffects.stressRelief
+			patient.stress = math.clamp(patient.stress - decay * dt, 0, 100)
 			AnimalAnimator.setStress(patient.rig, patient.stress)
 		end
 

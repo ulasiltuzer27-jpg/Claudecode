@@ -42,7 +42,7 @@ type Entry = {
 }
 
 --- Tek bir magaza satiri: ikon, ad, aciklama, durum/fiyat.
-local function entryCard(parent: Instance, order: number, entry: Entry)
+local function entryCard(parent: Instance, order: number, entry: Entry): Frame
 	local dim = entry.locked or entry.owned
 	local card = Theme.card({
 		name = entry.id,
@@ -119,6 +119,8 @@ local function entryCard(parent: Instance, order: number, entry: Entry)
 			onClick = entry.onBuy,
 		})
 	end
+
+	return card
 end
 
 --- Sekme dugmesi. Secili sekme dolgulu, digerleri saydam.
@@ -126,7 +128,7 @@ local function tabButton(parent: Instance, id: string, labelKey: string, iconNam
 	local button = Theme.button({
 		name = id,
 		text = "",
-		size = UDim2.fromOffset(168, 34),
+		size = UDim2.fromOffset(128, 34),
 		color = Theme.color.panelLight,
 		layoutOrder = order,
 		parent = parent,
@@ -213,6 +215,7 @@ function ShopPanel.create(parent: ScreenGui)
 		tools = tabButton(tabRow, "tools", "shop.tools", "tool", 1),
 		upgrades = tabButton(tabRow, "upgrades", "shop.upgrades", "shop", 2),
 		decor = tabButton(tabRow, "decor", "shop.decor", "decor", 3),
+		staff = tabButton(tabRow, "staff", "shop.staff", "queue", 4),
 	}
 
 	Theme.divider(panel, 0).Position = UDim2.new(0, Theme.space.lg, 0, 92)
@@ -260,7 +263,10 @@ function ShopPanel.setTab(id: string)
 	for tabId, tab in widgets.tabs do
 		local active = tabId == id
 		tab.icon = Theme.icon({
-			name = if tabId == "tools" then "tool" elseif tabId == "upgrades" then "shop" else "decor",
+			name = if tabId == "tools" then "tool"
+				elseif tabId == "upgrades" then "shop"
+				elseif tabId == "staff" then "queue"
+				else "decor",
 			size = 14,
 			color = if active then Theme.color.accentGlow else Theme.color.textFaint,
 			position = UDim2.fromOffset(Theme.space.md, 10),
@@ -304,6 +310,9 @@ function ShopPanel.update(state: any)
 		signature ..= upgrade.id .. (if upgrade.owned then "1" else "0") .. (if upgrade.locked then "L" else "-")
 	end
 	for _, item in state.shop.decor or {} do
+		signature ..= item.id .. (if item.owned then "1" else "0") .. (if item.locked then "L" else "-")
+	end
+	for _, item in state.shop.staff or {} do
 		signature ..= item.id .. (if item.owned then "1" else "0") .. (if item.locked then "L" else "-")
 	end
 	if signature == lastSignature then
@@ -351,7 +360,7 @@ function ShopPanel.update(state: any)
 				end,
 			})
 		end
-	else
+	elseif activeTab == "decor" then
 		for index, item in state.shop.decor or {} do
 			local id = item.id
 			count += 1
@@ -368,6 +377,39 @@ function ShopPanel.update(state: any)
 					Net.toServer("BuyDecor", id)
 				end,
 			})
+		end
+	else
+		for index, item in state.shop.staff or {} do
+			local id = item.id
+			count += 1
+			local card = entryCard(widgets.list, index, {
+				id = id,
+				nameKey = item.nameKey,
+				descKey = item.descKey,
+				price = item.price,
+				owned = item.owned,
+				locked = item.locked,
+				unlockLevel = item.unlockLevel,
+				icon = "queue",
+				onBuy = function()
+					Net.toServer("HireStaff", id)
+				end,
+			})
+			-- GUNLUK MAAS kartin uzerinde yaziyor: personel tek seferlik
+			-- bir yukseltme degil, surekli bir gider. Bunu satin alma
+			-- anindan sonra ogrenmek kotu bir surpriz olurdu.
+			local wage = Theme.label({
+				name = "Maas",
+				text = Loc.get("staff.wage", item.wage),
+				size = UDim2.new(0, 140, 0, 14),
+				position = UDim2.new(0, 44, 1, -18),
+				textSize = Theme.size.micro,
+				bold = true,
+				color = Theme.color.warn,
+				parent = card,
+				zIndex = 3,
+			})
+			wage.TextXAlignment = Enum.TextXAlignment.Left
 		end
 	end
 

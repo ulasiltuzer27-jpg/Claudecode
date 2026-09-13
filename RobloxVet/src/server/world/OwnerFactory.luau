@@ -154,10 +154,15 @@ local function buildBubble(root: BasePart): (BillboardGui, TextLabel, Frame)
 end
 
 --- Sahibi kurar. `cframe` ayaklarinin basacagi yer.
-function OwnerFactory.create(cframe: CFrame, hintKey: string, parent: Instance): Owner
+--- Insan rigi kurar.
+---
+--- `coat` verilirse ustu o renge boyaniyor: PERSONEL de ayni rigi
+--- kullaniyor (StaffFactory), yalnizca onlugunun rengi sabit. Ikinci
+--- bir insan rigi yazmak, ayni 40 satiri iki yerde tutmak olurdu.
+function OwnerFactory.create(cframe: CFrame, hintKey: string, parent: Instance, coat: Color3?): Owner
 	local model = Build.model("Sahip", parent)
 	local skin = pick(SKIN)
-	local shirt = pick(SHIRT)
+	local shirt = if coat ~= nil then coat else pick(SHIRT)
 	local trousers = pick(TROUSERS)
 	local hair = pick(HAIR)
 

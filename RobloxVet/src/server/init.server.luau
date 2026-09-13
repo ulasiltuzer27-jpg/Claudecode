@@ -38,6 +38,7 @@ local AnimalAnimator = require(script.world.AnimalAnimator)
 local Clinic = require(script.world.Clinic)
 local DayCycle = require(script.world.DayCycle)
 local Decor = require(script.world.Decor)
+local StaffFactory = require(script.world.StaffFactory)
 local Doors = require(script.world.Doors)
 local Lobby = require(script.world.Lobby)
 local OwnerFactory = require(script.world.OwnerFactory)
@@ -47,6 +48,7 @@ local Leaderboard = require(script.game.Leaderboard)
 local Matchmaking = require(script.game.Matchmaking)
 local PatientFlow = require(script.game.PatientFlow)
 local Profile = require(script.game.Profile)
+local Staff = require(script.game.Staff)
 local Surgery = require(script.game.Surgery)
 local Tasks = require(script.game.Tasks)
 local ToolGame = require(script.game.ToolGame)
@@ -170,6 +172,7 @@ local function startClinic()
 		-- basliyor. Ters sirada ilk gecede hicbir lamba yanmazdi.
 		DayCycle.collectLamps((clinicBuilt :: Clinic.Built).model)
 		DayCycle.start()
+		StaffFactory.start((clinicBuilt :: Clinic.Built).model)
 		AnimalAnimator.start()
 		OwnerFactory.start()
 		PatientFlow.start(clinicBuilt :: Clinic.Built)
@@ -265,6 +268,61 @@ local function refreshDecor()
 	Decor.refresh(bags)
 end
 
+--- Klinikteki personeli online oyuncularin ise aldiklarina gore
+--- tazeler. Dekorasyondaki kuralin aynisi: bina ORTAK, bir
+--- resepsiyonist ya vardir ya yoktur.
+local function refreshStaff()
+	if mode ~= "clinic" or clinicBuilt == nil then
+		return
+	end
+	local wanted: { [string]: boolean } = {}
+	for _, player in Players:GetPlayers() do
+		local entry = Profile.get(player)
+		if entry == nil then
+			continue
+		end
+		for id, hired in entry.data.staff do
+			if hired == true then
+				wanted[id] = true
+			end
+		end
+	end
+	StaffFactory.sync(wanted)
+end
+
+--- Gun sonu bordrosu. Maasi odenemeyen personel ISTEN AYRILIYOR ve
+--- oyuncuya bildiriliyor - sessizce bedava calismaya devam etmek,
+--- gunluk maasi anlamsiz kilardi.
+local function payWages(day: number)
+	if mode ~= "clinic" then
+		return
+	end
+	for _, player in Players:GetPlayers() do
+		local entry = Profile.get(player)
+		if entry == nil then
+			continue
+		end
+		local payroll = Staff.payWages(entry.data)
+		if payroll.paid > 0 then
+			Net.toPlayer("Notify", player, "info", "staff.wagesPaid", { payroll.paid, day })
+			Profile.markDirty(player)
+		end
+		for _, id in payroll.quit do
+			local member = Staff.get(id)
+			Net.toPlayer("Notify", player, "bad", "staff.quit", {
+				if member ~= nil then member.nameKey else id,
+			})
+			Profile.markDirty(player)
+		end
+		if payroll.paid > 0 or #payroll.quit > 0 then
+			PatientFlow.pushState(player)
+		end
+	end
+	refreshStaff()
+end
+
+DayCycle.onDayEnded(payWages)
+
 local function onPlayerAdded(player: Player)
 	local entry = Profile.load(player)
 	Leaderboard.attach(player)
@@ -273,8 +331,9 @@ local function onPlayerAdded(player: Player)
 	task.defer(function()
 		if mode == "clinic" then
 			PatientFlow.pushState(player)
-			-- Giren oyuncunun dekoru de klinige isliyor.
+			-- Giren oyuncunun dekoru ve personeli de klinige isliyor.
 			refreshDecor()
+			refreshStaff()
 		else
 			pushLobby(player)
 		end
@@ -288,8 +347,9 @@ Players.PlayerRemoving:Connect(function(player: Player)
 	ToolGame.cancel(player)
 	Matchmaking.leave(player)
 	Validate.forget(player)
-	-- Cikan oyuncunun dekoru da kalkiyor; kalanlarinki duruyor.
+	-- Cikan oyuncunun dekoru ve personeli de kalkiyor.
 	task.defer(refreshDecor)
+	task.defer(refreshStaff)
 end)
 
 for _, player in Players:GetPlayers() do
@@ -401,6 +461,20 @@ local function sanitizeSettings(raw: any, current: any): any
 	return result
 end
 
+bind("HireStaff", function(player: Player, staffId: string)
+	local entry = Profile.get(player)
+	if entry == nil then
+		return
+	end
+	local result = Staff.hire(entry.data, staffId)
+	Net.toPlayer("Notify", player, if result.ok then "good" else "warn", result.reasonKey, result.args)
+	if result.ok then
+		Profile.markDirty(player)
+		-- Personel KLINIGE isliyor: ise alan kisi degil, bina degisiyor.
+		refreshStaff()
+	end
+	PatientFlow.pushState(player)
+end)
 bind("SaveSettings", function(player: Player, raw: any)
 	local entry = Profile.get(player)
 	if entry == nil then
