@@ -41,6 +41,7 @@ local Surgery = require(script.Parent.Surgery)
 local Tasks = require(script.Parent.Tasks)
 local ToolGame = require(script.Parent.ToolGame)
 local Treatment = require(script.Parent.Treatment)
+local Ward = require(script.Parent.Ward)
 local Upgrades = require(script.Parent.Upgrades)
 
 local economy = require(Data.economy)
@@ -457,6 +458,15 @@ local function pushStateAll()
 	end
 end
 
+--- Kogus herkese ayni gorunuyor: padoklar ortak, dolduklarinda herkes
+--- icin dolu. Bu yuzden tek bir goruntu butun oyunculara gidiyor.
+local function pushWard()
+	local snapshot = Ward.snapshot()
+	for _, player in Players:GetPlayers() do
+		Net.toPlayer("WardUpdate", player, snapshot)
+	end
+end
+
 -- ── Hasta uretimi ─────────────────────────────────────────────────────
 
 --- Seviyeye uygun (tur, hastalik) cifti secer. Hicbir cift yoksa nil.
@@ -751,6 +761,86 @@ local function sendAway(patient: Patient, walkOut: boolean)
 			clinic.entranceOutside + Vector3.new(3, 0, -30),
 		})
 	end
+end
+
+--- Bu vaka agir mi? Ameliyat gerektiren ve acil vakalar kogusa yatiyor.
+--- Kural VERIDEN cikiyor (tedavi zinciri), kodda hastalik listesi yok.
+local function needsWard(patient: Patient): boolean
+	if patient.emergency then
+		return true
+	end
+	for _, treatmentId in Treatment.requiredFor(patient.conditionId) do
+		if treatmentId == "surgery" then
+			return true
+		end
+	end
+	return false
+end
+
+--- Hastayi kogusa yatirir. Sahibi evine gidiyor, hayvan padoga
+--- yuruyor. Yatak yoksa `false` doner ve hasta normal taburcu ediliyor -
+--- kogus dolu diye oyuncuyu kilitlemek dogru olmaz.
+local function admitToWard(patient: Patient, vet: Player): boolean
+	if clinic == nil then
+		return false
+	end
+	local animal = AnimalFactory.spec(patient.animalId)
+	local entry = Ward.admit(
+		patient.id,
+		patient.animalId,
+		if animal ~= nil then animal.nameKey else patient.animalId,
+		vet
+	)
+	if entry == nil then
+		return false
+	end
+
+	local bed = clinic.bedPoints[entry.bed]
+	if bed == nil then
+		Ward.release(entry.bed)
+		return false
+	end
+
+	patient.state = "ward"
+	if patient.queueSlot ~= nil then
+		usedQueueSlots[patient.queueSlot] = nil
+		patient.queueSlot = nil
+	end
+	if patient.stationId ~= nil then
+		occupiedStation[patient.stationId] = nil
+		patient.stationId = nil
+	end
+	-- Veteriner serbest kaliyor: yatan hasta masayi mesgul etmiyor,
+	-- bir sonraki hastayi alabiliyor.
+	if activeOf[vet] == patient.id then
+		activeOf[vet] = nil
+	end
+
+	AnimalAnimator.setLimp(patient.rig, 0, 0)
+	AnimalAnimator.walkPath(patient.rig, { bed.Position }, function()
+		local current = patients[patient.id]
+		if current ~= nil then
+			AnimalAnimator.setState(current.rig, "rest")
+		end
+	end)
+
+	-- Sahip evine gidiyor; hayvani iyilesince almaya donuyor.
+	if patient.owner ~= nil then
+		OwnerFactory.say(patient.owner, "hint.wardLeave")
+		OwnerFactory.walkPath(patient.owner, {
+			clinic.entranceInside + Vector3.new(3, 0, 0),
+			clinic.entranceOutside + Vector3.new(3, 0, 0),
+			clinic.entranceOutside + Vector3.new(3, 0, -30),
+		}, function()
+			local current = patients[patient.id]
+			if current ~= nil and current.owner ~= nil then
+				OwnerFactory.unregister(current.owner)
+				current.owner.model:Destroy()
+				current.owner = nil
+			end
+		end)
+	end
+	return true
 end
 
 -- ── Oyuncu eylemleri ──────────────────────────────────────────────────
@@ -1206,6 +1296,110 @@ function PatientFlow.applyTreatment(player: Player, treatmentId: string)
 	end)
 end
 
+--- Kogus turu: kacirilan dozlar ve biten yatislar. Vitals dongusunun
+--- icinden cagriliyor (ayri bir zamanlayici kurmak, ayni isi iki kez
+--- planlamak olurdu).
+local function tickWard()
+	local result = Ward.tick()
+	if #result.missed == 0 and #result.done == 0 then
+		return
+	end
+
+	local ward = economy.ward
+	for _, entry in result.missed do
+		local patient = patients[entry.patientId]
+		if patient ~= nil then
+			patient.health = math.clamp(patient.health + ward.missedDoseHealth, 0, 100)
+			updateNameplate(patient)
+		end
+		local vet = entry.vet
+		if vet ~= nil and vet.Parent ~= nil then
+			local profile = Profile.get(vet)
+			if profile ~= nil then
+				profile.data.reputation = Economy.clampReputation(
+					profile.data.reputation + ward.missedDoseReputation
+				)
+				Profile.markDirty(vet)
+			end
+			notify(vet, "bad", "notify.wardMissed", { entry.nameKey })
+			pushState(vet)
+		end
+	end
+
+	for _, entry in result.done do
+		local patient = patients[entry.patientId]
+		local score = Ward.careScore(entry)
+		local vet = entry.vet
+		if vet ~= nil and vet.Parent ~= nil then
+			local profile = Profile.get(vet)
+			if profile ~= nil then
+				local data = profile.data
+				local previousLevel = data.level
+				-- Yatis ucreti BAKIM PUANIYLA carpiliyor: kogusu unutan
+				-- oyuncu hastayi kaybetmiyor ama parayi da almiyor.
+				local fee = math.floor(ward.boardingFee * score + 0.5)
+				local xpGain = math.floor(ward.boardingXp * score + 0.5)
+				data.money += fee
+				data.xp += xpGain
+				data.stats.earned += fee
+				Tasks.bump(data, "earned", fee)
+				applyLevel(vet, data, previousLevel)
+				settleProgress(vet, data)
+				Profile.markDirty(vet)
+				notify(vet, "good", "notify.wardDone", { entry.nameKey, fee, math.floor(score * 100 + 0.5) })
+				pushState(vet)
+			end
+		end
+		if patient ~= nil then
+			sendAway(patient, true)
+		end
+	end
+
+	pushWard()
+end
+
+--- Yatan hastaya ilac verir. Yakinlik ve zaman penceresi SUNUCUDA
+--- denetleniyor (Ward.giveDose).
+function PatientFlow.giveMedicine(player: Player, bed: number)
+	if bed % 1 ~= 0 or bed < 1 then
+		return
+	end
+	local result = Ward.giveDose(player, bed)
+	if not result.ok then
+		notify(player, "warn", result.reasonKey)
+		return
+	end
+
+	local entry = result.entry
+	if entry == nil then
+		return
+	end
+
+	local ward = economy.ward
+	local patient = patients[entry.patientId]
+	if patient ~= nil then
+		patient.health = math.clamp(patient.health + ward.healthPerDose, 0, 100)
+		patient.stress = math.clamp(patient.stress - 6, 0, 100)
+		AnimalAnimator.setStress(patient.rig, patient.stress)
+		AnimalAnimator.react(patient.rig, "relax")
+		Effects.treatment(patient.rig.model, patient.rig.root.CFrame, "pill")
+		Audio.play("treatPill", patient.rig.root)
+		updateNameplate(patient)
+	end
+
+	local profile = Profile.get(player)
+	if profile ~= nil then
+		profile.data.reputation = Economy.clampReputation(
+			profile.data.reputation + ward.dosedReputation
+		)
+		Profile.markDirty(player)
+		pushState(player)
+	end
+
+	notify(player, "good", "notify.wardDose", { entry.nameKey })
+	pushWard()
+end
+
 function PatientFlow.surgeryInput(player: Player, step: number)
 	local result = Surgery.input(player, step)
 	if result.accepted then
@@ -1320,7 +1514,17 @@ function PatientFlow.discharge(player: Player)
 	settleProgress(player, data)
 
 	Audio.play("discharge", patient.rig.root)
-	sendAway(patient, true)
+
+	-- AGIR VAKA KOGUSA: ameliyat ve acil vakalar kapidan cikmiyor,
+	-- iyilesmesi icin padoga yatiyor. Ucretin geri kalani (yatis
+	-- ucreti) ancak bakim bitince ve BAKIM PUANIYLA carpilarak
+	-- odeniyor - kogusu unutan oyuncu parayi da alamiyor.
+	if needsWard(patient) and admitToWard(patient, player) then
+		notify(player, "info", "notify.wardAdmitted", { animal.nameKey })
+		pushWard()
+	else
+		sendAway(patient, true)
+	end
 	pushState(player)
 	pushChart(player)
 	pushStateAll()
@@ -1329,6 +1533,9 @@ end
 --- Oyuncu ayrildi: hastasini kuyruga geri koymak yerine birakiyoruz ki
 --- baska bir veteriner alabilsin.
 function PatientFlow.playerLeft(player: Player)
+	-- Kogustaki hastalari sahipsiz kaliyor: iyilesip gidiyorlar ama
+	-- ucreti kimse alamiyor.
+	Ward.playerLeft(player)
 	Surgery.cancel(player)
 	local patient = patientOf(player)
 	activeOf[player] = nil
@@ -1346,6 +1553,15 @@ local function tickVitals(dt: number)
 	local config = economy.patient
 	for _, patient in patients do
 		if patient.state == "leaving" then
+			continue
+		end
+		if patient.state == "ward" then
+			-- Yatan hasta iyilesme surecinde: sagligi kendiliginden
+			-- dusmuyor (tedavisi bitti) ve sahibi evde, sabri
+			-- tukenmiyor. Doz zamanlayicisi asagidaki kogus turunde.
+			AnimalAnimator.setStress(patient.rig, patient.stress)
+			AnimalAnimator.lookAt(patient.rig, nil)
+			updateNameplate(patient)
 			continue
 		end
 
@@ -1460,6 +1676,9 @@ function PatientFlow.start(built: Clinic.Built)
 	started = true
 	clinic = built
 
+	-- Kogus yataklari klinikle birlikte kuruluyor.
+	Ward.start(built.bedPoints)
+
 	local folder = Instance.new("Folder")
 	folder.Name = "Hastalar"
 	folder.Parent = workspace
@@ -1496,11 +1715,12 @@ function PatientFlow.start(built: Clinic.Built)
 		end
 	end)
 
-	-- Yasamsal belirtiler
+	-- Yasamsal belirtiler + kogus
 	task.spawn(function()
 		while true do
 			task.wait(VITALS_TICK)
 			tickVitals(VITALS_TICK)
+			tickWard()
 		end
 	end)
 

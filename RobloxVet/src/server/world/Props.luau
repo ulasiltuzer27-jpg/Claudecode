@@ -591,33 +591,56 @@ end
 
 -- ── Kogus ve yikama ───────────────────────────────────────────────────
 
-builders.kennelCage = function(model, origin)
+builders.kennelPen = function(model, origin)
 	local p, d = maker(model, origin), makerDecor(model, origin)
-	p("Taban", Vector3.new(6, 0.4, 4.8), Vector3.new(0, 0.2, 0), C.offWhite)
-	d("TabanPahi", Vector3.new(6.2, 0.16, 5), Vector3.new(0, 0.42, 0), C.shadowWhite)
-	d("Yatak", Vector3.new(4.8, 0.4, 3.6), Vector3.new(0, 0.62, -0.2), C.pad, Enum.Material.Fabric)
-	d("YatakKenari", Vector3.new(5, 0.28, 0.3), Vector3.new(0, 0.75, -2), C.darkPad, Enum.Material.Fabric)
-	p("Tavan", Vector3.new(6, 0.35, 4.8), Vector3.new(0, 5.2, 0), C.offWhite)
-	p("ArkaDuvar", Vector3.new(6, 5, 0.22), Vector3.new(0, 2.7, -2.3), C.white)
-	p("YanDuvar", Vector3.new(0.22, 5, 4.8), Vector3.new(-2.9, 2.7, 0), C.white)
-	p("YanDuvar", Vector3.new(0.22, 5, 4.8), Vector3.new(2.9, 2.7, 0), C.white)
-	-- On yuz: cerceve + dikey parmakliklar + yatay kusaklar
-	d("KapiCercevesi", Vector3.new(6, 0.24, 0.24), Vector3.new(0, 5.05, 2.3), C.darkSteel, Enum.Material.Metal)
-	d("KapiCercevesi", Vector3.new(6, 0.24, 0.24), Vector3.new(0, 0.42, 2.3), C.darkSteel, Enum.Material.Metal)
-	for index = 0, 8 do
-		d("Parmaklik", Vector3.new(0.16, 4.6, 0.16), Vector3.new(-2.6 + index * 0.65, 2.7, 2.3), C.chrome, Enum.Material.Metal)
+	-- KOGUS PADOGU
+	--
+	-- Eskiden burada bes kucuk kafes vardi ve icine hicbir hayvan
+	-- sigmiyordu: en buyuk hastanin ayak izi 6,4 stud, kafesin ici
+	-- 4,8'di. Yatan hasta oynanisi gelince padok gercekten hayvan alacak
+	-- olcuye buyudu (ic olcu 10,4 x 7,4) ve sayi 5'ten 3'e indi.
+	-- `data/props.json` -> `shelter` bu ic olcuyu bildiriyor; yerlesim
+	-- denetimi yatak noktasinin oraya sigdigini olcuyor.
+	p("Taban", Vector3.new(10.8, 0.4, 7.8), Vector3.new(0, 0.2, 0), C.offWhite)
+	d("TabanPahi", Vector3.new(11, 0.16, 8), Vector3.new(0, 0.42, 0), C.shadowWhite)
+	d("Yatak", Vector3.new(7.4, 0.45, 5.2), Vector3.new(0, 0.64, -0.4), C.pad, Enum.Material.Fabric)
+	d("YatakKenari", Vector3.new(7.6, 0.32, 0.35), Vector3.new(0, 0.8, -3), C.darkPad, Enum.Material.Fabric)
+	d("Battaniye", Vector3.new(5.2, 0.12, 3.4), Vector3.new(0.6, 0.88, -0.2), C.towel, Enum.Material.Fabric)
+
+	p("ArkaDuvar", Vector3.new(10.8, 5.6, 0.24), Vector3.new(0, 3, -3.9), C.white)
+	p("YanDuvar", Vector3.new(0.24, 5.6, 7.8), Vector3.new(-5.3, 3, 0), C.white)
+	p("YanDuvar", Vector3.new(0.24, 5.6, 7.8), Vector3.new(5.3, 3, 0), C.white)
+	p("Tavan", Vector3.new(10.8, 0.3, 7.8), Vector3.new(0, 5.85, 0), C.offWhite)
+
+	-- On yuz: cerceve + dikey parmakliklar + yatay kusaklar. Parmaklik
+	-- araligi hayvani gormeye yetecek kadar genis.
+	d("KapiCercevesi", Vector3.new(10.8, 0.26, 0.26), Vector3.new(0, 5.65, 3.9), C.darkSteel, Enum.Material.Metal)
+	d("KapiCercevesi", Vector3.new(10.8, 0.26, 0.26), Vector3.new(0, 0.45, 3.9), C.darkSteel, Enum.Material.Metal)
+	for index = 0, 12 do
+		d("Parmaklik", Vector3.new(0.16, 5.1, 0.16), Vector3.new(-4.9 + index * 0.82, 3, 3.9), C.chrome, Enum.Material.Metal)
 	end
 	for index = 1, 2 do
-		d("Kusak", Vector3.new(5.6, 0.14, 0.14), Vector3.new(0, 1.4 + (index - 1) * 2.4, 2.3), C.chrome, Enum.Material.Metal)
+		d("Kusak", Vector3.new(10.2, 0.16, 0.16), Vector3.new(0, 1.6 + (index - 1) * 2.6, 3.9), C.chrome, Enum.Material.Metal)
 	end
-	d("Mandal", Vector3.new(0.55, 0.45, 0.3), Vector3.new(2.2, 2.7, 2.45), C.darkSteel, Enum.Material.Metal)
-	d("MandalKolu", Vector3.new(0.14, 0.9, 0.14), Vector3.new(2.2, 3.2, 2.5), C.chrome, Enum.Material.Metal)
-	Detail.plate(model, origin * CFrame.new(-2, 5.5, 2.2), 2, 0.6, C.deepTeal, C.white, Loc.get("prop.kennel"))
+	d("Mandal", Vector3.new(0.6, 0.5, 0.32), Vector3.new(4.2, 3, 4.08), C.darkSteel, Enum.Material.Metal)
+	d("MandalKolu", Vector3.new(0.16, 1, 0.16), Vector3.new(4.2, 3.5, 4.14), C.chrome, Enum.Material.Metal)
+
+	Detail.plate(model, origin * CFrame.new(-3.4, 5.95, 3.8), 2.6, 0.7, C.deepTeal, C.white, Loc.get("prop.kennel"))
 	Build.pillar({
-		name = "SuKabi", size = Vector3.new(1, 0.4, 1),
-		cf = origin * CFrame.new(1.9, 0.6, 1.2), color = C.water,
+		name = "SuKabi", size = Vector3.new(1.3, 0.45, 1.3),
+		cf = origin * CFrame.new(3.4, 0.62, 2.2), color = C.water,
 		canCollide = false, castShadow = false, parent = model,
 	})
+	Build.pillar({
+		name = "MamaKabi", size = Vector3.new(1.3, 0.45, 1.3),
+		cf = origin * CFrame.new(3.4, 0.62, 0.6), color = C.steel,
+		material = Enum.Material.Metal,
+		canCollide = false, castShadow = false, parent = model,
+	})
+	-- Serum askisi: yatan hastanin orada TEDAVI GORDUGUNU anlatan detay.
+	d("SerumDiregi", Vector3.new(0.16, 4.4, 0.16), Vector3.new(-4.3, 2.4, 2.4), C.chrome, Enum.Material.Metal)
+	d("SerumKolu", Vector3.new(0.9, 0.14, 0.14), Vector3.new(-3.9, 4.5, 2.4), C.chrome, Enum.Material.Metal)
+	d("SerumTorbasi", Vector3.new(0.8, 1.2, 0.3), Vector3.new(-3.5, 3.9, 2.4), C.water, Enum.Material.Glass)
 end
 
 builders.feedStation = function(model, origin)

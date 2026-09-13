@@ -151,5 +151,18 @@
     }
   ],
   "routineChance": 0.22,
-  "_rutin_notu": "Gelen hastanin RUTIN KONTROL olma olasiligi. Acil vakalar bundan once degerlendiriliyor: bir vaka hem acil hem rutin olamaz."
+  "_rutin_notu": "Gelen hastanin RUTIN KONTROL olma olasiligi. Acil vakalar bundan once degerlendiriliyor: bir vaka hem acil hem rutin olamaz.",
+  "_kogus_notu": "Kogus (yatan hasta). Agir vaka - ameliyat ya da acil - tedavisi bitince kapidan cikmiyor, kogusa yatiyor. doseIntervalSeconds'da bir ilac saati geliyor; doseWindowSeconds pencere disinda verilen doz KACIK sayiliyor. Yatis ucreti bakim puaniyla (verilen doz / beklenen doz) carpiliyor, yani kogusu unutan oyuncu parayi da alamiyor.",
+  "ward": {
+    "recoverySeconds": 150,
+    "doseIntervalSeconds": 30,
+    "doseWindowSeconds": 12,
+    "healthPerDose": 9,
+    "missedDoseHealth": -6,
+    "missedDoseReputation": -3,
+    "dosedReputation": 1.5,
+    "boardingFee": 280,
+    "boardingXp": 34,
+    "radius": 14
+  }
 }

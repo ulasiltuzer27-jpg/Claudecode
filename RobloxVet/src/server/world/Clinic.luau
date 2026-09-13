@@ -36,6 +36,8 @@ export type Built = {
 	stations: Stations,
 	queuePoints: { CFrame },
 	ownerPoints: { CFrame },
+	-- Kogus yataklari: yatan hastanin duracagi yerler (Ward.luau).
+	bedPoints: { CFrame },
 	entranceOutside: Vector3,
 	entranceInside: Vector3,
 	roomOf: { [string]: { min: { number }, max: { number } } },
@@ -366,6 +368,7 @@ function Clinic.build(parent: Instance): Built
 	local stations: Stations = {}
 	local queuePoints: { CFrame } = {}
 	local ownerPoints: { CFrame } = {}
+	local bedPoints: { CFrame } = {}
 	local roomOf = {}
 
 	for _, room in plan.rooms do
@@ -447,6 +450,10 @@ function Clinic.build(parent: Instance): Built
 			table.insert(ownerPoints, CFrame.new(point[1], plan.floorY, point[2]))
 		end
 
+		for _, point in room.bedPoints or {} do
+			table.insert(bedPoints, CFrame.new(point[1], plan.floorY, point[2]))
+		end
+
 		for _, spec in room.props do
 			local origin = CFrame.new(spec.at[1], plan.floorY, spec.at[2])
 				* CFrame.Angles(0, math.rad(spec.rot or 0), 0)
@@ -495,6 +502,7 @@ function Clinic.build(parent: Instance): Built
 		stations = stations,
 		queuePoints = queuePoints,
 		ownerPoints = ownerPoints,
+		bedPoints = bedPoints,
 		entranceOutside = Vector3.new(plan.entrance.outside[1], plan.floorY, plan.entrance.outside[2]),
 		entranceInside = Vector3.new(plan.entrance.inside[1], plan.floorY, plan.entrance.inside[2]),
 		roomOf = roomOf,

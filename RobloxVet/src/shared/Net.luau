@@ -40,6 +40,8 @@ Net.Schema = {
 	ToolGameBegin = { direction = "toClient", args = { "table" } },
 	ToolGameHint = { direction = "toClient", args = { "number" } },
 	ToolGameEnd = { direction = "toClient", args = { "boolean", "string" } },
+	-- Kogus: yatan hastalarin durumu (HUD karti bunu ciziyor).
+	WardUpdate = { direction = "toClient", args = { "table" } },
 
 	-- ── Istemci -> Sunucu ──────────────────────────────────────────────
 	CallNext = { direction = "toServer", args = {} },
@@ -58,6 +60,7 @@ Net.Schema = {
 	LeaveQueue = { direction = "toServer", args = {} },
 	ToolGameProbe = { direction = "toServer", args = { "number", "number" } },
 	ToolGameSubmit = { direction = "toServer", args = { "number", "number" } },
+	GiveMedicine = { direction = "toServer", args = { "number" } },
 }
 
 -- Istemcinin saniyede kac kez gonderebilecegi. Dogrulama sunucuda
@@ -84,6 +87,7 @@ Net.RateLimit = {
 	-- 12 ornek yeterli ve istemci zaten bundan sik yollamıyor.
 	ToolGameProbe = 12,
 	ToolGameSubmit = 6,
+	GiveMedicine = 6,
 }
 
 local folderName = "VetRemotes"

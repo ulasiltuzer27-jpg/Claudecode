@@ -267,18 +267,22 @@
       "againstWall": false
     },
     {
-      "id": "kennelCage",
+      "id": "kennelPen",
       "size": [
-        6.3,
-        5.0,
-        5.9
+        11.0,
+        8.0,
+        6.0
       ],
       "offset": [
         0,
         0
       ],
       "base": 0,
-      "againstWall": true
+      "againstWall": true,
+      "shelter": [
+        10.4,
+        7.4
+      ]
     },
     {
       "id": "feedStation",
@@ -441,5 +445,6 @@
     }
   ],
   "_yuzey_notu": "surface = masanin uzerine hayvan konabilen yuzeyi [uzunluk, genislik]. Buyuk bir hayvan kucuk bir masaya konamaz; PatientFlow bunu denetliyor ve verify_layout her turun EN AZ BIR masaya sigdigini dogruluyor.",
-  "_gecit_notu": "spansDoorway = bu esya bilerek bir kapinin uzerinden geciyor (giris tabelasi bir kemer gibi yolun ustunde duruyor); kapi tikama denetiminden muaf."
+  "_gecit_notu": "spansDoorway = bu esya bilerek bir kapinin uzerinden geciyor (giris tabelasi bir kemer gibi yolun ustunde duruyor); kapi tikama denetiminden muaf.",
+  "_barinak_notu": "`shelter` [genislik, derinlik]: hayvanin ICINDE durdugu esya (kogus padoku). Yatak noktasi bu esyanin icinde kaliyor ve bu bir CAKISMA DEGIL - tools/verify_layout.py yatak noktasini barinagin ic olcusune sigdirip sigmadigini denetliyor, sonra o barinagi cakisma testinden muaf tutuyor. Muafiyet yalnizca o yatagin kendi barinagi icin gecerli: baska bir esya yatak noktasina giremiyor."
 }

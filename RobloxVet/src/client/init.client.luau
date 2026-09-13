@@ -40,6 +40,7 @@ local ToolBar = require(script.ToolBar)
 local ToolGamePanel = require(script.ToolGamePanel)
 local TreatmentPanel = require(script.TreatmentPanel)
 local ViewModel = require(script.ViewModel)
+local WardPanel = require(script.WardPanel)
 
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
@@ -72,6 +73,7 @@ ToolBar.create(screen)
 ShopPanel.create(screen)
 SurgeryPanel.create(screen)
 ToolGamePanel.create(screen)
+WardPanel.create(screen)
 ProgressPanel.create(screen)
 Fps.create(screen)
 SettingsPanel.create(screen)
@@ -82,6 +84,7 @@ Camera.start()
 -- Birinci sahis el/alet modeli kameradan SONRA baslamali: sallanma
 -- verisini Camera.motion()'dan okuyor.
 ViewModel.start()
+WardPanel.start()
 
 -- Butun hazir sesleri bir kez yukle ve tutmayanlari Output'a raporla.
 -- Bu depoyu ureten ortamda Roblox'a erisim yoktu; hangi rbxasset yolunun
@@ -201,6 +204,10 @@ Net.get("ToolResult").OnClientEvent:Connect(function(toolId: string, payload: { 
 	for _, nameKey in payload do
 		Notify.push("good", "notify.symptomFound", { nameKey })
 	end
+end)
+
+Net.get("WardUpdate").OnClientEvent:Connect(function(snapshot: any)
+	WardPanel.update(snapshot)
 end)
 
 Net.get("ToolGameBegin").OnClientEvent:Connect(function(payload: any)

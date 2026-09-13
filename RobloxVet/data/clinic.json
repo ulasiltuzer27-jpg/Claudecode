@@ -636,45 +636,31 @@
       ],
       "props": [
         {
-          "id": "kennelCage",
+          "id": "kennelPen",
           "at": [
-            -36.5,
-            27.1
+            -34,
+            26
           ],
           "rot": 0,
-          "tag": "kennel"
+          "tag": "kennel:1"
         },
         {
-          "id": "kennelCage",
+          "id": "kennelPen",
           "at": [
-            -29.5,
-            27.1
+            -22,
+            26
           ],
-          "rot": 0
+          "rot": 0,
+          "tag": "kennel:2"
         },
         {
-          "id": "kennelCage",
+          "id": "kennelPen",
           "at": [
-            -22.5,
-            27.1
+            -10,
+            26
           ],
-          "rot": 0
-        },
-        {
-          "id": "kennelCage",
-          "at": [
-            -15.5,
-            27.1
-          ],
-          "rot": 0
-        },
-        {
-          "id": "kennelCage",
-          "at": [
-            -8.5,
-            27.1
-          ],
-          "rot": 0
+          "rot": 0,
+          "tag": "kennel:3"
         },
         {
           "id": "feedStation",
@@ -690,6 +676,20 @@
         192,
         186,
         176
+      ],
+      "bedPoints": [
+        [
+          -34,
+          26
+        ],
+        [
+          -22,
+          26
+        ],
+        [
+          -10,
+          26
+        ]
       ]
     },
     {

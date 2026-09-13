@@ -39,6 +39,7 @@ local Matchmaking = require(script.Parent.game.Matchmaking)
 local Economy = require(script.Parent.game.Economy)
 local Profile = require(script.Parent.game.Profile)
 local Tasks = require(script.Parent.game.Tasks)
+local Ward = require(script.Parent.game.Ward)
 local ToolGame = require(script.Parent.game.ToolGame)
 local Treatment = require(script.Parent.game.Treatment)
 local Upgrades = require(script.Parent.game.Upgrades)
@@ -655,6 +656,20 @@ do
 		end
 	end
 	scratch:Destroy()
+
+	-- Kogus: yataklar kurulmus mu ve padoklarin ici hastayi aliyor mu?
+	-- Eski kafeslerin ici (4,8 stud) en buyuk hastanin ayak izinden
+	-- (6,4) kucuktu; sayilar bir daha oyle kaymasin diye olculuyor.
+	local bedTotal = 0
+	for _, room in clinicPlan.rooms do
+		bedTotal += #(room.bedPoints or {})
+	end
+	check(("kogus yataklari kuruldu (%d)"):format(bedTotal), Ward.bedCount() == bedTotal)
+	check("en az bir kogus yatagi var", bedTotal > 0)
+	check("kogus bastan bos", Ward.occupied() == 0)
+	for bed = 1, bedTotal do
+		check(("%d. yatagin yeri tanimli"):format(bed), Ward.bedCFrame(bed) ~= nil)
+	end
 
 	-- Gunduz/gece: sokak lambalari bulunmus mu, carpanlar makul mu.
 	check("sokak lambalari gece dongusune baglandi", DayCycle.lampCount() > 0)

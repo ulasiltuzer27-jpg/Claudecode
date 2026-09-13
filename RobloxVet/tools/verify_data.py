@@ -381,6 +381,33 @@ def main() -> int:
         economy.get("routineChance", 1) < 0.5,
     )
 
+    # 9d. Kogus (yatan hasta)
+    #
+    # Kogus dongusu sayilara bagli: doz araligi iyilesme suresinden uzun
+    # olursa hicbir doz gelmez ve oynanis sessizce kaybolur.
+    ward = economy["ward"]
+    check("kogus iyilesme suresi pozitif", ward["recoverySeconds"] > 0)
+    check(
+        "kogus doz araligi iyilesme suresinden kisa",
+        0 < ward["doseIntervalSeconds"] < ward["recoverySeconds"],
+    )
+    check(
+        "kogus doz penceresi araliktan kisa",
+        0 < ward["doseWindowSeconds"] < ward["doseIntervalSeconds"],
+    )
+    check("kogus dozu saglik kazandiriyor", ward["healthPerDose"] > 0)
+    check("kacirilan doz saglik kaybettiriyor", ward["missedDoseHealth"] < 0)
+    check("kacirilan doz itibar kaybettiriyor", ward["missedDoseReputation"] < 0)
+    check("kogus yatis ucreti pozitif", ward["boardingFee"] > 0)
+    check("kogus yakinlik yaricapi makul", 4 <= ward["radius"] <= 30)
+    for key in ("ward.title", "ward.dose", "ward.doseNow", "ward.doseIn"):
+        check(f"kogus metni tr.json'da var: {key}", key in strings)
+
+    # Kogus yataklari: en az bir yatak olmali, yoksa agir vaka hicbir
+    # zaman kogusa yatmaz ve ozellik sessizce olu kalir.
+    bed_total = sum(len(room.get("bedPoints", [])) for room in clinic["rooms"])
+    check("klinikte en az bir kogus yatagi var", bed_total > 0)
+
     # 10. XP egrisi
     previous = -1
     for row in economy["levels"]:

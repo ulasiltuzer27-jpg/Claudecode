@@ -280,6 +280,17 @@ def main() -> int:
                     not box.overlaps(spot),
                 )
 
+    # 6a-b arasi: BARINAKLAR (kogus padoklari)
+    #
+    # Yatak noktasi padogun ICINDE - bu bir cakisma degil, tasarimin
+    # kendisi. Ama "icinde" demek yetmiyor: hayvanin padogun IC
+    # olcusune sigmasi gerekiyor. Eski kafesler tam olarak burada
+    # kaliyordu (ic olcu 4,8 stud, en buyuk hasta 6,4).
+    shelters = []
+    for room_id, entry, box, budget, room in placed:
+        if budget.get("shelter"):
+            shelters.append((room_id, entry, box, budget))
+
     # 6b. Bekleyen hayvanlar
     #
     # Hayvan bekleme noktasinda hangi yone donuk duracagi belli olmadigi
@@ -303,6 +314,46 @@ def main() -> int:
                 point[0] - radius, point[0] + radius, 0, 4.5,
                 point[1] - radius, point[1] + radius,
             )))
+
+    # Kogus yataklari da bekleyen hayvan gibi denetleniyor, tek farkla:
+    # her yatagin KENDI barinagi cakisma testinden muaf.
+    bed_spots = []
+    for room in clinic["rooms"]:
+        for point in room.get("bedPoints", []):
+            spot = Box(
+                point[0] - radius, point[0] + radius, 0, 4.5,
+                point[1] - radius, point[1] + radius,
+            )
+            owner = None
+            for shelter in shelters:
+                shelter_box = shelter[2]
+                if shelter_box.x0 <= point[0] <= shelter_box.x1 and shelter_box.z0 <= point[1] <= shelter_box.z1:
+                    owner = shelter
+                    break
+            check(f"{room['id']} yatak noktasi {point} bir barinagin icinde", owner is not None)
+            if owner is not None:
+                width, depth = owner[3]["shelter"]
+                at = owner[1]["at"]
+                check(
+                    f"{room['id']} yatak noktasi {point}: en buyuk hasta "
+                    f"'{biggest_wait['id']}' padogun icine sigiyor ({radius * 2:.1f} stud)",
+                    at[0] - width / 2 <= spot.x0 and spot.x1 <= at[0] + width / 2
+                    and at[1] - depth / 2 <= spot.z0 and spot.z1 <= at[1] + depth / 2,
+                )
+            bed_spots.append((room, point, spot, owner))
+
+    for room, point, spot, owner in bed_spots:
+        for placed_entry in placed:
+            if owner is not None and placed_entry[1] is owner[1]:
+                continue  # kendi padogu
+            room_id, entry, box = placed_entry[0], placed_entry[1], placed_entry[2]
+            check(
+                f"{room['id']} yatagindaki {biggest_wait['id']} {point} "
+                f"{room_id}/{entry['id']}@{entry['at']} icine girmiyor",
+                not box.overlaps(spot),
+            )
+    for (ra, pa, sa, _oa), (rb, pb, sb, _ob) in itertools.combinations(bed_spots, 2):
+        check(f"kogus yataklari {pa} ve {pb} ust uste degil", not sa.overlaps(sb))
 
     for room, point, spot in waiting_spots:
         check(

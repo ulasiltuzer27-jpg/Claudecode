@@ -1077,6 +1077,8 @@ Net.Schema = {
 	ToolGameBegin = { direction = &quot;toClient&quot;, args = { &quot;table&quot; } },
 	ToolGameHint = { direction = &quot;toClient&quot;, args = { &quot;number&quot; } },
 	ToolGameEnd = { direction = &quot;toClient&quot;, args = { &quot;boolean&quot;, &quot;string&quot; } },
+	-- Kogus: yatan hastalarin durumu (HUD karti bunu ciziyor).
+	WardUpdate = { direction = &quot;toClient&quot;, args = { &quot;table&quot; } },
 
 	-- ── Istemci -&gt; Sunucu ──────────────────────────────────────────────
 	CallNext = { direction = &quot;toServer&quot;, args = {} },
@@ -1095,6 +1097,7 @@ Net.Schema = {
 	LeaveQueue = { direction = &quot;toServer&quot;, args = {} },
 	ToolGameProbe = { direction = &quot;toServer&quot;, args = { &quot;number&quot;, &quot;number&quot; } },
 	ToolGameSubmit = { direction = &quot;toServer&quot;, args = { &quot;number&quot;, &quot;number&quot; } },
+	GiveMedicine = { direction = &quot;toServer&quot;, args = { &quot;number&quot; } },
 }
 
 -- Istemcinin saniyede kac kez gonderebilecegi. Dogrulama sunucuda
@@ -1121,6 +1124,7 @@ Net.RateLimit = {
 	-- 12 ornek yeterli ve istemci zaten bundan sik yollamıyor.
 	ToolGameProbe = 12,
 	ToolGameSubmit = 6,
+	GiveMedicine = 6,
 }
 
 local folderName = &quot;VetRemotes&quot;
@@ -2319,7 +2323,7 @@ return {
 		[&quot;receptionDesk&quot;] = 0,
 		[&quot;xrayMachine&quot;] = 0,
 		[&quot;surgeryTable&quot;] = 0,
-		[&quot;kennelCage&quot;] = 0,
+		[&quot;kennelPen&quot;] = 0,
 		[&quot;medicineShelf&quot;] = 0,
 	},
 	[&quot;sounds&quot;] = {
@@ -3358,45 +3362,31 @@ return {
 			},
 			[&quot;props&quot;] = {
 				{
-					[&quot;id&quot;] = &quot;kennelCage&quot;,
+					[&quot;id&quot;] = &quot;kennelPen&quot;,
 					[&quot;at&quot;] = {
-						-36.5,
-						27.1,
+						-34,
+						26,
 					},
 					[&quot;rot&quot;] = 0,
-					[&quot;tag&quot;] = &quot;kennel&quot;,
+					[&quot;tag&quot;] = &quot;kennel:1&quot;,
 				},
 				{
-					[&quot;id&quot;] = &quot;kennelCage&quot;,
+					[&quot;id&quot;] = &quot;kennelPen&quot;,
 					[&quot;at&quot;] = {
-						-29.5,
-						27.1,
+						-22,
+						26,
 					},
 					[&quot;rot&quot;] = 0,
+					[&quot;tag&quot;] = &quot;kennel:2&quot;,
 				},
 				{
-					[&quot;id&quot;] = &quot;kennelCage&quot;,
+					[&quot;id&quot;] = &quot;kennelPen&quot;,
 					[&quot;at&quot;] = {
-						-22.5,
-						27.1,
+						-10,
+						26,
 					},
 					[&quot;rot&quot;] = 0,
-				},
-				{
-					[&quot;id&quot;] = &quot;kennelCage&quot;,
-					[&quot;at&quot;] = {
-						-15.5,
-						27.1,
-					},
-					[&quot;rot&quot;] = 0,
-				},
-				{
-					[&quot;id&quot;] = &quot;kennelCage&quot;,
-					[&quot;at&quot;] = {
-						-8.5,
-						27.1,
-					},
-					[&quot;rot&quot;] = 0,
+					[&quot;tag&quot;] = &quot;kennel:3&quot;,
 				},
 				{
 					[&quot;id&quot;] = &quot;feedStation&quot;,
@@ -3412,6 +3402,20 @@ return {
 				192,
 				186,
 				176,
+			},
+			[&quot;bedPoints&quot;] = {
+				{
+					-34,
+					26,
+				},
+				{
+					-22,
+					26,
+				},
+				{
+					-10,
+					26,
+				},
 			},
 		},
 		{
@@ -5222,6 +5226,18 @@ return {
 		},
 	},
 	[&quot;routineChance&quot;] = 0.22,
+	[&quot;ward&quot;] = {
+		[&quot;recoverySeconds&quot;] = 150,
+		[&quot;doseIntervalSeconds&quot;] = 30,
+		[&quot;doseWindowSeconds&quot;] = 12,
+		[&quot;healthPerDose&quot;] = 9,
+		[&quot;missedDoseHealth&quot;] = -6,
+		[&quot;missedDoseReputation&quot;] = -3,
+		[&quot;dosedReputation&quot;] = 1.5,
+		[&quot;boardingFee&quot;] = 280,
+		[&quot;boardingXp&quot;] = 34,
+		[&quot;radius&quot;] = 14,
+	},
 }
 </ProtectedString>
 				</Properties>
@@ -5616,7 +5632,7 @@ return {
 		[&quot;prop.monitor&quot;] = &quot;HASTA TAKİP&quot;,
 		[&quot;prop.xray&quot;] = &quot;RÖNTGEN&quot;,
 		[&quot;prop.cabinet&quot;] = &quot;MALZEME&quot;,
-		[&quot;prop.kennel&quot;] = &quot;KOĞUŞ 1&quot;,
+		[&quot;prop.kennel&quot;] = &quot;KOĞUŞ&quot;,
 		[&quot;prompt.callNext&quot;] = &quot;Hastayı masaya al&quot;,
 		[&quot;prompt.station.exam1&quot;] = &quot;Muayene Masası 1&quot;,
 		[&quot;prompt.station.exam2&quot;] = &quot;Muayene Masası 2&quot;,
@@ -5741,6 +5757,18 @@ return {
 		[&quot;toolgame.failed&quot;] = &quot;İşlem tutmadı, aleti tekrar dene.&quot;,
 		[&quot;toolgame.timeout&quot;] = &quot;Süre doldu — aleti tekrar dene.&quot;,
 		[&quot;toolgame.cancelled&quot;] = &quot;İşlem yarıda kaldı.&quot;,
+		[&quot;ward.title&quot;] = &quot;KOĞUŞ — YATAN HASTALAR&quot;,
+		[&quot;ward.dose&quot;] = &quot;İLAÇ VER&quot;,
+		[&quot;ward.doseNow&quot;] = &quot;İlaç saati geldi!&quot;,
+		[&quot;ward.doseIn&quot;] = &quot;Sonraki doz {1} sn&quot;,
+		[&quot;ward.emptyBed&quot;] = &quot;O padokta hasta yok.&quot;,
+		[&quot;ward.tooEarly&quot;] = &quot;Dozun saati daha gelmedi.&quot;,
+		[&quot;ward.doseGiven&quot;] = &quot;Doz verildi.&quot;,
+		[&quot;notify.wardAdmitted&quot;] = &quot;{1} koğuşa yatırıldı — ilaç saatlerini kaçırma.&quot;,
+		[&quot;notify.wardDose&quot;] = &quot;{1} ilacını aldı.&quot;,
+		[&quot;notify.wardMissed&quot;] = &quot;{1} dozunu kaçırdın — iyileşmesi yavaşladı.&quot;,
+		[&quot;notify.wardDone&quot;] = &quot;{1} iyileşti ve gitti. Yatış ücreti {2} TL (bakım %{3}).&quot;,
+		[&quot;hint.wardLeave&quot;] = &quot;Emanet sizde, akşam alırım.&quot;,
 		[&quot;shop.title&quot;] = &quot;MAĞAZA&quot;,
 		[&quot;shop.close&quot;] = &quot;Kapat (B)&quot;,
 		[&quot;shop.tools&quot;] = &quot;ALETLER&quot;,
@@ -6285,11 +6313,11 @@ return {
 			[&quot;againstWall&quot;] = false,
 		},
 		{
-			[&quot;id&quot;] = &quot;kennelCage&quot;,
+			[&quot;id&quot;] = &quot;kennelPen&quot;,
 			[&quot;size&quot;] = {
-				6.3,
-				5,
-				5.9,
+				11,
+				8,
+				6,
 			},
 			[&quot;offset&quot;] = {
 				0,
@@ -6297,6 +6325,10 @@ return {
 			},
 			[&quot;base&quot;] = 0,
 			[&quot;againstWall&quot;] = true,
+			[&quot;shelter&quot;] = {
+				10.4,
+				7.4,
+			},
 		},
 		{
 			[&quot;id&quot;] = &quot;feedStation&quot;,
@@ -7766,6 +7798,9 @@ end)
 bind(&quot;ToolGameSubmit&quot;, function(player: Player, x: number, y: number)
 	PatientFlow.toolSubmit(player, x, y)
 end)
+bind(&quot;GiveMedicine&quot;, function(player: Player, bed: number)
+	PatientFlow.giveMedicine(player, bed)
+end)
 bind(&quot;SurgeryInput&quot;, function(player: Player, step: number)
 	PatientFlow.surgeryInput(player, step)
 end)
@@ -7933,6 +7968,7 @@ local Matchmaking = require(script.Parent.game.Matchmaking)
 local Economy = require(script.Parent.game.Economy)
 local Profile = require(script.Parent.game.Profile)
 local Tasks = require(script.Parent.game.Tasks)
+local Ward = require(script.Parent.game.Ward)
 local ToolGame = require(script.Parent.game.ToolGame)
 local Treatment = require(script.Parent.game.Treatment)
 local Upgrades = require(script.Parent.game.Upgrades)
@@ -8549,6 +8585,20 @@ do
 		end
 	end
 	scratch:Destroy()
+
+	-- Kogus: yataklar kurulmus mu ve padoklarin ici hastayi aliyor mu?
+	-- Eski kafeslerin ici (4,8 stud) en buyuk hastanin ayak izinden
+	-- (6,4) kucuktu; sayilar bir daha oyle kaymasin diye olculuyor.
+	local bedTotal = 0
+	for _, room in clinicPlan.rooms do
+		bedTotal += #(room.bedPoints or {})
+	end
+	check((&quot;kogus yataklari kuruldu (%d)&quot;):format(bedTotal), Ward.bedCount() == bedTotal)
+	check(&quot;en az bir kogus yatagi var&quot;, bedTotal &gt; 0)
+	check(&quot;kogus bastan bos&quot;, Ward.occupied() == 0)
+	for bed = 1, bedTotal do
+		check((&quot;%d. yatagin yeri tanimli&quot;):format(bed), Ward.bedCFrame(bed) ~= nil)
+	end
 
 	-- Gunduz/gece: sokak lambalari bulunmus mu, carpanlar makul mu.
 	check(&quot;sokak lambalari gece dongusune baglandi&quot;, DayCycle.lampCount() &gt; 0)
@@ -9416,6 +9466,7 @@ local Surgery = require(script.Parent.Surgery)
 local Tasks = require(script.Parent.Tasks)
 local ToolGame = require(script.Parent.ToolGame)
 local Treatment = require(script.Parent.Treatment)
+local Ward = require(script.Parent.Ward)
 local Upgrades = require(script.Parent.Upgrades)
 
 local economy = require(Data.economy)
@@ -9832,6 +9883,15 @@ local function pushStateAll()
 	end
 end
 
+--- Kogus herkese ayni gorunuyor: padoklar ortak, dolduklarinda herkes
+--- icin dolu. Bu yuzden tek bir goruntu butun oyunculara gidiyor.
+local function pushWard()
+	local snapshot = Ward.snapshot()
+	for _, player in Players:GetPlayers() do
+		Net.toPlayer(&quot;WardUpdate&quot;, player, snapshot)
+	end
+end
+
 -- ── Hasta uretimi ─────────────────────────────────────────────────────
 
 --- Seviyeye uygun (tur, hastalik) cifti secer. Hicbir cift yoksa nil.
@@ -10126,6 +10186,86 @@ local function sendAway(patient: Patient, walkOut: boolean)
 			clinic.entranceOutside + Vector3.new(3, 0, -30),
 		})
 	end
+end
+
+--- Bu vaka agir mi? Ameliyat gerektiren ve acil vakalar kogusa yatiyor.
+--- Kural VERIDEN cikiyor (tedavi zinciri), kodda hastalik listesi yok.
+local function needsWard(patient: Patient): boolean
+	if patient.emergency then
+		return true
+	end
+	for _, treatmentId in Treatment.requiredFor(patient.conditionId) do
+		if treatmentId == &quot;surgery&quot; then
+			return true
+		end
+	end
+	return false
+end
+
+--- Hastayi kogusa yatirir. Sahibi evine gidiyor, hayvan padoga
+--- yuruyor. Yatak yoksa `false` doner ve hasta normal taburcu ediliyor -
+--- kogus dolu diye oyuncuyu kilitlemek dogru olmaz.
+local function admitToWard(patient: Patient, vet: Player): boolean
+	if clinic == nil then
+		return false
+	end
+	local animal = AnimalFactory.spec(patient.animalId)
+	local entry = Ward.admit(
+		patient.id,
+		patient.animalId,
+		if animal ~= nil then animal.nameKey else patient.animalId,
+		vet
+	)
+	if entry == nil then
+		return false
+	end
+
+	local bed = clinic.bedPoints[entry.bed]
+	if bed == nil then
+		Ward.release(entry.bed)
+		return false
+	end
+
+	patient.state = &quot;ward&quot;
+	if patient.queueSlot ~= nil then
+		usedQueueSlots[patient.queueSlot] = nil
+		patient.queueSlot = nil
+	end
+	if patient.stationId ~= nil then
+		occupiedStation[patient.stationId] = nil
+		patient.stationId = nil
+	end
+	-- Veteriner serbest kaliyor: yatan hasta masayi mesgul etmiyor,
+	-- bir sonraki hastayi alabiliyor.
+	if activeOf[vet] == patient.id then
+		activeOf[vet] = nil
+	end
+
+	AnimalAnimator.setLimp(patient.rig, 0, 0)
+	AnimalAnimator.walkPath(patient.rig, { bed.Position }, function()
+		local current = patients[patient.id]
+		if current ~= nil then
+			AnimalAnimator.setState(current.rig, &quot;rest&quot;)
+		end
+	end)
+
+	-- Sahip evine gidiyor; hayvani iyilesince almaya donuyor.
+	if patient.owner ~= nil then
+		OwnerFactory.say(patient.owner, &quot;hint.wardLeave&quot;)
+		OwnerFactory.walkPath(patient.owner, {
+			clinic.entranceInside + Vector3.new(3, 0, 0),
+			clinic.entranceOutside + Vector3.new(3, 0, 0),
+			clinic.entranceOutside + Vector3.new(3, 0, -30),
+		}, function()
+			local current = patients[patient.id]
+			if current ~= nil and current.owner ~= nil then
+				OwnerFactory.unregister(current.owner)
+				current.owner.model:Destroy()
+				current.owner = nil
+			end
+		end)
+	end
+	return true
 end
 
 -- ── Oyuncu eylemleri ──────────────────────────────────────────────────
@@ -10581,6 +10721,110 @@ function PatientFlow.applyTreatment(player: Player, treatmentId: string)
 	end)
 end
 
+--- Kogus turu: kacirilan dozlar ve biten yatislar. Vitals dongusunun
+--- icinden cagriliyor (ayri bir zamanlayici kurmak, ayni isi iki kez
+--- planlamak olurdu).
+local function tickWard()
+	local result = Ward.tick()
+	if #result.missed == 0 and #result.done == 0 then
+		return
+	end
+
+	local ward = economy.ward
+	for _, entry in result.missed do
+		local patient = patients[entry.patientId]
+		if patient ~= nil then
+			patient.health = math.clamp(patient.health + ward.missedDoseHealth, 0, 100)
+			updateNameplate(patient)
+		end
+		local vet = entry.vet
+		if vet ~= nil and vet.Parent ~= nil then
+			local profile = Profile.get(vet)
+			if profile ~= nil then
+				profile.data.reputation = Economy.clampReputation(
+					profile.data.reputation + ward.missedDoseReputation
+				)
+				Profile.markDirty(vet)
+			end
+			notify(vet, &quot;bad&quot;, &quot;notify.wardMissed&quot;, { entry.nameKey })
+			pushState(vet)
+		end
+	end
+
+	for _, entry in result.done do
+		local patient = patients[entry.patientId]
+		local score = Ward.careScore(entry)
+		local vet = entry.vet
+		if vet ~= nil and vet.Parent ~= nil then
+			local profile = Profile.get(vet)
+			if profile ~= nil then
+				local data = profile.data
+				local previousLevel = data.level
+				-- Yatis ucreti BAKIM PUANIYLA carpiliyor: kogusu unutan
+				-- oyuncu hastayi kaybetmiyor ama parayi da almiyor.
+				local fee = math.floor(ward.boardingFee * score + 0.5)
+				local xpGain = math.floor(ward.boardingXp * score + 0.5)
+				data.money += fee
+				data.xp += xpGain
+				data.stats.earned += fee
+				Tasks.bump(data, &quot;earned&quot;, fee)
+				applyLevel(vet, data, previousLevel)
+				settleProgress(vet, data)
+				Profile.markDirty(vet)
+				notify(vet, &quot;good&quot;, &quot;notify.wardDone&quot;, { entry.nameKey, fee, math.floor(score * 100 + 0.5) })
+				pushState(vet)
+			end
+		end
+		if patient ~= nil then
+			sendAway(patient, true)
+		end
+	end
+
+	pushWard()
+end
+
+--- Yatan hastaya ilac verir. Yakinlik ve zaman penceresi SUNUCUDA
+--- denetleniyor (Ward.giveDose).
+function PatientFlow.giveMedicine(player: Player, bed: number)
+	if bed % 1 ~= 0 or bed &lt; 1 then
+		return
+	end
+	local result = Ward.giveDose(player, bed)
+	if not result.ok then
+		notify(player, &quot;warn&quot;, result.reasonKey)
+		return
+	end
+
+	local entry = result.entry
+	if entry == nil then
+		return
+	end
+
+	local ward = economy.ward
+	local patient = patients[entry.patientId]
+	if patient ~= nil then
+		patient.health = math.clamp(patient.health + ward.healthPerDose, 0, 100)
+		patient.stress = math.clamp(patient.stress - 6, 0, 100)
+		AnimalAnimator.setStress(patient.rig, patient.stress)
+		AnimalAnimator.react(patient.rig, &quot;relax&quot;)
+		Effects.treatment(patient.rig.model, patient.rig.root.CFrame, &quot;pill&quot;)
+		Audio.play(&quot;treatPill&quot;, patient.rig.root)
+		updateNameplate(patient)
+	end
+
+	local profile = Profile.get(player)
+	if profile ~= nil then
+		profile.data.reputation = Economy.clampReputation(
+			profile.data.reputation + ward.dosedReputation
+		)
+		Profile.markDirty(player)
+		pushState(player)
+	end
+
+	notify(player, &quot;good&quot;, &quot;notify.wardDose&quot;, { entry.nameKey })
+	pushWard()
+end
+
 function PatientFlow.surgeryInput(player: Player, step: number)
 	local result = Surgery.input(player, step)
 	if result.accepted then
@@ -10695,7 +10939,17 @@ function PatientFlow.discharge(player: Player)
 	settleProgress(player, data)
 
 	Audio.play(&quot;discharge&quot;, patient.rig.root)
-	sendAway(patient, true)
+
+	-- AGIR VAKA KOGUSA: ameliyat ve acil vakalar kapidan cikmiyor,
+	-- iyilesmesi icin padoga yatiyor. Ucretin geri kalani (yatis
+	-- ucreti) ancak bakim bitince ve BAKIM PUANIYLA carpilarak
+	-- odeniyor - kogusu unutan oyuncu parayi da alamiyor.
+	if needsWard(patient) and admitToWard(patient, player) then
+		notify(player, &quot;info&quot;, &quot;notify.wardAdmitted&quot;, { animal.nameKey })
+		pushWard()
+	else
+		sendAway(patient, true)
+	end
 	pushState(player)
 	pushChart(player)
 	pushStateAll()
@@ -10704,6 +10958,9 @@ end
 --- Oyuncu ayrildi: hastasini kuyruga geri koymak yerine birakiyoruz ki
 --- baska bir veteriner alabilsin.
 function PatientFlow.playerLeft(player: Player)
+	-- Kogustaki hastalari sahipsiz kaliyor: iyilesip gidiyorlar ama
+	-- ucreti kimse alamiyor.
+	Ward.playerLeft(player)
 	Surgery.cancel(player)
 	local patient = patientOf(player)
 	activeOf[player] = nil
@@ -10721,6 +10978,15 @@ local function tickVitals(dt: number)
 	local config = economy.patient
 	for _, patient in patients do
 		if patient.state == &quot;leaving&quot; then
+			continue
+		end
+		if patient.state == &quot;ward&quot; then
+			-- Yatan hasta iyilesme surecinde: sagligi kendiliginden
+			-- dusmuyor (tedavisi bitti) ve sahibi evde, sabri
+			-- tukenmiyor. Doz zamanlayicisi asagidaki kogus turunde.
+			AnimalAnimator.setStress(patient.rig, patient.stress)
+			AnimalAnimator.lookAt(patient.rig, nil)
+			updateNameplate(patient)
 			continue
 		end
 
@@ -10835,6 +11101,9 @@ function PatientFlow.start(built: Clinic.Built)
 	started = true
 	clinic = built
 
+	-- Kogus yataklari klinikle birlikte kuruluyor.
+	Ward.start(built.bedPoints)
+
 	local folder = Instance.new(&quot;Folder&quot;)
 	folder.Name = &quot;Hastalar&quot;
 	folder.Parent = workspace
@@ -10871,11 +11140,12 @@ function PatientFlow.start(built: Clinic.Built)
 		end
 	end)
 
-	-- Yasamsal belirtiler
+	-- Yasamsal belirtiler + kogus
 	task.spawn(function()
 		while true do
 			task.wait(VITALS_TICK)
 			tickVitals(VITALS_TICK)
+			tickWard()
 		end
 	end)
 
@@ -12454,12 +12724,262 @@ return Upgrades
 </ProtectedString>
 					</Properties>
 				</Item>
+				<Item class="ModuleScript" referent="RBX48">
+					<Properties>
+						<string name="Name">Ward</string>
+						<ProtectedString name="Source">--!strict
+-- Ward.luau
+-- =========
+-- Kogus: ameliyat ve acil vaka sonrasi YATAN hasta.
+--
+-- Neden var?
+-- ----------
+-- Kogus odasi ve kafesleri bastan beri duruyordu ama hicbir oynanisi
+-- yoktu: bes kutu ve sifir kural. Ustelik kafeslerin ici (4,8 stud) en
+-- buyuk hastanin ayak izinden (6,4) kucuktu, yani icine bir sey koymak
+-- da mumkun degildi. Kafesler uc gercek padoga donustu ve agir vakalar
+-- artik taburcu edilmeden once burada yatiyor.
+--
+-- Dongu
+-- -----
+-- Agir vaka (ameliyat ya da acil) tedavisi bitince kapidan cikmiyor,
+-- kogusa yatiyor. Belirli araliklarla ILAC saati geliyor; oyuncu
+-- padogun yanina gidip dozu veriyor. Zamaninda verilen doz sagligi ve
+-- itibari yukseltiyor, kacirilan doz ikisini de dusuruyor. Iyilesme
+-- bitince sahibi gelip aliyor ve YATIS UCRETI bakim puaniyla carpilarak
+-- odeniyor.
+--
+-- Neden ayri modul?
+-- -----------------
+-- PatientFlow zaten 1400 satir. Kogus kendi zamanlayicisi ve kendi
+-- yuvalari olan bagimsiz bir defter; rigi hic ellemiyor (yurutme ve
+-- silme hala PatientFlow'un isi), yalnizca &quot;hangi yatakta kim var, bir
+-- sonraki doz ne zaman&quot; tutuyor. Boylece rig yasam dongusu tek yerde
+-- kaliyor.
+
+local Workspace = game:GetService(&quot;Workspace&quot;)
+
+local ReplicatedStorage = game:GetService(&quot;ReplicatedStorage&quot;)
+local Data = ReplicatedStorage:WaitForChild(&quot;VetData&quot;)
+
+local economy = require(Data.economy)
+
+local Ward = {}
+
+export type Entry = {
+	bed: number,
+	patientId: number,
+	animalId: string,
+	nameKey: string,
+	vet: Player?,
+	recoverUntil: number,
+	nextDoseAt: number,
+	dosesGiven: number,
+	dosesMissed: number,
+	dosesTotal: number,
+}
+
+local beds: { CFrame } = {}
+local occupants: { [number]: Entry } = {}
+
+local config = economy.ward
+
+--- Yatak yerlerini kaydeder. Klinik kurulunca bir kez cagriliyor.
+function Ward.start(points: { CFrame })
+	beds = points
+	table.clear(occupants)
+end
+
+function Ward.bedCount(): number
+	return #beds
+end
+
+function Ward.bedCFrame(index: number): CFrame?
+	return beds[index]
+end
+
+--- Bos yatak. Yoksa nil - kogus doluyken agir vaka normal taburcu
+--- ediliyor (hasta kapida bekletilmiyor).
+function Ward.freeBed(): number?
+	for index = 1, #beds do
+		if occupants[index] == nil then
+			return index
+		end
+	end
+	return nil
+end
+
+function Ward.entry(index: number): Entry?
+	return occupants[index]
+end
+
+--- Hastayi kogusa yatirir. Yatak yoksa nil doner.
+function Ward.admit(patientId: number, animalId: string, nameKey: string, vet: Player?): Entry?
+	local bed = Ward.freeBed()
+	if bed == nil then
+		return nil
+	end
+	local now = Workspace:GetServerTimeNow()
+	local total = math.max(1, math.floor(config.recoverySeconds / config.doseIntervalSeconds))
+	local entry: Entry = {
+		bed = bed,
+		patientId = patientId,
+		animalId = animalId,
+		nameKey = nameKey,
+		vet = vet,
+		recoverUntil = now + config.recoverySeconds,
+		nextDoseAt = now + config.doseIntervalSeconds,
+		dosesGiven = 0,
+		dosesMissed = 0,
+		dosesTotal = total,
+	}
+	occupants[bed] = entry
+	return entry
+end
+
+function Ward.release(bed: number)
+	occupants[bed] = nil
+end
+
+--- Oyuncu bu yatagin yanina gelmis mi? Sunucuda denetleniyor: istemcinin
+--- &quot;yanindayim&quot; demesine guvenilmiyor (istasyon kuralinin aynisi).
+local function nearBed(player: Player, bed: number): boolean
+	local cframe = beds[bed]
+	if cframe == nil then
+		return false
+	end
+	local character = player.Character
+	if character == nil then
+		return false
+	end
+	local root = character:FindFirstChild(&quot;HumanoidRootPart&quot;)
+	if root == nil or not root:IsA(&quot;BasePart&quot;) then
+		return false
+	end
+	local flat = Vector3.new(root.Position.X, 0, root.Position.Z)
+	local target = Vector3.new(cframe.Position.X, 0, cframe.Position.Z)
+	return (flat - target).Magnitude &lt;= config.radius
+end
+
+export type DoseResult = { ok: boolean, reasonKey: string, entry: Entry? }
+
+--- Dozu verir. Sunucu hem YAKINLIGI hem ZAMAN PENCERESINI denetliyor.
+function Ward.giveDose(player: Player, bed: number): DoseResult
+	local entry = occupants[bed]
+	if entry == nil then
+		return { ok = false, reasonKey = &quot;ward.emptyBed&quot;, entry = nil }
+	end
+	if not nearBed(player, bed) then
+		return { ok = false, reasonKey = &quot;notify.tooFar&quot;, entry = entry }
+	end
+
+	local now = Workspace:GetServerTimeNow()
+	-- Doz penceresi: saatinden ONCE de verilebiliyor ama pencerenin
+	-- disinda erken verilen doz sayilmiyor. Aksi halde oyuncu butun
+	-- dozlari pes pese basip kogusu anlamsizlastirirdi.
+	if now &lt; entry.nextDoseAt - config.doseWindowSeconds then
+		return { ok = false, reasonKey = &quot;ward.tooEarly&quot;, entry = entry }
+	end
+
+	entry.dosesGiven += 1
+	entry.nextDoseAt = now + config.doseIntervalSeconds
+	return { ok = true, reasonKey = &quot;ward.doseGiven&quot;, entry = entry }
+end
+
+export type Tick = {
+	missed: { Entry },
+	done: { Entry },
+}
+
+--- Zamanlayici. Kacirilan dozlari ve biten yatislari doner; ne
+--- yapilacagina PatientFlow karar veriyor (para ve itibar orada).
+function Ward.tick(): Tick
+	local now = Workspace:GetServerTimeNow()
+	local missed: { Entry } = {}
+	local done: { Entry } = {}
+
+	for bed, entry in occupants do
+		if now &gt; entry.nextDoseAt + config.doseWindowSeconds then
+			entry.dosesMissed += 1
+			entry.nextDoseAt = now + config.doseIntervalSeconds
+			table.insert(missed, entry)
+		end
+		if now &gt;= entry.recoverUntil then
+			table.insert(done, entry)
+			occupants[bed] = nil
+		end
+	end
+
+	return { missed = missed, done = done }
+end
+
+--- Bakim puani 0..1: verilen dozun beklenen doza orani, kacirilan doz
+--- cezasiyla. Yatis ucreti bununla carpiliyor.
+function Ward.careScore(entry: Entry): number
+	local expected = math.max(1, entry.dosesGiven + entry.dosesMissed)
+	return math.clamp(entry.dosesGiven / expected, 0, 1)
+end
+
+--- Istemciye yollanan goruntu: kogus karti bunu ciziyor.
+---
+--- Zamanlar MUTLAK ve SENKRON sunucu saatinde (`GetServerTimeNow`).
+--- Kalan sure yollansaydi istemci onu ancak bir sonraki guncellemede
+--- tazeleyebilirdi; mutlak zamanla istemci geri sayimi kendi ciziyor ve
+--- sunucu yalnizca DEGISIKLIKTE gonderiyor.
+function Ward.snapshot(): any
+	local list = {}
+	for bed = 1, #beds do
+		local entry = occupants[bed]
+		if entry == nil then
+			table.insert(list, { bed = bed, busy = false })
+			continue
+		end
+		table.insert(list, {
+			bed = bed,
+			busy = true,
+			nameKey = entry.nameKey,
+			doseAt = entry.nextDoseAt,
+			doseWindow = config.doseWindowSeconds,
+			recoverAt = entry.recoverUntil,
+			recoverTotal = config.recoverySeconds,
+			dosesGiven = entry.dosesGiven,
+			dosesMissed = entry.dosesMissed,
+			dosesTotal = entry.dosesTotal,
+			mine = entry.vet ~= nil and entry.vet.Parent ~= nil,
+		})
+	end
+	return { beds = list, total = #beds }
+end
+
+--- Oyuncu ayrildi: yatan hastasi koguste kaliyor ama sahibi yok sayiliyor
+--- (ucreti kimse alamaz, hasta yine de iyilesip gidiyor).
+function Ward.playerLeft(player: Player)
+	for _, entry in occupants do
+		if entry.vet == player then
+			entry.vet = nil
+		end
+	end
+end
+
+--- Dolu yatak sayisi (SelfTest ve HUD icin).
+function Ward.occupied(): number
+	local total = 0
+	for _ in occupants do
+		total += 1
+	end
+	return total
+end
+
+return Ward
+</ProtectedString>
+					</Properties>
+				</Item>
 			</Item>
-			<Item class="Folder" referent="RBX48">
+			<Item class="Folder" referent="RBX49">
 				<Properties>
 					<string name="Name">world</string>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX49">
+				<Item class="ModuleScript" referent="RBX50">
 					<Properties>
 						<string name="Name">AnimalAnimator</string>
 						<ProtectedString name="Source">--!strict
@@ -13126,7 +13646,7 @@ return Animator
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX50">
+				<Item class="ModuleScript" referent="RBX51">
 					<Properties>
 						<string name="Name">AnimalFactory</string>
 						<ProtectedString name="Source">--!strict
@@ -14153,7 +14673,7 @@ return AnimalFactory
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX51">
+				<Item class="ModuleScript" referent="RBX52">
 					<Properties>
 						<string name="Name">Clinic</string>
 						<ProtectedString name="Source">--!strict
@@ -14194,6 +14714,8 @@ export type Built = {
 	stations: Stations,
 	queuePoints: { CFrame },
 	ownerPoints: { CFrame },
+	-- Kogus yataklari: yatan hastanin duracagi yerler (Ward.luau).
+	bedPoints: { CFrame },
 	entranceOutside: Vector3,
 	entranceInside: Vector3,
 	roomOf: { [string]: { min: { number }, max: { number } } },
@@ -14524,6 +15046,7 @@ function Clinic.build(parent: Instance): Built
 	local stations: Stations = {}
 	local queuePoints: { CFrame } = {}
 	local ownerPoints: { CFrame } = {}
+	local bedPoints: { CFrame } = {}
 	local roomOf = {}
 
 	for _, room in plan.rooms do
@@ -14605,6 +15128,10 @@ function Clinic.build(parent: Instance): Built
 			table.insert(ownerPoints, CFrame.new(point[1], plan.floorY, point[2]))
 		end
 
+		for _, point in room.bedPoints or {} do
+			table.insert(bedPoints, CFrame.new(point[1], plan.floorY, point[2]))
+		end
+
 		for _, spec in room.props do
 			local origin = CFrame.new(spec.at[1], plan.floorY, spec.at[2])
 				* CFrame.Angles(0, math.rad(spec.rot or 0), 0)
@@ -14653,6 +15180,7 @@ function Clinic.build(parent: Instance): Built
 		stations = stations,
 		queuePoints = queuePoints,
 		ownerPoints = ownerPoints,
+		bedPoints = bedPoints,
 		entranceOutside = Vector3.new(plan.entrance.outside[1], plan.floorY, plan.entrance.outside[2]),
 		entranceInside = Vector3.new(plan.entrance.inside[1], plan.floorY, plan.entrance.inside[2]),
 		roomOf = roomOf,
@@ -14663,7 +15191,7 @@ return Clinic
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX52">
+				<Item class="ModuleScript" referent="RBX53">
 					<Properties>
 						<string name="Name">DayCycle</string>
 						<ProtectedString name="Source">--!strict
@@ -14867,7 +15395,7 @@ return DayCycle
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX53">
+				<Item class="ModuleScript" referent="RBX54">
 					<Properties>
 						<string name="Name">Decor</string>
 						<ProtectedString name="Source">--!strict
@@ -15108,7 +15636,7 @@ return Decor
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX54">
+				<Item class="ModuleScript" referent="RBX55">
 					<Properties>
 						<string name="Name">Doors</string>
 						<ProtectedString name="Source">--!strict
@@ -15354,7 +15882,7 @@ return Doors
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX55">
+				<Item class="ModuleScript" referent="RBX56">
 					<Properties>
 						<string name="Name">Effects</string>
 						<ProtectedString name="Source">--!strict
@@ -15538,7 +16066,7 @@ return Effects
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX56">
+				<Item class="ModuleScript" referent="RBX57">
 					<Properties>
 						<string name="Name">Lighting</string>
 						<ProtectedString name="Source">--!strict
@@ -15661,7 +16189,7 @@ return Sky
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX57">
+				<Item class="ModuleScript" referent="RBX58">
 					<Properties>
 						<string name="Name">Lobby</string>
 						<ProtectedString name="Source">--!strict
@@ -15920,7 +16448,7 @@ return Lobby
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX58">
+				<Item class="ModuleScript" referent="RBX59">
 					<Properties>
 						<string name="Name">OwnerFactory</string>
 						<ProtectedString name="Source">--!strict
@@ -16520,7 +17048,7 @@ return OwnerFactory
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX59">
+				<Item class="ModuleScript" referent="RBX60">
 					<Properties>
 						<string name="Name">Props</string>
 						<ProtectedString name="Source">--!strict
@@ -17116,33 +17644,56 @@ end
 
 -- ── Kogus ve yikama ───────────────────────────────────────────────────
 
-builders.kennelCage = function(model, origin)
+builders.kennelPen = function(model, origin)
 	local p, d = maker(model, origin), makerDecor(model, origin)
-	p(&quot;Taban&quot;, Vector3.new(6, 0.4, 4.8), Vector3.new(0, 0.2, 0), C.offWhite)
-	d(&quot;TabanPahi&quot;, Vector3.new(6.2, 0.16, 5), Vector3.new(0, 0.42, 0), C.shadowWhite)
-	d(&quot;Yatak&quot;, Vector3.new(4.8, 0.4, 3.6), Vector3.new(0, 0.62, -0.2), C.pad, Enum.Material.Fabric)
-	d(&quot;YatakKenari&quot;, Vector3.new(5, 0.28, 0.3), Vector3.new(0, 0.75, -2), C.darkPad, Enum.Material.Fabric)
-	p(&quot;Tavan&quot;, Vector3.new(6, 0.35, 4.8), Vector3.new(0, 5.2, 0), C.offWhite)
-	p(&quot;ArkaDuvar&quot;, Vector3.new(6, 5, 0.22), Vector3.new(0, 2.7, -2.3), C.white)
-	p(&quot;YanDuvar&quot;, Vector3.new(0.22, 5, 4.8), Vector3.new(-2.9, 2.7, 0), C.white)
-	p(&quot;YanDuvar&quot;, Vector3.new(0.22, 5, 4.8), Vector3.new(2.9, 2.7, 0), C.white)
-	-- On yuz: cerceve + dikey parmakliklar + yatay kusaklar
-	d(&quot;KapiCercevesi&quot;, Vector3.new(6, 0.24, 0.24), Vector3.new(0, 5.05, 2.3), C.darkSteel, Enum.Material.Metal)
-	d(&quot;KapiCercevesi&quot;, Vector3.new(6, 0.24, 0.24), Vector3.new(0, 0.42, 2.3), C.darkSteel, Enum.Material.Metal)
-	for index = 0, 8 do
-		d(&quot;Parmaklik&quot;, Vector3.new(0.16, 4.6, 0.16), Vector3.new(-2.6 + index * 0.65, 2.7, 2.3), C.chrome, Enum.Material.Metal)
+	-- KOGUS PADOGU
+	--
+	-- Eskiden burada bes kucuk kafes vardi ve icine hicbir hayvan
+	-- sigmiyordu: en buyuk hastanin ayak izi 6,4 stud, kafesin ici
+	-- 4,8'di. Yatan hasta oynanisi gelince padok gercekten hayvan alacak
+	-- olcuye buyudu (ic olcu 10,4 x 7,4) ve sayi 5'ten 3'e indi.
+	-- `data/props.json` -&gt; `shelter` bu ic olcuyu bildiriyor; yerlesim
+	-- denetimi yatak noktasinin oraya sigdigini olcuyor.
+	p(&quot;Taban&quot;, Vector3.new(10.8, 0.4, 7.8), Vector3.new(0, 0.2, 0), C.offWhite)
+	d(&quot;TabanPahi&quot;, Vector3.new(11, 0.16, 8), Vector3.new(0, 0.42, 0), C.shadowWhite)
+	d(&quot;Yatak&quot;, Vector3.new(7.4, 0.45, 5.2), Vector3.new(0, 0.64, -0.4), C.pad, Enum.Material.Fabric)
+	d(&quot;YatakKenari&quot;, Vector3.new(7.6, 0.32, 0.35), Vector3.new(0, 0.8, -3), C.darkPad, Enum.Material.Fabric)
+	d(&quot;Battaniye&quot;, Vector3.new(5.2, 0.12, 3.4), Vector3.new(0.6, 0.88, -0.2), C.towel, Enum.Material.Fabric)
+
+	p(&quot;ArkaDuvar&quot;, Vector3.new(10.8, 5.6, 0.24), Vector3.new(0, 3, -3.9), C.white)
+	p(&quot;YanDuvar&quot;, Vector3.new(0.24, 5.6, 7.8), Vector3.new(-5.3, 3, 0), C.white)
+	p(&quot;YanDuvar&quot;, Vector3.new(0.24, 5.6, 7.8), Vector3.new(5.3, 3, 0), C.white)
+	p(&quot;Tavan&quot;, Vector3.new(10.8, 0.3, 7.8), Vector3.new(0, 5.85, 0), C.offWhite)
+
+	-- On yuz: cerceve + dikey parmakliklar + yatay kusaklar. Parmaklik
+	-- araligi hayvani gormeye yetecek kadar genis.
+	d(&quot;KapiCercevesi&quot;, Vector3.new(10.8, 0.26, 0.26), Vector3.new(0, 5.65, 3.9), C.darkSteel, Enum.Material.Metal)
+	d(&quot;KapiCercevesi&quot;, Vector3.new(10.8, 0.26, 0.26), Vector3.new(0, 0.45, 3.9), C.darkSteel, Enum.Material.Metal)
+	for index = 0, 12 do
+		d(&quot;Parmaklik&quot;, Vector3.new(0.16, 5.1, 0.16), Vector3.new(-4.9 + index * 0.82, 3, 3.9), C.chrome, Enum.Material.Metal)
 	end
 	for index = 1, 2 do
-		d(&quot;Kusak&quot;, Vector3.new(5.6, 0.14, 0.14), Vector3.new(0, 1.4 + (index - 1) * 2.4, 2.3), C.chrome, Enum.Material.Metal)
+		d(&quot;Kusak&quot;, Vector3.new(10.2, 0.16, 0.16), Vector3.new(0, 1.6 + (index - 1) * 2.6, 3.9), C.chrome, Enum.Material.Metal)
 	end
-	d(&quot;Mandal&quot;, Vector3.new(0.55, 0.45, 0.3), Vector3.new(2.2, 2.7, 2.45), C.darkSteel, Enum.Material.Metal)
-	d(&quot;MandalKolu&quot;, Vector3.new(0.14, 0.9, 0.14), Vector3.new(2.2, 3.2, 2.5), C.chrome, Enum.Material.Metal)
-	Detail.plate(model, origin * CFrame.new(-2, 5.5, 2.2), 2, 0.6, C.deepTeal, C.white, Loc.get(&quot;prop.kennel&quot;))
+	d(&quot;Mandal&quot;, Vector3.new(0.6, 0.5, 0.32), Vector3.new(4.2, 3, 4.08), C.darkSteel, Enum.Material.Metal)
+	d(&quot;MandalKolu&quot;, Vector3.new(0.16, 1, 0.16), Vector3.new(4.2, 3.5, 4.14), C.chrome, Enum.Material.Metal)
+
+	Detail.plate(model, origin * CFrame.new(-3.4, 5.95, 3.8), 2.6, 0.7, C.deepTeal, C.white, Loc.get(&quot;prop.kennel&quot;))
 	Build.pillar({
-		name = &quot;SuKabi&quot;, size = Vector3.new(1, 0.4, 1),
-		cf = origin * CFrame.new(1.9, 0.6, 1.2), color = C.water,
+		name = &quot;SuKabi&quot;, size = Vector3.new(1.3, 0.45, 1.3),
+		cf = origin * CFrame.new(3.4, 0.62, 2.2), color = C.water,
 		canCollide = false, castShadow = false, parent = model,
 	})
+	Build.pillar({
+		name = &quot;MamaKabi&quot;, size = Vector3.new(1.3, 0.45, 1.3),
+		cf = origin * CFrame.new(3.4, 0.62, 0.6), color = C.steel,
+		material = Enum.Material.Metal,
+		canCollide = false, castShadow = false, parent = model,
+	})
+	-- Serum askisi: yatan hastanin orada TEDAVI GORDUGUNU anlatan detay.
+	d(&quot;SerumDiregi&quot;, Vector3.new(0.16, 4.4, 0.16), Vector3.new(-4.3, 2.4, 2.4), C.chrome, Enum.Material.Metal)
+	d(&quot;SerumKolu&quot;, Vector3.new(0.9, 0.14, 0.14), Vector3.new(-3.9, 4.5, 2.4), C.chrome, Enum.Material.Metal)
+	d(&quot;SerumTorbasi&quot;, Vector3.new(0.8, 1.2, 0.3), Vector3.new(-3.5, 3.9, 2.4), C.water, Enum.Material.Glass)
 end
 
 builders.feedStation = function(model, origin)
@@ -17624,15 +18175,15 @@ return Props
 			</Item>
 		</Item>
 	</Item>
-	<Item class="StarterPlayer" referent="RBX60">
+	<Item class="StarterPlayer" referent="RBX61">
 		<Properties>
 			<string name="Name">StarterPlayer</string>
 		</Properties>
-		<Item class="StarterPlayerScripts" referent="RBX61">
+		<Item class="StarterPlayerScripts" referent="RBX62">
 			<Properties>
 				<string name="Name">StarterPlayerScripts</string>
 			</Properties>
-			<Item class="LocalScript" referent="RBX62">
+			<Item class="LocalScript" referent="RBX63">
 				<Properties>
 					<string name="Name">VetClient</string>
 					<ProtectedString name="Source">--!strict
@@ -17677,6 +18228,7 @@ local ToolBar = require(script.ToolBar)
 local ToolGamePanel = require(script.ToolGamePanel)
 local TreatmentPanel = require(script.TreatmentPanel)
 local ViewModel = require(script.ViewModel)
+local WardPanel = require(script.WardPanel)
 
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild(&quot;PlayerGui&quot;)
@@ -17709,6 +18261,7 @@ ToolBar.create(screen)
 ShopPanel.create(screen)
 SurgeryPanel.create(screen)
 ToolGamePanel.create(screen)
+WardPanel.create(screen)
 ProgressPanel.create(screen)
 Fps.create(screen)
 SettingsPanel.create(screen)
@@ -17719,6 +18272,7 @@ Camera.start()
 -- Birinci sahis el/alet modeli kameradan SONRA baslamali: sallanma
 -- verisini Camera.motion()'dan okuyor.
 ViewModel.start()
+WardPanel.start()
 
 -- Butun hazir sesleri bir kez yukle ve tutmayanlari Output'a raporla.
 -- Bu depoyu ureten ortamda Roblox'a erisim yoktu; hangi rbxasset yolunun
@@ -17840,6 +18394,10 @@ Net.get(&quot;ToolResult&quot;).OnClientEvent:Connect(function(toolId: string, p
 	end
 end)
 
+Net.get(&quot;WardUpdate&quot;).OnClientEvent:Connect(function(snapshot: any)
+	WardPanel.update(snapshot)
+end)
+
 Net.get(&quot;ToolGameBegin&quot;).OnClientEvent:Connect(function(payload: any)
 	ToolGamePanel.begin(payload)
 end)
@@ -17882,7 +18440,7 @@ end)
 print(&quot;[Veteriner] istemci hazir.&quot;)
 </ProtectedString>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX63">
+				<Item class="ModuleScript" referent="RBX64">
 					<Properties>
 						<string name="Name">Camera</string>
 						<ProtectedString name="Source">--!strict
@@ -18133,7 +18691,7 @@ return Camera
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX64">
+				<Item class="ModuleScript" referent="RBX65">
 					<Properties>
 						<string name="Name">Chart</string>
 						<ProtectedString name="Source">--!strict
@@ -18524,7 +19082,7 @@ return Chart
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX65">
+				<Item class="ModuleScript" referent="RBX66">
 					<Properties>
 						<string name="Name">Crosshair</string>
 						<ProtectedString name="Source">--!strict
@@ -18672,7 +19230,7 @@ return Crosshair
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX66">
+				<Item class="ModuleScript" referent="RBX67">
 					<Properties>
 						<string name="Name">DiagnosisPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -18862,7 +19420,7 @@ return DiagnosisPanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX67">
+				<Item class="ModuleScript" referent="RBX68">
 					<Properties>
 						<string name="Name">Fps</string>
 						<ProtectedString name="Source">--!strict
@@ -18978,7 +19536,7 @@ return Fps
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX68">
+				<Item class="ModuleScript" referent="RBX69">
 					<Properties>
 						<string name="Name">Hud</string>
 						<ProtectedString name="Source">--!strict
@@ -19463,7 +20021,7 @@ return Hud
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX69">
+				<Item class="ModuleScript" referent="RBX70">
 					<Properties>
 						<string name="Name">LobbyPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -19753,7 +20311,7 @@ return LobbyPanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX70">
+				<Item class="ModuleScript" referent="RBX71">
 					<Properties>
 						<string name="Name">Notify</string>
 						<ProtectedString name="Source">--!strict
@@ -19939,7 +20497,7 @@ return Notify
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX71">
+				<Item class="ModuleScript" referent="RBX72">
 					<Properties>
 						<string name="Name">ProgressPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -20222,7 +20780,7 @@ return ProgressPanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX72">
+				<Item class="ModuleScript" referent="RBX73">
 					<Properties>
 						<string name="Name">SettingsPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -20495,7 +21053,7 @@ return SettingsPanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX73">
+				<Item class="ModuleScript" referent="RBX74">
 					<Properties>
 						<string name="Name">ShopPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -20878,7 +21436,7 @@ return ShopPanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX74">
+				<Item class="ModuleScript" referent="RBX75">
 					<Properties>
 						<string name="Name">SurgeryPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -21239,7 +21797,7 @@ return SurgeryPanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX75">
+				<Item class="ModuleScript" referent="RBX76">
 					<Properties>
 						<string name="Name">Theme</string>
 						<ProtectedString name="Source">--!strict
@@ -22237,7 +22795,7 @@ return Theme
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX76">
+				<Item class="ModuleScript" referent="RBX77">
 					<Properties>
 						<string name="Name">ToolBar</string>
 						<ProtectedString name="Source">--!strict
@@ -22478,7 +23036,7 @@ return ToolBar
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX77">
+				<Item class="ModuleScript" referent="RBX78">
 					<Properties>
 						<string name="Name">ToolGamePanel</string>
 						<ProtectedString name="Source">--!strict
@@ -22936,7 +23494,7 @@ return ToolGamePanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX78">
+				<Item class="ModuleScript" referent="RBX79">
 					<Properties>
 						<string name="Name">TreatmentPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -23175,7 +23733,7 @@ return TreatmentPanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX79">
+				<Item class="ModuleScript" referent="RBX80">
 					<Properties>
 						<string name="Name">ViewModel</string>
 						<ProtectedString name="Source">--!strict
@@ -23560,22 +24118,299 @@ return ViewModel
 </ProtectedString>
 					</Properties>
 				</Item>
+				<Item class="ModuleScript" referent="RBX81">
+					<Properties>
+						<string name="Name">WardPanel</string>
+						<ProtectedString name="Source">--!strict
+-- WardPanel.luau
+-- ==============
+-- Kogus karti: yatan hastalar, iyilesme cubugu ve ILAC SAATI.
+--
+-- Neden HUD'da surekli duruyor?
+-- -----------------------------
+-- Yatan hasta arka planda isliyor: oyuncu baska bir hastayla ugrasirken
+-- dozun saati geliyor. Acilip kapanan bir panel olsaydi oyuncu dozu
+-- kacirdigini ancak ceza yedikten sonra ogrenirdi. Kart ekranin sol
+-- altinda duruyor ve doz penceresi acilinca NABIZ atiyor.
+--
+-- Kogus BOSKEN kart tamamen gizli: bos bir kutu ekranda yer kaplamasin.
+
+local RunService = game:GetService(&quot;RunService&quot;)
+local Workspace = game:GetService(&quot;Workspace&quot;)
+
+local ReplicatedStorage = game:GetService(&quot;ReplicatedStorage&quot;)
+local Shared = ReplicatedStorage:WaitForChild(&quot;VetShared&quot;)
+local Loc = require(Shared.Loc)
+local Net = require(Shared.Net)
+
+local Theme = require(script.Parent.Theme)
+
+local WardPanel = {}
+
+local widgets: any = nil
+local rows: { any } = {}
+local lastSnapshot: any = nil
+
+local ROW_HEIGHT = 42
+
+--- Tek bir padok satiri. Yatak numarasi sabit, icerigi degisiyor.
+local function buildRow(parent: Instance, bed: number): any
+	local root = Theme.frame({
+		name = &quot;Padok&quot; .. bed,
+		size = UDim2.new(1, 0, 0, ROW_HEIGHT),
+		color = Theme.color.panelLight,
+		transparency = 0.35,
+		radius = Theme.radius.sm,
+		parent = parent,
+		layoutOrder = bed,
+		zIndex = 2,
+	})
+
+	local number = Theme.label({
+		name = &quot;Numara&quot;,
+		text = tostring(bed),
+		size = UDim2.fromOffset(18, ROW_HEIGHT),
+		position = UDim2.fromOffset(Theme.space.sm, 0),
+		textSize = Theme.size.small,
+		bold = true,
+		align = Enum.TextXAlignment.Center,
+		color = Theme.color.textFaint,
+		parent = root,
+		zIndex = 3,
+	})
+
+	local name = Theme.label({
+		name = &quot;Ad&quot;,
+		text = &quot;&quot;,
+		size = UDim2.new(1, -136, 0, 16),
+		position = UDim2.fromOffset(30, 4),
+		textSize = Theme.size.micro,
+		bold = true,
+		parent = root,
+		zIndex = 3,
+	})
+
+	local status = Theme.label({
+		name = &quot;Durum&quot;,
+		text = &quot;&quot;,
+		size = UDim2.new(1, -136, 0, 14),
+		position = UDim2.fromOffset(30, 22),
+		textSize = Theme.size.micro,
+		color = Theme.color.textDim,
+		parent = root,
+		zIndex = 3,
+	})
+
+	local bar = Theme.bar(
+		root,
+		UDim2.new(1, -142, 0, 4),
+		UDim2.fromOffset(30, ROW_HEIGHT - 8),
+		Theme.color.good,
+		{ radius = 2 }
+	)
+	bar.track.ZIndex = 3
+	bar.ghost.ZIndex = 3
+	bar.fill.ZIndex = 4
+
+	local button = Theme.button({
+		name = &quot;Ilac&quot;,
+		text = Loc.get(&quot;ward.dose&quot;),
+		size = UDim2.fromOffset(96, 28),
+		position = UDim2.new(1, -Theme.space.sm, 0.5, 0),
+		anchor = Vector2.new(1, 0.5),
+		textSize = Theme.size.micro,
+		color = Theme.color.accentDark,
+		parent = root,
+		zIndex = 3,
+		onClick = function()
+			Net.toServer(&quot;GiveMedicine&quot;, bed)
+		end,
+	})
+
+	return {
+		root = root,
+		number = number,
+		name = name,
+		status = status,
+		bar = bar,
+		button = button,
+		pulse = nil :: Theme.Pulse?,
+		due = false,
+	}
+end
+
+function WardPanel.create(parent: ScreenGui)
+	local panel = Theme.card({
+		name = &quot;Kogus&quot;,
+		size = UDim2.fromOffset(320, 60),
+		position = UDim2.new(0, Theme.space.lg, 1, -112),
+		anchor = Vector2.new(0, 1),
+		parent = parent,
+		visible = false,
+	})
+
+	Theme.icon({
+		name = &quot;paw&quot;,
+		size = 14,
+		color = Theme.color.accent,
+		position = UDim2.fromOffset(Theme.space.md, 11),
+		parent = panel,
+		zIndex = 2,
+	})
+	Theme.label({
+		name = &quot;Baslik&quot;,
+		text = Loc.get(&quot;ward.title&quot;),
+		size = UDim2.new(1, -Theme.space.md * 2 - 22, 0, 18),
+		position = UDim2.fromOffset(Theme.space.md + 22, Theme.space.sm),
+		textSize = Theme.size.micro,
+		bold = true,
+		color = Theme.color.textDim,
+		parent = panel,
+		zIndex = 2,
+	})
+
+	local list = Theme.frame({
+		name = &quot;Padoklar&quot;,
+		size = UDim2.new(1, -Theme.space.md * 2, 0, 0),
+		position = UDim2.fromOffset(Theme.space.md, 30),
+		transparency = 1,
+		radius = 0,
+		parent = panel,
+		zIndex = 2,
+	})
+	Theme.list(list, Theme.space.xs)
+
+	widgets = { panel = panel, list = list }
+end
+
+--- Kogus goruntusunu cizer. Sunucu MUTLAK zaman yolluyor; geri sayim
+--- istemcide her karede hesaplaniyor, yani sunucu yalnizca bir sey
+--- DEGISINCE gonderiyor.
+local function draw()
+	local snapshot = lastSnapshot
+	if widgets == nil or snapshot == nil then
+		return
+	end
+	local now = Workspace:GetServerTimeNow()
+
+	-- Satirlar yatak sayisi kadar; yatak sayisi degismedikce yeniden
+	-- kurulmuyor.
+	if #rows ~= snapshot.total then
+		for _, row in rows do
+			row.root:Destroy()
+		end
+		rows = {}
+		for bed = 1, snapshot.total do
+			table.insert(rows, buildRow(widgets.list, bed))
+		end
+	end
+
+	local busy = 0
+	for _, info in snapshot.beds do
+		local row = rows[info.bed]
+		if row == nil then
+			continue
+		end
+		row.root.Visible = info.busy == true
+		if info.busy ~= true then
+			if row.pulse ~= nil then
+				row.pulse.stop()
+				row.pulse = nil
+			end
+			row.due = false
+			continue
+		end
+		busy += 1
+
+		row.name.Text = Loc.get(info.nameKey)
+
+		-- Doz penceresi: saatinden `doseWindow` once acilip ayni kadar
+		-- sonra kapaniyor. Pencere aciksa dugme canli, degilse geri
+		-- sayim yaziyor.
+		local doseIn = info.doseAt - now
+		local recoverIn = info.recoverAt - now
+		local due = doseIn &lt;= info.doseWindow
+		row.button.Visible = due
+		row.button.BackgroundColor3 = Theme.color.accentDark
+		if due then
+			row.status.Text = Loc.get(&quot;ward.doseNow&quot;)
+			row.status.TextColor3 = Theme.color.warn
+		else
+			row.status.Text = Loc.get(&quot;ward.doseIn&quot;, math.max(0, math.ceil(doseIn)))
+			row.status.TextColor3 = Theme.color.textDim
+		end
+
+		-- Iyilesme cubugu: kalan sure degil, TAMAMLANAN oran.
+		local progress = 1 - math.clamp(recoverIn / math.max(1, info.recoverTotal), 0, 1)
+		Theme.setBar(row.bar, progress)
+		Theme.setBarColor(row.bar, if info.dosesMissed &gt; 0 then Theme.color.warn else Theme.color.good)
+
+		-- Doz saati gelince satir NABIZ atiyor: oyuncu baska bir
+		-- hastayla ugrasirken bile kenarda hareketi fark ediyor.
+		if due ~= row.due then
+			row.due = due
+			if row.pulse ~= nil then
+				row.pulse.stop()
+				row.pulse = nil
+			end
+			if due then
+				row.pulse = Theme.pulse(row.root, &quot;BackgroundTransparency&quot;, 0.05, 0.5)
+			end
+		end
+	end
+
+	-- Panel yuksekligi dolu padok sayisina gore: bos satir yer
+	-- kaplamasin.
+	local height = 30 + busy * (ROW_HEIGHT + Theme.space.xs) + Theme.space.sm
+	widgets.list.Size = UDim2.new(1, -Theme.space.md * 2, 0, busy * (ROW_HEIGHT + Theme.space.xs))
+	widgets.panel.Size = UDim2.fromOffset(320, height)
+
+	local show = busy &gt; 0
+	if show ~= widgets.panel.Visible then
+		if show then
+			Theme.open(widgets.panel)
+		else
+			Theme.close(widgets.panel)
+		end
+	end
+end
+
+--- Sunucudan gelen kogus goruntusu.
+function WardPanel.update(snapshot: any)
+	lastSnapshot = snapshot
+	draw()
+end
+
+function WardPanel.start()
+	-- Geri sayim her karede taze: sunucunun yeni bir paket yollamasini
+	-- beklemiyor.
+	RunService.RenderStepped:Connect(draw)
+end
+
+function WardPanel.snapshot(): any
+	return lastSnapshot
+end
+
+return WardPanel
+</ProtectedString>
+					</Properties>
+				</Item>
 			</Item>
 		</Item>
 	</Item>
-	<Item class="StarterGui" referent="RBX80">
+	<Item class="StarterGui" referent="RBX82">
 		<Properties>
 			<string name="Name">StarterGui</string>
 			<bool name="ResetPlayerGuiOnSpawn">false</bool>
 		</Properties>
 	</Item>
-	<Item class="Players" referent="RBX81">
+	<Item class="Players" referent="RBX83">
 		<Properties>
 			<string name="Name">Players</string>
 			<bool name="CharacterAutoLoads">false</bool>
 		</Properties>
 	</Item>
-	<Item class="SoundService" referent="RBX82">
+	<Item class="SoundService" referent="RBX84">
 		<Properties>
 			<string name="Name">SoundService</string>
 		</Properties>
