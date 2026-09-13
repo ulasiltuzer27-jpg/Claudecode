@@ -43,6 +43,7 @@ local Tasks = require(script.Parent.game.Tasks)
 local Staff = require(script.Parent.game.Staff)
 local ClinicLevel = require(script.Parent.game.ClinicLevel)
 local Events = require(script.Parent.game.Events)
+local Tutorial = require(script.Parent.game.Tutorial)
 local Surgery = require(script.Parent.game.Surgery)
 local Ward = require(script.Parent.game.Ward)
 local ToolGame = require(script.Parent.game.ToolGame)
@@ -738,6 +739,43 @@ do
 		ClinicLevel.levelForXp(ClinicLevel.xpForLevel(ClinicLevel.MAX) * 10) == ClinicLevel.MAX
 	)
 	check("klinik bos sunucuda 1. seviyede", ClinicLevel.activeLevel({}) == 1)
+
+	-- Ogretici: adimlar SIRAYLA ilerliyor mu ve beklenmeyen bir eylem
+	-- adim atlatiyor mu? Atlanan adim, ogretilmemis adimdir.
+	do
+		local sandbox = { tutorialStep = 0 }
+		check("yeni oyuncu ogreticinin basinda", Tutorial.current(sandbox :: any) ~= nil)
+		check("yeni oyuncu icin ogretici bitmemis", not Tutorial.done(sandbox :: any))
+		local steps = Tutorial.steps()
+		check("ogretici en az 4 adim", #steps >= 4)
+		check(
+			"beklenmeyen eylem adim atlatmiyor",
+			not Tutorial.advance(sandbox :: any, "__olmayan_eylem__")
+		)
+		check("beklenmeyen eylemden sonra adim ayni", sandbox.tutorialStep == 0)
+		for index, step in steps do
+			check(
+				("ogretici adimi %d ('%s') sirasi gelince aciliyor"):format(index, step.id),
+				(Tutorial.current(sandbox :: any) :: any).id == step.id
+			)
+			check(("ogretici adimi '%s' basligi cevrili"):format(step.id), Loc.has(step.titleKey))
+			check(("ogretici adimi '%s' metni cevrili"):format(step.id), Loc.has(step.bodyKey))
+			check(
+				("ogretici adimi '%s' vurgu bolgesi taniniyor"):format(step.id),
+				Tutorial.knownRegion(step.highlight)
+			)
+			check(
+				("ogretici adimi '%s' kendi eylemiyle iliyor"):format(step.id),
+				Tutorial.advance(sandbox :: any, step.advanceOn)
+			)
+		end
+		check("butun adimlardan sonra ogretici bitiyor", Tutorial.done(sandbox :: any))
+		check("bitmis ogreticinin goruntusu yok", Tutorial.snapshot(sandbox :: any) == nil)
+		check(
+			"bitmis ogretici bir daha ilerlemiyor",
+			not Tutorial.advance(sandbox :: any, steps[1].advanceOn)
+		)
+	end
 
 	-- Vardiya olaylari: tablo tutarli mi ve baslangicta olay YOK mu?
 	-- Sunucu acilir acilmaz bir salginla baslamak, oyuncuyu daha ilk

@@ -413,6 +413,79 @@ def main() -> int:
         # aksine).
         check(f"kronik '{condition['id']}' en az bir belirti tasiyor", len(condition["symptoms"]) > 0)
 
+    # 9a6. Ogretici (data/tutorial.json)
+    #
+    # Ogreticinin iki tarafi var: adimlar SUNUCUDA ilerliyor
+    # (Tutorial.luau), vurgu halkasini ISTEMCI ciziyor
+    # (src/client/Tutorial.luau). Uc tablo birbirinden kayarsa ogretici
+    # ya ilerlemeyen bir adimda takilir ya da ekranda hicbir seyi
+    # isaretlemez - ikisi de ancak Studio'da fark edilirdi.
+    tutorial_file = load("tutorial.json")
+    steps = tutorial_file["steps"]
+    check("tutorial.json en az 4 adim tanimliyor", len(steps) >= 4)
+
+    with open(os.path.join(ROOT, "src", "server", "game", "Tutorial.luau"), "r", encoding="utf-8") as handle:
+        tutorial_server = handle.read()
+    with open(os.path.join(ROOT, "src", "client", "Tutorial.luau"), "r", encoding="utf-8") as handle:
+        tutorial_client = handle.read()
+
+    server_regions = set()
+    found = re.search(r"local REGIONS = \{(.*?)\n\}", tutorial_server, re.S)
+    if found:
+        server_regions = set(re.findall(r"(\w+) = true", found.group(1)))
+    client_regions = set()
+    found = re.search(r"local REGIONS: \{ \[string\]: \{ number \} \} = \{(.*?)\n\}", tutorial_client, re.S)
+    if found:
+        client_regions = set(re.findall(r"^\t(\w+) = \{", found.group(1), re.M))
+    check("ogretici vurgu bolgeleri sunucu ve istemcide ayni", server_regions == client_regions)
+    check("ogretici en az bir vurgu bolgesi tanimliyor", len(server_regions) > 0)
+
+    # Adimlari ilerleten eylemler PatientFlow'da GERCEKTEN cagriliyor
+    # mu? Cagrilmayan bir eylem, ogreticinin o adimda sonsuza kadar
+    # beklemesi demek.
+    with open(os.path.join(ROOT, "src", "server", "game", "PatientFlow.luau"), "r", encoding="utf-8") as handle:
+        flow_src = handle.read()
+    taught = set(re.findall(r'teach\([^,]+, [^,]+, "(\w+)"\)', flow_src))
+
+    step_ids: set[str] = set()
+    for index, step in enumerate(steps, 1):
+        identifier = step["id"]
+        check(f"ogretici adimi '{identifier}' tekil", identifier not in step_ids)
+        step_ids.add(identifier)
+        check(f"ogretici adimi '{identifier}' basligi tr.json'da var", step["titleKey"] in strings)
+        check(f"ogretici adimi '{identifier}' metni tr.json'da var", step["bodyKey"] in strings)
+        check(
+            f"ogretici adimi '{identifier}' vurgu bolgesi taniniyor ({step['highlight']})",
+            step["highlight"] in server_regions,
+        )
+        check(
+            f"ogretici adimi '{identifier}' eylemi ({step['advanceOn']}) PatientFlow'da cagriliyor",
+            step["advanceOn"] in taught,
+        )
+
+    # Ters yon: kodda ilerletilen ama tabloda bulunmayan bir eylem,
+    # olu bir cagri demek.
+    declared_actions = {step["advanceOn"] for step in steps}
+    for action in sorted(taught):
+        check(f"PatientFlow'daki '{action}' ogretici adimi tutorial.json'da var", action in declared_actions)
+
+    # 9a7. Dokunmatik kontroller (src/client/Touch.luau)
+    #
+    # Dokunmatik dugmelerin YOLLADIGI remote'lar gercekten var mi?
+    # Olmayan bir remote'a basmak telefonda sessizce hicbir sey
+    # yapmazdi ve bu ortamda telefon yok.
+    with open(os.path.join(ROOT, "src", "shared", "Net.luau"), "r", encoding="utf-8") as handle:
+        net_src = handle.read()
+    with open(os.path.join(ROOT, "src", "client", "Touch.luau"), "r", encoding="utf-8") as handle:
+        touch_src = handle.read()
+    to_server = set(re.findall(r'(\w+) = \{ direction = "toServer"', net_src))
+    touch_remotes = set(re.findall(r'remote = "(\w+)"', touch_src))
+    check(f"dokunmatik dugmeler en az 3 eylem tasiyor ({len(touch_remotes)})", len(touch_remotes) >= 3)
+    for remote in sorted(touch_remotes):
+        check(f"dokunmatik '{remote}' remote'u Net.Schema'da ve sunucuya gidiyor", remote in to_server)
+    for key in sorted(set(re.findall(r'key = "(touch\.\w+)"', touch_src))):
+        check(f"dokunmatik yazisi '{key}' tr.json'da var", key in strings)
+
     # 9a2. Personel (data/staff.json)
     #
     # Yukseltmelerdeki kalibin aynisi: veri ile KODUN OKUDUGU etki

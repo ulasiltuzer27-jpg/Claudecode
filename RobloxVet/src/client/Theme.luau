@@ -23,6 +23,7 @@
 -- `Theme.tween` uzerinden, `Theme.motion` suresleriyle gidiyor.
 
 local TweenService = game:GetService("TweenService")
+local Workspace = game:GetService("Workspace")
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Shared = ReplicatedStorage:WaitForChild("VetShared")
@@ -130,6 +131,71 @@ function Theme.flash(target: GuiObject, color: Color3?)
 	stroke.Color = color or Theme.color.accentGlow
 	stroke.Thickness = originalThickness + 1.5
 	Theme.tween(stroke, { Color = originalColor, Thickness = originalThickness }, Theme.motion.slow)
+end
+
+-- ── Ekran olcegi ──────────────────────────────────────────────────────
+-- Yerlesim 1280x768 REFERANS cozunurlugune gore yaziliyor ve
+-- `tools/verify_ui.py` o cozunurlukte hicbir panelin cakismadigini ve
+-- ekrandan tasmadigini olcuyor.
+--
+-- Daha kucuk ekranlarda (telefon, kucuk pencere) ayni yerlesim tasardi.
+-- Her paneli ayri ayri kuculten bir "dar ekran yerlesimi" yazmak
+-- yerine BUTUN arayuz tek bir UIScale ile kuculuyor: boylece 1280x768
+-- icin kanitlanmis yerlesim her ekranda gecerli kaliyor. Bu depoda
+-- telefon yok; olculebilen bir garanti, gozle bakilan bir tahminden
+-- iyidir.
+--
+-- Taban 0.62'de kesiliyor: daha kucugunde yazilar okunmaz oluyor ve
+-- kaydirmak dokunmatikte kuculterek sigdirmaktan daha kotu.
+local REFERENCE = Vector2.new(1280, 768)
+local MIN_SCALE = 0.62
+
+--- Dar ekran mi? (Dokunmatik yerlesim kararlari bunu okuyor.)
+function Theme.isCompact(): boolean
+	local camera = Workspace.CurrentCamera
+	if camera == nil then
+		return false
+	end
+	local size = camera.ViewportSize
+	return size.X < 900 or size.Y < 640
+end
+
+--- Ekrana gore olcek (0.62..1).
+function Theme.scaleFor(size: Vector2): number
+	local ratio = math.min(size.X / REFERENCE.X, size.Y / REFERENCE.Y)
+	return math.clamp(ratio, MIN_SCALE, 1)
+end
+
+--- ScreenGui'ye kendini ekrana gore ayarlayan bir UIScale takar.
+--- Pencere boyutu degistiginde yeniden hesapliyor.
+function Theme.autoScale(screen: ScreenGui): UIScale
+	local scale = Instance.new("UIScale")
+	scale.Name = "EkranOlcegi"
+	scale.Parent = screen
+
+	local function apply()
+		local camera = Workspace.CurrentCamera
+		if camera == nil then
+			return
+		end
+		scale.Scale = Theme.scaleFor(camera.ViewportSize)
+	end
+
+	apply()
+	local camera = Workspace.CurrentCamera
+	if camera ~= nil then
+		camera:GetPropertyChangedSignal("ViewportSize"):Connect(apply)
+	end
+	-- Kamera sonradan degisebiliyor (dogma ani); yeni kameraya da
+	-- baglanmazsak olcek ilk degerde takili kalirdi.
+	Workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(function()
+		local current = Workspace.CurrentCamera
+		if current ~= nil then
+			current:GetPropertyChangedSignal("ViewportSize"):Connect(apply)
+			apply()
+		end
+	end)
+	return scale
 end
 
 -- ── Kucuk yapi yardimcilari ───────────────────────────────────────────

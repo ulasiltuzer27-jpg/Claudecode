@@ -37,6 +37,8 @@ local ShopPanel = require(script.ShopPanel)
 local SurgeryPanel = require(script.SurgeryPanel)
 local Theme = require(script.Theme)
 local ToolBar = require(script.ToolBar)
+local Touch = require(script.Touch)
+local Tutorial = require(script.Tutorial)
 local ToolGamePanel = require(script.ToolGamePanel)
 local TreatmentPanel = require(script.TreatmentPanel)
 local ViewModel = require(script.ViewModel)
@@ -78,7 +80,33 @@ ProgressPanel.create(screen)
 Fps.create(screen)
 SettingsPanel.create(screen)
 Notify.create(screen)
+Tutorial.create(screen)
+-- Dokunmatik dugmeler EN SONDA kuruluyor ki diger panellerin ustunde
+-- kalsinlar; `Touch.create` klavyeli cihazda hicbir sey yapmiyor.
+Touch.create(screen, function(panel: string)
+	if panel == "shop" then
+		ShopPanel.toggle()
+	elseif panel == "progress" then
+		ProgressPanel.toggle()
+	elseif panel == "settings" then
+		SettingsPanel.toggle()
+	end
+end)
 LobbyPanel.create(lobbyScreen)
+
+-- Arayuz 1280x768 referansina gore yaziliyor ve `tools/verify_ui.py`
+-- o cozunurlukte cakisma olmadigini olcuyor. Daha kucuk ekranlarda
+-- BUTUN arayuz birlikte kuculuyor; boylece kanitlanmis yerlesim her
+-- ekranda gecerli kaliyor.
+Theme.autoScale(screen)
+Theme.autoScale(lobbyScreen)
+
+if Touch.needed() then
+	-- Kucuk ekranda birinci sahis el/alet modeli ekranin alt yarisini
+	-- kapatiyor ve dokunmatik dugmeler de orada. Ayarlardan geri
+	-- acilabiliyor - kapatilan sey kaybolmus sayilmaz.
+	ViewModel.setEnabled(false)
+end
 
 Camera.start()
 -- Birinci sahis el/alet modeli kameradan SONRA baslamali: sallanma
@@ -107,6 +135,8 @@ local hints = Theme.label({
 	parent = screen,
 })
 hints.TextStrokeTransparency = 0.6
+-- Klavyesi olmayan bir cihazda tus listesi yalnizca yer kapliyor.
+hints.Visible = not Touch.needed()
 
 local lastState: any = nil
 local lastChart: any = nil
@@ -136,6 +166,7 @@ end
 
 local function redraw()
 	Hud.update(lastState)
+	Tutorial.update(if lastState ~= nil then lastState.tutorial else nil)
 	Hud.setObjective(objectiveKey(lastChart))
 	Hud.setStress(if lastChart ~= nil and lastChart.present == true then lastChart.stress / 100 else 0)
 	ToolBar.update(lastState)

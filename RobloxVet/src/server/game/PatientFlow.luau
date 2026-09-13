@@ -44,6 +44,7 @@ local Surgery = require(script.Parent.Surgery)
 local Tasks = require(script.Parent.Tasks)
 local ToolGame = require(script.Parent.ToolGame)
 local Treatment = require(script.Parent.Treatment)
+local Tutorial = require(script.Parent.Tutorial)
 local Ward = require(script.Parent.Ward)
 local Upgrades = require(script.Parent.Upgrades)
 
@@ -110,6 +111,18 @@ local nextPatientId = 1
 local started = false
 
 -- ── Yardimcilar ───────────────────────────────────────────────────────
+
+--- Ogreticiyi ilerletir. Adim GERCEKTEN yapilan isle aciliyor: bu
+--- fonksiyon oyunun akisindaki gercek basari noktalarindan cagriliyor,
+--- istemcinin "tamam" demesiyle degil.
+---
+--- Cagiran taraf zaten `pushState` yapiyor; burada yalnizca kayit
+--- kirletiliyor ki adim diske yazilsin.
+local function teach(player: Player, data: any, action: string)
+	if Tutorial.advance(data, action) then
+		Profile.markDirty(player)
+	end
+end
 
 local function notify(player: Player, kind: string, messageKey: string, args: { any }?)
 	Net.toPlayer("Notify", player, kind, messageKey, args or {})
@@ -497,6 +510,8 @@ local function stateSnapshot(player: Player): any
 		-- Vardiya olayi. Salginin HANGI hastalik oldugu burada YOK:
 		-- gitseydi teshis listesini bir anda daraltirdi.
 		event = Events.snapshot(),
+		-- Ogretici adimi. Bittiyse nil ve istemci hicbir sey cizmiyor.
+		tutorial = Tutorial.snapshot(data),
 	}
 end
 
@@ -1212,6 +1227,10 @@ function PatientFlow.callNext(player: Player)
 	placeOnStation(chosen, stationId)
 
 	notify(player, "good", "notify.patientTaken")
+	local taking = Profile.get(player)
+	if taking ~= nil then
+		teach(player, taking.data, "callNext")
+	end
 	pushState(player)
 	pushChart(player)
 	pushStateAll()
@@ -1263,6 +1282,15 @@ local function revealFindings(player: Player, patient: Patient, toolId: string, 
 
 	Audio.play("tool" .. toolId:sub(1, 1):upper() .. toolId:sub(2), patient.rig.root)
 	Net.toPlayer("ToolResult", player, toolId, names)
+	-- Ogreticinin "muayene et" adimi ancak BULGU cikinca kapaniyor:
+	-- hicbir sey bulmayan bir alet kullanimi muayeneyi ogretmez.
+	if #found > 0 then
+		local examining = Profile.get(player)
+		if examining ~= nil then
+			teach(player, examining.data, "useTool")
+			pushState(player)
+		end
+	end
 	pushChart(player)
 end
 
@@ -1427,6 +1455,7 @@ function PatientFlow.submitDiagnosis(player: Player, conditionId: string)
 
 	if Diagnosis.check(patient.conditionId, conditionId) then
 		patient.diagnosed = true
+		teach(player, data, "diagnose")
 		data.reputation = Economy.clampReputation(
 			data.reputation + economy.reputation.correctDiagnosis * effects.repGain
 		)
@@ -1511,6 +1540,10 @@ local function finishTreatment(player: Player, patient: Patient, treatmentId: st
 	Effects.treatment(patient.rig.model, patient.rig.root.CFrame, treatmentId)
 
 	if outcome.correct then
+		local treating = Profile.get(player)
+		if treating ~= nil then
+			teach(player, treating.data, "treat")
+		end
 		Audio.play("treat" .. treatmentId:sub(1, 1):upper() .. treatmentId:sub(2), patient.rig.root)
 		patient.treatmentsDone[treatmentId] = true
 		-- Kirik iyilesince topallama biter: gorunur geri bildirim.
@@ -1945,6 +1978,7 @@ function PatientFlow.discharge(player: Player)
 	end
 
 	applyLevel(player, data, previousLevel)
+	teach(player, data, "discharge")
 	settleClinicLevel(clinicBefore)
 
 	if tip > 0 then

@@ -236,6 +236,58 @@ def main() -> int:
                 not overlaps(a["rect"], b["rect"]),
             )
 
+    # 4. Olcek referansi: Theme.luau butun arayuzu 1280x768'e gore
+    # olcekliyor. Oradaki referans bu dosyadakinden farkli olsaydi,
+    # burada "sigiyor" dedigimiz yerlesim oyunda baska bir olcekle
+    # cizilirdi ve denetim bir sey garanti etmezdi.
+    theme_path = os.path.join(CLIENT, "Theme.luau")
+    with open(theme_path, "r", encoding="utf-8") as handle:
+        theme_src = handle.read()
+    reference = re.search(r"local REFERENCE = Vector2\.new\((\d+), (\d+)\)", theme_src)
+    check("Theme.luau bir olcek referansi tanimliyor", reference is not None)
+    if reference is not None:
+        check(
+            f"Theme.luau referansi ({reference.group(1)}x{reference.group(2)}) "
+            f"bu denetimin referansiyla ayni ({SCREEN_W}x{SCREEN_H})",
+            int(reference.group(1)) == SCREEN_W and int(reference.group(2)) == SCREEN_H,
+        )
+    floor = re.search(r"local MIN_SCALE = (0?\.\d+)", theme_src)
+    check("Theme.luau bir alt olcek siniri tanimliyor", floor is not None)
+    if floor is not None:
+        check(
+            f"alt olcek siniri okunabilir bantta ({floor.group(1)})",
+            0.5 <= float(floor.group(1)) <= 0.9,
+        )
+
+    # 5. Ogreticinin vurgu halkalari GERCEK bir panelin etrafini
+    # cizyor mu? Bos bir bolgeye halka koymak, oyuncuya hicbir seyi
+    # gostermeden "suraya bak" demek olurdu.
+    tutorial_path = os.path.join(CLIENT, "Tutorial.luau")
+    if os.path.exists(tutorial_path):
+        with open(tutorial_path, "r", encoding="utf-8") as handle:
+            tutorial_src = handle.read()
+        block = re.search(r"local REGIONS: \{ \[string\]: \{ number \} \} = \{(.*?)\n\}", tutorial_src, re.S)
+        regions = re.findall(r"^\t(\w+) = \{ (-?\d+), (-?\d+), (-?\d+), (-?\d+) \},", block.group(1) if block else "", re.M)
+        check("ogretici vurgu bolgeleri okunabildi", len(regions) > 0)
+        for name, x, y, w, h in regions:
+            rx0, ry0 = float(x), float(y)
+            rx1, ry1 = rx0 + float(w), ry0 + float(h)
+            check(
+                f"ogretici bolgesi '{name}' ekranin icinde  [{rx0:.0f},{ry0:.0f}-{rx1:.0f},{ry1:.0f}]",
+                rx0 >= -1 and ry0 >= -1 and rx1 <= SCREEN_W + 1 and ry1 <= SCREEN_H + 1,
+            )
+            # Bolgenin icinde, alaninin en az %80'i o bolgeye dusen bir
+            # panel olmali.
+            covered = False
+            for entry in found:
+                px0, py0, px1, py1 = entry["rect"]
+                area = max(1e-6, (px1 - px0) * (py1 - py0))
+                inner = max(0.0, min(px1, rx1) - max(px0, rx0)) * max(0.0, min(py1, ry1) - max(py0, ry0))
+                if inner / area >= 0.8:
+                    covered = True
+                    break
+            check(f"ogretici bolgesi '{name}' gercek bir paneli isaret ediyor", covered)
+
     if errors:
         print(f"verify_ui: {checks - len(errors)}/{checks} gecti — {len(errors)} HATA:", file=sys.stderr)
         for index, label in enumerate(errors, 1):

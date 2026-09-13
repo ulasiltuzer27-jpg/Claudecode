@@ -6008,6 +6008,23 @@ return {
 	[&quot;name&quot;] = &quot;Türkçe&quot;,
 	[&quot;strings&quot;] = {
 		[&quot;clinic.name&quot;] = &quot;PATİ VETERİNER KLİNİĞİ&quot;,
+		[&quot;tut.step&quot;] = &quot;ADIM {1}/{2}&quot;,
+		[&quot;tut.callNext&quot;] = &quot;Sıradaki hastayı al&quot;,
+		[&quot;tut.callNextBody&quot;] = &quot;Bir muayene masasının yanına git ve hastayı masaya al. Masa hayvanın boyuna uygun olmalı — at küçük bir kuvete sığmaz.&quot;,
+		[&quot;tut.examine&quot;] = &quot;Muayene et&quot;,
+		[&quot;tut.examineBody&quot;] = &quot;Alt taraftaki aletlerden birini seç. Her alet farklı belirtiler buluyor; hepsini denemek bedava değil, hayvanı geriyor.&quot;,
+		[&quot;tut.diagnose&quot;] = &quot;Teşhis koy&quot;,
+		[&quot;tut.diagnoseBody&quot;] = &quot;Bulduğun belirtilere en çok uyan hastalığı seç. Yanlış teşhis itibar kaybettirir, o yüzden acele etme.&quot;,
+		[&quot;tut.treat&quot;] = &quot;Tedaviyi uygula&quot;,
+		[&quot;tut.treatBody&quot;] = &quot;Teşhis konunca tedavi paneli açılıyor. Hastalığın istediği tedavilerin hepsini uygula.&quot;,
+		[&quot;tut.discharge&quot;] = &quot;Taburcu et&quot;,
+		[&quot;tut.dischargeBody&quot;] = &quot;Tedavi bitince hastayı sahibine teslim et. Sağlığı yüksek ve sahibi memnunsa bahşiş de alırsın.&quot;,
+		[&quot;touch.callNext&quot;] = &quot;HASTAYI AL&quot;,
+		[&quot;touch.discharge&quot;] = &quot;TABURCU ET&quot;,
+		[&quot;touch.sample&quot;] = &quot;NUMUNEYİ İNCELE&quot;,
+		[&quot;touch.shop&quot;] = &quot;Mağaza&quot;,
+		[&quot;touch.progress&quot;] = &quot;İlerleme&quot;,
+		[&quot;touch.settings&quot;] = &quot;Ayarlar&quot;,
 		[&quot;hud.eventLine&quot;] = &quot;{1} — {2}&quot;,
 		[&quot;event.outbreak&quot;] = &quot;SALGIN&quot;,
 		[&quot;event.outbreakDesc&quot;] = &quot;aynı hastalıktan seri hasta geliyor&quot;,
@@ -8098,6 +8115,55 @@ return {
 			</Item>
 			<Item class="ModuleScript" referent="RBX34">
 				<Properties>
+					<string name="Name">tutorial</string>
+					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
+-- Kaynak: data/tutorial.json
+-- Uretici: tools/jsontolua.py  (python3 build.py)
+-- (VERI) OGRETICI. Yeni oyuncunun ilk hastasinda adim adim yol gosteriyor.
+return {
+	[&quot;steps&quot;] = {
+		{
+			[&quot;id&quot;] = &quot;callNext&quot;,
+			[&quot;titleKey&quot;] = &quot;tut.callNext&quot;,
+			[&quot;bodyKey&quot;] = &quot;tut.callNextBody&quot;,
+			[&quot;advanceOn&quot;] = &quot;callNext&quot;,
+			[&quot;highlight&quot;] = &quot;toolbar&quot;,
+		},
+		{
+			[&quot;id&quot;] = &quot;examine&quot;,
+			[&quot;titleKey&quot;] = &quot;tut.examine&quot;,
+			[&quot;bodyKey&quot;] = &quot;tut.examineBody&quot;,
+			[&quot;advanceOn&quot;] = &quot;useTool&quot;,
+			[&quot;highlight&quot;] = &quot;toolbar&quot;,
+		},
+		{
+			[&quot;id&quot;] = &quot;diagnose&quot;,
+			[&quot;titleKey&quot;] = &quot;tut.diagnose&quot;,
+			[&quot;bodyKey&quot;] = &quot;tut.diagnoseBody&quot;,
+			[&quot;advanceOn&quot;] = &quot;diagnose&quot;,
+			[&quot;highlight&quot;] = &quot;rightLower&quot;,
+		},
+		{
+			[&quot;id&quot;] = &quot;treat&quot;,
+			[&quot;titleKey&quot;] = &quot;tut.treat&quot;,
+			[&quot;bodyKey&quot;] = &quot;tut.treatBody&quot;,
+			[&quot;advanceOn&quot;] = &quot;treat&quot;,
+			[&quot;highlight&quot;] = &quot;rightLower&quot;,
+		},
+		{
+			[&quot;id&quot;] = &quot;discharge&quot;,
+			[&quot;titleKey&quot;] = &quot;tut.discharge&quot;,
+			[&quot;bodyKey&quot;] = &quot;tut.dischargeBody&quot;,
+			[&quot;advanceOn&quot;] = &quot;discharge&quot;,
+			[&quot;highlight&quot;] = &quot;chart&quot;,
+		},
+	},
+}
+</ProtectedString>
+				</Properties>
+			</Item>
+			<Item class="ModuleScript" referent="RBX35">
+				<Properties>
 					<string name="Name">upgrades</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
 -- Kaynak: data/upgrades.json
@@ -8221,11 +8287,11 @@ return {
 			</Item>
 		</Item>
 	</Item>
-	<Item class="ServerScriptService" referent="RBX35">
+	<Item class="ServerScriptService" referent="RBX36">
 		<Properties>
 			<string name="Name">ServerScriptService</string>
 		</Properties>
-		<Item class="Script" referent="RBX36">
+		<Item class="Script" referent="RBX37">
 			<Properties>
 				<string name="Name">VetServer</string>
 				<ProtectedString name="Source">--!strict
@@ -8772,7 +8838,7 @@ end
 print((&quot;[Veteriner] sunucu hazir — mod: %s&quot;):format(mode))
 </ProtectedString>
 			</Properties>
-			<Item class="Script" referent="RBX37">
+			<Item class="Script" referent="RBX38">
 				<Properties>
 					<string name="Name">SelfTest</string>
 					<ProtectedString name="Source">--!strict
@@ -8820,6 +8886,7 @@ local Tasks = require(script.Parent.game.Tasks)
 local Staff = require(script.Parent.game.Staff)
 local ClinicLevel = require(script.Parent.game.ClinicLevel)
 local Events = require(script.Parent.game.Events)
+local Tutorial = require(script.Parent.game.Tutorial)
 local Surgery = require(script.Parent.game.Surgery)
 local Ward = require(script.Parent.game.Ward)
 local ToolGame = require(script.Parent.game.ToolGame)
@@ -9516,6 +9583,43 @@ do
 	)
 	check(&quot;klinik bos sunucuda 1. seviyede&quot;, ClinicLevel.activeLevel({}) == 1)
 
+	-- Ogretici: adimlar SIRAYLA ilerliyor mu ve beklenmeyen bir eylem
+	-- adim atlatiyor mu? Atlanan adim, ogretilmemis adimdir.
+	do
+		local sandbox = { tutorialStep = 0 }
+		check(&quot;yeni oyuncu ogreticinin basinda&quot;, Tutorial.current(sandbox :: any) ~= nil)
+		check(&quot;yeni oyuncu icin ogretici bitmemis&quot;, not Tutorial.done(sandbox :: any))
+		local steps = Tutorial.steps()
+		check(&quot;ogretici en az 4 adim&quot;, #steps &gt;= 4)
+		check(
+			&quot;beklenmeyen eylem adim atlatmiyor&quot;,
+			not Tutorial.advance(sandbox :: any, &quot;__olmayan_eylem__&quot;)
+		)
+		check(&quot;beklenmeyen eylemden sonra adim ayni&quot;, sandbox.tutorialStep == 0)
+		for index, step in steps do
+			check(
+				(&quot;ogretici adimi %d ('%s') sirasi gelince aciliyor&quot;):format(index, step.id),
+				(Tutorial.current(sandbox :: any) :: any).id == step.id
+			)
+			check((&quot;ogretici adimi '%s' basligi cevrili&quot;):format(step.id), Loc.has(step.titleKey))
+			check((&quot;ogretici adimi '%s' metni cevrili&quot;):format(step.id), Loc.has(step.bodyKey))
+			check(
+				(&quot;ogretici adimi '%s' vurgu bolgesi taniniyor&quot;):format(step.id),
+				Tutorial.knownRegion(step.highlight)
+			)
+			check(
+				(&quot;ogretici adimi '%s' kendi eylemiyle iliyor&quot;):format(step.id),
+				Tutorial.advance(sandbox :: any, step.advanceOn)
+			)
+		end
+		check(&quot;butun adimlardan sonra ogretici bitiyor&quot;, Tutorial.done(sandbox :: any))
+		check(&quot;bitmis ogreticinin goruntusu yok&quot;, Tutorial.snapshot(sandbox :: any) == nil)
+		check(
+			&quot;bitmis ogretici bir daha ilerlemiyor&quot;,
+			not Tutorial.advance(sandbox :: any, steps[1].advanceOn)
+		)
+	end
+
 	-- Vardiya olaylari: tablo tutarli mi ve baslangicta olay YOK mu?
 	-- Sunucu acilir acilmaz bir salginla baslamak, oyuncuyu daha ilk
 	-- saniyede anlamadigi bir seyin ortasina birakirdi.
@@ -9633,11 +9737,11 @@ end
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="Folder" referent="RBX38">
+			<Item class="Folder" referent="RBX39">
 				<Properties>
 					<string name="Name">game</string>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX39">
+				<Item class="ModuleScript" referent="RBX40">
 					<Properties>
 						<string name="Name">Achievements</string>
 						<ProtectedString name="Source">--!strict
@@ -9797,7 +9901,7 @@ return Achievements
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX40">
+				<Item class="ModuleScript" referent="RBX41">
 					<Properties>
 						<string name="Name">ClinicLevel</string>
 						<ProtectedString name="Source">--!strict
@@ -9928,7 +10032,7 @@ return ClinicLevel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX41">
+				<Item class="ModuleScript" referent="RBX42">
 					<Properties>
 						<string name="Name">Diagnosis</string>
 						<ProtectedString name="Source">--!strict
@@ -10090,7 +10194,7 @@ return Diagnosis
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX42">
+				<Item class="ModuleScript" referent="RBX43">
 					<Properties>
 						<string name="Name">Economy</string>
 						<ProtectedString name="Source">--!strict
@@ -10207,7 +10311,7 @@ return Economy
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX43">
+				<Item class="ModuleScript" referent="RBX44">
 					<Properties>
 						<string name="Name">Events</string>
 						<ProtectedString name="Source">--!strict
@@ -10480,7 +10584,7 @@ return Events
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX44">
+				<Item class="ModuleScript" referent="RBX45">
 					<Properties>
 						<string name="Name">Leaderboard</string>
 						<ProtectedString name="Source">--!strict
@@ -10556,7 +10660,7 @@ return Leaderboard
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX45">
+				<Item class="ModuleScript" referent="RBX46">
 					<Properties>
 						<string name="Name">Matchmaking</string>
 						<ProtectedString name="Source">--!strict
@@ -10794,7 +10898,7 @@ return Matchmaking
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX46">
+				<Item class="ModuleScript" referent="RBX47">
 					<Properties>
 						<string name="Name">PatientFlow</string>
 						<ProtectedString name="Source">--!strict
@@ -10843,6 +10947,7 @@ local Surgery = require(script.Parent.Surgery)
 local Tasks = require(script.Parent.Tasks)
 local ToolGame = require(script.Parent.ToolGame)
 local Treatment = require(script.Parent.Treatment)
+local Tutorial = require(script.Parent.Tutorial)
 local Ward = require(script.Parent.Ward)
 local Upgrades = require(script.Parent.Upgrades)
 
@@ -10909,6 +11014,18 @@ local nextPatientId = 1
 local started = false
 
 -- ── Yardimcilar ───────────────────────────────────────────────────────
+
+--- Ogreticiyi ilerletir. Adim GERCEKTEN yapilan isle aciliyor: bu
+--- fonksiyon oyunun akisindaki gercek basari noktalarindan cagriliyor,
+--- istemcinin &quot;tamam&quot; demesiyle degil.
+---
+--- Cagiran taraf zaten `pushState` yapiyor; burada yalnizca kayit
+--- kirletiliyor ki adim diske yazilsin.
+local function teach(player: Player, data: any, action: string)
+	if Tutorial.advance(data, action) then
+		Profile.markDirty(player)
+	end
+end
 
 local function notify(player: Player, kind: string, messageKey: string, args: { any }?)
 	Net.toPlayer(&quot;Notify&quot;, player, kind, messageKey, args or {})
@@ -11296,6 +11413,8 @@ local function stateSnapshot(player: Player): any
 		-- Vardiya olayi. Salginin HANGI hastalik oldugu burada YOK:
 		-- gitseydi teshis listesini bir anda daraltirdi.
 		event = Events.snapshot(),
+		-- Ogretici adimi. Bittiyse nil ve istemci hicbir sey cizmiyor.
+		tutorial = Tutorial.snapshot(data),
 	}
 end
 
@@ -12011,6 +12130,10 @@ function PatientFlow.callNext(player: Player)
 	placeOnStation(chosen, stationId)
 
 	notify(player, &quot;good&quot;, &quot;notify.patientTaken&quot;)
+	local taking = Profile.get(player)
+	if taking ~= nil then
+		teach(player, taking.data, &quot;callNext&quot;)
+	end
 	pushState(player)
 	pushChart(player)
 	pushStateAll()
@@ -12062,6 +12185,15 @@ local function revealFindings(player: Player, patient: Patient, toolId: string, 
 
 	Audio.play(&quot;tool&quot; .. toolId:sub(1, 1):upper() .. toolId:sub(2), patient.rig.root)
 	Net.toPlayer(&quot;ToolResult&quot;, player, toolId, names)
+	-- Ogreticinin &quot;muayene et&quot; adimi ancak BULGU cikinca kapaniyor:
+	-- hicbir sey bulmayan bir alet kullanimi muayeneyi ogretmez.
+	if #found &gt; 0 then
+		local examining = Profile.get(player)
+		if examining ~= nil then
+			teach(player, examining.data, &quot;useTool&quot;)
+			pushState(player)
+		end
+	end
 	pushChart(player)
 end
 
@@ -12226,6 +12358,7 @@ function PatientFlow.submitDiagnosis(player: Player, conditionId: string)
 
 	if Diagnosis.check(patient.conditionId, conditionId) then
 		patient.diagnosed = true
+		teach(player, data, &quot;diagnose&quot;)
 		data.reputation = Economy.clampReputation(
 			data.reputation + economy.reputation.correctDiagnosis * effects.repGain
 		)
@@ -12310,6 +12443,10 @@ local function finishTreatment(player: Player, patient: Patient, treatmentId: st
 	Effects.treatment(patient.rig.model, patient.rig.root.CFrame, treatmentId)
 
 	if outcome.correct then
+		local treating = Profile.get(player)
+		if treating ~= nil then
+			teach(player, treating.data, &quot;treat&quot;)
+		end
 		Audio.play(&quot;treat&quot; .. treatmentId:sub(1, 1):upper() .. treatmentId:sub(2), patient.rig.root)
 		patient.treatmentsDone[treatmentId] = true
 		-- Kirik iyilesince topallama biter: gorunur geri bildirim.
@@ -12744,6 +12881,7 @@ function PatientFlow.discharge(player: Player)
 	end
 
 	applyLevel(player, data, previousLevel)
+	teach(player, data, &quot;discharge&quot;)
 	settleClinicLevel(clinicBefore)
 
 	if tip &gt; 0 then
@@ -13123,7 +13261,7 @@ return PatientFlow
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX47">
+				<Item class="ModuleScript" referent="RBX48">
 					<Properties>
 						<string name="Name">Profile</string>
 						<ProtectedString name="Source">--!strict
@@ -13239,6 +13377,12 @@ export type Data = {
 	-- cikiyor. Kayit OYUNCUNUN profilinde: gecmisi bilen, onu tutan
 	-- oyuncudur - baska bir veteriner ayni hayvani taniyamaz.
 	history: { HistoryEntry },
+	-- Ogreticide tamamlanan adim sayisi. Sema 4 ile geldi; eski
+	-- kayitlarda yok ve migrate() 0 koyuyor - yani uzun suredir oynayan
+	-- bir oyuncu ogreticiyi bir kez goruyor. Bunu &quot;zaten biliyordur&quot;
+	-- diye atlamak, hicbir sey bilmeyen eski bir kaydi da atlamak
+	-- olurdu; ogretici zaten ilk hastada bitiyor.
+	tutorialStep: number,
 	stats: Stats,
 	species: { [string]: boolean },
 	achievements: { [string]: boolean },
@@ -13359,6 +13503,7 @@ local function defaultData(): Data
 		staff = {},
 		clinicXp = 0,
 		history = {},
+		tutorialStep = 0,
 		stats = defaultStats(),
 		species = {},
 		achievements = {},
@@ -13407,6 +13552,9 @@ local function migrate(raw: any): Data
 	-- Gecmis: bozuk/eksik satirlar SESSIZCE atlaniyor. Eski kayitlarda
 	-- bu alan hic yok ve bos gecmis gecerli bir durum - kronik vaka
 	-- yalnizca cikmiyor, hicbir sey bozulmuyor.
+	result.tutorialStep = if type(raw.tutorialStep) == &quot;number&quot;
+		then math.max(0, math.floor(raw.tutorialStep))
+		else fresh.tutorialStep
 	if type(raw.history) == &quot;table&quot; then
 		for _, entry in raw.history do
 			if #result.history &gt;= HISTORY_MAX then
@@ -13721,7 +13869,7 @@ return Profile
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX48">
+				<Item class="ModuleScript" referent="RBX49">
 					<Properties>
 						<string name="Name">Staff</string>
 						<ProtectedString name="Source">--!strict
@@ -13950,7 +14098,7 @@ return Staff
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX49">
+				<Item class="ModuleScript" referent="RBX50">
 					<Properties>
 						<string name="Name">Surgery</string>
 						<ProtectedString name="Source">--!strict
@@ -14246,7 +14394,7 @@ return Surgery
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX50">
+				<Item class="ModuleScript" referent="RBX51">
 					<Properties>
 						<string name="Name">Tasks</string>
 						<ProtectedString name="Source">--!strict
@@ -14426,7 +14574,7 @@ return Tasks
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX51">
+				<Item class="ModuleScript" referent="RBX52">
 					<Properties>
 						<string name="Name">ToolGame</string>
 						<ProtectedString name="Source">--!strict
@@ -14693,7 +14841,7 @@ return ToolGame
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX52">
+				<Item class="ModuleScript" referent="RBX53">
 					<Properties>
 						<string name="Name">Treatment</string>
 						<ProtectedString name="Source">--!strict
@@ -14857,7 +15005,109 @@ return Treatment
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX53">
+				<Item class="ModuleScript" referent="RBX54">
+					<Properties>
+						<string name="Name">Tutorial</string>
+						<ProtectedString name="Source">--!strict
+-- Tutorial.luau
+-- =============
+-- Ilk hastada adim adim yol gosteren ogretici.
+--
+-- Neden SUNUCUDA?
+-- ---------------
+-- Adimlar GERCEKTEN YAPILAN islerle aciliyor: &quot;hastayi al&quot; adimi
+-- ancak hasta alininca kapaniyor, &quot;teshis koy&quot; adimi ancak DOGRU
+-- teshis konunca. Istemcide dursaydi ogretici &quot;tamam&quot; diyerek
+-- gecilebilirdi ve hicbir sey ogretmezdi.
+--
+-- Ilerleme PROFILDE (`tutorialStep`): oyuncu cikip girdiginde kaldigi
+-- yerden devam ediyor, ikinci oturumunda bastan baslamiyor.
+
+local ReplicatedStorage = game:GetService(&quot;ReplicatedStorage&quot;)
+local Data = ReplicatedStorage:WaitForChild(&quot;VetData&quot;)
+
+local plan = require(Data.tutorial)
+
+local Tutorial = {}
+
+Tutorial.STEPS = #plan.steps
+
+--- Istemcinin tanidigi vurgu bolgeleri. verify_data bu kumenin
+--- veriyle ayni oldugunu denetliyor: veride olup burada olmayan bir ad,
+--- ekranda hicbir seyin isaretlenmemesi demek olurdu.
+local REGIONS = {
+	toolbar = true,
+	chart = true,
+	rightLower = true,
+	hud = true,
+}
+
+function Tutorial.regions(): { string }
+	local names = {}
+	for name in REGIONS do
+		table.insert(names, name)
+	end
+	table.sort(names)
+	return names
+end
+
+function Tutorial.knownRegion(name: string): boolean
+	return REGIONS[name] == true
+end
+
+function Tutorial.steps(): { any }
+	return plan.steps
+end
+
+--- Ogretici bitti mi?
+function Tutorial.done(data: any): boolean
+	return data.tutorialStep &gt;= Tutorial.STEPS
+end
+
+--- O anki adim (bittiyse nil).
+function Tutorial.current(data: any): any?
+	if Tutorial.done(data) then
+		return nil
+	end
+	return plan.steps[data.tutorialStep + 1]
+end
+
+--- Oyuncu bir sey yapti. Bekledigimiz sey buysa adim ilerliyor ve
+--- `true` donuyor (cagiran taraf profili kirli isaretliyor ve durumu
+--- tazeliyor).
+---
+--- Beklenmeyen bir eylem hicbir sey yapmiyor: oyuncu ogreticinin
+--- onunden kosarsa adimlar atlanmiyor, cunku atlanan adim ogretilmemis
+--- adimdir.
+function Tutorial.advance(data: any, action: string): boolean
+	local step = Tutorial.current(data)
+	if step == nil or step.advanceOn ~= action then
+		return false
+	end
+	data.tutorialStep += 1
+	return true
+end
+
+--- Istemciye yollanan goruntu. Bittiyse nil: HUD hicbir sey cizmiyor.
+function Tutorial.snapshot(data: any): any
+	local step = Tutorial.current(data)
+	if step == nil then
+		return nil
+	end
+	return {
+		index = data.tutorialStep + 1,
+		total = Tutorial.STEPS,
+		titleKey = step.titleKey,
+		bodyKey = step.bodyKey,
+		highlight = step.highlight,
+	}
+end
+
+return Tutorial
+</ProtectedString>
+					</Properties>
+				</Item>
+				<Item class="ModuleScript" referent="RBX55">
 					<Properties>
 						<string name="Name">Upgrades</string>
 						<ProtectedString name="Source">--!strict
@@ -15133,7 +15383,7 @@ return Upgrades
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX54">
+				<Item class="ModuleScript" referent="RBX56">
 					<Properties>
 						<string name="Name">Ward</string>
 						<ProtectedString name="Source">--!strict
@@ -15384,11 +15634,11 @@ return Ward
 					</Properties>
 				</Item>
 			</Item>
-			<Item class="Folder" referent="RBX55">
+			<Item class="Folder" referent="RBX57">
 				<Properties>
 					<string name="Name">world</string>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX56">
+				<Item class="ModuleScript" referent="RBX58">
 					<Properties>
 						<string name="Name">AnimalAnimator</string>
 						<ProtectedString name="Source">--!strict
@@ -16055,7 +16305,7 @@ return Animator
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX57">
+				<Item class="ModuleScript" referent="RBX59">
 					<Properties>
 						<string name="Name">AnimalFactory</string>
 						<ProtectedString name="Source">--!strict
@@ -17082,7 +17332,7 @@ return AnimalFactory
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX58">
+				<Item class="ModuleScript" referent="RBX60">
 					<Properties>
 						<string name="Name">Clinic</string>
 						<ProtectedString name="Source">--!strict
@@ -17611,7 +17861,7 @@ return Clinic
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX59">
+				<Item class="ModuleScript" referent="RBX61">
 					<Properties>
 						<string name="Name">DayCycle</string>
 						<ProtectedString name="Source">--!strict
@@ -17840,7 +18090,7 @@ return DayCycle
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX60">
+				<Item class="ModuleScript" referent="RBX62">
 					<Properties>
 						<string name="Name">Decor</string>
 						<ProtectedString name="Source">--!strict
@@ -18081,7 +18331,7 @@ return Decor
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX61">
+				<Item class="ModuleScript" referent="RBX63">
 					<Properties>
 						<string name="Name">Doors</string>
 						<ProtectedString name="Source">--!strict
@@ -18327,7 +18577,7 @@ return Doors
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX62">
+				<Item class="ModuleScript" referent="RBX64">
 					<Properties>
 						<string name="Name">Effects</string>
 						<ProtectedString name="Source">--!strict
@@ -18511,7 +18761,7 @@ return Effects
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX63">
+				<Item class="ModuleScript" referent="RBX65">
 					<Properties>
 						<string name="Name">Lighting</string>
 						<ProtectedString name="Source">--!strict
@@ -18634,7 +18884,7 @@ return Sky
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX64">
+				<Item class="ModuleScript" referent="RBX66">
 					<Properties>
 						<string name="Name">Lobby</string>
 						<ProtectedString name="Source">--!strict
@@ -18893,7 +19143,7 @@ return Lobby
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX65">
+				<Item class="ModuleScript" referent="RBX67">
 					<Properties>
 						<string name="Name">OwnerFactory</string>
 						<ProtectedString name="Source">--!strict
@@ -19498,7 +19748,7 @@ return OwnerFactory
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX66">
+				<Item class="ModuleScript" referent="RBX68">
 					<Properties>
 						<string name="Name">Props</string>
 						<ProtectedString name="Source">--!strict
@@ -20789,7 +21039,7 @@ return Props
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX67">
+				<Item class="ModuleScript" referent="RBX69">
 					<Properties>
 						<string name="Name">StaffFactory</string>
 						<ProtectedString name="Source">--!strict
@@ -20960,15 +21210,15 @@ return StaffFactory
 			</Item>
 		</Item>
 	</Item>
-	<Item class="StarterPlayer" referent="RBX68">
+	<Item class="StarterPlayer" referent="RBX70">
 		<Properties>
 			<string name="Name">StarterPlayer</string>
 		</Properties>
-		<Item class="StarterPlayerScripts" referent="RBX69">
+		<Item class="StarterPlayerScripts" referent="RBX71">
 			<Properties>
 				<string name="Name">StarterPlayerScripts</string>
 			</Properties>
-			<Item class="LocalScript" referent="RBX70">
+			<Item class="LocalScript" referent="RBX72">
 				<Properties>
 					<string name="Name">VetClient</string>
 					<ProtectedString name="Source">--!strict
@@ -21010,6 +21260,8 @@ local ShopPanel = require(script.ShopPanel)
 local SurgeryPanel = require(script.SurgeryPanel)
 local Theme = require(script.Theme)
 local ToolBar = require(script.ToolBar)
+local Touch = require(script.Touch)
+local Tutorial = require(script.Tutorial)
 local ToolGamePanel = require(script.ToolGamePanel)
 local TreatmentPanel = require(script.TreatmentPanel)
 local ViewModel = require(script.ViewModel)
@@ -21051,7 +21303,33 @@ ProgressPanel.create(screen)
 Fps.create(screen)
 SettingsPanel.create(screen)
 Notify.create(screen)
+Tutorial.create(screen)
+-- Dokunmatik dugmeler EN SONDA kuruluyor ki diger panellerin ustunde
+-- kalsinlar; `Touch.create` klavyeli cihazda hicbir sey yapmiyor.
+Touch.create(screen, function(panel: string)
+	if panel == &quot;shop&quot; then
+		ShopPanel.toggle()
+	elseif panel == &quot;progress&quot; then
+		ProgressPanel.toggle()
+	elseif panel == &quot;settings&quot; then
+		SettingsPanel.toggle()
+	end
+end)
 LobbyPanel.create(lobbyScreen)
+
+-- Arayuz 1280x768 referansina gore yaziliyor ve `tools/verify_ui.py`
+-- o cozunurlukte cakisma olmadigini olcuyor. Daha kucuk ekranlarda
+-- BUTUN arayuz birlikte kuculuyor; boylece kanitlanmis yerlesim her
+-- ekranda gecerli kaliyor.
+Theme.autoScale(screen)
+Theme.autoScale(lobbyScreen)
+
+if Touch.needed() then
+	-- Kucuk ekranda birinci sahis el/alet modeli ekranin alt yarisini
+	-- kapatiyor ve dokunmatik dugmeler de orada. Ayarlardan geri
+	-- acilabiliyor - kapatilan sey kaybolmus sayilmaz.
+	ViewModel.setEnabled(false)
+end
 
 Camera.start()
 -- Birinci sahis el/alet modeli kameradan SONRA baslamali: sallanma
@@ -21080,6 +21358,8 @@ local hints = Theme.label({
 	parent = screen,
 })
 hints.TextStrokeTransparency = 0.6
+-- Klavyesi olmayan bir cihazda tus listesi yalnizca yer kapliyor.
+hints.Visible = not Touch.needed()
 
 local lastState: any = nil
 local lastChart: any = nil
@@ -21109,6 +21389,7 @@ end
 
 local function redraw()
 	Hud.update(lastState)
+	Tutorial.update(if lastState ~= nil then lastState.tutorial else nil)
 	Hud.setObjective(objectiveKey(lastChart))
 	Hud.setStress(if lastChart ~= nil and lastChart.present == true then lastChart.stress / 100 else 0)
 	ToolBar.update(lastState)
@@ -21234,7 +21515,7 @@ end)
 print(&quot;[Veteriner] istemci hazir.&quot;)
 </ProtectedString>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX71">
+				<Item class="ModuleScript" referent="RBX73">
 					<Properties>
 						<string name="Name">Camera</string>
 						<ProtectedString name="Source">--!strict
@@ -21485,7 +21766,7 @@ return Camera
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX72">
+				<Item class="ModuleScript" referent="RBX74">
 					<Properties>
 						<string name="Name">Chart</string>
 						<ProtectedString name="Source">--!strict
@@ -21980,7 +22261,7 @@ return Chart
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX73">
+				<Item class="ModuleScript" referent="RBX75">
 					<Properties>
 						<string name="Name">Crosshair</string>
 						<ProtectedString name="Source">--!strict
@@ -22131,7 +22412,7 @@ return Crosshair
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX74">
+				<Item class="ModuleScript" referent="RBX76">
 					<Properties>
 						<string name="Name">DiagnosisPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -22323,7 +22604,7 @@ return DiagnosisPanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX75">
+				<Item class="ModuleScript" referent="RBX77">
 					<Properties>
 						<string name="Name">Fps</string>
 						<ProtectedString name="Source">--!strict
@@ -22442,7 +22723,7 @@ return Fps
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX76">
+				<Item class="ModuleScript" referent="RBX78">
 					<Properties>
 						<string name="Name">Hud</string>
 						<ProtectedString name="Source">--!strict
@@ -23141,7 +23422,7 @@ return Hud
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX77">
+				<Item class="ModuleScript" referent="RBX79">
 					<Properties>
 						<string name="Name">LobbyPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -23432,7 +23713,7 @@ return LobbyPanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX78">
+				<Item class="ModuleScript" referent="RBX80">
 					<Properties>
 						<string name="Name">Notify</string>
 						<ProtectedString name="Source">--!strict
@@ -23618,7 +23899,7 @@ return Notify
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX79">
+				<Item class="ModuleScript" referent="RBX81">
 					<Properties>
 						<string name="Name">ProgressPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -23902,7 +24183,7 @@ return ProgressPanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX80">
+				<Item class="ModuleScript" referent="RBX82">
 					<Properties>
 						<string name="Name">SettingsPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -24176,7 +24457,7 @@ return SettingsPanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX81">
+				<Item class="ModuleScript" referent="RBX83">
 					<Properties>
 						<string name="Name">ShopPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -24602,7 +24883,7 @@ return ShopPanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX82">
+				<Item class="ModuleScript" referent="RBX84">
 					<Properties>
 						<string name="Name">SurgeryPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -25130,7 +25411,7 @@ return SurgeryPanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX83">
+				<Item class="ModuleScript" referent="RBX85">
 					<Properties>
 						<string name="Name">Theme</string>
 						<ProtectedString name="Source">--!strict
@@ -25158,6 +25439,7 @@ return SurgeryPanel
 -- `Theme.tween` uzerinden, `Theme.motion` suresleriyle gidiyor.
 
 local TweenService = game:GetService(&quot;TweenService&quot;)
+local Workspace = game:GetService(&quot;Workspace&quot;)
 
 local ReplicatedStorage = game:GetService(&quot;ReplicatedStorage&quot;)
 local Shared = ReplicatedStorage:WaitForChild(&quot;VetShared&quot;)
@@ -25265,6 +25547,71 @@ function Theme.flash(target: GuiObject, color: Color3?)
 	stroke.Color = color or Theme.color.accentGlow
 	stroke.Thickness = originalThickness + 1.5
 	Theme.tween(stroke, { Color = originalColor, Thickness = originalThickness }, Theme.motion.slow)
+end
+
+-- ── Ekran olcegi ──────────────────────────────────────────────────────
+-- Yerlesim 1280x768 REFERANS cozunurlugune gore yaziliyor ve
+-- `tools/verify_ui.py` o cozunurlukte hicbir panelin cakismadigini ve
+-- ekrandan tasmadigini olcuyor.
+--
+-- Daha kucuk ekranlarda (telefon, kucuk pencere) ayni yerlesim tasardi.
+-- Her paneli ayri ayri kuculten bir &quot;dar ekran yerlesimi&quot; yazmak
+-- yerine BUTUN arayuz tek bir UIScale ile kuculuyor: boylece 1280x768
+-- icin kanitlanmis yerlesim her ekranda gecerli kaliyor. Bu depoda
+-- telefon yok; olculebilen bir garanti, gozle bakilan bir tahminden
+-- iyidir.
+--
+-- Taban 0.62'de kesiliyor: daha kucugunde yazilar okunmaz oluyor ve
+-- kaydirmak dokunmatikte kuculterek sigdirmaktan daha kotu.
+local REFERENCE = Vector2.new(1280, 768)
+local MIN_SCALE = 0.62
+
+--- Dar ekran mi? (Dokunmatik yerlesim kararlari bunu okuyor.)
+function Theme.isCompact(): boolean
+	local camera = Workspace.CurrentCamera
+	if camera == nil then
+		return false
+	end
+	local size = camera.ViewportSize
+	return size.X &lt; 900 or size.Y &lt; 640
+end
+
+--- Ekrana gore olcek (0.62..1).
+function Theme.scaleFor(size: Vector2): number
+	local ratio = math.min(size.X / REFERENCE.X, size.Y / REFERENCE.Y)
+	return math.clamp(ratio, MIN_SCALE, 1)
+end
+
+--- ScreenGui'ye kendini ekrana gore ayarlayan bir UIScale takar.
+--- Pencere boyutu degistiginde yeniden hesapliyor.
+function Theme.autoScale(screen: ScreenGui): UIScale
+	local scale = Instance.new(&quot;UIScale&quot;)
+	scale.Name = &quot;EkranOlcegi&quot;
+	scale.Parent = screen
+
+	local function apply()
+		local camera = Workspace.CurrentCamera
+		if camera == nil then
+			return
+		end
+		scale.Scale = Theme.scaleFor(camera.ViewportSize)
+	end
+
+	apply()
+	local camera = Workspace.CurrentCamera
+	if camera ~= nil then
+		camera:GetPropertyChangedSignal(&quot;ViewportSize&quot;):Connect(apply)
+	end
+	-- Kamera sonradan degisebiliyor (dogma ani); yeni kameraya da
+	-- baglanmazsak olcek ilk degerde takili kalirdi.
+	Workspace:GetPropertyChangedSignal(&quot;CurrentCamera&quot;):Connect(function()
+		local current = Workspace.CurrentCamera
+		if current ~= nil then
+			current:GetPropertyChangedSignal(&quot;ViewportSize&quot;):Connect(apply)
+			apply()
+		end
+	end)
+	return scale
 end
 
 -- ── Kucuk yapi yardimcilari ───────────────────────────────────────────
@@ -26155,7 +26502,7 @@ return Theme
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX84">
+				<Item class="ModuleScript" referent="RBX86">
 					<Properties>
 						<string name="Name">ToolBar</string>
 						<ProtectedString name="Source">--!strict
@@ -26396,7 +26743,7 @@ return ToolBar
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX85">
+				<Item class="ModuleScript" referent="RBX87">
 					<Properties>
 						<string name="Name">ToolGamePanel</string>
 						<ProtectedString name="Source">--!strict
@@ -26854,7 +27201,138 @@ return ToolGamePanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX86">
+				<Item class="ModuleScript" referent="RBX88">
+					<Properties>
+						<string name="Name">Touch</string>
+						<ProtectedString name="Source">--!strict
+-- Touch.luau
+-- ==========
+-- Dokunmatik ekran kontrolleri.
+--
+-- Neden var?
+-- ----------
+-- Butun kontroller klavyedeydi: E hastayi al, T taburcu, R numune,
+-- B magaza, G ilerleme, O ayarlar. Roblox oyuncularinin cogunlugu
+-- telefonda ve onlar icin oyun OYNANAMAZ durumdaydi - baslatip
+-- bakabiliyor, hicbir sey yapamiyorlardi.
+--
+-- Ne yapiyor, ne yapmiyor?
+-- ------------------------
+-- Yalnizca klavyedeki eylemleri ekrana tasiyor. Yeni bir oyun kurali
+-- ya da dokunmatige ozel bir kolaylik EKLEMIYOR: dokunmatik oyuncu
+-- klavyeli oyuncuyla ayni oyunu oynuyor.
+--
+-- Mini-oyunlar zaten tiklama tabanli (`ToolGamePanel` fare/dokunus
+-- ayrimi yapmiyor), alet kapaklari da tiklanabilir; bu yuzden burada
+-- yalnizca TUS karsiliklari var.
+--
+-- Dugmeler yalnizca `TouchEnabled` ve klavye YOKKEN kuruluyor. Hem
+-- dokunmatik hem klavyesi olan bir cihazda (2'si 1 arada dizustu)
+-- ekrani dugmelerle doldurmak, sorunu olmayan oyuncuya sorun
+-- eklemek olurdu.
+
+local UserInputService = game:GetService(&quot;UserInputService&quot;)
+
+local ReplicatedStorage = game:GetService(&quot;ReplicatedStorage&quot;)
+local Shared = ReplicatedStorage:WaitForChild(&quot;VetShared&quot;)
+local Loc = require(Shared.Loc)
+local Net = require(Shared.Net)
+
+local Theme = require(script.Parent.Theme)
+
+local Touch = {}
+
+local root: Frame? = nil
+
+--- Dokunmatik kontrollere ihtiyac var mi?
+--- Klavye varsa yok: oyuncunun zaten calisan bir yolu var.
+function Touch.needed(): boolean
+	return UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+end
+
+-- Alet cubugu ekranin alt ortasinda (ToolBar), koğuş karti sol altta.
+-- Eylem dugmeleri SAG ALTTA: bas parmagin dogal olarak durdugu yer ve
+-- orasi (alet cubugu sola kaydirildigi icin) bos.
+local BUTTONS = {
+	{ key = &quot;touch.callNext&quot;, remote = &quot;CallNext&quot;, color = &quot;accent&quot; },
+	{ key = &quot;touch.discharge&quot;, remote = &quot;Discharge&quot;, color = &quot;good&quot; },
+	{ key = &quot;touch.sample&quot;, remote = &quot;AnalyzeSample&quot;, color = &quot;xp&quot; },
+}
+
+local MENUS = {
+	{ key = &quot;touch.shop&quot;, panel = &quot;shop&quot; },
+	{ key = &quot;touch.progress&quot;, panel = &quot;progress&quot; },
+	{ key = &quot;touch.settings&quot;, panel = &quot;settings&quot; },
+}
+
+--- `open(panelName)` istemcinin panel acma islevini disaridan aliyor:
+--- `Touch` modulunun panelleri require etmesi dairesel bagimlilik
+--- olurdu (paneller de Theme'i, Theme'i herkes kullaniyor).
+function Touch.create(parent: ScreenGui, open: (string) -&gt; ())
+	if root ~= nil or not Touch.needed() then
+		return
+	end
+
+	local frame = Theme.frame({
+		name = &quot;DokunmatikKontroller&quot;,
+		-- ui:katman — saydam kapsayici; icindeki dugmeler kendi
+		-- yuvalarini kapliyor, kapsayici bir yuva kaplamiyor.
+		size = UDim2.fromOffset(150, 214),
+		position = UDim2.new(1, -Theme.space.lg, 1, -Theme.space.lg),
+		anchor = Vector2.new(1, 1),
+		transparency = 1,
+		radius = 0,
+		parent = parent,
+	})
+	local list = Theme.list(frame, Theme.space.sm)
+	list.HorizontalAlignment = Enum.HorizontalAlignment.Right
+	list.VerticalAlignment = Enum.VerticalAlignment.Bottom
+
+	for index, entry in MENUS do
+		Theme.button({
+			name = entry.panel,
+			text = Loc.get(entry.key),
+			size = UDim2.fromOffset(150, 34),
+			color = Theme.color.panel,
+			textSize = Theme.size.micro,
+			layoutOrder = index,
+			parent = frame,
+			onClick = function()
+				open(entry.panel)
+			end,
+		})
+	end
+
+	for index, entry in BUTTONS do
+		Theme.button({
+			name = entry.remote,
+			text = Loc.get(entry.key),
+			size = UDim2.fromOffset(150, 44),
+			color = (Theme.color :: any)[entry.color],
+			textSize = Theme.size.small,
+			layoutOrder = #MENUS + index,
+			parent = frame,
+			onClick = function()
+				Net.toServer(entry.remote)
+			end,
+		})
+	end
+
+	root = frame
+end
+
+--- Dokunmatik dugmeler kuruldu mu? (SelfTest'in istemci tarafi yok;
+--- bunu `init.client` gunlugune yaziyor ki cihazda ne oldugu Output'tan
+--- gorulebilsin.)
+function Touch.active(): boolean
+	return root ~= nil
+end
+
+return Touch
+</ProtectedString>
+					</Properties>
+				</Item>
+				<Item class="ModuleScript" referent="RBX89">
 					<Properties>
 						<string name="Name">TreatmentPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -27094,7 +27572,209 @@ return TreatmentPanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX87">
+				<Item class="ModuleScript" referent="RBX90">
+					<Properties>
+						<string name="Name">Tutorial</string>
+						<ProtectedString name="Source">--!strict
+-- Tutorial.luau
+-- =============
+-- Ogreticinin gorunur tarafi: adim karti + vurgu halkasi.
+--
+-- Istemci hicbir sey KARAR VERMIYOR. Hangi adimda oldugumuzu sunucu
+-- soyluyor (`state.tutorial`); burada yalnizca o adim ciziliyor ve
+-- ilgili arayuz bolgesinin etrafina bir cerceve konuyor.
+--
+-- Neden &quot;sonraki&quot; dugmesi yok?
+-- ----------------------------
+-- Adim, isi YAPINCA kapaniyor. Bir &quot;anladim&quot; dugmesi koymak, hicbir
+-- sey yapmadan ogreticiyi bitirmeyi mumkun kilardi ve ogretici de
+-- hicbir sey ogretmezdi.
+
+local ReplicatedStorage = game:GetService(&quot;ReplicatedStorage&quot;)
+local Shared = ReplicatedStorage:WaitForChild(&quot;VetShared&quot;)
+local Loc = require(Shared.Loc)
+
+local Theme = require(script.Parent.Theme)
+
+local Tutorial = {}
+
+-- Vurgu bolgeleri: 1280x768 referans yerlesimindeki dikdortgenler.
+-- `Theme.autoScale` butun arayuzu birlikte olcekledigi icin bu sayilar
+-- her ekranda dogru kaliyor.
+--
+-- Tablodaki adlarin `src/server/game/Tutorial.luau` icindeki REGIONS
+-- kumesiyle AYNI olmasi gerekiyor; verify_data ikisini karsilastiriyor.
+local REGIONS: { [string]: { number } } = {
+	-- alet cubugu (ToolBar): ekranin altinda, sag sutunun soluna kaydik
+	toolbar = { 87, 668, 760, 84 },
+	-- hasta karti (Chart)
+	chart = { 934, 144, 330, 344 },
+	-- teshis/tedavi paneli (ayni yuva)
+	rightLower = { 934, 496, 330, 258 },
+	-- sol ust: para, seviye, itibar, XP
+	hud = { 16, 16, 306, 150 },
+}
+
+local card: Frame? = nil
+local widgets: any = nil
+local shownIndex = -1
+
+function Tutorial.create(parent: ScreenGui)
+	if card ~= nil then
+		return
+	end
+
+	-- Vurgu cercevesi: saydam bir kare, yalnizca kenarligi gorunuyor.
+	-- Koyu perde yerine cerceve secildi cunku perde, altindaki paneli
+	-- okunmaz hale getiriyordu - oysa oyuncunun tam da onu okumasi
+	-- gerekiyor.
+	local ring = Theme.frame({
+		name = &quot;OgreticiVurgu&quot;,
+		-- ui:katman — mevcut bir panelin ETRAFINA cizilen cerceve;
+		-- kendi yuvasi yok, bu yuzden cakisma denetiminin disinda.
+		size = UDim2.fromOffset(10, 10),
+		position = UDim2.fromOffset(0, 0),
+		transparency = 1,
+		radius = Theme.radius.md,
+		parent = parent,
+	})
+	Theme.stroke(ring, Theme.color.accentGlow, 2)
+	ring.Visible = false
+	ring.ZIndex = 20
+
+	local panel = Theme.card({
+		name = &quot;Ogretici&quot;,
+		-- Yukseklik 80'de kesiliyor: 286'dan itibaren ameliyat paneli
+		-- basliyor ve tedavi adiminda ikisi ayni anda ekranda olabilir.
+		size = UDim2.fromOffset(420, 80),
+		-- Ekranin ust ortasinda, vardiya olayi seridinin altinda. Sol
+		-- sutun (sayaclar, bildirimler, kogus, FPS) ve sag sutun (hasta
+		-- karti, teshis/tedavi) dolu; olcunce kartin oraya SIGMADIGI
+		-- cikti - `tools/verify_ui.py` iki cakismayi da yakaladi.
+		position = UDim2.new(0.5, 0, 0, 204),
+		anchor = Vector2.new(0.5, 0),
+		color = Theme.color.panel,
+		parent = parent,
+	}, Theme.color.accentGlow)
+	panel.ZIndex = 21
+	panel.Visible = false
+
+	-- Adim sayaci ile baslik AYNI satirda: kart 80 piksele sigmak
+	-- zorunda ve metnin kendisi sayacin ustunde.
+	local step = Theme.label({
+		name = &quot;Adim&quot;,
+		text = &quot;&quot;,
+		size = UDim2.fromOffset(70, 18),
+		position = UDim2.new(1, -Theme.space.md, 0, 8),
+		anchor = Vector2.new(1, 0),
+		textSize = Theme.size.micro,
+		bold = true,
+		align = Enum.TextXAlignment.Right,
+		color = Theme.color.accentGlow,
+		parent = panel,
+		zIndex = 22,
+	})
+	local title = Theme.label({
+		name = &quot;Baslik&quot;,
+		text = &quot;&quot;,
+		size = UDim2.new(1, -Theme.space.md * 2 - 74, 0, 18),
+		position = UDim2.fromOffset(Theme.space.md, 8),
+		textSize = Theme.size.small,
+		bold = true,
+		parent = panel,
+		zIndex = 22,
+	})
+	local body = Theme.label({
+		name = &quot;Metin&quot;,
+		text = &quot;&quot;,
+		size = UDim2.new(1, -Theme.space.md * 2, 0, 38),
+		position = UDim2.fromOffset(Theme.space.md, 28),
+		textSize = Theme.size.micro,
+		color = Theme.color.textDim,
+		wrapped = true,
+		verticalAlign = Enum.TextYAlignment.Top,
+		parent = panel,
+		zIndex = 22,
+	})
+
+	local bar = Theme.bar(
+		panel,
+		UDim2.new(1, -Theme.space.md * 2, 0, 4),
+		UDim2.new(0, Theme.space.md, 1, -10),
+		Theme.color.accentGlow
+	)
+	bar.track.ZIndex = 22
+	bar.fill.ZIndex = 23
+
+	card = panel
+	widgets = { panel = panel, ring = ring, step = step, title = title, body = body, bar = bar, pulse = nil }
+end
+
+--- Sunucudan gelen ogretici goruntusunu cizer. `nil` ise ogretici
+--- bitmistir ve her sey gizleniyor.
+function Tutorial.update(info: any)
+	if widgets == nil then
+		return
+	end
+	if info == nil then
+		widgets.panel.Visible = false
+		widgets.ring.Visible = false
+		if widgets.pulse ~= nil then
+			widgets.pulse.stop()
+			widgets.pulse = nil
+		end
+		shownIndex = -1
+		return
+	end
+
+	widgets.panel.Visible = true
+	if shownIndex ~= info.index then
+		shownIndex = info.index
+		widgets.step.Text = Loc.get(&quot;tut.step&quot;, info.index, info.total)
+		widgets.title.Text = Loc.get(info.titleKey)
+		widgets.body.Text = Loc.get(info.bodyKey)
+		Theme.setBar(widgets.bar, (info.index - 1) / math.max(1, info.total))
+		Theme.flash(widgets.panel, Theme.color.accentGlow)
+
+		local region = REGIONS[info.highlight]
+		if region == nil then
+			-- Bilinmeyen bolge SESSIZCE yutulmuyor: ekranda hicbir sey
+			-- isaretlenmezse oyuncu nereye bakacagini bilemez.
+			warn((&quot;[Tutorial] bilinmeyen vurgu bolgesi: %s&quot;):format(tostring(info.highlight)))
+			widgets.ring.Visible = false
+		else
+			-- Cerceve panelin biraz DISINDAN geciyor ki paneli
+			-- kapatmasin.
+			local pad = 6
+			widgets.ring.Position = UDim2.fromOffset(region[1] - pad, region[2] - pad)
+			widgets.ring.Size = UDim2.fromOffset(region[3] + pad * 2, region[4] + pad * 2)
+			widgets.ring.Visible = true
+			if widgets.pulse ~= nil then
+				widgets.pulse.stop()
+			end
+			local stroke = widgets.ring:FindFirstChildOfClass(&quot;UIStroke&quot;)
+			if stroke ~= nil then
+				widgets.pulse = Theme.pulse(stroke, &quot;Transparency&quot;, 0.75, 0.9)
+			end
+		end
+	end
+end
+
+--- Vurgu bolgesi adlari (verify_data sunucu tablosuyla karsilastiriyor).
+function Tutorial.regions(): { string }
+	local names = {}
+	for name in REGIONS do
+		table.insert(names, name)
+	end
+	table.sort(names)
+	return names
+end
+
+return Tutorial
+</ProtectedString>
+					</Properties>
+				</Item>
+				<Item class="ModuleScript" referent="RBX91">
 					<Properties>
 						<string name="Name">ViewModel</string>
 						<ProtectedString name="Source">--!strict
@@ -27479,7 +28159,7 @@ return ViewModel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX88">
+				<Item class="ModuleScript" referent="RBX92">
 					<Properties>
 						<string name="Name">WardPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -27759,19 +28439,19 @@ return WardPanel
 			</Item>
 		</Item>
 	</Item>
-	<Item class="StarterGui" referent="RBX89">
+	<Item class="StarterGui" referent="RBX93">
 		<Properties>
 			<string name="Name">StarterGui</string>
 			<bool name="ResetPlayerGuiOnSpawn">false</bool>
 		</Properties>
 	</Item>
-	<Item class="Players" referent="RBX90">
+	<Item class="Players" referent="RBX94">
 		<Properties>
 			<string name="Name">Players</string>
 			<bool name="CharacterAutoLoads">false</bool>
 		</Properties>
 	</Item>
-	<Item class="SoundService" referent="RBX91">
+	<Item class="SoundService" referent="RBX95">
 		<Properties>
 			<string name="Name">SoundService</string>
 		</Properties>

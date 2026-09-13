@@ -1,0 +1,43 @@
+{
+  "_comment": "(VERI) OGRETICI. Yeni oyuncunun ilk hastasinda adim adim yol gosteriyor.",
+  "_neden_notu": "Oyunun akisi (hastayi al -> muayene et -> teshis koy -> tedavi uygula -> taburcu et) hicbir yerde ANLATILMIYORDU. HUD'daki hedef seridi 'simdi ne yapmaliyim' sorusunu cevapliyor ama NEDEN oyle oldugunu soylemiyor. Ogretici o bosluga giriyor ve bir kez bitince bir daha cikmiyor.",
+  "_ilerleme_notu": "Adim numarasi PROFILDE (tutorialStep). Sunucuda ilerliyor: adimlar gercekten yapilan islerle aciliyor, istemcinin 'bitirdim' demesiyle degil. Oyuncu cikip girince kaldigi yerden devam ediyor.",
+  "_vurgu_notu": "highlight, istemcinin hangi arayuz bolgesini halkayla isaretleyecegini soyluyor. Bilinmeyen bir ad sessizce yutulmuyor: Tutorial.luau'daki bolge tablosuyla ayni olmak zorunda ve verify_data ikisini karsilastiriyor.",
+  "steps": [
+    {
+      "id": "callNext",
+      "titleKey": "tut.callNext",
+      "bodyKey": "tut.callNextBody",
+      "advanceOn": "callNext",
+      "highlight": "toolbar"
+    },
+    {
+      "id": "examine",
+      "titleKey": "tut.examine",
+      "bodyKey": "tut.examineBody",
+      "advanceOn": "useTool",
+      "highlight": "toolbar"
+    },
+    {
+      "id": "diagnose",
+      "titleKey": "tut.diagnose",
+      "bodyKey": "tut.diagnoseBody",
+      "advanceOn": "diagnose",
+      "highlight": "rightLower"
+    },
+    {
+      "id": "treat",
+      "titleKey": "tut.treat",
+      "bodyKey": "tut.treatBody",
+      "advanceOn": "treat",
+      "highlight": "rightLower"
+    },
+    {
+      "id": "discharge",
+      "titleKey": "tut.discharge",
+      "bodyKey": "tut.dischargeBody",
+      "advanceOn": "discharge",
+      "highlight": "chart"
+    }
+  ]
+}

@@ -111,6 +111,12 @@ export type Data = {
 	-- cikiyor. Kayit OYUNCUNUN profilinde: gecmisi bilen, onu tutan
 	-- oyuncudur - baska bir veteriner ayni hayvani taniyamaz.
 	history: { HistoryEntry },
+	-- Ogreticide tamamlanan adim sayisi. Sema 4 ile geldi; eski
+	-- kayitlarda yok ve migrate() 0 koyuyor - yani uzun suredir oynayan
+	-- bir oyuncu ogreticiyi bir kez goruyor. Bunu "zaten biliyordur"
+	-- diye atlamak, hicbir sey bilmeyen eski bir kaydi da atlamak
+	-- olurdu; ogretici zaten ilk hastada bitiyor.
+	tutorialStep: number,
 	stats: Stats,
 	species: { [string]: boolean },
 	achievements: { [string]: boolean },
@@ -231,6 +237,7 @@ local function defaultData(): Data
 		staff = {},
 		clinicXp = 0,
 		history = {},
+		tutorialStep = 0,
 		stats = defaultStats(),
 		species = {},
 		achievements = {},
@@ -279,6 +286,9 @@ local function migrate(raw: any): Data
 	-- Gecmis: bozuk/eksik satirlar SESSIZCE atlaniyor. Eski kayitlarda
 	-- bu alan hic yok ve bos gecmis gecerli bir durum - kronik vaka
 	-- yalnizca cikmiyor, hicbir sey bozulmuyor.
+	result.tutorialStep = if type(raw.tutorialStep) == "number"
+		then math.max(0, math.floor(raw.tutorialStep))
+		else fresh.tutorialStep
 	if type(raw.history) == "table" then
 		for _, entry in raw.history do
 			if #result.history >= HISTORY_MAX then
