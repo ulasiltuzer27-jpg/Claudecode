@@ -5,8 +5,9 @@ taburcu edersin → para, bahşiş ve XP kazanırsın. Klinik büyür; yeni alet
 türler ve odalar açılır.
 
 **Yalnızca birinci şahıs** — ellerini ve elindeki aleti görüyorsun.
-Gündüz/gece döngüsü, gece nöbeti zammı, alet mini-oyunları, kendi
-dekorasyonunu seçtiğin bir klinik.
+Gündüz/gece döngüsü, gece nöbeti zammı, alet mini-oyunları, yatan hastalar,
+maaşlı personel, salgın vardiyaları, laboratuvar ve karantina, kendi
+dekorasyonunu seçtiğin bir klinik. Telefonda da oynanıyor.
 
 Luau · Rojo uyumlu · sunucu otoriter · DataStore kayıtlı · **hiçbir dış
 asset'e bağımlı değil** (tek bir doku, mesh ya da animasyon ID'si yok)
@@ -47,6 +48,7 @@ normal, bozuk değil (neden böyle: aşağıda "Neden her şey kodda").
 | **1 – 8** | Aleti kullan |
 | Panelden tıkla | Teşhis koy · Tedavi uygula |
 | **T** | Hastayı taburcu et (gereken bütün tedaviler bitince) |
+| **R** | Laboratuvar tezgâhında numuneyi incele |
 | **B** | Mağaza — aletler ve klinik yükseltmeleri |
 | **G** | İlerleme — günlük görevler · başarımlar · istatistikler |
 | **O** | Ayarlar — kamera, sallanma, FOV, koşma, kare sayacı |
@@ -56,6 +58,10 @@ normal, bozuk değil (neden böyle: aşağıda "Neden her şey kodda").
 
 Masaların yanında ayrıca **"Hastayı masaya al"** yazan bir ProximityPrompt çıkar.
 **Tab** tuşundaki oyuncu listesinde Para / Seviye / Hasta sütunları var.
+
+**Telefonda**: klavye yoksa sağ altta ekran düğmeleri çıkıyor (hastayı al ·
+taburcu · numuneyi incele · mağaza · ilerleme · ayarlar). Alet kapaklarına ve
+mini-oyunlara zaten dokunarak basılıyor.
 
 ### Oynanışın özeti
 
@@ -162,20 +168,29 @@ Sessiz bir gizem değil, tek satırlık bir düzeltme.
 | **33 belirti** | 8 farklı aletle açılıyor |
 | **8 tedavi** | İğne, ilaç, sargı, damla, yıkama, besleme, su, ameliyat |
 | **9 yükseltme** | Bekleme odası, reklam, eczane, premium bakım… |
+| **4 personel** | Temizlikçi, resepsiyonist, hemşire, teknisyen — **günlük maaşla** |
 | **18 başarım** | İlk hastadan "Başhekim"e |
 | **10 günlük görev** | Her gün havuzdan 3 tanesi seçilir |
 | **15 seviye** | Stajyer → Efsane Veteriner |
-| **7 oda** | Resepsiyon, eczane, 2 muayene, ameliyathane, koğuş, yıkama |
+| **6 klinik seviyesi** | Herkesin birlikte yükselttiği **ortak** ilerleme |
+| **9 oda** | Resepsiyon, eczane, 2 muayene, ameliyathane, koğuş, yıkama, **laboratuvar, karantina** |
 | **3 alet mini-oyunu** | Röntgen (kırığı bul), kan testi (ibreyi durdur), ultrason (sıcak/soğuk) |
+| **4 ameliyat türü** | Ritim, dikiş, kanama, hizalama — hastalığa göre değişiyor |
+| **3 yatak koğuşta** | Ağır vaka taburcu olmuyor, **yatıyor**; ilaç saatleri var |
+| **6 bulaşıcı hastalık** | Karantinaya alınmazsa kuyruktakileri de hasta ediyor |
+| **6 kronik hastalık** | Aynı hayvan günler sonra **geri geliyor** |
+| **4 vardiya olayı** | Salgın, yoğun vardiya, sakin vardiya, denetim |
 | **4 tema + 4 süs** | Mağazanın dekorasyon sekmesi — klinik oyuncunun eline geçiyor |
 | **Gündüz/gece** | 12 dakikalık gün; gece az hasta, zamlı ücret, çok acil |
+| **5 adımlık öğretici** | İlk hastada adım adım; adımlar **yapılan işle** açılıyor |
+| **Dokunmatik** | Telefonda oynanabiliyor; arayüz ekrana göre ölçekleniyor |
 
 ### Görünüm
 
-Klinik ve 26 eşya, **eşya başına en az 8 parçadan** kuruluyor: pahlı
+Klinik ve 35 eşya, **eşya başına en az 8 parçadan** kuruluyor: pahlı
 kenarlar, iki tonlu paneller, kulplar, konik ayaklar, sarkan kablolar,
 tepside sıralı aletler, rafta şişeler, kafeste mandal ve etiket. Ortak
-detaylar `src/shared/Detail.luau` içinde tek yerde — 26 eşya aynı kalite
+detaylar `src/shared/Detail.luau` içinde tek yerde — 35 eşya aynı kalite
 dilinden konuşuyor.
 
 Bina artık kutu değil: **dış duvarlarda 11 pencere** (cam + çerçeve +
@@ -373,6 +388,183 @@ var; gece nöbetinde rozet ücret çarpanını yazıyor.
 
 ---
 
+## Yatan hasta: koğuş
+
+Koğuş odası ve kafesleri duruyordu ama **hiçbir oynanışı yoktu** —
+`kennel` etiketini hiçbir kod okumuyordu. Ölçünce kafeslerin daha kötü bir
+yanı çıktı: iç ölçü 4,8 stud, en büyük hastanın ayak izi 6,4. Yani içine
+**hiçbir hayvan sığmıyordu**. Beş küçük kafes, gerçekten hayvan alan
+**üç padoğa** dönüştü (iç ölçü 10,4 × 7,4) ve `props.json` artık
+`shelter` alanıyla bu iç ölçüyü bildiriyor; `verify_layout` yatak
+noktasının oraya sığdığını ölçüyor.
+
+**Akış**: ameliyat olan ya da sağlığı eşiğin altında kalan hasta taburcu
+edilmiyor, koğuşa yatıyor. Yatan hastanın **ilaç saatleri** var; doz
+zamanı gelince HUD'un sol altındaki koğuş kartı nabız atıyor. Zamanında
+verilen dozlar bakım puanını yükseltiyor, kaçırılanlar düşürüyor —
+ve yatış ücreti bakım puanıyla **çarpılarak** ödeniyor. Koğuşu unutan
+oyuncu hastayı kaybetmiyor ama parayı da almıyor.
+
+Geri sayımı **istemci** çiziyor: sunucu mutlak zaman yolluyor
+(`Workspace:GetServerTimeNow()`), böylece saniyede bir paket yollamaya
+gerek kalmıyor.
+
+---
+
+## Personel ve günlük maaş
+
+Simülasyon oyuncunun 15. seviyeyi ~176.000 TL ile bitirdiğini gösteriyordu:
+harcayacak yer kalmıyordu ve ekonomide **para musluğu** yoktu.
+
+| Personel | Etkisi |
+|---|---|
+| Temizlikçi | itibar kaybını yavaşlatıyor |
+| Resepsiyonist | bir bekleme yeri daha açıyor |
+| Hemşire | bütün kliniğin stresini düşürüyor |
+| Teknisyen | mini-oyun pencerelerini genişletiyor |
+
+Personel tek seferlik bir yükseltme **değil**: gün sonunda maaş kesiliyor.
+Parası yetmeyen en pahalı personelden başlayarak işten ayrılıyor. NPC'ler
+`OwnerFactory`'nin insan riginden üretiliyor (yeni rig yazılmadı) ve
+klinikte kendi rotalarında dolaşıyorlar.
+
+`simulate_economy` maaşı **modellemek zorundaydı**; modellemeseydi ilerleme
+eğrisi olduğundan iyi çıkardı ve bunu kimse fark etmezdi.
+
+---
+
+## Ameliyat çeşitleri ve asistanlık
+
+Tek çeşit ameliyat vardı: 5 adımlık ritim oyunu, her hastalıkta aynı.
+Artık dört tür var ve hangi hastalığın hangisini istediği
+`conditions.json` → `surgeryKind` ile belirleniyor: **ritim**, **dikiş**
+(çizgiyi takip et), **kanama** (basıncı bantta tut), **hizalama** (kırık
+parçayı hizala).
+
+Ameliyathanedeki ikinci oyuncuya "Asistanlık et" istemi çıkıyor. Asistan
+varken pencereler genişliyor; ikisi de XP alıyor, ücret ameliyatı yapanın —
+iki kişi aynı parayı iki kez alamaz.
+
+> **Arayüz dürüstlüğü kuralı.** İşaretin ekrandaki yeri doğrusal olmayan
+> bir fonksiyondan geçiyorsa, hedef bandının **kenarları da aynı
+> fonksiyondan** geçmek zorunda ve fonksiyon monoton olmalı. Yoksa ekran,
+> sunucunun zamanlama kararı hakkında **yalan söyler**: oyuncu bandın
+> içinde görünürken sunucu "ıskaladın" der.
+
+---
+
+## Ortak klinik seviyesi
+
+Herkes kendi XP'sini topluyordu; birlikte oynamanın **ortak bir hedefi**
+yoktu. Taburcu edilen her hastanın XP'sinin %60'ı kliniğe de yazılıyor.
+
+Klinik XP'si oyuncunun **profilinde** saklanıyor (sunucu kapanınca ilerleme
+kaybolmuyor), aktif seviye ise online oyuncuların **en yükseği** —
+yükseltmelerdeki `CLINIC_WIDE` kuralının aynısı. Böylece klinik tek bir
+kişinin sırtında kalmıyor ama bir kişi girip çıkınca da sıfırlanmıyor.
+Açılan her şey odadaki **herkese** açılıyor.
+
+Altı seviye; etkiler kademeli toplanıyor (bekleme yeri, ücret zammı, hasta
+sıklığı). `simulate_economy` tavanın kişisel tavandan **önce bitmediğini**
+ama ulaşılabilir olduğunu ölçüyor: kişisel ilerleme dururken kliniğin
+hedefi sürüyor.
+
+---
+
+## Laboratuvar ve karantina
+
+Bina kuzeye büyüdü: iki yeni oda, beş yeni eşya.
+
+**Laboratuvar.** Kan ve idrar tahlili artık masada **anında sonuç
+vermiyor** — zaten gerçekçi değildi. Alet numuneyi alıyor, sonuç
+laboratuvar tezgâhında (**R**) çıkıyor. Hasta muayene masasında kalabiliyor:
+numune elde taşınan bir nesne değil, dosyada duran bir kayıt. İncelenen
+numune küçük bir ücret zammı ve XP getiriyor. Bulgunun **kendisi**
+değişmiyor, yalnızca nerede açıklandığı değişiyor.
+
+**Karantina.** Altı hastalık bulaşıcı. Bulaşıcı hasta karantinaya
+alınmadan klinikte durduğu sürece **bekleyen bütün hayvanların** sağlığı ve
+memnuniyeti geriliyor, kliniğin itibarı düşüyor.
+
+Hastanın bulaşıcı olduğu istemciye **teşhisten önce gitmiyor**: gitseydi
+aday listesini 35'ten 6'ya indirirdi. Bunun yerine bulaşma **ölçülebilir
+bir etki** olarak görünüyor — bekleyenlerin sağlığı düşüyor, hayvanlar
+öksürüyor. Oyuncu sebebini muayene ederek buluyor, yani oyunu oynayarak.
+
+Karantina bölmesi bir **istasyon**: hasta oraya yatırılınca yayılma duruyor
+ve tedavinin tamamı orada yapılabiliyor. Karantina "hastayı bir kenara koy"
+cezası değil, akışın içinde bir yer.
+
+---
+
+## Vardiya olayları ve kronik vakalar
+
+Her vardiya birbirinin aynısıydı. Gündüz/gece döngüsü günün **saatini**
+değiştiriyordu ama oyunun **ritmini** değiştirmiyordu.
+
+| Olay | |
+|---|---|
+| **Salgın** | Bulaşıcı bir hastalık seçiliyor, gelenlerin %55'i onunla geliyor; ücret ve XP zamlı |
+| **Yoğun vardiya** | Hasta sık geliyor, sıra yönetimi zorlaşıyor |
+| **Sakin vardiya** | Hasta seyrek ama ücret yüksek |
+| **Denetim** | XP zamlı; düzgün çalışmanın ödüllendiği vardiya |
+
+Salgının **hangi** hastalık olduğu istemciye gitmiyor; oyuncu muayene
+ederek anlıyor. Olaylar ancak 4. seviyeden sonra ve aralarında en az 210
+saniye boşlukla çıkıyor — ilk dakikalarını oynayan bir oyuncuya salgın
+göndermek öğrenmeyi imkânsız kılardı.
+
+**Kronik vakalar.** Altı hastalık geçmiyor, yönetiliyor. Taburcu edilen vaka
+oyuncunun profiline yazılıyor (son 20 vaka) ve kronik olanlar günler sonra
+**aynı hayvanla** geri geliyor. Hasta kartında "3 gün önce burada tedavi
+edildi" satırı çıkıyor.
+
+Hastalığın **adını** yalnızca o vakayı kendi geçmişinde tutan oyuncu
+görüyor; başka bir veteriner "bu hayvan daha önce buradaydı" satırını
+görüyor ama neyle geldiğini bilmiyor. Kayıt tutmanın karşılığı bu. Kontrol
+ziyareti tam ücret etmiyor — teşhis zaten biliniyor, iş daha kolay; yoksa
+en kârlı hamle aynı hastayı tekrar tekrar görmek olurdu.
+
+---
+
+## Telefonda oynanabiliyor
+
+Bütün kontroller klavyedeydi: dokunmatik oyuncu oyunu başlatıp
+**bakabiliyor, hiçbir şey yapamıyordu**. Artık sağ altta üç eylem düğmesi
+(hastayı al / taburcu / numuneyi incele) ve üç menü düğmesi var.
+Mini-oyunlar ve alet kapakları zaten tıklama tabanlıydı.
+
+Düğmeler yalnızca `TouchEnabled` **ve klavye yokken** kuruluyor: hem
+dokunmatik hem klavyesi olan bir cihazda ekranı düğmelerle doldurmak,
+sorunu olmayan oyuncuya sorun eklemek olurdu.
+
+**Ekran ölçeği.** Yerleşim 1280×768 referansına göre yazılıyor ve
+`verify_ui` o çözünürlükte hiçbir panelin çakışmadığını ölçüyor. Daha küçük
+ekranlarda her paneli ayrı ayrı küçülten bir "dar ekran yerleşimi" yazmak
+yerine **bütün arayüz tek bir `UIScale` ile** küçülüyor; böylece
+kanıtlanmış yerleşim her ekranda geçerli kalıyor. Taban 0,62'de kesiliyor —
+daha küçüğünde yazılar okunmaz oluyor.
+
+> Bu depoda telefon yok. Dokunmatik yerleşim **gözle görülemedi**; ölçüyle
+> hesaplandı ve ölçüsü doğrulandı. İlk telefonda denenmesi gereken tek
+> katman bu.
+
+---
+
+## Öğretici
+
+Oyunun akışı hiçbir yerde anlatılmıyordu. İlk hastada beş adım: hastayı al
+→ muayene et → teşhis koy → tedavi uygula → taburcu et. İlgili arayüz
+bölgesi nabız atan bir çerçeveyle işaretleniyor.
+
+Adımlar **sunucuda** ve **gerçekten yapılan işle** açılıyor; "anladım"
+düğmesi **yok**. Olsaydı öğretici hiçbir şey yapmadan geçilebilirdi ve
+hiçbir şey öğretmezdi. "Muayene et" adımı bile alet **bulgu çıkarınca**
+kapanıyor. İlerleme profilde: oyuncu çıkıp girince kaldığı yerden devam
+ediyor.
+
+---
+
 ## Kamera ve konfor
 
 Oyun **yalnızca birinci şahıs**. Üçüncü şahıs seçeneği bilerek yok: muayene
@@ -479,7 +671,7 @@ Sonucu:
 - Bir asset ID'sinin gerçekten var olduğu bile **doğrulanamazdı**. Ezberden
   bir ID yazmak, oyunda gri/kırık bir model demek olurdu — bu yüzden yazılmadı.
 
-Onun yerine klinik, 26 eşya, 10 hayvan rigi ve sahip NPC'leri **kod ile,
+Onun yerine klinik, 35 eşya, 10 hayvan rigi, sahip ve personel NPC'leri **kod ile,
 temel parçalardan** (Part / WedgePart / silindir / küre + malzeme, ışık,
 parçacık) kuruluyor. Hiçbir dış dosyaya bağımlı değil; ilk açılışta
 eksiksiz görünüyor.
@@ -549,15 +741,16 @@ hedefleri.
 ## Doğrulama
 
 Studio'ya erişimimiz olmadığı için "çalışıyor" demek yerine **çalıştırılabilir
-denetim** yazıldı. Toplam **9.797 denetim**:
+denetim** yazıldı. Toplam **12.867 denetim**:
 
 ```bash
 python3 build.py
-python3 tools/verify_place.py       #   303  yer dosyası şeması + tazelik
-python3 tools/verify_data.py        # 2.260  veri + ses + ışık + dekor + gündüz/gece + çeviri
-python3 tools/verify_luau.py        # 1.025  Luau statik denetimleri
-python3 tools/verify_layout.py      # 5.991  3B çakışma, bekleyen hayvan, sahip, dekor, lobi
-python3 tools/simulate_economy.py   #   218  ilerleme/ekonomi eğrisi
+python3 tools/verify_place.py       #    355  yer dosyası şeması + tazelik
+python3 tools/verify_data.py        #  2.603  veri + personel + olay + öğretici + çeviri
+python3 tools/verify_luau.py        #  1.238  Luau statik denetimleri
+python3 tools/verify_layout.py      #  8.212  3B çakışma, bekleyen hayvan, yatak, sahip, lobi
+python3 tools/verify_ui.py          #    211  EKRAN yerleşimi: panel çakışması, taşma, ölçek
+python3 tools/simulate_economy.py   #    248  ilerleme/ekonomi eğrisi (maaş, olay, kronik dahil)
 ```
 
 Hepsi hata yoksa `0`, varsa `1` döner (mevcut deponun `Tools/verify_*.py`
@@ -570,6 +763,43 @@ Denetimler birbirini de kontrol ediyor: `verify_data`, veri dosyalarındaki
 sayaç/etki adlarını **kodun gerçekten okuduğu** adlarla karşılaştırıyor;
 `verify_luau`'nun sıra denetimi ise bilerek bozulmuş bir örnek üzerinde
 kendini doğruluyor.
+
+### Ekran yerleşimi de ölçülüyor
+
+Kliniğin 3B yerleşimi ölçülüyordu ama **ekranın** yerleşimi hiçbir yerde
+ölçülmüyordu. `verify_ui.py` yazılınca altı gerçek çakışma çıktı — hepsi de
+Studio'suz görülemeyecek cinsten:
+
+- FPS sayacı kuyruk ve vardiya kartlarının **üzerindeydi**,
+- alet çubuğu sağ sütunun (teşhis/tedavi paneli) altına giriyordu,
+- tedavi paneli 768 piksellik ekrandan 4 piksel taşıyordu,
+- klinik seviyesi kartı hasta kartının yerine konmuştu,
+- bulaşma uyarısı acil bandıyla aynı yerdeydi,
+- kayıt uyarısı bildirim yığınıyla üst üste geliyordu.
+
+Denetim üst düzey panelleri kaynaktan okuyor: `X.create(parent: ScreenGui)`
+gövdesinde **ve** `parent = parent` ile bağlanan her kart. İkisine birden
+bakmak şart — yalnızca ikincisine bakan ilk yazım, iç içe duran kartları üst
+düzey sanıyordu. Kipli paneller `-- ui:üstlük`, saydam katmanlar
+`-- ui:katman`, aynı yuvayı paylaşan paneller `-- ui:grup=` ile işaretleniyor.
+
+Öğreticinin vurgu halkalarının **gerçek bir panelin** etrafını çizdiği de
+burada ölçülüyor: boş bir bölgeye halka koymak, oyuncuya hiçbir şey
+göstermeden "şuraya bak" demek olurdu.
+
+### Doğrulayıcıların yakaladığı gerçek hatalar
+
+Bu denetimler süs değil; her biri kendi ailesinden en az bir gerçek hata
+yakaladı:
+
+| Denetim | Yakaladığı |
+|---|---|
+| `verify_layout` | 19 model kesişmesi; koğuş kafeslerinin içine **hiçbir hasta sığmıyordu** (iç ölçü 4,8 stud, en büyük hasta 6,4) |
+| `verify_data` | Resepsiyonist personeli **var olmayan** bir bekleme yeri açıyordu: satın alınan yer sessizce hiçbir işe yaramıyordu |
+| `verify_ui` | Yukarıdaki altı panel çakışması |
+| `simulate_economy` | Dikkatsiz oyuncunun kasası 2 TL eksiye düşüyordu — oyunun yapamayacağı bir şey (modelin hatasıydı, oyunun değil) |
+| `verify_luau` | Kullanımdan önce tanımlanmamış yerel fonksiyonlar; çeviri anahtarı hiç denetlenmeyen ad alanları |
+| `SelfTest` | Rig eklem kümesi, koğuş yatak sayısı, klinik eşik tablosunun sınırları |
 
 ### Çakışan modeller: ölçülüp düzeltildi ve bir daha olamaz
 
@@ -665,25 +895,31 @@ RobloxVet/
 │   ├── clinic.json                   oda planı, duvarlar, kapılar, eşya yerleşimi
 │   ├── decor.json                    4 tema paleti + 4 süs eşyası ve yerleri
 │   ├── daycycle.json                 gün uzunluğu, gece eşikleri, nöbet çarpanları
+│   ├── staff.json                    4 personel, işe alma bedeli, GÜNLÜK MAAŞ, etkiler
+│   ├── clinicLevels.json             ortak klinik XP eğrisi ve her seviyenin açtığı
+│   ├── events.json                   salgın / yoğun / sakin / denetim vardiyaları
+│   ├── tutorial.json                 5 adımlık öğretici ve vurgu bölgeleri
 │   ├── assetIds.json                 Creator Store yuvaları (boş)
-│   └── locale/tr.json                425 satır Türkçe metin
+│   └── locale/tr.json                522 satır Türkçe metin
 │
 ├── src/shared/                       Net · Validate · Loc · Assets · Build · Detail · Audio
 ├── src/server/
 │   ├── init.server.luau              tek giriş noktası, kurulum sırası
 │   ├── SelfTest.server.luau          açılış denetimleri → Output
 │   ├── world/                        Clinic · Props · Lighting · AnimalFactory
-│   │                                 AnimalAnimator · OwnerFactory · Lobby
-│   │                                 Decor · Doors · Effects · DayCycle
+│   │                                 AnimalAnimator · OwnerFactory · StaffFactory
+│   │                                 Lobby · Decor · Doors · Effects · DayCycle
 │   └── game/                         PatientFlow · Diagnosis · Treatment · Surgery
 │                                     ToolGame · Economy · Upgrades · Profile
+│                                     Ward · Staff · ClinicLevel · Events · Tutorial
 │                                     Achievements · Tasks · Leaderboard · Matchmaking
 ├── src/client/                       Hud · Chart · DiagnosisPanel · TreatmentPanel
 │                                     SurgeryPanel · ToolGamePanel · ShopPanel
-│                                     ProgressPanel · SettingsPanel · LobbyPanel
+│                                     WardPanel · ProgressPanel · SettingsPanel
+│                                     LobbyPanel · Tutorial · Touch
 │                                     Camera · ViewModel · Crosshair · Fps · ToolBar
 │                                     Notify · Theme
-└── tools/                            rbxlx yazıcısı + 5 doğrulayıcı
+└── tools/                            rbxlx yazıcısı + 6 doğrulayıcı
 ```
 
 ### Mimarinin üç kuralı
@@ -724,11 +960,17 @@ bakılacak liste:
 - **Hayvanlar ve sahip NPC'leri çarpışmasız yürüyor.** Yolları düz hatlar
   olduğu için duvarlardan geçmiyorlar, ama kalabalıkta birbirlerinin
   içinden geçebilirler.
-- **Arayüz yerleşimi** masaüstü çözünürlüğüne göre kuruldu. Sağ sütun
-  (kuyruk → vardiya → hasta kartı → teşhis/tedavi) yukarıdan aşağı
-  ~790 piksel yer kaplıyor; 768 piksel yüksekliğindeki bir ekranda alttaki
-  panel alet çubuğuna değebilir. Panellerin konumu kendi dosyalarının
-  `create` fonksiyonlarında tek satır.
+- ~~**Arayüz yerleşimi taşıyor.**~~ **Düzeltildi ve ölçülüyor.**
+  `tools/verify_ui.py` 1280×768'de altı gerçek çakışma buldu (hepsi
+  düzeltildi) ve artık her koşumda ölçüyor; küçük ekranlarda bütün arayüz
+  birlikte ölçekleniyor.
+- **Dokunmatik yerleşim gözle görülmedi.** Bu ortamda telefon yok. Düğme
+  yerleri ve ölçek ölçüyle hesaplandı ve doğrulandı ama gerçek bir cihazda
+  denenmedi. Studio'da **Test → Device** ile emülasyonda bakılabilir.
+- **Öğreticinin vurgu çerçeveleri** referans yerleşimdeki dikdörtgenlere
+  göre çiziliyor (`src/client/Tutorial.luau` → `REGIONS`); `verify_ui`
+  her birinin gerçek bir panelin etrafını çizdiğini ölçüyor ama halkanın
+  ekranda ne kadar iyi durduğu ilk Play'de bakılacak bir şey.
 - **Birinci şahıs el modeli ekranı kapatabilir.** Ölçüler
   `data/settings.json` → `viewModel` içinde ayarlanabilir; ayar panelinden
   ("Ellerini göster") tamamen kapatılabiliyor.
