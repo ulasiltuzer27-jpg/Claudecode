@@ -211,6 +211,24 @@
             -8
           ],
           "rot": 0
+        },
+        {
+          "id": "roomSign",
+          "at": [
+            -26,
+            -4.6
+          ],
+          "rot": 0,
+          "tag": "sign:room.exam1"
+        },
+        {
+          "id": "roomSign",
+          "at": [
+            2,
+            -4.6
+          ],
+          "rot": 0,
+          "tag": "sign:room.exam2"
         }
       ],
       "floorTile": 6,
@@ -342,6 +360,14 @@
             -6
           ],
           "rot": 0
+        },
+        {
+          "id": "magazineTable",
+          "at": [
+            32,
+            -20
+          ],
+          "rot": 0
         }
       ],
       "floorTile": 5,
@@ -439,6 +465,14 @@
             15.5
           ],
           "rot": 0
+        },
+        {
+          "id": "wallRail",
+          "at": [
+            -35,
+            -3.4
+          ],
+          "rot": 180
         }
       ],
       "floorTile": 5,
@@ -529,6 +563,14 @@
             16
           ],
           "rot": 0
+        },
+        {
+          "id": "wallRail",
+          "at": [
+            -7,
+            -3.4
+          ],
+          "rot": 180
         }
       ],
       "floorTile": 5,
@@ -618,6 +660,23 @@
             5
           ],
           "rot": 0
+        },
+        {
+          "id": "roomSign",
+          "at": [
+            28,
+            -3.4
+          ],
+          "rot": 180,
+          "tag": "sign:room.surgery"
+        },
+        {
+          "id": "wallRail",
+          "at": [
+            36,
+            -3.4
+          ],
+          "rot": 180
         }
       ],
       "floorTile": 5,
@@ -685,6 +744,15 @@
             20
           ],
           "rot": 180
+        },
+        {
+          "id": "roomSign",
+          "at": [
+            -20,
+            18.6
+          ],
+          "rot": 180,
+          "tag": "sign:room.kennels"
         }
       ],
       "floorTile": 4,
@@ -780,6 +848,15 @@
             28
           ],
           "rot": 0
+        },
+        {
+          "id": "roomSign",
+          "at": [
+            20,
+            18.6
+          ],
+          "rot": 180,
+          "tag": "sign:room.wash"
         }
       ],
       "floorTile": 4,
@@ -865,6 +942,15 @@
             44
           ],
           "rot": 0
+        },
+        {
+          "id": "roomSign",
+          "at": [
+            30,
+            30.6
+          ],
+          "rot": 180,
+          "tag": "sign:room.lab"
         }
       ],
       "floorTile": 4,
@@ -949,6 +1035,15 @@
             44
           ],
           "rot": 0
+        },
+        {
+          "id": "roomSign",
+          "at": [
+            -27,
+            30.6
+          ],
+          "rot": 180,
+          "tag": "sign:room.quarantine"
         }
       ],
       "floorTile": 4,
@@ -1262,23 +1357,23 @@
         "id": "clinicSign",
         "at": [
           0,
-          -34
+          -52
         ],
         "rot": 0
       },
       {
         "id": "lampPost",
         "at": [
-          -11,
-          -40
+          -24,
+          -46
         ],
         "rot": 0
       },
       {
         "id": "lampPost",
         "at": [
-          11,
-          -40
+          24,
+          -46
         ],
         "rot": 0
       },
@@ -1317,8 +1412,8 @@
       {
         "id": "tree",
         "at": [
-          -34,
-          -46
+          -40,
+          -50
         ],
         "rot": 0
       },
@@ -1365,16 +1460,16 @@
       {
         "id": "bush",
         "at": [
-          -22,
-          -36
+          -20,
+          -33.5
         ],
         "rot": 0
       },
       {
         "id": "bush",
         "at": [
-          22,
-          -36
+          20,
+          -33.5
         ],
         "rot": 0
       },
@@ -1407,6 +1502,54 @@
         "at": [
           44,
           36
+        ],
+        "rot": 0
+      },
+      {
+        "id": "entranceSteps",
+        "at": [
+          0,
+          -34.5
+        ],
+        "rot": 0
+      },
+      {
+        "id": "entranceCanopy",
+        "at": [
+          0,
+          -42
+        ],
+        "rot": 0
+      },
+      {
+        "id": "flagPole",
+        "at": [
+          -16,
+          -34
+        ],
+        "rot": 0
+      },
+      {
+        "id": "flagPole",
+        "at": [
+          16,
+          -34
+        ],
+        "rot": 0
+      },
+      {
+        "id": "ambulance",
+        "at": [
+          -30,
+          -40
+        ],
+        "rot": 90
+      },
+      {
+        "id": "bikeRack",
+        "at": [
+          30,
+          -38
         ],
         "rot": 0
       }

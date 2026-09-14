@@ -1,8 +1,28 @@
 --!strict
 -- Lobby.luau
 -- ==========
--- Lobi salonunu kurar: giris holü, dort portal kemeri ve ustlerinde
--- SIRADAKI OYUNCU SAYISI.
+-- Lobi salonunu kurar. Salon UC BOLUM:
+--
+--     guney  z -40..-18  GIRIS HOLU     karsilama bankosu, koltuklar,
+--                                       duyuru panolari, saksilar
+--            z = -18     ── kapili ic duvar ──
+--     orta   z -18..14   ANA SALON      cesme, sutun dizileri, heykel,
+--                                       hali yollari, pankartlar
+--            z = 14      ── kapili ic duvar ──
+--     kuzey  z 14..40    PORTAL KANADI  dort kemer, dort portal
+--
+-- Neden bu kadar?
+-- ---------------
+-- Lobi oyunun ILK gordugu oda ve en bos odasiydi: dort duz duvar,
+-- birkac bank, dort portal. Oyuncunun oyun hakkindaki ilk izlenimi
+-- oradan cikiyor. Salon artik bir YOL sunuyor - kapidan gir, bankoyu
+-- gec, cesmenin etrafindan dolan, kemerin altindan portala yurü.
+--
+-- Duvarlar, kapilar ve pencereler VERIDE (`data/lobby.json` -> walls)
+-- ve klinikle AYNI kurucudan geciyor (`src/shared/Walls.luau`). Once
+-- kodda uretilen dort duz duvardi; veriye tasininca `verify_layout`
+-- onlari da olcmeye basladi - kapi onune konan bir esya artik denetimde
+-- yakalaniyor.
 --
 -- Klinigin esya kutuphanesi burada da kullaniliyor (Props.luau); lobi
 -- icin ayri bir esya seti yazmak ayni isi iki kez yapmak olurdu.
@@ -14,7 +34,9 @@ local Data = ReplicatedStorage:WaitForChild("VetData")
 local Build = require(Shared.Build)
 local Detail = require(Shared.Detail)
 local Loc = require(Shared.Loc)
+local Walls = require(Shared.Walls)
 
+local Doors = require(script.Parent.Doors)
 local Props = require(script.Parent.Props)
 local SkyLighting = require(script.Parent.Lighting)
 
@@ -35,6 +57,7 @@ export type Built = {
 	model: Model,
 	portals: { [string]: Portal },
 	spawn: Vector3,
+	doors: Model,
 }
 
 local function colorOf(name: string): Color3
@@ -139,57 +162,65 @@ function Lobby.build(parent: Instance): Built
 
 	Build.slab({ -half, -half }, { half, half }, -0.5, 1, colorOf("ground"), Enum.Material.Grass, root, "Zemin")
 	Build.slab(min, max, -0.25, 0.5, colorOf("floor"), Enum.Material.Marble, root, "Doseme")
-	Detail.tiles(root, min, max, 0.03, 6, colorOf("floor"), colorOf("floorTile"), Enum.Material.Marble)
-	Build.slab(min, max, plan.wallHeight - 0.25, 0.5, colorOf("ceiling"), Enum.Material.SmoothPlastic, root, "Tavan")
+	Detail.tiles(root, min, max, 0.03, 8, colorOf("floor"), colorOf("floorTile"), Enum.Material.Marble)
 
-	-- Orta hali: gozun merkeze gitmesi icin.
-	Build.slab({ -14, -14 }, { 14, 14 }, 0.1, 0.2, colorOf("carpet"), Enum.Material.Fabric, root, "Hali")
+	-- Girise giden tas yol: bina disindaki tek zemin parcasi.
+	local path = plan.outdoor.path
+	local pathHalf = path.width * 0.5
+	Build.slab(
+		{ path.from[1] - pathHalf, math.min(path.from[2], path.to[2]) },
+		{ path.from[1] + pathHalf, math.max(path.from[2], path.to[2]) },
+		-0.2, 0.45, colorOf("path"), Enum.Material.Concrete, root, "Yol"
+	)
 
-	-- Duvarlar: dort kenar, portallarin oldugu kuzey duvari da dahil
-	-- (portal kemerleri duvarin onunde duruyor).
-	local th = plan.wallThickness
-	local sides = {
-		{ Vector3.new(max[1] - min[1] + th * 2, plan.wallHeight, th), Vector3.new((min[1] + max[1]) / 2, plan.wallHeight / 2, min[2]) },
-		{ Vector3.new(max[1] - min[1] + th * 2, plan.wallHeight, th), Vector3.new((min[1] + max[1]) / 2, plan.wallHeight / 2, max[2]) },
-		{ Vector3.new(th, plan.wallHeight, max[2] - min[2]), Vector3.new(min[1], plan.wallHeight / 2, (min[2] + max[2]) / 2) },
-		{ Vector3.new(th, plan.wallHeight, max[2] - min[2]), Vector3.new(max[1], plan.wallHeight / 2, (min[2] + max[2]) / 2) },
-	}
-	for _, side in sides do
+	-- Tavan: ORTA acikligi bos birakiliyor (aydinlik). Duz bir tavan
+	-- 96x80'lik bir salonu kutuya ceviriyordu.
+	local lightMin, lightMax = { -18, -10 }, { 18, 10 }
+	Build.slab(min, { max[1], lightMin[2] }, plan.wallHeight - 0.25, 0.5, colorOf("ceiling"), Enum.Material.SmoothPlastic, root, "Tavan")
+	Build.slab({ min[1], lightMax[2] }, max, plan.wallHeight - 0.25, 0.5, colorOf("ceiling"), Enum.Material.SmoothPlastic, root, "Tavan")
+	Build.slab({ min[1], lightMin[2] }, { lightMin[1], lightMax[2] }, plan.wallHeight - 0.25, 0.5, colorOf("ceiling"), Enum.Material.SmoothPlastic, root, "Tavan")
+	Build.slab({ lightMax[1], lightMin[2] }, { max[1], lightMax[2] }, plan.wallHeight - 0.25, 0.5, colorOf("ceiling"), Enum.Material.SmoothPlastic, root, "Tavan")
+
+	-- Aydinlik camı ve kafesi: gunes salonun ortasina dusuyor.
+	local sky = Build.slab(
+		lightMin, lightMax, plan.wallHeight - 0.2, 0.3,
+		colorOf("glass"), Enum.Material.Glass, root, "Aydinlik"
+	)
+	sky.Transparency = 0.55
+	sky.CanCollide = false
+	sky.CastShadow = false
+	for index = -3, 3 do
 		Build.part({
-			name = "Duvar",
-			size = side[1],
-			cf = CFrame.new(side[2]),
-			color = colorOf("wall"),
-			material = Enum.Material.SmoothPlastic,
-			parent = root,
-		})
-	end
-	-- Supurgelik ve kornis
-	for _, side in sides do
-		Build.part({
-			name = "Supurgelik",
-			size = Vector3.new(side[1].X + 0.2, 0.9, side[1].Z + 0.2),
-			cf = CFrame.new(side[2].X, 0.45, side[2].Z),
-			color = colorOf("trim"),
-			canCollide = false,
-			castShadow = false,
-			parent = root,
-		})
-		Build.part({
-			name = "Kornis",
-			size = Vector3.new(side[1].X + 0.3, 0.8, side[1].Z + 0.3),
-			cf = CFrame.new(side[2].X, plan.wallHeight - 0.9, side[2].Z),
+			name = "AydinlikKafesi",
+			size = Vector3.new(0.4, 0.4, lightMax[2] - lightMin[2]),
+			cf = CFrame.new(index * 5, plan.wallHeight - 0.05, 0),
 			color = colorOf("trim"),
 			canCollide = false,
 			castShadow = false,
 			parent = root,
 		})
 	end
+	for index = -2, 2 do
+		Build.part({
+			name = "AydinlikKafesi",
+			size = Vector3.new(lightMax[1] - lightMin[1], 0.4, 0.4),
+			cf = CFrame.new(0, plan.wallHeight - 0.05, index * 4),
+			color = colorOf("trim"),
+			canCollide = false,
+			castShadow = false,
+			parent = root,
+		})
+	end
 
-	-- Tavan lambalari
+	-- Duvarlar VERIDEN ve klinikle AYNI kurucudan.
+	for _, wall in plan.walls do
+		Walls.build(plan :: any, root, wall, colorOf("wall"), colorOf("trim"))
+	end
+
+	-- Tavan lambalari: aydinligin disinda, dort kose. Cok lamba sahneyi
+	-- yikiyor; aydinlik zaten ortayi aydinlatiyor.
 	local lamp = SkyLighting.lamp("ceiling")
-	-- Az sayida, genis menzilli armatur: cok lamba sahneyi yikiyor.
-	for _, position in { { -22, -10 }, { 22, -10 }, { 0, 10 } } do
+	for _, position in { { -26, -30 }, { 26, -30 }, { -30, 0 }, { 30, 0 }, { -20, 28 }, { 20, 28 } } do
 		Build.ceilingLight(Vector3.new(position[1], plan.wallHeight - 0.9, position[2]), root, lamp)
 	end
 
@@ -197,7 +228,7 @@ function Lobby.build(parent: Instance): Built
 	local welcome = Build.part({
 		name = "Tabela",
 		size = Vector3.new(30, 4.5, 0.6),
-		cf = CFrame.new(0, 14, min[2] + 0.9),
+		cf = CFrame.new(0, 15.5, min[2] + 0.9),
 		color = colorOf("trim"),
 		material = Enum.Material.Marble,
 		canCollide = false,
@@ -209,7 +240,7 @@ function Lobby.build(parent: Instance): Built
 	local hint = Build.part({
 		name = "Aciklama",
 		size = Vector3.new(30, 2, 0.4),
-		cf = CFrame.new(0, 10.6, min[2] + 0.9),
+		cf = CFrame.new(0, 12.4, min[2] + 0.9),
 		color = colorOf("wall"),
 		canCollide = false,
 		castShadow = false,
@@ -219,6 +250,14 @@ function Lobby.build(parent: Instance): Built
 
 	local furniture = Build.model("Esyalar", root)
 	for _, spec in plan.props do
+		Props.build(
+			spec.id,
+			CFrame.new(spec.at[1], 0, spec.at[2]) * CFrame.Angles(0, math.rad(spec.rot or 0), 0),
+			furniture
+		)
+	end
+	-- Bina disi: yolun iki yani ve bahce.
+	for _, spec in plan.outdoor.props do
 		Props.build(
 			spec.id,
 			CFrame.new(spec.at[1], 0, spec.at[2]) * CFrame.Angles(0, math.rad(spec.rot or 0), 0),
@@ -243,10 +282,15 @@ function Lobby.build(parent: Instance): Built
 	spawnPoint.Duration = 0
 	spawnPoint.Parent = root
 
+	-- Kapilar: klinikteki AYNI modul, lobi planiyla. Lobide de kapiyi
+	-- kendin aciyorsun.
+	local doors = Doors.build(root, plan :: any)
+
 	return {
 		model = root,
 		portals = portals,
 		spawn = Vector3.new(plan.spawn.at[1], 0, plan.spawn.at[2]),
+		doors = doors,
 	}
 end
 

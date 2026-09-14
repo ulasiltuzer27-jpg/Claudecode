@@ -2,45 +2,927 @@
   "_comment": "(VERI) Lobi salonu ve eslestirme ayarlari.",
   "_akis_notu": "Oyun TEK yer dosyasi. Herkese acik sunucu LOBI olarak aciliyor; ayrilmis (reserved) sunucu KLINIK olarak. Ayrim game.PrivateServerId ile yapiliyor - iki ayri place yayinlamak ve PlaceId yapistirmak gerekmiyor.",
   "_studio_notu": "Studio isinlanmayi desteklemiyor ve yayinlanmamis yerde PlaceId 0. Isinlanma basarisiz olursa klinik AYNI sunucuda basliyor; boylece dosya Studio'da acildigi anda lobi -> mod secimi -> klinik akisi bastan sona oynanabiliyor.",
-
   "soloFallbackSeconds": 30,
   "countdownSeconds": 4,
-
-  "bounds": { "min": [-36, -26], "max": [36, 26] },
-  "wallHeight": 20,
-  "wallThickness": 1.2,
-  "groundSize": 220,
-  "spawn": { "at": [0, -19] },
-
-  "colors": {
-    "floor": [212, 206, 198],
-    "floorTile": [188, 182, 174],
-    "wall": [236, 240, 244],
-    "trim": [64, 84, 104],
-    "ceiling": [246, 249, 252],
-    "ground": [124, 166, 102],
-    "carpet": [58, 118, 124]
+  "bounds": {
+    "min": [
+      -48,
+      -40
+    ],
+    "max": [
+      48,
+      40
+    ]
   },
-
+  "wallHeight": 22,
+  "wallThickness": 1.2,
+  "groundSize": 300,
+  "spawn": {
+    "at": [
+      0,
+      -36
+    ]
+  },
+  "colors": {
+    "floor": [
+      222,
+      216,
+      206
+    ],
+    "floorTile": [
+      196,
+      190,
+      180
+    ],
+    "wall": [
+      238,
+      242,
+      246
+    ],
+    "trim": [
+      64,
+      84,
+      104
+    ],
+    "ceiling": [
+      248,
+      250,
+      253
+    ],
+    "ground": [
+      124,
+      166,
+      102
+    ],
+    "carpet": [
+      58,
+      118,
+      124
+    ],
+    "wallTrim": [
+      64,
+      84,
+      104
+    ],
+    "windowFrame": [
+      148,
+      112,
+      74
+    ],
+    "glass": [
+      206,
+      228,
+      238
+    ],
+    "path": [
+      206,
+      200,
+      190
+    ]
+  },
   "_portal_notu": "Her portal bir mod. capacity kadar oyuncu birikince kadro dolar ve grup birlikte isinlanir.",
   "portals": [
-    { "id": "solo",   "nameKey": "lobby.solo",   "capacity": 1, "at": [-25, 20], "color": [96, 176, 144] },
-    { "id": "duo",    "nameKey": "lobby.duo",    "capacity": 2, "at": [-8.5, 20], "color": [86, 158, 210] },
-    { "id": "triple", "nameKey": "lobby.triple", "capacity": 3, "at": [8.5, 20],  "color": [196, 146, 214] },
-    { "id": "quad",   "nameKey": "lobby.quad",   "capacity": 4, "at": [25, 20],   "color": [226, 150, 84] }
+    {
+      "id": "solo",
+      "nameKey": "lobby.solo",
+      "capacity": 1,
+      "at": [
+        -27,
+        30
+      ],
+      "color": [
+        96,
+        176,
+        144
+      ]
+    },
+    {
+      "id": "duo",
+      "nameKey": "lobby.duo",
+      "capacity": 2,
+      "at": [
+        -9,
+        30
+      ],
+      "color": [
+        86,
+        158,
+        210
+      ]
+    },
+    {
+      "id": "triple",
+      "nameKey": "lobby.triple",
+      "capacity": 3,
+      "at": [
+        9,
+        30
+      ],
+      "color": [
+        196,
+        146,
+        214
+      ]
+    },
+    {
+      "id": "quad",
+      "nameKey": "lobby.quad",
+      "capacity": 4,
+      "at": [
+        27,
+        30
+      ],
+      "color": [
+        226,
+        150,
+        84
+      ]
+    }
   ],
-
   "_esya_notu": "Lobi de klinigin esya kutuphanesini kullaniyor (Props.luau); ayri bir set yazmaya gerek yok.",
   "props": [
-    { "id": "waitingBench", "at": [-26, -8], "rot": 0 },
-    { "id": "waitingBench", "at": [-14, -8], "rot": 0 },
-    { "id": "waitingBench", "at": [14, -8],  "rot": 0 },
-    { "id": "waitingBench", "at": [26, -8],  "rot": 0 },
-    { "id": "plant", "at": [-33, 12], "rot": 0 },
-    { "id": "plant", "at": [33, 12],  "rot": 0 },
-    { "id": "plant", "at": [-33, -20], "rot": 0 },
-    { "id": "plant", "at": [33, -20],  "rot": 0 },
-    { "id": "waterCooler", "at": [-33, 0], "rot": 90 },
-    { "id": "trashBin", "at": [33, 0], "rot": 0 }
-  ]
+    {
+      "id": "lobbyDesk",
+      "at": [
+        0,
+        -25.5
+      ],
+      "rot": 180
+    },
+    {
+      "id": "lobbySofa",
+      "at": [
+        -30,
+        -30
+      ],
+      "rot": 0
+    },
+    {
+      "id": "lobbySofa",
+      "at": [
+        30,
+        -30
+      ],
+      "rot": 0
+    },
+    {
+      "id": "noticeBoard",
+      "at": [
+        -47.2,
+        -26
+      ],
+      "rot": 90
+    },
+    {
+      "id": "noticeBoard",
+      "at": [
+        47.2,
+        -26
+      ],
+      "rot": 270
+    },
+    {
+      "id": "planterBox",
+      "at": [
+        -20,
+        -37.5
+      ],
+      "rot": 0
+    },
+    {
+      "id": "planterBox",
+      "at": [
+        20,
+        -37.5
+      ],
+      "rot": 0
+    },
+    {
+      "id": "plant",
+      "at": [
+        -44,
+        -35
+      ],
+      "rot": 0
+    },
+    {
+      "id": "plant",
+      "at": [
+        44,
+        -35
+      ],
+      "rot": 0
+    },
+    {
+      "id": "waterCooler",
+      "at": [
+        -44,
+        -20
+      ],
+      "rot": 90
+    },
+    {
+      "id": "trashBin",
+      "at": [
+        44,
+        -20
+      ],
+      "rot": 0
+    },
+    {
+      "id": "fountain",
+      "at": [
+        0,
+        0
+      ],
+      "rot": 0
+    },
+    {
+      "id": "statue",
+      "at": [
+        0,
+        10
+      ],
+      "rot": 0
+    },
+    {
+      "id": "rugRunner",
+      "at": [
+        -25,
+        0
+      ],
+      "rot": 0
+    },
+    {
+      "id": "rugRunner",
+      "at": [
+        25,
+        0
+      ],
+      "rot": 0
+    },
+    {
+      "id": "banner",
+      "at": [
+        -47.4,
+        -8
+      ],
+      "rot": 90
+    },
+    {
+      "id": "banner",
+      "at": [
+        47.4,
+        -8
+      ],
+      "rot": 270
+    },
+    {
+      "id": "banner",
+      "at": [
+        -47.4,
+        8
+      ],
+      "rot": 90
+    },
+    {
+      "id": "banner",
+      "at": [
+        47.4,
+        8
+      ],
+      "rot": 270
+    },
+    {
+      "id": "archFrame",
+      "at": [
+        -27,
+        17
+      ],
+      "rot": 0
+    },
+    {
+      "id": "archFrame",
+      "at": [
+        -9,
+        17
+      ],
+      "rot": 0
+    },
+    {
+      "id": "archFrame",
+      "at": [
+        9,
+        17
+      ],
+      "rot": 0
+    },
+    {
+      "id": "archFrame",
+      "at": [
+        27,
+        17
+      ],
+      "rot": 0
+    },
+    {
+      "id": "planterBox",
+      "at": [
+        -18,
+        22
+      ],
+      "rot": 0
+    },
+    {
+      "id": "planterBox",
+      "at": [
+        0,
+        22
+      ],
+      "rot": 0
+    },
+    {
+      "id": "planterBox",
+      "at": [
+        18,
+        22
+      ],
+      "rot": 0
+    },
+    {
+      "id": "lobbySofa",
+      "at": [
+        -40,
+        27
+      ],
+      "rot": 90
+    },
+    {
+      "id": "lobbySofa",
+      "at": [
+        40,
+        27
+      ],
+      "rot": 270
+    },
+    {
+      "id": "noticeBoard",
+      "at": [
+        0,
+        39.2
+      ],
+      "rot": 0
+    },
+    {
+      "id": "column",
+      "at": [
+        -34,
+        -12
+      ],
+      "rot": 0
+    },
+    {
+      "id": "column",
+      "at": [
+        -34,
+        -4
+      ],
+      "rot": 0
+    },
+    {
+      "id": "column",
+      "at": [
+        -34,
+        4
+      ],
+      "rot": 0
+    },
+    {
+      "id": "column",
+      "at": [
+        -34,
+        11
+      ],
+      "rot": 0
+    },
+    {
+      "id": "column",
+      "at": [
+        -16,
+        -12
+      ],
+      "rot": 0
+    },
+    {
+      "id": "column",
+      "at": [
+        -16,
+        -4
+      ],
+      "rot": 0
+    },
+    {
+      "id": "column",
+      "at": [
+        -16,
+        4
+      ],
+      "rot": 0
+    },
+    {
+      "id": "column",
+      "at": [
+        -16,
+        11
+      ],
+      "rot": 0
+    },
+    {
+      "id": "column",
+      "at": [
+        16,
+        -12
+      ],
+      "rot": 0
+    },
+    {
+      "id": "column",
+      "at": [
+        16,
+        -4
+      ],
+      "rot": 0
+    },
+    {
+      "id": "column",
+      "at": [
+        16,
+        4
+      ],
+      "rot": 0
+    },
+    {
+      "id": "column",
+      "at": [
+        16,
+        11
+      ],
+      "rot": 0
+    },
+    {
+      "id": "column",
+      "at": [
+        34,
+        -12
+      ],
+      "rot": 0
+    },
+    {
+      "id": "column",
+      "at": [
+        34,
+        -4
+      ],
+      "rot": 0
+    },
+    {
+      "id": "column",
+      "at": [
+        34,
+        4
+      ],
+      "rot": 0
+    },
+    {
+      "id": "column",
+      "at": [
+        34,
+        11
+      ],
+      "rot": 0
+    },
+    {
+      "id": "column",
+      "at": [
+        -40,
+        20
+      ],
+      "rot": 0
+    },
+    {
+      "id": "column",
+      "at": [
+        -40,
+        34
+      ],
+      "rot": 0
+    },
+    {
+      "id": "column",
+      "at": [
+        40,
+        20
+      ],
+      "rot": 0
+    },
+    {
+      "id": "column",
+      "at": [
+        40,
+        34
+      ],
+      "rot": 0
+    }
+  ],
+  "privacy": {
+    "_comment": "SUNUCU OZELLIGI. Her kadro KENDI ayrilmis sunucusuna gidiyor; klinik sunucusu kadro disindan kimseyi almiyor.",
+    "_neden_notu": "Solo giren oyuncu kendi sunucusunda olmali. Eslestirme zaten her kadro icin ayri bir sunucu rezerve ediyordu ama bunu hicbir yer ZORLAMIYORDU: erisim kodunu bilen ya da Studio yedeginde ayni sunucuda kalan ikinci bir oyuncu klinige girebiliyordu.",
+    "_yedek_notu": "Studio'da isinlanma yok. Orada klinik lobi sunucusunda aciliyor ve sunucu ILK GRUBA ait oluyor; sonraki gruplar birlestirilmiyor, lobide kaliyor ve sebebini yazili goruyorlar. Yayinlanmis oyunda bu yol hic kullanilmiyor.",
+    "returnDelaySeconds": 3,
+    "kickMessage": "Bu klinik sunucusu baska bir kadroya ayrilmis. Lobiden yeniden basla."
+  },
+  "_salon_notu": "Salon UC BOLUM: giris holu (z -40..-18, karsilama bankosu ve koltuklar), ana salon (z -18..14, cesme, sutunlar, heykel) ve portal kanadi (z 14..40, dort kemer ve dort portal). Bolumler arasinda ACILAN KAPILAR var - lobide de kapiyi kendin aciyorsun, klinikteki gibi.",
+  "doorHeight": 11,
+  "floorY": 0,
+  "walls": [
+    {
+      "from": [
+        -48,
+        -40
+      ],
+      "to": [
+        48,
+        -40
+      ],
+      "doors": [
+        {
+          "at": 0,
+          "width": 12
+        }
+      ],
+      "windows": [
+        {
+          "at": -34,
+          "width": 8,
+          "sill": 6,
+          "height": 7
+        },
+        {
+          "at": -18,
+          "width": 7,
+          "sill": 6,
+          "height": 7
+        },
+        {
+          "at": 18,
+          "width": 7,
+          "sill": 6,
+          "height": 7
+        },
+        {
+          "at": 34,
+          "width": 8,
+          "sill": 6,
+          "height": 7
+        }
+      ]
+    },
+    {
+      "from": [
+        -48,
+        40
+      ],
+      "to": [
+        48,
+        40
+      ],
+      "doors": [],
+      "windows": [
+        {
+          "at": -40,
+          "width": 7,
+          "sill": 6,
+          "height": 7
+        },
+        {
+          "at": -18,
+          "width": 7,
+          "sill": 6,
+          "height": 7
+        },
+        {
+          "at": 18,
+          "width": 7,
+          "sill": 6,
+          "height": 7
+        },
+        {
+          "at": 40,
+          "width": 7,
+          "sill": 6,
+          "height": 7
+        }
+      ]
+    },
+    {
+      "from": [
+        -48,
+        -40
+      ],
+      "to": [
+        -48,
+        40
+      ],
+      "doors": [],
+      "windows": [
+        {
+          "at": -35,
+          "width": 8,
+          "sill": 6,
+          "height": 8
+        },
+        {
+          "at": -16,
+          "width": 8,
+          "sill": 6,
+          "height": 8
+        },
+        {
+          "at": 0,
+          "width": 8,
+          "sill": 6,
+          "height": 8
+        },
+        {
+          "at": 24,
+          "width": 8,
+          "sill": 6,
+          "height": 8
+        },
+        {
+          "at": 36,
+          "width": 6,
+          "sill": 6,
+          "height": 8
+        }
+      ]
+    },
+    {
+      "from": [
+        48,
+        -40
+      ],
+      "to": [
+        48,
+        40
+      ],
+      "doors": [],
+      "windows": [
+        {
+          "at": -35,
+          "width": 8,
+          "sill": 6,
+          "height": 8
+        },
+        {
+          "at": -16,
+          "width": 8,
+          "sill": 6,
+          "height": 8
+        },
+        {
+          "at": 0,
+          "width": 8,
+          "sill": 6,
+          "height": 8
+        },
+        {
+          "at": 24,
+          "width": 8,
+          "sill": 6,
+          "height": 8
+        },
+        {
+          "at": 36,
+          "width": 6,
+          "sill": 6,
+          "height": 8
+        }
+      ]
+    },
+    {
+      "from": [
+        -48,
+        -18
+      ],
+      "to": [
+        48,
+        -18
+      ],
+      "doors": [
+        {
+          "at": -24,
+          "width": 10
+        },
+        {
+          "at": 0,
+          "width": 14
+        },
+        {
+          "at": 24,
+          "width": 10
+        }
+      ],
+      "windows": []
+    },
+    {
+      "from": [
+        -48,
+        14
+      ],
+      "to": [
+        48,
+        14
+      ],
+      "doors": [
+        {
+          "at": -27,
+          "width": 10
+        },
+        {
+          "at": -9,
+          "width": 10
+        },
+        {
+          "at": 9,
+          "width": 10
+        },
+        {
+          "at": 27,
+          "width": 10
+        }
+      ],
+      "windows": []
+    }
+  ],
+  "_disari_notu": "Bina disi: girise giden yol ve bahce. Esyalar binanin DISINDA kalmak zorunda; verify_layout olcuyor.",
+  "outdoor": {
+    "path": {
+      "from": [
+        0,
+        -40
+      ],
+      "to": [
+        0,
+        -66
+      ],
+      "width": 16
+    },
+    "props": [
+      {
+        "id": "lampPost",
+        "at": [
+          -13,
+          -48
+        ],
+        "rot": 0
+      },
+      {
+        "id": "lampPost",
+        "at": [
+          13,
+          -48
+        ],
+        "rot": 0
+      },
+      {
+        "id": "lampPost",
+        "at": [
+          -13,
+          -60
+        ],
+        "rot": 0
+      },
+      {
+        "id": "lampPost",
+        "at": [
+          13,
+          -60
+        ],
+        "rot": 0
+      },
+      {
+        "id": "outdoorBench",
+        "at": [
+          -22,
+          -52
+        ],
+        "rot": 90
+      },
+      {
+        "id": "outdoorBench",
+        "at": [
+          22,
+          -52
+        ],
+        "rot": 270
+      },
+      {
+        "id": "tree",
+        "at": [
+          -38,
+          -54
+        ],
+        "rot": 0
+      },
+      {
+        "id": "tree",
+        "at": [
+          38,
+          -54
+        ],
+        "rot": 0
+      },
+      {
+        "id": "tree",
+        "at": [
+          -62,
+          -14
+        ],
+        "rot": 0
+      },
+      {
+        "id": "tree",
+        "at": [
+          62,
+          14
+        ],
+        "rot": 0
+      },
+      {
+        "id": "tree",
+        "at": [
+          -60,
+          34
+        ],
+        "rot": 0
+      },
+      {
+        "id": "tree",
+        "at": [
+          58,
+          46
+        ],
+        "rot": 0
+      },
+      {
+        "id": "bush",
+        "at": [
+          -28,
+          -46
+        ],
+        "rot": 0
+      },
+      {
+        "id": "bush",
+        "at": [
+          28,
+          -46
+        ],
+        "rot": 0
+      },
+      {
+        "id": "bush",
+        "at": [
+          -32,
+          -62
+        ],
+        "rot": 0
+      },
+      {
+        "id": "bush",
+        "at": [
+          32,
+          -62
+        ],
+        "rot": 0
+      },
+      {
+        "id": "bush",
+        "at": [
+          -56,
+          4
+        ],
+        "rot": 0
+      },
+      {
+        "id": "bush",
+        "at": [
+          56,
+          -4
+        ],
+        "rot": 0
+      }
+    ]
+  }
 }

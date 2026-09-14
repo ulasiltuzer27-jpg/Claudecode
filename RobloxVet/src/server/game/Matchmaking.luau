@@ -50,6 +50,10 @@ end
 
 local waitingSince: { [Player]: number } = {}
 local launching: { [string]: boolean } = {}
+-- Bu sunucu artik kadro yollayamiyor (Studio yedegi: klinik BURADA
+-- acildi ve sunucu ilk gruba ait). Sonraki gruplari ayni klinige
+-- eklemek, "solo girdim ama yanima biri dustu" demek olurdu.
+local haltedKey: string? = nil
 
 local onChanged: (() -> ())? = nil
 local onFallback: ((group: { Player }, modeId: string) -> ())? = nil
@@ -106,6 +110,9 @@ end
 --- Oyuncuyu bir siraya alir. Zaten o siradaysa CIKARIR (ayni portala
 --- ikinci kez basmak "vazgectim" demek).
 function Matchmaking.join(player: Player, modeId: string): string
+	if haltedKey ~= nil then
+		return haltedKey
+	end
 	if modes[modeId] == nil then
 		return "lobby.unknownMode"
 	end
@@ -134,10 +141,20 @@ local function launch(modeId: string, group: { Player })
 	notifyChanged()
 
 	local ok, err = pcall(function()
+		-- HER KADRO ICIN YENI BIR SUNUCU. Erisim kodu asla yeniden
+		-- kullanilmiyor: kullanilsaydi iki ayri kadro ayni klinikte
+		-- bulusurdu ve "solo" solo olmazdi.
 		local code = TeleportService:ReserveServer(game.PlaceId)
 		local options = Instance.new("TeleportOptions")
 		options.ReservedServerAccessCode = code
-		options:SetTeleportData({ mode = modeId, size = #group })
+		-- Kadro listesi de gidiyor: varis sunucusu bunu okuyup kendini
+		-- bu gruba KILITLIYOR (Roster.luau). Erisim kodunu bilen bir
+		-- ucuncu kisi girse bile oyuna alinmiyor.
+		local roster = {}
+		for _, member in group do
+			table.insert(roster, member.UserId)
+		end
+		options:SetTeleportData({ mode = modeId, size = #group, roster = roster })
 		TeleportService:TeleportAsync(game.PlaceId, group, options)
 	end)
 
@@ -179,6 +196,25 @@ function Matchmaking.snapshot(): any
 	return { modes = list, players = #Players:GetPlayers() }
 end
 
+--- Bu sunucuda artik kadro baslatilamaz. Studio yedeginde klinik
+--- BURADA acildiginda cagriliyor: sira dongusu duruyor, bekleyenler
+--- cikariliyor ve yeni katilma denemeleri `reasonKey` ile reddediliyor.
+---
+--- Sessizce kabul edip ayni klinige eklemek en kolayi olurdu ve tam da
+--- istenmeyen sey oydu.
+function Matchmaking.halt(reasonKey: string)
+	haltedKey = reasonKey
+	for _, queue in queues do
+		table.clear(queue)
+	end
+	table.clear(waitingSince)
+	notifyChanged()
+end
+
+function Matchmaking.halted(): boolean
+	return haltedKey ~= nil
+end
+
 --- Sira dongusunu baslatir.
 --- `changed` sira degisince, `fallback` isinlanma basarisiz olunca.
 function Matchmaking.start(changed: () -> (), fallback: (group: { Player }, modeId: string) -> ())
@@ -193,6 +229,9 @@ function Matchmaking.start(changed: () -> (), fallback: (group: { Player }, mode
 	task.spawn(function()
 		while true do
 			task.wait(1)
+			if haltedKey ~= nil then
+				continue
+			end
 			for _, id in order do
 				local queue = queues[id]
 				local mode = modes[id]

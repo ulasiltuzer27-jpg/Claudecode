@@ -1289,12 +1289,260 @@ return Validate
 </ProtectedString>
 				</Properties>
 			</Item>
+			<Item class="ModuleScript" referent="RBX11">
+				<Properties>
+					<string name="Name">Walls</string>
+					<ProtectedString name="Source">--!strict
+-- Walls.luau
+-- ==========
+-- Kapi ve pencere boslukli duvar kurucusu.
+--
+-- Neden ayri bir modul?
+-- ---------------------
+-- Bu kod once `Clinic.luau` icindeydi ve yalnizca klinik planini
+-- taniyordu. Lobi de ayni duvarlari (supurgelik, tavan kornisi, kapi
+-- cercevesi, pencere denizligi) isteyince iki secenek vardi: ayni
+-- mantigi ikinci kez yazmak ya da buraya tasimak. Ikinci kez yazmak,
+-- bir duvar hatasini iki yerde birden duzeltmek demekti.
+--
+-- Modul bir PLAN tablosu aliyor (`Blueprint`) ve o plandan baskasini
+-- bilmiyor: klinik de lobi de ayni alanlari bildiriyor, kurucu ikisini
+-- ayirt etmiyor.
+
+local ReplicatedStorage = game:GetService(&quot;ReplicatedStorage&quot;)
+local Shared = ReplicatedStorage:WaitForChild(&quot;VetShared&quot;)
+
+local Build = require(Shared.Build)
+
+local Walls = {}
+
+export type Blueprint = {
+	wallHeight: number,
+	wallThickness: number,
+	doorHeight: number,
+	colors: { [string]: { number } },
+}
+
+local EPSILON = 1e-3
+
+--- Duvarin bir parcasi. Kapi/pencere bosluklari bu parcalarin ARASINDA
+--- kaliyor: delik acmak yerine bosluk birakiyoruz, cunku Roblox'ta
+--- parcaya delik acilamaz.
+function Walls.segment(
+	blueprint: Blueprint,
+	parent: Instance,
+	horizontal: boolean,
+	fixed: number,
+	axisFrom: number,
+	axisTo: number,
+	yFrom: number,
+	yTo: number,
+	color: Color3,
+	name: string?
+)
+	local length = axisTo - axisFrom
+	if length &lt;= EPSILON then
+		return
+	end
+	local height = yTo - yFrom
+	if height &lt;= EPSILON then
+		return
+	end
+
+	local center = (axisFrom + axisTo) * 0.5
+	local y = (yFrom + yTo) * 0.5
+	local thickness = blueprint.wallThickness
+
+	local size, position
+	if horizontal then
+		size = Vector3.new(length, height, thickness)
+		position = Vector3.new(center, y, fixed)
+	else
+		size = Vector3.new(thickness, height, length)
+		position = Vector3.new(fixed, y, center)
+	end
+
+	Build.part({
+		name = name or &quot;Duvar&quot;,
+		size = size,
+		cf = CFrame.new(position),
+		color = color,
+		material = Enum.Material.SmoothPlastic,
+		parent = parent,
+	})
+end
+
+--- Kapi cercevesi: iki dikme + ust kiris. Bos bir delik yerine cerceve
+--- koymak binayi bitmis gosteriyor.
+local function doorFrame(
+	blueprint: Blueprint,
+	parent: Instance,
+	horizontal: boolean,
+	fixed: number,
+	at: number,
+	width: number,
+	color: Color3
+)
+	local thickness = blueprint.wallThickness + 0.15
+	local postWidth = 0.5
+	local top = blueprint.doorHeight
+
+	local function piece(axisCenter: number, axisSize: number, y: number, ySize: number)
+		local size, position
+		if horizontal then
+			size = Vector3.new(axisSize, ySize, thickness)
+			position = Vector3.new(axisCenter, y, fixed)
+		else
+			size = Vector3.new(thickness, ySize, axisSize)
+			position = Vector3.new(fixed, y, axisCenter)
+		end
+		Build.part({
+			name = &quot;KapiCercevesi&quot;,
+			size = size,
+			cf = CFrame.new(position),
+			color = color,
+			material = Enum.Material.SmoothPlastic,
+			canCollide = false,
+			parent = parent,
+		})
+	end
+
+	piece(at - width * 0.5 - postWidth * 0.5, postWidth, top * 0.5, top)
+	piece(at + width * 0.5 + postWidth * 0.5, postWidth, top * 0.5, top)
+	piece(at, width + postWidth * 2, top + 0.25, 0.5)
+end
+
+--- Cam bosluğu: kapi ile AYNI mantik, farki alttan ve ustten duvarin
+--- devam etmesi. Icine cam ve cerceve konuyor.
+local function windowGlass(
+	blueprint: Blueprint,
+	parent: Instance,
+	horizontal: boolean,
+	fixed: number,
+	at: number,
+	width: number,
+	sill: number,
+	height: number,
+	frameColor: Color3
+)
+	local centerY = sill + height * 0.5
+	local function piece(
+		name: string,
+		axisCenter: number,
+		axisSize: number,
+		y: number,
+		ySize: number,
+		thickness: number,
+		color: Color3,
+		material: Enum.Material,
+		transparency: number
+	)
+		local size, position
+		if horizontal then
+			size = Vector3.new(axisSize, ySize, thickness)
+			position = Vector3.new(axisCenter, y, fixed)
+		else
+			size = Vector3.new(thickness, ySize, axisSize)
+			position = Vector3.new(fixed, y, axisCenter)
+		end
+		Build.part({
+			name = name,
+			size = size,
+			cf = CFrame.new(position),
+			color = color,
+			material = material,
+			transparency = transparency,
+			canCollide = transparency &lt; 0.5,
+			castShadow = false,
+			parent = parent,
+		})
+	end
+
+	local glassColor = Build.color(blueprint.colors.glass)
+	local wt = blueprint.wallThickness
+	piece(&quot;Cam&quot;, at, width - 0.5, centerY, height - 0.5, wt * 0.45, glassColor, Enum.Material.Glass, 0.72)
+	-- Cerceve: dort kenar + orta dikme
+	piece(&quot;PencereCercevesi&quot;, at, width, sill + 0.12, 0.28, wt + 0.1, frameColor, Enum.Material.SmoothPlastic, 0)
+	piece(&quot;PencereCercevesi&quot;, at, width, sill + height - 0.12, 0.28, wt + 0.1, frameColor, Enum.Material.SmoothPlastic, 0)
+	piece(&quot;PencereCercevesi&quot;, at - width * 0.5 + 0.14, 0.28, centerY, height, wt + 0.1, frameColor, Enum.Material.SmoothPlastic, 0)
+	piece(&quot;PencereCercevesi&quot;, at + width * 0.5 - 0.14, 0.28, centerY, height, wt + 0.1, frameColor, Enum.Material.SmoothPlastic, 0)
+	piece(&quot;PencereKayidi&quot;, at, 0.18, centerY, height - 0.4, wt + 0.06, frameColor, Enum.Material.SmoothPlastic, 0)
+	-- Denizlik: disariya tasan ince raf
+	piece(&quot;Denizlik&quot;, at, width + 0.6, sill - 0.1, 0.22, wt + 0.8, frameColor, Enum.Material.SmoothPlastic, 0)
+end
+
+--- Tek bir duvari kapi ve pencere bosluklariyla birlikte kurar.
+function Walls.build(blueprint: Blueprint, parent: Instance, wall: any, color: Color3, trim: Color3)
+	local from, to = wall.from, wall.to
+	local horizontal = math.abs(to[2] - from[2]) &lt; EPSILON
+
+	local axisFrom, axisTo, fixed
+	if horizontal then
+		axisFrom = math.min(from[1], to[1])
+		axisTo = math.max(from[1], to[1])
+		fixed = from[2]
+	else
+		axisFrom = math.min(from[2], to[2])
+		axisTo = math.max(from[2], to[2])
+		fixed = from[1]
+	end
+
+	-- Kapi ve pencere ayni eksende siralaniyor; duvar ikisinin arasinda
+	-- kalan parcalardan kuruluyor.
+	local openings = {}
+	for _, door in wall.doors or {} do
+		table.insert(openings, { at = door.at, width = door.width, kind = &quot;door&quot; })
+	end
+	for _, window in wall.windows or {} do
+		table.insert(openings, {
+			at = window.at,
+			width = window.width,
+			kind = &quot;window&quot;,
+			sill = window.sill,
+			height = window.height,
+		})
+	end
+	table.sort(openings, function(a, b)
+		return a.at &lt; b.at
+	end)
+
+	local frameColor = Build.color(blueprint.colors.windowFrame)
+	local cursor = axisFrom
+	for _, opening in openings do
+		local left = opening.at - opening.width * 0.5
+		local right = opening.at + opening.width * 0.5
+		Walls.segment(blueprint, parent, horizontal, fixed, cursor, left, 0, blueprint.wallHeight, color)
+
+		if opening.kind == &quot;door&quot; then
+			Walls.segment(blueprint, parent, horizontal, fixed, left, right, blueprint.doorHeight, blueprint.wallHeight, color)
+			doorFrame(blueprint, parent, horizontal, fixed, opening.at, opening.width, trim)
+		else
+			-- Pencerenin alti ve ustu duvar olarak devam ediyor.
+			Walls.segment(blueprint, parent, horizontal, fixed, left, right, 0, opening.sill, color)
+			Walls.segment(blueprint, parent, horizontal, fixed, left, right, opening.sill + opening.height, blueprint.wallHeight, color)
+			windowGlass(blueprint, parent, horizontal, fixed, opening.at, opening.width, opening.sill, opening.height, frameColor)
+		end
+		cursor = right
+	end
+	Walls.segment(blueprint, parent, horizontal, fixed, cursor, axisTo, 0, blueprint.wallHeight, color)
+
+	-- Supurgelik: duvarin dibinde ince bir serit. Tek renkli duvarlari
+	-- kirar, mekan daha bitmis gorunur.
+	Walls.segment(blueprint, parent, horizontal, fixed, axisFrom, axisTo, 0, 0.6, trim, &quot;Supurgelik&quot;)
+	-- Tavan kornisi: ust kenarda ikinci serit.
+	Walls.segment(blueprint, parent, horizontal, fixed, axisFrom, axisTo, blueprint.wallHeight - 0.7, blueprint.wallHeight, trim, &quot;TavanKornisi&quot;)
+end
+
+return Walls
+</ProtectedString>
+				</Properties>
+			</Item>
 		</Item>
-		<Item class="Folder" referent="RBX11">
+		<Item class="Folder" referent="RBX12">
 			<Properties>
 				<string name="Name">VetData</string>
 			</Properties>
-			<Item class="ModuleScript" referent="RBX12">
+			<Item class="ModuleScript" referent="RBX13">
 				<Properties>
 					<string name="Name">achievements</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -1537,7 +1785,7 @@ return {
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX13">
+			<Item class="ModuleScript" referent="RBX14">
 				<Properties>
 					<string name="Name">animals</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -2316,7 +2564,7 @@ return {
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX14">
+			<Item class="ModuleScript" referent="RBX15">
 				<Properties>
 					<string name="Name">assetIds</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -2359,7 +2607,7 @@ return {
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX15">
+			<Item class="ModuleScript" referent="RBX16">
 				<Properties>
 					<string name="Name">audio</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -2711,6 +2959,27 @@ return {
 			[&quot;pitch&quot;] = 1.7,
 			[&quot;kind&quot;] = &quot;ui&quot;,
 		},
+		[&quot;doorLatch&quot;] = {
+			[&quot;sound&quot;] = &quot;rbxasset://sounds/switch3.wav&quot;,
+			[&quot;assetId&quot;] = 0,
+			[&quot;volume&quot;] = 0.4,
+			[&quot;pitch&quot;] = 1.25,
+			[&quot;kind&quot;] = &quot;world&quot;,
+		},
+		[&quot;doorOpen&quot;] = {
+			[&quot;sound&quot;] = &quot;rbxasset://sounds/swoosh.mp3&quot;,
+			[&quot;assetId&quot;] = 0,
+			[&quot;volume&quot;] = 0.35,
+			[&quot;pitch&quot;] = 0.85,
+			[&quot;kind&quot;] = &quot;world&quot;,
+		},
+		[&quot;doorClose&quot;] = {
+			[&quot;sound&quot;] = &quot;rbxasset://sounds/snap.mp3&quot;,
+			[&quot;assetId&quot;] = 0,
+			[&quot;volume&quot;] = 0.32,
+			[&quot;pitch&quot;] = 0.9,
+			[&quot;kind&quot;] = &quot;world&quot;,
+		},
 	},
 	[&quot;music&quot;] = {
 		[&quot;lobby&quot;] = {
@@ -2731,7 +3000,7 @@ return {
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX16">
+			<Item class="ModuleScript" referent="RBX17">
 				<Properties>
 					<string name="Name">clinic</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -2950,6 +3219,24 @@ return {
 					},
 					[&quot;rot&quot;] = 0,
 				},
+				{
+					[&quot;id&quot;] = &quot;roomSign&quot;,
+					[&quot;at&quot;] = {
+						-26,
+						-4.6,
+					},
+					[&quot;rot&quot;] = 0,
+					[&quot;tag&quot;] = &quot;sign:room.exam1&quot;,
+				},
+				{
+					[&quot;id&quot;] = &quot;roomSign&quot;,
+					[&quot;at&quot;] = {
+						2,
+						-4.6,
+					},
+					[&quot;rot&quot;] = 0,
+					[&quot;tag&quot;] = &quot;sign:room.exam2&quot;,
+				},
 			},
 			[&quot;floorTile&quot;] = 6,
 			[&quot;floorTileColor&quot;] = {
@@ -3081,6 +3368,14 @@ return {
 					},
 					[&quot;rot&quot;] = 0,
 				},
+				{
+					[&quot;id&quot;] = &quot;magazineTable&quot;,
+					[&quot;at&quot;] = {
+						32,
+						-20,
+					},
+					[&quot;rot&quot;] = 0,
+				},
 			},
 			[&quot;floorTile&quot;] = 5,
 			[&quot;floorTileColor&quot;] = {
@@ -3178,6 +3473,14 @@ return {
 					},
 					[&quot;rot&quot;] = 0,
 				},
+				{
+					[&quot;id&quot;] = &quot;wallRail&quot;,
+					[&quot;at&quot;] = {
+						-35,
+						-3.4,
+					},
+					[&quot;rot&quot;] = 180,
+				},
 			},
 			[&quot;floorTile&quot;] = 5,
 			[&quot;floorTileColor&quot;] = {
@@ -3268,6 +3571,14 @@ return {
 					},
 					[&quot;rot&quot;] = 0,
 				},
+				{
+					[&quot;id&quot;] = &quot;wallRail&quot;,
+					[&quot;at&quot;] = {
+						-7,
+						-3.4,
+					},
+					[&quot;rot&quot;] = 180,
+				},
 			},
 			[&quot;floorTile&quot;] = 5,
 			[&quot;floorTileColor&quot;] = {
@@ -3357,6 +3668,23 @@ return {
 					},
 					[&quot;rot&quot;] = 0,
 				},
+				{
+					[&quot;id&quot;] = &quot;roomSign&quot;,
+					[&quot;at&quot;] = {
+						28,
+						-3.4,
+					},
+					[&quot;rot&quot;] = 180,
+					[&quot;tag&quot;] = &quot;sign:room.surgery&quot;,
+				},
+				{
+					[&quot;id&quot;] = &quot;wallRail&quot;,
+					[&quot;at&quot;] = {
+						36,
+						-3.4,
+					},
+					[&quot;rot&quot;] = 180,
+				},
 			},
 			[&quot;floorTile&quot;] = 5,
 			[&quot;floorTileColor&quot;] = {
@@ -3423,6 +3751,15 @@ return {
 						20,
 					},
 					[&quot;rot&quot;] = 180,
+				},
+				{
+					[&quot;id&quot;] = &quot;roomSign&quot;,
+					[&quot;at&quot;] = {
+						-20,
+						18.6,
+					},
+					[&quot;rot&quot;] = 180,
+					[&quot;tag&quot;] = &quot;sign:room.kennels&quot;,
 				},
 			},
 			[&quot;floorTile&quot;] = 4,
@@ -3519,6 +3856,15 @@ return {
 					},
 					[&quot;rot&quot;] = 0,
 				},
+				{
+					[&quot;id&quot;] = &quot;roomSign&quot;,
+					[&quot;at&quot;] = {
+						20,
+						18.6,
+					},
+					[&quot;rot&quot;] = 180,
+					[&quot;tag&quot;] = &quot;sign:room.wash&quot;,
+				},
 			},
 			[&quot;floorTile&quot;] = 4,
 			[&quot;floorTileColor&quot;] = {
@@ -3604,6 +3950,15 @@ return {
 					},
 					[&quot;rot&quot;] = 0,
 				},
+				{
+					[&quot;id&quot;] = &quot;roomSign&quot;,
+					[&quot;at&quot;] = {
+						30,
+						30.6,
+					},
+					[&quot;rot&quot;] = 180,
+					[&quot;tag&quot;] = &quot;sign:room.lab&quot;,
+				},
 			},
 			[&quot;floorTile&quot;] = 4,
 			[&quot;floorTileColor&quot;] = {
@@ -3687,6 +4042,15 @@ return {
 						44,
 					},
 					[&quot;rot&quot;] = 0,
+				},
+				{
+					[&quot;id&quot;] = &quot;roomSign&quot;,
+					[&quot;at&quot;] = {
+						-27,
+						30.6,
+					},
+					[&quot;rot&quot;] = 180,
+					[&quot;tag&quot;] = &quot;sign:room.quarantine&quot;,
 				},
 			},
 			[&quot;floorTile&quot;] = 4,
@@ -3999,23 +4363,23 @@ return {
 				[&quot;id&quot;] = &quot;clinicSign&quot;,
 				[&quot;at&quot;] = {
 					0,
-					-34,
+					-52,
 				},
 				[&quot;rot&quot;] = 0,
 			},
 			{
 				[&quot;id&quot;] = &quot;lampPost&quot;,
 				[&quot;at&quot;] = {
-					-11,
-					-40,
+					-24,
+					-46,
 				},
 				[&quot;rot&quot;] = 0,
 			},
 			{
 				[&quot;id&quot;] = &quot;lampPost&quot;,
 				[&quot;at&quot;] = {
-					11,
-					-40,
+					24,
+					-46,
 				},
 				[&quot;rot&quot;] = 0,
 			},
@@ -4054,8 +4418,8 @@ return {
 			{
 				[&quot;id&quot;] = &quot;tree&quot;,
 				[&quot;at&quot;] = {
-					-34,
-					-46,
+					-40,
+					-50,
 				},
 				[&quot;rot&quot;] = 0,
 			},
@@ -4102,16 +4466,16 @@ return {
 			{
 				[&quot;id&quot;] = &quot;bush&quot;,
 				[&quot;at&quot;] = {
-					-22,
-					-36,
+					-20,
+					-33.5,
 				},
 				[&quot;rot&quot;] = 0,
 			},
 			{
 				[&quot;id&quot;] = &quot;bush&quot;,
 				[&quot;at&quot;] = {
-					22,
-					-36,
+					20,
+					-33.5,
 				},
 				[&quot;rot&quot;] = 0,
 			},
@@ -4147,13 +4511,61 @@ return {
 				},
 				[&quot;rot&quot;] = 0,
 			},
+			{
+				[&quot;id&quot;] = &quot;entranceSteps&quot;,
+				[&quot;at&quot;] = {
+					0,
+					-34.5,
+				},
+				[&quot;rot&quot;] = 0,
+			},
+			{
+				[&quot;id&quot;] = &quot;entranceCanopy&quot;,
+				[&quot;at&quot;] = {
+					0,
+					-42,
+				},
+				[&quot;rot&quot;] = 0,
+			},
+			{
+				[&quot;id&quot;] = &quot;flagPole&quot;,
+				[&quot;at&quot;] = {
+					-16,
+					-34,
+				},
+				[&quot;rot&quot;] = 0,
+			},
+			{
+				[&quot;id&quot;] = &quot;flagPole&quot;,
+				[&quot;at&quot;] = {
+					16,
+					-34,
+				},
+				[&quot;rot&quot;] = 0,
+			},
+			{
+				[&quot;id&quot;] = &quot;ambulance&quot;,
+				[&quot;at&quot;] = {
+					-30,
+					-40,
+				},
+				[&quot;rot&quot;] = 90,
+			},
+			{
+				[&quot;id&quot;] = &quot;bikeRack&quot;,
+				[&quot;at&quot;] = {
+					30,
+					-38,
+				},
+				[&quot;rot&quot;] = 0,
+			},
 		},
 	},
 }
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX17">
+			<Item class="ModuleScript" referent="RBX18">
 				<Properties>
 					<string name="Name">clinicLevels</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -4215,7 +4627,7 @@ return {
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX18">
+			<Item class="ModuleScript" referent="RBX19">
 				<Properties>
 					<string name="Name">conditions</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -5130,7 +5542,7 @@ return {
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX19">
+			<Item class="ModuleScript" referent="RBX20">
 				<Properties>
 					<string name="Name">daycycle</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -5193,7 +5605,7 @@ return {
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX20">
+			<Item class="ModuleScript" referent="RBX21">
 				<Properties>
 					<string name="Name">decor</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -5397,7 +5809,7 @@ return {
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX21">
+			<Item class="ModuleScript" referent="RBX22">
 				<Properties>
 					<string name="Name">economy</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -5580,7 +5992,7 @@ return {
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX22">
+			<Item class="ModuleScript" referent="RBX23">
 				<Properties>
 					<string name="Name">events</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -5651,7 +6063,7 @@ return {
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX23">
+			<Item class="ModuleScript" referent="RBX24">
 				<Properties>
 					<string name="Name">lighting</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -5782,7 +6194,7 @@ return {
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX24">
+			<Item class="ModuleScript" referent="RBX25">
 				<Properties>
 					<string name="Name">lobby</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -5794,38 +6206,38 @@ return {
 	[&quot;countdownSeconds&quot;] = 4,
 	[&quot;bounds&quot;] = {
 		[&quot;min&quot;] = {
-			-36,
-			-26,
+			-48,
+			-40,
 		},
 		[&quot;max&quot;] = {
-			36,
-			26,
+			48,
+			40,
 		},
 	},
-	[&quot;wallHeight&quot;] = 20,
+	[&quot;wallHeight&quot;] = 22,
 	[&quot;wallThickness&quot;] = 1.2,
-	[&quot;groundSize&quot;] = 220,
+	[&quot;groundSize&quot;] = 300,
 	[&quot;spawn&quot;] = {
 		[&quot;at&quot;] = {
 			0,
-			-19,
+			-36,
 		},
 	},
 	[&quot;colors&quot;] = {
 		[&quot;floor&quot;] = {
-			212,
+			222,
+			216,
 			206,
-			198,
 		},
 		[&quot;floorTile&quot;] = {
-			188,
-			182,
-			174,
+			196,
+			190,
+			180,
 		},
 		[&quot;wall&quot;] = {
-			236,
-			240,
-			244,
+			238,
+			242,
+			246,
 		},
 		[&quot;trim&quot;] = {
 			64,
@@ -5833,9 +6245,9 @@ return {
 			104,
 		},
 		[&quot;ceiling&quot;] = {
-			246,
-			249,
-			252,
+			248,
+			250,
+			253,
 		},
 		[&quot;ground&quot;] = {
 			124,
@@ -5847,6 +6259,26 @@ return {
 			118,
 			124,
 		},
+		[&quot;wallTrim&quot;] = {
+			64,
+			84,
+			104,
+		},
+		[&quot;windowFrame&quot;] = {
+			148,
+			112,
+			74,
+		},
+		[&quot;glass&quot;] = {
+			206,
+			228,
+			238,
+		},
+		[&quot;path&quot;] = {
+			206,
+			200,
+			190,
+		},
 	},
 	[&quot;portals&quot;] = {
 		{
@@ -5854,8 +6286,8 @@ return {
 			[&quot;nameKey&quot;] = &quot;lobby.solo&quot;,
 			[&quot;capacity&quot;] = 1,
 			[&quot;at&quot;] = {
-				-25,
-				20,
+				-27,
+				30,
 			},
 			[&quot;color&quot;] = {
 				96,
@@ -5868,8 +6300,8 @@ return {
 			[&quot;nameKey&quot;] = &quot;lobby.duo&quot;,
 			[&quot;capacity&quot;] = 2,
 			[&quot;at&quot;] = {
-				-8.5,
-				20,
+				-9,
+				30,
 			},
 			[&quot;color&quot;] = {
 				86,
@@ -5882,8 +6314,8 @@ return {
 			[&quot;nameKey&quot;] = &quot;lobby.triple&quot;,
 			[&quot;capacity&quot;] = 3,
 			[&quot;at&quot;] = {
-				8.5,
-				20,
+				9,
+				30,
 			},
 			[&quot;color&quot;] = {
 				196,
@@ -5896,8 +6328,8 @@ return {
 			[&quot;nameKey&quot;] = &quot;lobby.quad&quot;,
 			[&quot;capacity&quot;] = 4,
 			[&quot;at&quot;] = {
-				25,
-				20,
+				27,
+				30,
 			},
 			[&quot;color&quot;] = {
 				226,
@@ -5908,95 +6340,793 @@ return {
 	},
 	[&quot;props&quot;] = {
 		{
-			[&quot;id&quot;] = &quot;waitingBench&quot;,
+			[&quot;id&quot;] = &quot;lobbyDesk&quot;,
 			[&quot;at&quot;] = {
+				0,
+				-25.5,
+			},
+			[&quot;rot&quot;] = 180,
+		},
+		{
+			[&quot;id&quot;] = &quot;lobbySofa&quot;,
+			[&quot;at&quot;] = {
+				-30,
+				-30,
+			},
+			[&quot;rot&quot;] = 0,
+		},
+		{
+			[&quot;id&quot;] = &quot;lobbySofa&quot;,
+			[&quot;at&quot;] = {
+				30,
+				-30,
+			},
+			[&quot;rot&quot;] = 0,
+		},
+		{
+			[&quot;id&quot;] = &quot;noticeBoard&quot;,
+			[&quot;at&quot;] = {
+				-47.2,
 				-26,
-				-8,
 			},
-			[&quot;rot&quot;] = 0,
+			[&quot;rot&quot;] = 90,
 		},
 		{
-			[&quot;id&quot;] = &quot;waitingBench&quot;,
+			[&quot;id&quot;] = &quot;noticeBoard&quot;,
 			[&quot;at&quot;] = {
-				-14,
-				-8,
+				47.2,
+				-26,
 			},
-			[&quot;rot&quot;] = 0,
+			[&quot;rot&quot;] = 270,
 		},
 		{
-			[&quot;id&quot;] = &quot;waitingBench&quot;,
+			[&quot;id&quot;] = &quot;planterBox&quot;,
 			[&quot;at&quot;] = {
-				14,
-				-8,
-			},
-			[&quot;rot&quot;] = 0,
-		},
-		{
-			[&quot;id&quot;] = &quot;waitingBench&quot;,
-			[&quot;at&quot;] = {
-				26,
-				-8,
-			},
-			[&quot;rot&quot;] = 0,
-		},
-		{
-			[&quot;id&quot;] = &quot;plant&quot;,
-			[&quot;at&quot;] = {
-				-33,
-				12,
-			},
-			[&quot;rot&quot;] = 0,
-		},
-		{
-			[&quot;id&quot;] = &quot;plant&quot;,
-			[&quot;at&quot;] = {
-				33,
-				12,
-			},
-			[&quot;rot&quot;] = 0,
-		},
-		{
-			[&quot;id&quot;] = &quot;plant&quot;,
-			[&quot;at&quot;] = {
-				-33,
 				-20,
+				-37.5,
+			},
+			[&quot;rot&quot;] = 0,
+		},
+		{
+			[&quot;id&quot;] = &quot;planterBox&quot;,
+			[&quot;at&quot;] = {
+				20,
+				-37.5,
 			},
 			[&quot;rot&quot;] = 0,
 		},
 		{
 			[&quot;id&quot;] = &quot;plant&quot;,
 			[&quot;at&quot;] = {
-				33,
-				-20,
+				-44,
+				-35,
+			},
+			[&quot;rot&quot;] = 0,
+		},
+		{
+			[&quot;id&quot;] = &quot;plant&quot;,
+			[&quot;at&quot;] = {
+				44,
+				-35,
 			},
 			[&quot;rot&quot;] = 0,
 		},
 		{
 			[&quot;id&quot;] = &quot;waterCooler&quot;,
 			[&quot;at&quot;] = {
-				-33,
-				0,
+				-44,
+				-20,
 			},
 			[&quot;rot&quot;] = 90,
 		},
 		{
 			[&quot;id&quot;] = &quot;trashBin&quot;,
 			[&quot;at&quot;] = {
-				33,
+				44,
+				-20,
+			},
+			[&quot;rot&quot;] = 0,
+		},
+		{
+			[&quot;id&quot;] = &quot;fountain&quot;,
+			[&quot;at&quot;] = {
+				0,
 				0,
 			},
 			[&quot;rot&quot;] = 0,
+		},
+		{
+			[&quot;id&quot;] = &quot;statue&quot;,
+			[&quot;at&quot;] = {
+				0,
+				10,
+			},
+			[&quot;rot&quot;] = 0,
+		},
+		{
+			[&quot;id&quot;] = &quot;rugRunner&quot;,
+			[&quot;at&quot;] = {
+				-25,
+				0,
+			},
+			[&quot;rot&quot;] = 0,
+		},
+		{
+			[&quot;id&quot;] = &quot;rugRunner&quot;,
+			[&quot;at&quot;] = {
+				25,
+				0,
+			},
+			[&quot;rot&quot;] = 0,
+		},
+		{
+			[&quot;id&quot;] = &quot;banner&quot;,
+			[&quot;at&quot;] = {
+				-47.4,
+				-8,
+			},
+			[&quot;rot&quot;] = 90,
+		},
+		{
+			[&quot;id&quot;] = &quot;banner&quot;,
+			[&quot;at&quot;] = {
+				47.4,
+				-8,
+			},
+			[&quot;rot&quot;] = 270,
+		},
+		{
+			[&quot;id&quot;] = &quot;banner&quot;,
+			[&quot;at&quot;] = {
+				-47.4,
+				8,
+			},
+			[&quot;rot&quot;] = 90,
+		},
+		{
+			[&quot;id&quot;] = &quot;banner&quot;,
+			[&quot;at&quot;] = {
+				47.4,
+				8,
+			},
+			[&quot;rot&quot;] = 270,
+		},
+		{
+			[&quot;id&quot;] = &quot;archFrame&quot;,
+			[&quot;at&quot;] = {
+				-27,
+				17,
+			},
+			[&quot;rot&quot;] = 0,
+		},
+		{
+			[&quot;id&quot;] = &quot;archFrame&quot;,
+			[&quot;at&quot;] = {
+				-9,
+				17,
+			},
+			[&quot;rot&quot;] = 0,
+		},
+		{
+			[&quot;id&quot;] = &quot;archFrame&quot;,
+			[&quot;at&quot;] = {
+				9,
+				17,
+			},
+			[&quot;rot&quot;] = 0,
+		},
+		{
+			[&quot;id&quot;] = &quot;archFrame&quot;,
+			[&quot;at&quot;] = {
+				27,
+				17,
+			},
+			[&quot;rot&quot;] = 0,
+		},
+		{
+			[&quot;id&quot;] = &quot;planterBox&quot;,
+			[&quot;at&quot;] = {
+				-18,
+				22,
+			},
+			[&quot;rot&quot;] = 0,
+		},
+		{
+			[&quot;id&quot;] = &quot;planterBox&quot;,
+			[&quot;at&quot;] = {
+				0,
+				22,
+			},
+			[&quot;rot&quot;] = 0,
+		},
+		{
+			[&quot;id&quot;] = &quot;planterBox&quot;,
+			[&quot;at&quot;] = {
+				18,
+				22,
+			},
+			[&quot;rot&quot;] = 0,
+		},
+		{
+			[&quot;id&quot;] = &quot;lobbySofa&quot;,
+			[&quot;at&quot;] = {
+				-40,
+				27,
+			},
+			[&quot;rot&quot;] = 90,
+		},
+		{
+			[&quot;id&quot;] = &quot;lobbySofa&quot;,
+			[&quot;at&quot;] = {
+				40,
+				27,
+			},
+			[&quot;rot&quot;] = 270,
+		},
+		{
+			[&quot;id&quot;] = &quot;noticeBoard&quot;,
+			[&quot;at&quot;] = {
+				0,
+				39.2,
+			},
+			[&quot;rot&quot;] = 0,
+		},
+		{
+			[&quot;id&quot;] = &quot;column&quot;,
+			[&quot;at&quot;] = {
+				-34,
+				-12,
+			},
+			[&quot;rot&quot;] = 0,
+		},
+		{
+			[&quot;id&quot;] = &quot;column&quot;,
+			[&quot;at&quot;] = {
+				-34,
+				-4,
+			},
+			[&quot;rot&quot;] = 0,
+		},
+		{
+			[&quot;id&quot;] = &quot;column&quot;,
+			[&quot;at&quot;] = {
+				-34,
+				4,
+			},
+			[&quot;rot&quot;] = 0,
+		},
+		{
+			[&quot;id&quot;] = &quot;column&quot;,
+			[&quot;at&quot;] = {
+				-34,
+				11,
+			},
+			[&quot;rot&quot;] = 0,
+		},
+		{
+			[&quot;id&quot;] = &quot;column&quot;,
+			[&quot;at&quot;] = {
+				-16,
+				-12,
+			},
+			[&quot;rot&quot;] = 0,
+		},
+		{
+			[&quot;id&quot;] = &quot;column&quot;,
+			[&quot;at&quot;] = {
+				-16,
+				-4,
+			},
+			[&quot;rot&quot;] = 0,
+		},
+		{
+			[&quot;id&quot;] = &quot;column&quot;,
+			[&quot;at&quot;] = {
+				-16,
+				4,
+			},
+			[&quot;rot&quot;] = 0,
+		},
+		{
+			[&quot;id&quot;] = &quot;column&quot;,
+			[&quot;at&quot;] = {
+				-16,
+				11,
+			},
+			[&quot;rot&quot;] = 0,
+		},
+		{
+			[&quot;id&quot;] = &quot;column&quot;,
+			[&quot;at&quot;] = {
+				16,
+				-12,
+			},
+			[&quot;rot&quot;] = 0,
+		},
+		{
+			[&quot;id&quot;] = &quot;column&quot;,
+			[&quot;at&quot;] = {
+				16,
+				-4,
+			},
+			[&quot;rot&quot;] = 0,
+		},
+		{
+			[&quot;id&quot;] = &quot;column&quot;,
+			[&quot;at&quot;] = {
+				16,
+				4,
+			},
+			[&quot;rot&quot;] = 0,
+		},
+		{
+			[&quot;id&quot;] = &quot;column&quot;,
+			[&quot;at&quot;] = {
+				16,
+				11,
+			},
+			[&quot;rot&quot;] = 0,
+		},
+		{
+			[&quot;id&quot;] = &quot;column&quot;,
+			[&quot;at&quot;] = {
+				34,
+				-12,
+			},
+			[&quot;rot&quot;] = 0,
+		},
+		{
+			[&quot;id&quot;] = &quot;column&quot;,
+			[&quot;at&quot;] = {
+				34,
+				-4,
+			},
+			[&quot;rot&quot;] = 0,
+		},
+		{
+			[&quot;id&quot;] = &quot;column&quot;,
+			[&quot;at&quot;] = {
+				34,
+				4,
+			},
+			[&quot;rot&quot;] = 0,
+		},
+		{
+			[&quot;id&quot;] = &quot;column&quot;,
+			[&quot;at&quot;] = {
+				34,
+				11,
+			},
+			[&quot;rot&quot;] = 0,
+		},
+		{
+			[&quot;id&quot;] = &quot;column&quot;,
+			[&quot;at&quot;] = {
+				-40,
+				20,
+			},
+			[&quot;rot&quot;] = 0,
+		},
+		{
+			[&quot;id&quot;] = &quot;column&quot;,
+			[&quot;at&quot;] = {
+				-40,
+				34,
+			},
+			[&quot;rot&quot;] = 0,
+		},
+		{
+			[&quot;id&quot;] = &quot;column&quot;,
+			[&quot;at&quot;] = {
+				40,
+				20,
+			},
+			[&quot;rot&quot;] = 0,
+		},
+		{
+			[&quot;id&quot;] = &quot;column&quot;,
+			[&quot;at&quot;] = {
+				40,
+				34,
+			},
+			[&quot;rot&quot;] = 0,
+		},
+	},
+	[&quot;privacy&quot;] = {
+		[&quot;returnDelaySeconds&quot;] = 3,
+		[&quot;kickMessage&quot;] = &quot;Bu klinik sunucusu baska bir kadroya ayrilmis. Lobiden yeniden basla.&quot;,
+	},
+	[&quot;doorHeight&quot;] = 11,
+	[&quot;floorY&quot;] = 0,
+	[&quot;walls&quot;] = {
+		{
+			[&quot;from&quot;] = {
+				-48,
+				-40,
+			},
+			[&quot;to&quot;] = {
+				48,
+				-40,
+			},
+			[&quot;doors&quot;] = {
+				{
+					[&quot;at&quot;] = 0,
+					[&quot;width&quot;] = 12,
+				},
+			},
+			[&quot;windows&quot;] = {
+				{
+					[&quot;at&quot;] = -34,
+					[&quot;width&quot;] = 8,
+					[&quot;sill&quot;] = 6,
+					[&quot;height&quot;] = 7,
+				},
+				{
+					[&quot;at&quot;] = -18,
+					[&quot;width&quot;] = 7,
+					[&quot;sill&quot;] = 6,
+					[&quot;height&quot;] = 7,
+				},
+				{
+					[&quot;at&quot;] = 18,
+					[&quot;width&quot;] = 7,
+					[&quot;sill&quot;] = 6,
+					[&quot;height&quot;] = 7,
+				},
+				{
+					[&quot;at&quot;] = 34,
+					[&quot;width&quot;] = 8,
+					[&quot;sill&quot;] = 6,
+					[&quot;height&quot;] = 7,
+				},
+			},
+		},
+		{
+			[&quot;from&quot;] = {
+				-48,
+				40,
+			},
+			[&quot;to&quot;] = {
+				48,
+				40,
+			},
+			[&quot;doors&quot;] = {},
+			[&quot;windows&quot;] = {
+				{
+					[&quot;at&quot;] = -40,
+					[&quot;width&quot;] = 7,
+					[&quot;sill&quot;] = 6,
+					[&quot;height&quot;] = 7,
+				},
+				{
+					[&quot;at&quot;] = -18,
+					[&quot;width&quot;] = 7,
+					[&quot;sill&quot;] = 6,
+					[&quot;height&quot;] = 7,
+				},
+				{
+					[&quot;at&quot;] = 18,
+					[&quot;width&quot;] = 7,
+					[&quot;sill&quot;] = 6,
+					[&quot;height&quot;] = 7,
+				},
+				{
+					[&quot;at&quot;] = 40,
+					[&quot;width&quot;] = 7,
+					[&quot;sill&quot;] = 6,
+					[&quot;height&quot;] = 7,
+				},
+			},
+		},
+		{
+			[&quot;from&quot;] = {
+				-48,
+				-40,
+			},
+			[&quot;to&quot;] = {
+				-48,
+				40,
+			},
+			[&quot;doors&quot;] = {},
+			[&quot;windows&quot;] = {
+				{
+					[&quot;at&quot;] = -35,
+					[&quot;width&quot;] = 8,
+					[&quot;sill&quot;] = 6,
+					[&quot;height&quot;] = 8,
+				},
+				{
+					[&quot;at&quot;] = -16,
+					[&quot;width&quot;] = 8,
+					[&quot;sill&quot;] = 6,
+					[&quot;height&quot;] = 8,
+				},
+				{
+					[&quot;at&quot;] = 0,
+					[&quot;width&quot;] = 8,
+					[&quot;sill&quot;] = 6,
+					[&quot;height&quot;] = 8,
+				},
+				{
+					[&quot;at&quot;] = 24,
+					[&quot;width&quot;] = 8,
+					[&quot;sill&quot;] = 6,
+					[&quot;height&quot;] = 8,
+				},
+				{
+					[&quot;at&quot;] = 36,
+					[&quot;width&quot;] = 6,
+					[&quot;sill&quot;] = 6,
+					[&quot;height&quot;] = 8,
+				},
+			},
+		},
+		{
+			[&quot;from&quot;] = {
+				48,
+				-40,
+			},
+			[&quot;to&quot;] = {
+				48,
+				40,
+			},
+			[&quot;doors&quot;] = {},
+			[&quot;windows&quot;] = {
+				{
+					[&quot;at&quot;] = -35,
+					[&quot;width&quot;] = 8,
+					[&quot;sill&quot;] = 6,
+					[&quot;height&quot;] = 8,
+				},
+				{
+					[&quot;at&quot;] = -16,
+					[&quot;width&quot;] = 8,
+					[&quot;sill&quot;] = 6,
+					[&quot;height&quot;] = 8,
+				},
+				{
+					[&quot;at&quot;] = 0,
+					[&quot;width&quot;] = 8,
+					[&quot;sill&quot;] = 6,
+					[&quot;height&quot;] = 8,
+				},
+				{
+					[&quot;at&quot;] = 24,
+					[&quot;width&quot;] = 8,
+					[&quot;sill&quot;] = 6,
+					[&quot;height&quot;] = 8,
+				},
+				{
+					[&quot;at&quot;] = 36,
+					[&quot;width&quot;] = 6,
+					[&quot;sill&quot;] = 6,
+					[&quot;height&quot;] = 8,
+				},
+			},
+		},
+		{
+			[&quot;from&quot;] = {
+				-48,
+				-18,
+			},
+			[&quot;to&quot;] = {
+				48,
+				-18,
+			},
+			[&quot;doors&quot;] = {
+				{
+					[&quot;at&quot;] = -24,
+					[&quot;width&quot;] = 10,
+				},
+				{
+					[&quot;at&quot;] = 0,
+					[&quot;width&quot;] = 14,
+				},
+				{
+					[&quot;at&quot;] = 24,
+					[&quot;width&quot;] = 10,
+				},
+			},
+			[&quot;windows&quot;] = {},
+		},
+		{
+			[&quot;from&quot;] = {
+				-48,
+				14,
+			},
+			[&quot;to&quot;] = {
+				48,
+				14,
+			},
+			[&quot;doors&quot;] = {
+				{
+					[&quot;at&quot;] = -27,
+					[&quot;width&quot;] = 10,
+				},
+				{
+					[&quot;at&quot;] = -9,
+					[&quot;width&quot;] = 10,
+				},
+				{
+					[&quot;at&quot;] = 9,
+					[&quot;width&quot;] = 10,
+				},
+				{
+					[&quot;at&quot;] = 27,
+					[&quot;width&quot;] = 10,
+				},
+			},
+			[&quot;windows&quot;] = {},
+		},
+	},
+	[&quot;outdoor&quot;] = {
+		[&quot;path&quot;] = {
+			[&quot;from&quot;] = {
+				0,
+				-40,
+			},
+			[&quot;to&quot;] = {
+				0,
+				-66,
+			},
+			[&quot;width&quot;] = 16,
+		},
+		[&quot;props&quot;] = {
+			{
+				[&quot;id&quot;] = &quot;lampPost&quot;,
+				[&quot;at&quot;] = {
+					-13,
+					-48,
+				},
+				[&quot;rot&quot;] = 0,
+			},
+			{
+				[&quot;id&quot;] = &quot;lampPost&quot;,
+				[&quot;at&quot;] = {
+					13,
+					-48,
+				},
+				[&quot;rot&quot;] = 0,
+			},
+			{
+				[&quot;id&quot;] = &quot;lampPost&quot;,
+				[&quot;at&quot;] = {
+					-13,
+					-60,
+				},
+				[&quot;rot&quot;] = 0,
+			},
+			{
+				[&quot;id&quot;] = &quot;lampPost&quot;,
+				[&quot;at&quot;] = {
+					13,
+					-60,
+				},
+				[&quot;rot&quot;] = 0,
+			},
+			{
+				[&quot;id&quot;] = &quot;outdoorBench&quot;,
+				[&quot;at&quot;] = {
+					-22,
+					-52,
+				},
+				[&quot;rot&quot;] = 90,
+			},
+			{
+				[&quot;id&quot;] = &quot;outdoorBench&quot;,
+				[&quot;at&quot;] = {
+					22,
+					-52,
+				},
+				[&quot;rot&quot;] = 270,
+			},
+			{
+				[&quot;id&quot;] = &quot;tree&quot;,
+				[&quot;at&quot;] = {
+					-38,
+					-54,
+				},
+				[&quot;rot&quot;] = 0,
+			},
+			{
+				[&quot;id&quot;] = &quot;tree&quot;,
+				[&quot;at&quot;] = {
+					38,
+					-54,
+				},
+				[&quot;rot&quot;] = 0,
+			},
+			{
+				[&quot;id&quot;] = &quot;tree&quot;,
+				[&quot;at&quot;] = {
+					-62,
+					-14,
+				},
+				[&quot;rot&quot;] = 0,
+			},
+			{
+				[&quot;id&quot;] = &quot;tree&quot;,
+				[&quot;at&quot;] = {
+					62,
+					14,
+				},
+				[&quot;rot&quot;] = 0,
+			},
+			{
+				[&quot;id&quot;] = &quot;tree&quot;,
+				[&quot;at&quot;] = {
+					-60,
+					34,
+				},
+				[&quot;rot&quot;] = 0,
+			},
+			{
+				[&quot;id&quot;] = &quot;tree&quot;,
+				[&quot;at&quot;] = {
+					58,
+					46,
+				},
+				[&quot;rot&quot;] = 0,
+			},
+			{
+				[&quot;id&quot;] = &quot;bush&quot;,
+				[&quot;at&quot;] = {
+					-28,
+					-46,
+				},
+				[&quot;rot&quot;] = 0,
+			},
+			{
+				[&quot;id&quot;] = &quot;bush&quot;,
+				[&quot;at&quot;] = {
+					28,
+					-46,
+				},
+				[&quot;rot&quot;] = 0,
+			},
+			{
+				[&quot;id&quot;] = &quot;bush&quot;,
+				[&quot;at&quot;] = {
+					-32,
+					-62,
+				},
+				[&quot;rot&quot;] = 0,
+			},
+			{
+				[&quot;id&quot;] = &quot;bush&quot;,
+				[&quot;at&quot;] = {
+					32,
+					-62,
+				},
+				[&quot;rot&quot;] = 0,
+			},
+			{
+				[&quot;id&quot;] = &quot;bush&quot;,
+				[&quot;at&quot;] = {
+					-56,
+					4,
+				},
+				[&quot;rot&quot;] = 0,
+			},
+			{
+				[&quot;id&quot;] = &quot;bush&quot;,
+				[&quot;at&quot;] = {
+					56,
+					-4,
+				},
+				[&quot;rot&quot;] = 0,
+			},
 		},
 	},
 }
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="Folder" referent="RBX25">
+			<Item class="Folder" referent="RBX26">
 				<Properties>
 					<string name="Name">locale</string>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX26">
+				<Item class="ModuleScript" referent="RBX27">
 					<Properties>
 						<string name="Name">tr</string>
 						<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -6008,6 +7138,15 @@ return {
 	[&quot;name&quot;] = &quot;Türkçe&quot;,
 	[&quot;strings&quot;] = {
 		[&quot;clinic.name&quot;] = &quot;PATİ VETERİNER KLİNİĞİ&quot;,
+		[&quot;prop.roomSign&quot;] = &quot;ODA&quot;,
+		[&quot;lobby.desk&quot;] = &quot;KARŞILAMA&quot;,
+		[&quot;lobby.notice&quot;] = &quot;DUYURULAR&quot;,
+		[&quot;lobby.statue&quot;] = &quot;PATİ&quot;,
+		[&quot;prompt.door&quot;] = &quot;Kapı&quot;,
+		[&quot;prompt.doorOpen&quot;] = &quot;Kapıyı aç&quot;,
+		[&quot;prompt.doorClose&quot;] = &quot;Kapıyı kapat&quot;,
+		[&quot;lobby.serverTaken&quot;] = &quot;Bu sunucuda klinik zaten açık&quot;,
+		[&quot;notify.serverTaken&quot;] = &quot;Bu sunucu başka bir kadroya ayrıldı. Yayınlanmış oyunda her kadro kendi sunucusuna gider.&quot;,
 		[&quot;tut.step&quot;] = &quot;ADIM {1}/{2}&quot;,
 		[&quot;tut.callNext&quot;] = &quot;Sıradaki hastayı al&quot;,
 		[&quot;tut.callNextBody&quot;] = &quot;Bir muayene masasının yanına git ve hastayı masaya al. Masa hayvanın boyuna uygun olmalı — at küçük bir kuvete sığmaz.&quot;,
@@ -6535,7 +7674,7 @@ return {
 					</Properties>
 				</Item>
 			</Item>
-			<Item class="ModuleScript" referent="RBX27">
+			<Item class="ModuleScript" referent="RBX28">
 				<Properties>
 					<string name="Name">props</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -7065,12 +8204,267 @@ return {
 			[&quot;base&quot;] = 6.5,
 			[&quot;againstWall&quot;] = true,
 		},
+		{
+			[&quot;id&quot;] = &quot;column&quot;,
+			[&quot;size&quot;] = {
+				3.6,
+				3.6,
+				19,
+			},
+			[&quot;offset&quot;] = {
+				0,
+				0,
+			},
+			[&quot;base&quot;] = 0,
+			[&quot;againstWall&quot;] = false,
+		},
+		{
+			[&quot;id&quot;] = &quot;fountain&quot;,
+			[&quot;size&quot;] = {
+				12,
+				12,
+				6.4,
+			},
+			[&quot;offset&quot;] = {
+				0,
+				0,
+			},
+			[&quot;base&quot;] = 0,
+			[&quot;againstWall&quot;] = false,
+		},
+		{
+			[&quot;id&quot;] = &quot;lobbyDesk&quot;,
+			[&quot;size&quot;] = {
+				16,
+				6,
+				4.2,
+			},
+			[&quot;offset&quot;] = {
+				0,
+				0,
+			},
+			[&quot;base&quot;] = 0,
+			[&quot;againstWall&quot;] = false,
+		},
+		{
+			[&quot;id&quot;] = &quot;banner&quot;,
+			[&quot;size&quot;] = {
+				5,
+				0.6,
+				11,
+			},
+			[&quot;offset&quot;] = {
+				0,
+				0,
+			},
+			[&quot;base&quot;] = 6,
+			[&quot;againstWall&quot;] = true,
+		},
+		{
+			[&quot;id&quot;] = &quot;noticeBoard&quot;,
+			[&quot;size&quot;] = {
+				7,
+				0.8,
+				5.6,
+			},
+			[&quot;offset&quot;] = {
+				0,
+				0,
+			},
+			[&quot;base&quot;] = 4,
+			[&quot;againstWall&quot;] = true,
+		},
+		{
+			[&quot;id&quot;] = &quot;statue&quot;,
+			[&quot;size&quot;] = {
+				5.2,
+				5.2,
+				9.4,
+			},
+			[&quot;offset&quot;] = {
+				0,
+				0,
+			},
+			[&quot;base&quot;] = 0,
+			[&quot;againstWall&quot;] = false,
+		},
+		{
+			[&quot;id&quot;] = &quot;rugRunner&quot;,
+			[&quot;size&quot;] = {
+				10,
+				20,
+				0.2,
+			},
+			[&quot;offset&quot;] = {
+				0,
+				0,
+			},
+			[&quot;base&quot;] = 0,
+			[&quot;againstWall&quot;] = false,
+		},
+		{
+			[&quot;id&quot;] = &quot;lobbySofa&quot;,
+			[&quot;size&quot;] = {
+				9,
+				4.4,
+				3.6,
+			},
+			[&quot;offset&quot;] = {
+				0,
+				0,
+			},
+			[&quot;base&quot;] = 0,
+			[&quot;againstWall&quot;] = false,
+		},
+		{
+			[&quot;id&quot;] = &quot;planterBox&quot;,
+			[&quot;size&quot;] = {
+				10,
+				3.2,
+				3.4,
+			},
+			[&quot;offset&quot;] = {
+				0,
+				0,
+			},
+			[&quot;base&quot;] = 0,
+			[&quot;againstWall&quot;] = false,
+		},
+		{
+			[&quot;id&quot;] = &quot;archFrame&quot;,
+			[&quot;size&quot;] = {
+				13,
+				2.2,
+				15,
+			},
+			[&quot;offset&quot;] = {
+				0,
+				0,
+			},
+			[&quot;base&quot;] = 0,
+			[&quot;againstWall&quot;] = false,
+			[&quot;spansDoorway&quot;] = true,
+		},
+		{
+			[&quot;id&quot;] = &quot;entranceCanopy&quot;,
+			[&quot;size&quot;] = {
+				22,
+				9,
+				13,
+			},
+			[&quot;offset&quot;] = {
+				0,
+				0,
+			},
+			[&quot;base&quot;] = 0,
+			[&quot;againstWall&quot;] = false,
+			[&quot;spansDoorway&quot;] = true,
+		},
+		{
+			[&quot;id&quot;] = &quot;entranceSteps&quot;,
+			[&quot;size&quot;] = {
+				20,
+				5,
+				1.2,
+			},
+			[&quot;offset&quot;] = {
+				0,
+				0,
+			},
+			[&quot;base&quot;] = 0,
+			[&quot;againstWall&quot;] = false,
+			[&quot;spansDoorway&quot;] = true,
+		},
+		{
+			[&quot;id&quot;] = &quot;flagPole&quot;,
+			[&quot;size&quot;] = {
+				2.4,
+				2.4,
+				20,
+			},
+			[&quot;offset&quot;] = {
+				0,
+				0,
+			},
+			[&quot;base&quot;] = 0,
+			[&quot;againstWall&quot;] = false,
+		},
+		{
+			[&quot;id&quot;] = &quot;ambulance&quot;,
+			[&quot;size&quot;] = {
+				7.4,
+				15,
+				7.2,
+			},
+			[&quot;offset&quot;] = {
+				0,
+				0,
+			},
+			[&quot;base&quot;] = 0,
+			[&quot;againstWall&quot;] = false,
+		},
+		{
+			[&quot;id&quot;] = &quot;bikeRack&quot;,
+			[&quot;size&quot;] = {
+				7,
+				2.6,
+				3.4,
+			},
+			[&quot;offset&quot;] = {
+				0,
+				0,
+			},
+			[&quot;base&quot;] = 0,
+			[&quot;againstWall&quot;] = false,
+		},
+		{
+			[&quot;id&quot;] = &quot;roomSign&quot;,
+			[&quot;size&quot;] = {
+				5.6,
+				0.7,
+				2,
+			},
+			[&quot;offset&quot;] = {
+				0,
+				0,
+			},
+			[&quot;base&quot;] = 9.9,
+			[&quot;againstWall&quot;] = true,
+		},
+		{
+			[&quot;id&quot;] = &quot;wallRail&quot;,
+			[&quot;size&quot;] = {
+				8,
+				0.7,
+				1,
+			},
+			[&quot;offset&quot;] = {
+				0,
+				0,
+			},
+			[&quot;base&quot;] = 3.2,
+			[&quot;againstWall&quot;] = true,
+		},
+		{
+			[&quot;id&quot;] = &quot;magazineTable&quot;,
+			[&quot;size&quot;] = {
+				5,
+				5,
+				2.6,
+			},
+			[&quot;offset&quot;] = {
+				0,
+				0,
+			},
+			[&quot;base&quot;] = 0,
+			[&quot;againstWall&quot;] = false,
+		},
 	},
 }
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX28">
+			<Item class="ModuleScript" referent="RBX29">
 				<Properties>
 					<string name="Name">settings</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -7171,7 +8565,7 @@ return {
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX29">
+			<Item class="ModuleScript" referent="RBX30">
 				<Properties>
 					<string name="Name">staff</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -7305,7 +8699,7 @@ return {
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX30">
+			<Item class="ModuleScript" referent="RBX31">
 				<Properties>
 					<string name="Name">symptoms</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -7517,7 +8911,7 @@ return {
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX31">
+			<Item class="ModuleScript" referent="RBX32">
 				<Properties>
 					<string name="Name">tasks</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -7641,7 +9035,7 @@ return {
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX32">
+			<Item class="ModuleScript" referent="RBX33">
 				<Properties>
 					<string name="Name">tools</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -7937,7 +9331,7 @@ return {
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX33">
+			<Item class="ModuleScript" referent="RBX34">
 				<Properties>
 					<string name="Name">treatments</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -8113,7 +9507,7 @@ return {
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX34">
+			<Item class="ModuleScript" referent="RBX35">
 				<Properties>
 					<string name="Name">tutorial</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -8162,7 +9556,7 @@ return {
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX35">
+			<Item class="ModuleScript" referent="RBX36">
 				<Properties>
 					<string name="Name">upgrades</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -8287,11 +9681,11 @@ return {
 			</Item>
 		</Item>
 	</Item>
-	<Item class="ServerScriptService" referent="RBX36">
+	<Item class="ServerScriptService" referent="RBX37">
 		<Properties>
 			<string name="Name">ServerScriptService</string>
 		</Properties>
-		<Item class="Script" referent="RBX37">
+		<Item class="Script" referent="RBX38">
 			<Properties>
 				<string name="Name">VetServer</string>
 				<ProtectedString name="Source">--!strict
@@ -8345,6 +9739,7 @@ local Leaderboard = require(script.game.Leaderboard)
 local Matchmaking = require(script.game.Matchmaking)
 local PatientFlow = require(script.game.PatientFlow)
 local Profile = require(script.game.Profile)
+local Roster = require(script.game.Roster)
 local Staff = require(script.game.Staff)
 local Surgery = require(script.game.Surgery)
 local Tasks = require(script.game.Tasks)
@@ -8521,6 +9916,10 @@ local function startLobby()
 		return
 	end
 
+	-- Lobinin kapilari da acilir: otomatik kapanma dongusu burada
+	-- basliyor (istemler kurulum aninda baglandi).
+	Doors.start()
+
 	for _, portal in (lobbyBuilt :: Lobby.Built).portals do
 		local id = portal.id
 		portal.prompt.Triggered:Connect(function(player: Player)
@@ -8531,11 +9930,24 @@ local function startLobby()
 
 	Matchmaking.start(pushLobbyAll, function(group: { Player }, modeId: string)
 		-- Isinlanma yapilamadi (Studio / yayinlanmamis yer): klinigi
-		-- burada ac ve gruba haber ver.
+		-- BURADA ac. Sunucu artik bu gruba ait; eslestirme duruyor ve
+		-- sonraki gruplar ayni klinige EKLENMIYOR.
+		--
+		-- Sessizce eklemek en kolayi olurdu ve tam da kullanicinin
+		-- istemedigi sey oydu: &quot;solo girdim ama baska bir solo oyuncu
+		-- yanima dustu&quot;.
+		Roster.claimPlayers(group, modeId)
+		Matchmaking.halt(&quot;lobby.serverTaken&quot;)
 		for _, player in group do
 			Net.toPlayer(&quot;Notify&quot;, player, &quot;warn&quot;, &quot;notify.teleportFallback&quot;, {})
 		end
 		startClinic()
+		-- Lobide kalan herkes sebebini gorsun.
+		for _, player in Players:GetPlayers() do
+			if not Roster.allows(player) then
+				Net.toPlayer(&quot;Notify&quot;, player, &quot;bad&quot;, &quot;notify.serverTaken&quot;, {})
+			end
+		end
 	end)
 
 	print(&quot;[Veteriner] LOBI hazir — mod secilince ayrilmis sunucuya isinlanilacak.&quot;)
@@ -8544,6 +9956,13 @@ end
 Profile.startAutosave()
 
 if mode == &quot;clinic&quot; then
+	-- AYRILMIS SUNUCU. Kadro isinlanma verisinden kuruluyor ve kadro
+	-- disindaki her oyuncu lobiye geri yollaniyor: &quot;solo&quot; gercekten
+	-- solo, &quot;ikili&quot; gercekten ikili.
+	Roster.start()
+	for _, player in Players:GetPlayers() do
+		Roster.adopt(player)
+	end
 	startClinic()
 else
 	startLobby()
@@ -8636,6 +10055,13 @@ Events.onChanged(function(active)
 end)
 
 local function onPlayerAdded(player: Player)
+	-- Kadro disi oyuncu icin profil bile yuklenmiyor: `Roster.start`
+	-- onu birazdan lobiye geri yollayacak ve o arada oyuna dokunmasi
+	-- gerekmiyor.
+	if mode == &quot;clinic&quot; and not Roster.allows(player) then
+		warn((&quot;[init] '%s' bu kadroda degil — lobiye geri yollaniyor.&quot;):format(player.Name))
+		return
+	end
 	local entry = Profile.load(player)
 	Leaderboard.attach(player)
 	Tasks.ensure(entry.data, player.UserId)
@@ -8838,7 +10264,7 @@ end
 print((&quot;[Veteriner] sunucu hazir — mod: %s&quot;):format(mode))
 </ProtectedString>
 			</Properties>
-			<Item class="Script" referent="RBX38">
+			<Item class="Script" referent="RBX39">
 				<Properties>
 					<string name="Name">SelfTest</string>
 					<ProtectedString name="Source">--!strict
@@ -8886,6 +10312,7 @@ local Tasks = require(script.Parent.game.Tasks)
 local Staff = require(script.Parent.game.Staff)
 local ClinicLevel = require(script.Parent.game.ClinicLevel)
 local Events = require(script.Parent.game.Events)
+local Roster = require(script.Parent.game.Roster)
 local Tutorial = require(script.Parent.game.Tutorial)
 local Surgery = require(script.Parent.game.Surgery)
 local Ward = require(script.Parent.game.Ward)
@@ -9419,6 +10846,11 @@ do
 		doorCount += #(wall.doors or {})
 	end
 	check((&quot;kurulan kapi sayisi plandakiyle ayni (%d)&quot;):format(doorCount), Doors.count() == doorCount)
+	-- Kapilar BASARAK aciliyor: baslangicta hepsi kapali olmali.
+	-- Acik dogan bir kapi, &quot;kapiyi ac&quot; eyleminin hic olmamasiyla ayni
+	-- sey olurdu.
+	check(&quot;butun kapilar kapali basliyor&quot;, Doors.openCount() == 0)
+	check(&quot;her kapi bosluguna kanat kuruldu&quot;, Doors.count() &gt; 0)
 
 	-- Hayvan tepkileri ve sahip jestleri: PatientFlow'un yolladigi her
 	-- ad tanimli olmali; bilinmeyen ad sessizce hicbir sey oynatmiyor.
@@ -9583,6 +11015,63 @@ do
 	)
 	check(&quot;klinik bos sunucuda 1. seviyede&quot;, ClinicLevel.activeLevel({}) == 1)
 
+	-- LOBI: salon veride tarif ediliyor mu ve esyalar gercekten
+	-- kuruluyor mu? Lobi eskiden kodda uretilen dort duz duvardi;
+	-- veriye tasinip olculebilir hale geldi.
+	check(&quot;lobi duvarlari veride&quot;, #lobbyPlan.walls &gt;= 4)
+	check(&quot;lobi kapisi var&quot;, (function(): boolean
+		local total = 0
+		for _, wall in lobbyPlan.walls do
+			total += #(wall.doors or {})
+		end
+		return total &gt;= 1
+	end)())
+	check(&quot;lobide en az 20 esya var&quot;, #lobbyPlan.props &gt;= 20)
+	check(&quot;lobi disinda bahce var&quot;, #lobbyPlan.outdoor.props &gt;= 6)
+	check(&quot;lobi dort mod sunuyor&quot;, #lobbyPlan.portals == 4)
+	do
+		local known: { [string]: boolean } = {}
+		for _, entry in propData.props do
+			known[entry.id] = true
+		end
+		for _, spec in lobbyPlan.props do
+			check((&quot;lobi esyasi '%s' butce bildiriyor&quot;):format(spec.id), known[spec.id] == true)
+		end
+		for _, spec in lobbyPlan.outdoor.props do
+			check((&quot;lobi dis esyasi '%s' butce bildiriyor&quot;):format(spec.id), known[spec.id] == true)
+		end
+	end
+	-- Kapi ve pencere kurucusu bu uc rengi ariyor; biri eksikse duvar
+	-- kurulurken sessizce siyaha duserdi.
+	for _, name in { &quot;wallTrim&quot;, &quot;windowFrame&quot;, &quot;glass&quot; } do
+		check((&quot;lobi rengi '%s' tanimli&quot;):format(name), lobbyPlan.colors[name] ~= nil)
+	end
+
+	-- SUNUCU OZELLIGI: kadro gercekten kilitleniyor mu?
+	--
+	-- Bu, &quot;solo girdim ama yanima baska bir solo oyuncu dustu&quot;
+	-- sikayetinin kodla verilmis cevabi. Bir kez kurulan kadronun
+	-- GENISLETILEMEDIGINI olcuyoruz; genisletilebilseydi ozel sunucu
+	-- ozel olmazdi.
+	do
+		local before = Roster.claimed()
+		if before then
+			-- Ayrilmis sunucuda kadro zaten kurulmus olabilir; o zaman
+			-- yalnizca degismezligi olculuyor.
+			local size = Roster.size()
+			check(&quot;kurulmus kadro genisletilemiyor&quot;, not Roster.claim({ -1, -2 }, &quot;solo&quot;))
+			check(&quot;kadro boyu degismedi&quot;, Roster.size() == size)
+		else
+			check(&quot;kadrosuz sunucu herkese acik&quot;, Roster.size() == 0)
+			check(&quot;kadro bir kez kurulabiliyor&quot;, Roster.claim({ 101, 102 }, &quot;duo&quot;))
+			check(&quot;kadro boyu dogru&quot;, Roster.size() == 2)
+			check(&quot;kadro modu kaydedildi&quot;, Roster.modeId() == &quot;duo&quot;)
+			check(&quot;kadro ikinci kez kurulamiyor&quot;, not Roster.claim({ 103 }, &quot;solo&quot;))
+			check(&quot;ikinci deneme kadroyu genisletmedi&quot;, Roster.size() == 2)
+			check(&quot;kadro modu degismedi&quot;, Roster.modeId() == &quot;duo&quot;)
+		end
+	end
+
 	-- Ogretici: adimlar SIRAYLA ilerliyor mu ve beklenmeyen bir eylem
 	-- adim atlatiyor mu? Atlanan adim, ogretilmemis adimdir.
 	do
@@ -9737,11 +11226,11 @@ end
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="Folder" referent="RBX39">
+			<Item class="Folder" referent="RBX40">
 				<Properties>
 					<string name="Name">game</string>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX40">
+				<Item class="ModuleScript" referent="RBX41">
 					<Properties>
 						<string name="Name">Achievements</string>
 						<ProtectedString name="Source">--!strict
@@ -9901,7 +11390,7 @@ return Achievements
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX41">
+				<Item class="ModuleScript" referent="RBX42">
 					<Properties>
 						<string name="Name">ClinicLevel</string>
 						<ProtectedString name="Source">--!strict
@@ -10032,7 +11521,7 @@ return ClinicLevel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX42">
+				<Item class="ModuleScript" referent="RBX43">
 					<Properties>
 						<string name="Name">Diagnosis</string>
 						<ProtectedString name="Source">--!strict
@@ -10194,7 +11683,7 @@ return Diagnosis
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX43">
+				<Item class="ModuleScript" referent="RBX44">
 					<Properties>
 						<string name="Name">Economy</string>
 						<ProtectedString name="Source">--!strict
@@ -10311,7 +11800,7 @@ return Economy
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX44">
+				<Item class="ModuleScript" referent="RBX45">
 					<Properties>
 						<string name="Name">Events</string>
 						<ProtectedString name="Source">--!strict
@@ -10584,7 +12073,7 @@ return Events
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX45">
+				<Item class="ModuleScript" referent="RBX46">
 					<Properties>
 						<string name="Name">Leaderboard</string>
 						<ProtectedString name="Source">--!strict
@@ -10660,7 +12149,7 @@ return Leaderboard
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX46">
+				<Item class="ModuleScript" referent="RBX47">
 					<Properties>
 						<string name="Name">Matchmaking</string>
 						<ProtectedString name="Source">--!strict
@@ -10715,6 +12204,10 @@ end
 
 local waitingSince: { [Player]: number } = {}
 local launching: { [string]: boolean } = {}
+-- Bu sunucu artik kadro yollayamiyor (Studio yedegi: klinik BURADA
+-- acildi ve sunucu ilk gruba ait). Sonraki gruplari ayni klinige
+-- eklemek, &quot;solo girdim ama yanima biri dustu&quot; demek olurdu.
+local haltedKey: string? = nil
 
 local onChanged: (() -&gt; ())? = nil
 local onFallback: ((group: { Player }, modeId: string) -&gt; ())? = nil
@@ -10771,6 +12264,9 @@ end
 --- Oyuncuyu bir siraya alir. Zaten o siradaysa CIKARIR (ayni portala
 --- ikinci kez basmak &quot;vazgectim&quot; demek).
 function Matchmaking.join(player: Player, modeId: string): string
+	if haltedKey ~= nil then
+		return haltedKey
+	end
 	if modes[modeId] == nil then
 		return &quot;lobby.unknownMode&quot;
 	end
@@ -10799,10 +12295,20 @@ local function launch(modeId: string, group: { Player })
 	notifyChanged()
 
 	local ok, err = pcall(function()
+		-- HER KADRO ICIN YENI BIR SUNUCU. Erisim kodu asla yeniden
+		-- kullanilmiyor: kullanilsaydi iki ayri kadro ayni klinikte
+		-- bulusurdu ve &quot;solo&quot; solo olmazdi.
 		local code = TeleportService:ReserveServer(game.PlaceId)
 		local options = Instance.new(&quot;TeleportOptions&quot;)
 		options.ReservedServerAccessCode = code
-		options:SetTeleportData({ mode = modeId, size = #group })
+		-- Kadro listesi de gidiyor: varis sunucusu bunu okuyup kendini
+		-- bu gruba KILITLIYOR (Roster.luau). Erisim kodunu bilen bir
+		-- ucuncu kisi girse bile oyuna alinmiyor.
+		local roster = {}
+		for _, member in group do
+			table.insert(roster, member.UserId)
+		end
+		options:SetTeleportData({ mode = modeId, size = #group, roster = roster })
 		TeleportService:TeleportAsync(game.PlaceId, group, options)
 	end)
 
@@ -10844,6 +12350,25 @@ function Matchmaking.snapshot(): any
 	return { modes = list, players = #Players:GetPlayers() }
 end
 
+--- Bu sunucuda artik kadro baslatilamaz. Studio yedeginde klinik
+--- BURADA acildiginda cagriliyor: sira dongusu duruyor, bekleyenler
+--- cikariliyor ve yeni katilma denemeleri `reasonKey` ile reddediliyor.
+---
+--- Sessizce kabul edip ayni klinige eklemek en kolayi olurdu ve tam da
+--- istenmeyen sey oydu.
+function Matchmaking.halt(reasonKey: string)
+	haltedKey = reasonKey
+	for _, queue in queues do
+		table.clear(queue)
+	end
+	table.clear(waitingSince)
+	notifyChanged()
+end
+
+function Matchmaking.halted(): boolean
+	return haltedKey ~= nil
+end
+
 --- Sira dongusunu baslatir.
 --- `changed` sira degisince, `fallback` isinlanma basarisiz olunca.
 function Matchmaking.start(changed: () -&gt; (), fallback: (group: { Player }, modeId: string) -&gt; ())
@@ -10858,6 +12383,9 @@ function Matchmaking.start(changed: () -&gt; (), fallback: (group: { Player }, m
 	task.spawn(function()
 		while true do
 			task.wait(1)
+			if haltedKey ~= nil then
+				continue
+			end
 			for _, id in order do
 				local queue = queues[id]
 				local mode = modes[id]
@@ -10898,7 +12426,7 @@ return Matchmaking
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX47">
+				<Item class="ModuleScript" referent="RBX48">
 					<Properties>
 						<string name="Name">PatientFlow</string>
 						<ProtectedString name="Source">--!strict
@@ -13261,7 +14789,7 @@ return PatientFlow
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX48">
+				<Item class="ModuleScript" referent="RBX49">
 					<Properties>
 						<string name="Name">Profile</string>
 						<ProtectedString name="Source">--!strict
@@ -13869,7 +15397,184 @@ return Profile
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX49">
+				<Item class="ModuleScript" referent="RBX50">
+					<Properties>
+						<string name="Name">Roster</string>
+						<ProtectedString name="Source">--!strict
+-- Roster.luau
+-- ===========
+-- Klinik sunucusunun KADROSU: bu sunucuya kimlerin girmeye hakki var?
+--
+-- Neden var?
+-- ----------
+-- &quot;Solo girdim, sunucu bana ozel olsun; baska biri solo girince benim
+-- yanima dusmesin.&quot; Eslestirme her kadro icin AYRI bir ayrilmis sunucu
+-- rezerve ediyor, yani normal akista bu zaten boyle. Ama kod bunu
+-- yalnizca UMUYORDU; hicbir yerde ZORLAMIYORDU:
+--
+--   - ayrilmis sunucuya erisim kodu bilen bir istemci girebilir,
+--   - arkadas listesinden &quot;katil&quot; bazi ayarlarda ayrilmis sunucuya
+--     dusurebilir,
+--   - Studio yedeginde (isinlanma yok) klinik LOBI sunucusunda
+--     aciliyordu ve sonraki her grup ayni klinige ekleniyordu - solo
+--     giren iki oyuncu birbirinin yanina dusuyordu. Kullanicinin
+--     sikayeti tam olarak buydu.
+--
+-- Kadro burada TUTULUYOR ve giren her oyuncu ona karsi denetleniyor.
+-- Listede olmayan oyuncu oyuna alinmiyor; lobiye geri yollaniyor.
+--
+-- Kadro nereden geliyor?
+-- ----------------------
+-- Isinlanma verisinden (`TeleportData.roster`): eslestirme grubu
+-- yollarken UserId listesini de koyuyor. Ayrilmis sunucuda ILK giren
+-- oyuncunun katilma verisi kadroyu kuruyor; sonrakiler ona karsi
+-- olculuyor.
+--
+-- Isinlanma verisi yoksa (Studio yedegi ya da dogrudan giris) kadro
+-- `Roster.claim` ile YERINDE kuruluyor: sunucuyu ilk acan grup sahibi
+-- oluyor ve sunucu baskasina kapaniyor.
+
+local Players = game:GetService(&quot;Players&quot;)
+
+local ReplicatedStorage = game:GetService(&quot;ReplicatedStorage&quot;)
+local Data = ReplicatedStorage:WaitForChild(&quot;VetData&quot;)
+
+local plan = require(Data.lobby)
+
+local Roster = {}
+
+local allowed: { [number]: boolean } = {}
+local count = 0
+local modeId: string? = nil
+local claimed = false
+
+--- Kadro kuruldu mu?
+function Roster.claimed(): boolean
+	return claimed
+end
+
+function Roster.size(): number
+	return count
+end
+
+function Roster.modeId(): string?
+	return modeId
+end
+
+--- Kadroyu kurar. Ikinci cagri YOK SAYILIYOR: sunucu ilk gruba ait ve
+--- sonradan gelen bir grup onu genisletemez. Sessizce genisletmek,
+--- tam da kacinmak istedigimiz &quot;ikinci solo oyuncu yanima dustu&quot;
+--- durumunu geri getirirdi.
+function Roster.claim(userIds: { number }, mode: string?): boolean
+	if claimed then
+		return false
+	end
+	claimed = true
+	modeId = mode
+	for _, id in userIds do
+		if allowed[id] ~= true then
+			allowed[id] = true
+			count += 1
+		end
+	end
+	return true
+end
+
+--- Oyuncu grubunu kadroya cevirir (Player -&gt; UserId).
+function Roster.claimPlayers(group: { Player }, mode: string?): boolean
+	local ids = {}
+	for _, player in group do
+		table.insert(ids, player.UserId)
+	end
+	return Roster.claim(ids, mode)
+end
+
+--- Bu oyuncunun kadroda yeri var mi?
+--- Kadro hic kurulmamissa HERKES kabul ediliyor: kadrosuz bir sunucu
+--- (ornegin dogrudan klinige giris) kimseyi disari atmamali.
+function Roster.allows(player: Player): boolean
+	if not claimed then
+		return true
+	end
+	return allowed[player.UserId] == true
+end
+
+--- Oyuncunun katilma verisindeki kadroyu okur. Ayrilmis sunucuda ILK
+--- giren oyuncu icin cagriliyor.
+---
+--- Katilma verisi ISTEMCIDEN GELMIYOR: `Player:GetJoinData()` sunucunun
+--- Roblox'tan okudugu veri ve isinlanmayi baslatan sunucu yazdi. Yine de
+--- bicimi denetleniyor - bozuk bir tablo yuzunden kadro bos kalirsa
+--- sunucu herkese acilirdi.
+function Roster.adopt(player: Player): boolean
+	if claimed then
+		return false
+	end
+	local ok, join = pcall(function()
+		return player:GetJoinData()
+	end)
+	if not ok or type(join) ~= &quot;table&quot; then
+		return false
+	end
+	local data = (join :: any).TeleportData
+	if type(data) ~= &quot;table&quot; then
+		return false
+	end
+	local ids = data.roster
+	if type(ids) ~= &quot;table&quot; then
+		return false
+	end
+	local clean = {}
+	for _, id in ids do
+		if type(id) == &quot;number&quot; and id &gt; 0 then
+			table.insert(clean, id)
+		end
+	end
+	if #clean == 0 then
+		return false
+	end
+	local mode = if type(data.mode) == &quot;string&quot; then data.mode else nil
+	return Roster.claim(clean, mode)
+end
+
+--- Kadroda olmayan oyuncuyu lobiye (herkese acik yere) geri yollar.
+--- `TeleportService` Studio'da calismiyor; orada oyuncu KICK ediliyor
+--- ki sunucu yine de ozel kalsin. Sessizce iceride birakmak, ozelligin
+--- hic olmamasiyla ayni sey olurdu.
+function Roster.sendBack(player: Player)
+	local TeleportService = game:GetService(&quot;TeleportService&quot;)
+	local ok = pcall(function()
+		TeleportService:Teleport(game.PlaceId, player)
+	end)
+	if ok then
+		return
+	end
+	player:Kick(plan.privacy.kickMessage)
+end
+
+--- Kadro disi oyuncular icin bekci. `Roster.start()` klinik
+--- sunucusunda bir kez cagriliyor.
+function Roster.start()
+	Players.PlayerAdded:Connect(function(player: Player)
+		if not claimed then
+			Roster.adopt(player)
+		end
+		if Roster.allows(player) then
+			return
+		end
+		task.delay(plan.privacy.returnDelaySeconds, function()
+			if player.Parent ~= nil and not Roster.allows(player) then
+				Roster.sendBack(player)
+			end
+		end)
+	end)
+end
+
+return Roster
+</ProtectedString>
+					</Properties>
+				</Item>
+				<Item class="ModuleScript" referent="RBX51">
 					<Properties>
 						<string name="Name">Staff</string>
 						<ProtectedString name="Source">--!strict
@@ -14098,7 +15803,7 @@ return Staff
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX50">
+				<Item class="ModuleScript" referent="RBX52">
 					<Properties>
 						<string name="Name">Surgery</string>
 						<ProtectedString name="Source">--!strict
@@ -14394,7 +16099,7 @@ return Surgery
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX51">
+				<Item class="ModuleScript" referent="RBX53">
 					<Properties>
 						<string name="Name">Tasks</string>
 						<ProtectedString name="Source">--!strict
@@ -14574,7 +16279,7 @@ return Tasks
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX52">
+				<Item class="ModuleScript" referent="RBX54">
 					<Properties>
 						<string name="Name">ToolGame</string>
 						<ProtectedString name="Source">--!strict
@@ -14841,7 +16546,7 @@ return ToolGame
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX53">
+				<Item class="ModuleScript" referent="RBX55">
 					<Properties>
 						<string name="Name">Treatment</string>
 						<ProtectedString name="Source">--!strict
@@ -15005,7 +16710,7 @@ return Treatment
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX54">
+				<Item class="ModuleScript" referent="RBX56">
 					<Properties>
 						<string name="Name">Tutorial</string>
 						<ProtectedString name="Source">--!strict
@@ -15107,7 +16812,7 @@ return Tutorial
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX55">
+				<Item class="ModuleScript" referent="RBX57">
 					<Properties>
 						<string name="Name">Upgrades</string>
 						<ProtectedString name="Source">--!strict
@@ -15383,7 +17088,7 @@ return Upgrades
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX56">
+				<Item class="ModuleScript" referent="RBX58">
 					<Properties>
 						<string name="Name">Ward</string>
 						<ProtectedString name="Source">--!strict
@@ -15634,11 +17339,11 @@ return Ward
 					</Properties>
 				</Item>
 			</Item>
-			<Item class="Folder" referent="RBX57">
+			<Item class="Folder" referent="RBX59">
 				<Properties>
 					<string name="Name">world</string>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX58">
+				<Item class="ModuleScript" referent="RBX60">
 					<Properties>
 						<string name="Name">AnimalAnimator</string>
 						<ProtectedString name="Source">--!strict
@@ -16305,7 +18010,7 @@ return Animator
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX59">
+				<Item class="ModuleScript" referent="RBX61">
 					<Properties>
 						<string name="Name">AnimalFactory</string>
 						<ProtectedString name="Source">--!strict
@@ -17332,7 +19037,7 @@ return AnimalFactory
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX60">
+				<Item class="ModuleScript" referent="RBX62">
 					<Properties>
 						<string name="Name">Clinic</string>
 						<ProtectedString name="Source">--!strict
@@ -17352,6 +19057,7 @@ local Shared = ReplicatedStorage:WaitForChild(&quot;VetShared&quot;)
 local Data = ReplicatedStorage:WaitForChild(&quot;VetData&quot;)
 
 local Build = require(Shared.Build)
+local Walls = require(Shared.Walls)
 local Detail = require(Shared.Detail)
 local Loc = require(Shared.Loc)
 local Props = require(script.Parent.Props)
@@ -17406,199 +19112,18 @@ local function materialOf(name: string?): Enum.Material
 	return material
 end
 
---- Tek bir duvar parcasi. `horizontal` ise eksen X, degilse Z.
---- `name` yalnizca gorunum icin degil: dekorasyon temasi parcalari
---- ADINA gore buluyor (Decor.luau). Duvar govdesi ile supurgelik ayni
---- adi tasirsa tema ikisini ayni renge boyardi.
-local function wallSegment(
-	parent: Instance,
-	horizontal: boolean,
-	fixed: number,
-	axisFrom: number,
-	axisTo: number,
-	yFrom: number,
-	yTo: number,
-	color: Color3,
-	name: string?
-)
-	local length = axisTo - axisFrom
-	if length &lt;= EPSILON then
-		return
-	end
-	local height = yTo - yFrom
-	if height &lt;= EPSILON then
-		return
-	end
-
-	local center = (axisFrom + axisTo) * 0.5
-	local y = (yFrom + yTo) * 0.5
-	local thickness = plan.wallThickness
-
-	local size, position
-	if horizontal then
-		size = Vector3.new(length, height, thickness)
-		position = Vector3.new(center, y, fixed)
-	else
-		size = Vector3.new(thickness, height, length)
-		position = Vector3.new(fixed, y, center)
-	end
-
-	Build.part({
-		name = name or &quot;Duvar&quot;,
-		size = size,
-		cf = CFrame.new(position),
-		color = color,
-		material = Enum.Material.SmoothPlastic,
-		parent = parent,
-	})
-end
-
---- Kapi cercevesi: iki dikme + ust kiris. Bos bir delik yerine cerceve
---- koymak binayi bitmis gosteriyor.
-local function doorFrame(
-	parent: Instance,
-	horizontal: boolean,
-	fixed: number,
-	at: number,
-	width: number,
-	color: Color3
-)
-	local thickness = plan.wallThickness + 0.15
-	local postWidth = 0.5
-	local top = plan.doorHeight
-
-	local function piece(axisCenter: number, axisSize: number, y: number, ySize: number)
-		local size, position
-		if horizontal then
-			size = Vector3.new(axisSize, ySize, thickness)
-			position = Vector3.new(axisCenter, y, fixed)
-		else
-			size = Vector3.new(thickness, ySize, axisSize)
-			position = Vector3.new(fixed, y, axisCenter)
-		end
-		Build.part({
-			name = &quot;KapiCercevesi&quot;,
-			size = size,
-			cf = CFrame.new(position),
-			color = color,
-			material = Enum.Material.SmoothPlastic,
-			canCollide = false,
-			parent = parent,
-		})
-	end
-
-	piece(at - width * 0.5 - postWidth * 0.5, postWidth, top * 0.5, top)
-	piece(at + width * 0.5 + postWidth * 0.5, postWidth, top * 0.5, top)
-	piece(at, width + postWidth * 2, top + 0.25, 0.5)
-end
-
---- Cam bosluğu: kapi ile AYNI mantik, farki alttan ve ustten duvarin
---- devam etmesi. Icine cam ve cerceve konuyor.
-local function windowGlass(
-	parent: Instance,
-	horizontal: boolean,
-	fixed: number,
-	at: number,
-	width: number,
-	sill: number,
-	height: number,
-	frameColor: Color3
-)
-	local centerY = sill + height * 0.5
-	local function piece(name: string, axisCenter: number, axisSize: number, y: number, ySize: number, thickness: number, color: Color3, material: Enum.Material, transparency: number)
-		local size, position
-		if horizontal then
-			size = Vector3.new(axisSize, ySize, thickness)
-			position = Vector3.new(axisCenter, y, fixed)
-		else
-			size = Vector3.new(thickness, ySize, axisSize)
-			position = Vector3.new(fixed, y, axisCenter)
-		end
-		Build.part({
-			name = name,
-			size = size,
-			cf = CFrame.new(position),
-			color = color,
-			material = material,
-			transparency = transparency,
-			canCollide = transparency &lt; 0.5,
-			castShadow = false,
-			parent = parent,
-		})
-	end
-
-	local glassColor = Build.color(plan.colors.glass)
-	piece(&quot;Cam&quot;, at, width - 0.5, centerY, height - 0.5, plan.wallThickness * 0.45, glassColor, Enum.Material.Glass, 0.72)
-	-- Cerceve: dort kenar + orta dikme
-	piece(&quot;PencereCercevesi&quot;, at, width, sill + 0.12, 0.28, plan.wallThickness + 0.1, frameColor, Enum.Material.SmoothPlastic, 0)
-	piece(&quot;PencereCercevesi&quot;, at, width, sill + height - 0.12, 0.28, plan.wallThickness + 0.1, frameColor, Enum.Material.SmoothPlastic, 0)
-	piece(&quot;PencereCercevesi&quot;, at - width * 0.5 + 0.14, 0.28, centerY, height, plan.wallThickness + 0.1, frameColor, Enum.Material.SmoothPlastic, 0)
-	piece(&quot;PencereCercevesi&quot;, at + width * 0.5 - 0.14, 0.28, centerY, height, plan.wallThickness + 0.1, frameColor, Enum.Material.SmoothPlastic, 0)
-	piece(&quot;PencereKayidi&quot;, at, 0.18, centerY, height - 0.4, plan.wallThickness + 0.06, frameColor, Enum.Material.SmoothPlastic, 0)
-	-- Denizlik: disariya tasan ince raf
-	piece(&quot;Denizlik&quot;, at, width + 0.6, sill - 0.1, 0.22, plan.wallThickness + 0.8, frameColor, Enum.Material.SmoothPlastic, 0)
-end
-
+--- Duvarlar `src/shared/Walls.luau` icinde: lobi de AYNI duvarlari
+--- kuruyor ve ikinci bir kurucu yazmak, bir duvar hatasini iki yerde
+--- birden duzeltmek demek olurdu.
+---
+--- Parca ADLARI onemli: dekorasyon temasi parcalari adina gore buluyor
+--- (Decor.luau). Duvar govdesi ile supurgelik ayni adi tasirsa tema
+--- ikisini ayni renge boyardi - bu yuzden Walls.luau onlari ayri
+--- adlandiriyor.
 local function buildWall(parent: Instance, wall: any, color: Color3, trim: Color3)
-	local from, to = wall.from, wall.to
-	local horizontal = math.abs(to[2] - from[2]) &lt; EPSILON
-
-	local axisFrom, axisTo, fixed
-	if horizontal then
-		axisFrom = math.min(from[1], to[1])
-		axisTo = math.max(from[1], to[1])
-		fixed = from[2]
-	else
-		axisFrom = math.min(from[2], to[2])
-		axisTo = math.max(from[2], to[2])
-		fixed = from[1]
-	end
-
-	-- Kapi ve pencere ayni eksende siralaniyor; duvar ikisinin arasinda
-	-- kalan parcalardan kuruluyor.
-	local openings = {}
-	for _, door in wall.doors or {} do
-		table.insert(openings, { at = door.at, width = door.width, kind = &quot;door&quot; })
-	end
-	for _, window in wall.windows or {} do
-		table.insert(openings, {
-			at = window.at,
-			width = window.width,
-			kind = &quot;window&quot;,
-			sill = window.sill,
-			height = window.height,
-		})
-	end
-	table.sort(openings, function(a, b)
-		return a.at &lt; b.at
-	end)
-
-	local frameColor = Build.color(plan.colors.windowFrame)
-	local cursor = axisFrom
-	for _, opening in openings do
-		local left = opening.at - opening.width * 0.5
-		local right = opening.at + opening.width * 0.5
-		wallSegment(parent, horizontal, fixed, cursor, left, 0, plan.wallHeight, color)
-
-		if opening.kind == &quot;door&quot; then
-			wallSegment(parent, horizontal, fixed, left, right, plan.doorHeight, plan.wallHeight, color)
-			doorFrame(parent, horizontal, fixed, opening.at, opening.width, trim)
-		else
-			-- Pencerenin alti ve ustu duvar olarak devam ediyor.
-			wallSegment(parent, horizontal, fixed, left, right, 0, opening.sill, color)
-			wallSegment(parent, horizontal, fixed, left, right, opening.sill + opening.height, plan.wallHeight, color)
-			windowGlass(parent, horizontal, fixed, opening.at, opening.width, opening.sill, opening.height, frameColor)
-		end
-		cursor = right
-	end
-	wallSegment(parent, horizontal, fixed, cursor, axisTo, 0, plan.wallHeight, color)
-
-	-- Supurgelik: duvarin dibinde ince bir serit. Tek renkli duvarlari
-	-- kirar, mekan daha bitmis gorunur.
-	wallSegment(parent, horizontal, fixed, axisFrom, axisTo, 0, 0.6, trim, &quot;Supurgelik&quot;)
-	-- Tavan kornisi: ust kenarda ikinci serit.
-	wallSegment(parent, horizontal, fixed, axisFrom, axisTo, plan.wallHeight - 0.7, plan.wallHeight, trim, &quot;TavanKornisi&quot;)
+	Walls.build(plan :: any, parent, wall, color, trim)
 end
+
 
 --- Bahce, yol ve disarisi.
 local function buildGrounds(parent: Instance)
@@ -17806,6 +19331,17 @@ function Clinic.build(parent: Instance): Built
 				* CFrame.Angles(0, math.rad(spec.rot or 0), 0)
 			local model = Props.build(spec.id, origin, furniture)
 			if model ~= nil and spec.tag ~= nil then
+				-- Yonlendirme tabelasi: yazisi VERIDEN geliyor
+				-- (`tag: &quot;sign:room.exam1&quot;`). Esya kurucusunun oda
+				-- adlarini bilmesi gerekmiyor; tabela genel, yazi ozel.
+				local signKey = string.match(spec.tag, &quot;^sign:(.+)$&quot;)
+				if signKey ~= nil then
+					for _, item in model:GetDescendants() do
+						if item:IsA(&quot;TextLabel&quot;) then
+							item.Text = Loc.get(signKey)
+						end
+					end
+				end
 				local stationId = string.match(spec.tag, &quot;^station:(.+)$&quot;)
 				if stationId ~= nil then
 					local surface = surfaceOf[spec.id]
@@ -17861,7 +19397,7 @@ return Clinic
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX61">
+				<Item class="ModuleScript" referent="RBX63">
 					<Properties>
 						<string name="Name">DayCycle</string>
 						<ProtectedString name="Source">--!strict
@@ -18090,7 +19626,7 @@ return DayCycle
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX62">
+				<Item class="ModuleScript" referent="RBX64">
 					<Properties>
 						<string name="Name">Decor</string>
 						<ProtectedString name="Source">--!strict
@@ -18331,33 +19867,43 @@ return Decor
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX63">
+				<Item class="ModuleScript" referent="RBX65">
 					<Properties>
 						<string name="Name">Doors</string>
 						<ProtectedString name="Source">--!strict
 -- Doors.luau
 -- ==========
--- Yaklasinca acilan cift kanatli kapilar.
+-- ACILAN cift kanatli kapilar: oyuncu kapiyi kendi aciyor.
 --
--- Neden kapi?
--- -----------
--- Klinikte kapi bosluklari vardi ama kapi yoktu: odalar birbirine acik
--- deliklerle bagliydi ve bina &quot;bitmemis&quot; duruyordu. Yaklasinca acilan
--- kanatlar hem binayi bitiriyor hem de klinikte &quot;gecis&quot; hissini veriyor.
+-- Neden yaklasinca degil de BASARAK?
+-- ----------------------------------
+-- Once yaklasinca kendiliginden aciliyorlardi. Bu, kapiyi bir dekora
+-- ceviriyordu: oyuncu kapinin ORADA oldugunu bile fark etmeden
+-- geciyordu. Kapiyi acmak kucuk ama gercek bir eylem - klinikte bir
+-- odadan digerine gecmenin bir agirligi oluyor.
+--
+-- Animasyon
+-- ---------
+-- Kanat MENTESEDEN donuyor (ortadan degil): gercek bir kapi gibi
+-- disari savruluyor. Uc sey ayni anda oynuyor:
+--   1. kanat menteseden 96 derece aciliyor (`Back` yumusatmasi -
+--      sonunda hafifce salinip duruyor, tahta bir kapi gibi),
+--   2. kulp once ASAGI donuyor sonra geri geliyor (mandal),
+--   3. mandal sesi cikiyor, ardindan kanat sesi.
+--
+-- Kapanis daha yavas ve `Quad` ile: kapanan kapi savrulmaz.
 --
 -- Kanatlar CARPISMIYOR
 -- --------------------
 -- Kapali bir kanat carpisan bir duvar olsaydi, acilma gecikmesinde ya da
 -- bir hata durumunda oyuncu kapida SIKISIRDI. Gorunum icin kapi, oynanis
--- icin acik gecit. Yerlesim denetimi (tools/verify_layout.py) kapi
--- bosluklarinin bos kalmasini zaten sart kosuyor; kanatlar o bosluga
--- oturuyor ve esyalarla asla cakismiyor.
+-- icin acik gecit.
 --
 -- Neden CFrameValue suruyor?
 -- --------------------------
--- Bir kanat tek parca degil: govde + cam panel + kulp. TweenService bir
--- Model'i tasiyamiyor, ankorlu parcalara kaynak (weld) da islemiyor.
--- Bu yuzden bir `CFrameValue` tweenleniyor ve her degisiminde kanadin
+-- Bir kanat tek parca degil: govde + cam panel + kulp + mentese. Tween
+-- bir Model'i tasiyamiyor, ankorlu parcalara kaynak da islemiyor. Bu
+-- yuzden bir `CFrameValue` tweenleniyor ve her degisiminde kanadin
 -- butun parcalari o cerceveye gore yeniden konumlaniyor - tek kaynak,
 -- parcalar arasi kayma imkansiz.
 
@@ -18369,40 +19915,123 @@ local ReplicatedStorage = game:GetService(&quot;ReplicatedStorage&quot;)
 local Shared = ReplicatedStorage:WaitForChild(&quot;VetShared&quot;)
 local Data = ReplicatedStorage:WaitForChild(&quot;VetData&quot;)
 
+local Audio = require(Shared.Audio)
 local Build = require(Shared.Build)
+local Loc = require(Shared.Loc)
 
 local plan = require(Data.clinic)
 
 local Doors = {}
 
+--- Kapi kurulumu icin gereken her sey. Klinik plani bunu dogrudan
+--- karsiliyor; LOBI de ayni kapilari kullanabilsin diye tablo ayri bir
+--- tur olarak duruyor - ikinci bir kapi modulu yazmak, ayni hatayi iki
+--- yerde duzeltmek demek olurdu.
+export type Source = {
+	floorY: number,
+	doorHeight: number,
+	colors: { [string]: { number } },
+	walls: { any },
+}
+
 type Leaf = {
 	driver: CFrameValue,
 	closed: CFrame,
 	open: CFrame,
+	handle: BasePart,
+	handleClosed: CFrame,
 }
 
 type Door = {
 	center: Vector3,
 	leaves: { Leaf },
 	openNow: boolean,
+	prompt: ProximityPrompt,
+	anchor: BasePart,
+	openedAt: number,
 }
 
 local doors: { Door } = {}
 local running = false
 
--- Oyuncu bu mesafeye girince kapi aciliyor. Kapi genisliginden bagimsiz
--- sabit: kapi ne kadar genis olursa olsun &quot;yaklasma&quot; ayni.
-local TRIGGER_DISTANCE = 9
-local SWING_SECONDS = 0.45
+-- Acik kapi, kimse yakininda degilse kendiliginden kapaniyor. Oyuncunun
+-- arkasindan kapiyi kapatmasini BEKLEMEK, kisa surede butun klinigi
+-- acik kapili birakirdi.
+local AUTO_CLOSE_SECONDS = 6
+local AUTO_CLOSE_DISTANCE = 14
+local OPEN_SECONDS = 0.5
+local CLOSE_SECONDS = 0.7
+local HANDLE_SECONDS = 0.16
 
---- Tek bir kapi bosluguna cift kanat kurar.
-local function buildDoor(parent: Instance, center: Vector3, horizontal: boolean, width: number)
-	local height = plan.doorHeight - 0.4
+--- Kulp mandali: once asagi doner, sonra geri gelir. Kapi acilirken de
+--- kapanirken de oynuyor - mandala basmadan acilan bir kapi, animasyonu
+--- olmayan bir kapidan yalnizca biraz daha iyidir.
+local function turnHandle(leaf: Leaf)
+	local turned = leaf.handleClosed * CFrame.Angles(math.rad(-32), 0, 0)
+	local driver = leaf.driver.Value
+	local down = TweenService:Create(
+		leaf.handle,
+		TweenInfo.new(HANDLE_SECONDS, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+		{ CFrame = driver * turned }
+	)
+	down:Play()
+	down.Completed:Connect(function()
+		TweenService:Create(
+			leaf.handle,
+			TweenInfo.new(HANDLE_SECONDS * 1.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+			{ CFrame = leaf.driver.Value * leaf.handleClosed }
+		):Play()
+	end)
+end
+
+local function setOpen(door: Door, open: boolean)
+	if door.openNow == open then
+		return
+	end
+	door.openNow = open
+	door.openedAt = os.clock()
+	door.prompt.ActionText = Loc.get(if open then &quot;prompt.doorClose&quot; else &quot;prompt.doorOpen&quot;)
+
+	Audio.play(&quot;doorLatch&quot;, door.anchor)
+	for _, leaf in door.leaves do
+		turnHandle(leaf)
+	end
+
+	-- Kanat mandaldan SONRA hareket ediyor: once kulp doner, sonra kapi
+	-- acilir. Ayni anda olsalardi mandalin ne ise yaradigi gorunmezdi.
+	task.delay(HANDLE_SECONDS, function()
+		Audio.play(if open then &quot;doorOpen&quot; else &quot;doorClose&quot;, door.anchor)
+		for _, leaf in door.leaves do
+			TweenService:Create(
+				leaf.driver,
+				TweenInfo.new(
+					if open then OPEN_SECONDS else CLOSE_SECONDS,
+					-- Acilirken `Back`: kanat sonunda hafifce salinip
+					-- duruyor. Kapanirken `Quad`: kapanan kapi
+					-- savrulmaz, yavaslayarak oturur.
+					if open then Enum.EasingStyle.Back else Enum.EasingStyle.Quad,
+					Enum.EasingDirection.Out
+				),
+				{ Value = if open then leaf.open else leaf.closed }
+			):Play()
+		end
+	end)
+end
+
+--- Tek bir kapi bosluguna cift kanat + istem kurar.
+local function buildDoor(
+	parent: Instance,
+	center: Vector3,
+	horizontal: boolean,
+	width: number,
+	blueprint: any
+)
+	local height = blueprint.doorHeight - 0.4
 	local leafWidth = width * 0.5 - 0.2
 	local thickness = 0.24
-	local woodColor = Build.color(plan.colors.windowFrame)
-	local trimColor = Build.color(plan.colors.wallTrim)
-	local glassColor = Build.color(plan.colors.glass)
+	local woodColor = Build.color(blueprint.colors.windowFrame)
+	local trimColor = Build.color(blueprint.colors.wallTrim)
+	local glassColor = Build.color(blueprint.colors.glass)
 
 	local leaves: { Leaf } = {}
 	for side = -1, 1, 2 do
@@ -18446,8 +20075,24 @@ local function buildDoor(parent: Instance, center: Vector3, horizontal: boolean,
 		glass.Transparency = 0.62
 		add(glass)
 
-		-- Alt panel ve kulp: duz bir dikdortgen &quot;kapi&quot; degil, &quot;levha&quot;
-		-- gibi duruyordu.
+		-- Cam cercevesi: cerceveleri olmayan bir cam, kanada kesilmis
+		-- bir delik gibi duruyordu.
+		for _, edge in { -1, 1 } do
+			add(Build.part({
+				name = &quot;CamCercevesi&quot;,
+				size = if horizontal
+					then Vector3.new(leafWidth * 0.66, 0.1, thickness + 0.1)
+					else Vector3.new(thickness + 0.1, 0.1, leafWidth * 0.66),
+				cf = base * CFrame.new(0, height * 0.2 + edge * height * 0.18, 0),
+				color = trimColor,
+				canCollide = false,
+				castShadow = false,
+				parent = parent,
+			}))
+		end
+
+		-- Alt panel: duz bir dikdortgen &quot;kapi&quot; degil, &quot;levha&quot; gibi
+		-- duruyordu.
 		add(Build.part({
 			name = &quot;KanatPaneli&quot;,
 			size = if horizontal
@@ -18460,13 +20105,46 @@ local function buildDoor(parent: Instance, center: Vector3, horizontal: boolean,
 			parent = parent,
 		}))
 
-		local handleSide = if horizontal
+		-- MENTESE: kanadin hangi kenardan dondugunu gozle gosteren
+		-- parca. Animasyonun inandirici olmasi, donme ekseninin
+		-- GORUNMESINE bagli.
+		local hingeSide = if horizontal
+			then Vector3.new(side * leafWidth * 0.5, 0, 0)
+			else Vector3.new(0, 0, side * leafWidth * 0.5)
+		for _, level in { -0.3, 0.0, 0.3 } do
+			add(Build.part({
+				name = &quot;Mentese&quot;,
+				size = Vector3.new(0.16, 0.5, 0.16),
+				cf = base * CFrame.new(hingeSide + Vector3.new(0, height * level, 0)),
+				color = trimColor,
+				material = Enum.Material.Metal,
+				canCollide = false,
+				castShadow = false,
+				parent = parent,
+			}))
+		end
+
+		-- KULP menteseden UZAK kenarda (gercek kapilarda oyle). Ayrica
+		-- kendi basina donuyor, bu yuzden `parts` listesine GIRMIYOR:
+		-- kanatla birlikte tasiniyor ama kendi acisini da tutuyor.
+		local handleOffset = if horizontal
 			then Vector3.new(-side * leafWidth * 0.34, -height * 0.02, thickness * 0.85)
 			else Vector3.new(thickness * 0.85, -height * 0.02, -side * leafWidth * 0.34)
-		add(Build.part({
+		local handle = Build.part({
 			name = &quot;KanatKulpu&quot;,
 			size = Vector3.new(0.16, 0.9, 0.16),
-			cf = base * CFrame.new(handleSide),
+			cf = base * CFrame.new(handleOffset),
+			color = trimColor,
+			material = Enum.Material.Metal,
+			canCollide = false,
+			castShadow = false,
+			parent = parent,
+		})
+		local handleLocal = base:ToObjectSpace(handle.CFrame)
+		add(Build.part({
+			name = &quot;KulpTabani&quot;,
+			size = Vector3.new(0.3, 0.3, 0.12),
+			cf = base * CFrame.new(handleOffset) * CFrame.new(0, 0, -0.1),
 			color = trimColor,
 			material = Enum.Material.Metal,
 			canCollide = false,
@@ -18474,12 +20152,8 @@ local function buildDoor(parent: Instance, center: Vector3, horizontal: boolean,
 			parent = parent,
 		}))
 
-		-- Mentese DIS kenarda: kanat gecidin disina dogru aciliyor.
-		local hingeOffset = if horizontal
-			then Vector3.new(side * leafWidth * 0.5, 0, 0)
-			else Vector3.new(0, 0, side * leafWidth * 0.5)
-		local hinge = base * CFrame.new(hingeOffset)
-		local openBase = hinge * CFrame.Angles(0, side * math.rad(-95), 0) * hinge:ToObjectSpace(base)
+		local hinge = base * CFrame.new(hingeSide)
+		local openBase = hinge * CFrame.Angles(0, side * math.rad(-96), 0) * hinge:ToObjectSpace(base)
 
 		local driver = Instance.new(&quot;CFrameValue&quot;)
 		driver.Name = &quot;KanatSurucusu&quot;
@@ -18489,49 +20163,87 @@ local function buildDoor(parent: Instance, center: Vector3, horizontal: boolean,
 			for _, entry in parts do
 				entry.part.CFrame = value * entry.offset
 			end
+			-- Kulp kanatla birlikte gidiyor ama kendi donusunu
+			-- koruyor: `handleLocal` kanada gore konumu, kulbun
+			-- kendi acisi ise `handle.CFrame` uzerinde tweenleniyor.
+			handle.CFrame = value * handleLocal
 		end)
 
-		table.insert(leaves, { driver = driver, closed = base, open = openBase })
+		table.insert(leaves, {
+			driver = driver,
+			closed = base,
+			open = openBase,
+			handle = handle,
+			handleClosed = handleLocal,
+		})
 	end
 
-	table.insert(doors, { center = center, leaves = leaves, openNow = false })
+	-- Istem, kapi bosluğunun ortasinda gorunmez bir parcaya baglaniyor:
+	-- kanada baglansaydi kapi acilirken istem de savrulurdu.
+	local anchor = Build.part({
+		name = &quot;KapiIstemi&quot;,
+		size = Vector3.new(1, 1, 1),
+		cf = CFrame.new(center + Vector3.new(0, blueprint.doorHeight * 0.45, 0)),
+		color = Color3.new(1, 1, 1),
+		canCollide = false,
+		castShadow = false,
+		parent = parent,
+	})
+	anchor.Transparency = 1
+	anchor.CanQuery = false
+
+	local prompt = Instance.new(&quot;ProximityPrompt&quot;)
+	prompt.Name = &quot;Kapi&quot;
+	prompt.ActionText = Loc.get(&quot;prompt.doorOpen&quot;)
+	prompt.ObjectText = Loc.get(&quot;prompt.door&quot;)
+	prompt.HoldDuration = 0
+	prompt.MaxActivationDistance = 10
+	prompt.RequiresLineOfSight = false
+	prompt.Parent = anchor
+
+	local door: Door = {
+		center = center,
+		leaves = leaves,
+		openNow = false,
+		prompt = prompt,
+		anchor = anchor,
+		openedAt = 0,
+	}
+	table.insert(doors, door)
+
+	-- Istem KURULUM aninda baglaniyor, `Doors.start()` icinde degil.
+	-- Baglanti orada olsaydi ikinci bir bina (Studio yedeginde lobiden
+	-- klinige gecis) kurulunca `running` zaten true oldugu icin yeni
+	-- kapilar baglanmadan kalir ve HICBIRI acilmazdi.
+	prompt.Triggered:Connect(function()
+		setOpen(door, not door.openNow)
+	end)
 end
 
---- Klinik planindaki her kapiya kanat kurar.
-function Doors.build(parent: Instance): Model
+--- Plandaki her kapiya kanat kurar. `source` verilmezse KLINIK plani
+--- kullaniliyor.
+function Doors.build(parent: Instance, source: Source?): Model
+	local blueprint: any = source or plan
 	doors = {}
 	local model = Build.model(&quot;Kapilar&quot;, parent)
 
-	for _, wall in plan.walls do
+	for _, wall in blueprint.walls do
 		local horizontal = math.abs(wall.to[2] - wall.from[2]) &lt; 1e-6
 		local fixed = if horizontal then wall.from[2] else wall.from[1]
 		for _, door in wall.doors or {} do
 			local center = if horizontal
-				then Vector3.new(door.at, plan.floorY, fixed)
-				else Vector3.new(fixed, plan.floorY, door.at)
-			buildDoor(model, center, horizontal, door.width)
+				then Vector3.new(door.at, blueprint.floorY, fixed)
+				else Vector3.new(fixed, blueprint.floorY, door.at)
+			buildDoor(model, center, horizontal, door.width, blueprint)
 		end
 	end
 	return model
 end
 
-local function setOpen(door: Door, open: boolean)
-	if door.openNow == open then
-		return
-	end
-	door.openNow = open
-	for _, leaf in door.leaves do
-		TweenService:Create(
-			leaf.driver,
-			TweenInfo.new(SWING_SECONDS, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-			{ Value = if open then leaf.open else leaf.closed }
-		):Play()
-	end
-end
-
---- Yakinlik dongusu. Her karede degil, saniyede ~6 kez bakiyor: acilma
---- mesafesi 9 stud ve en hizli oyuncu bu surede ~4 stud gidiyor - yani
---- kapi hep zamaninda aciliyor ama 60 yerine 6 kez hesap yapiliyor.
+--- Kapi dongusu. Artik YAKINLIK acmiyor - yalnizca KAPATIYOR: acik
+--- birakilmis bir kapi, kimse yakininda degilken kendiliginden
+--- kapaniyor. Oyuncunun arkasindan kapiyi kapatmasini beklemek, kisa
+--- surede butun klinigi acik kapili birakirdi.
 function Doors.start()
 	if running then
 		return
@@ -18541,7 +20253,7 @@ function Doors.start()
 	local accumulator = 0
 	RunService.Heartbeat:Connect(function(dt: number)
 		accumulator += dt
-		if accumulator &lt; 1 / 6 then
+		if accumulator &lt; 0.5 then
 			return
 		end
 		accumulator = 0
@@ -18555,15 +20267,21 @@ function Doors.start()
 			end
 		end
 
+		local now = os.clock()
 		for _, door in doors do
+			if not door.openNow or now - door.openedAt &lt; AUTO_CLOSE_SECONDS then
+				continue
+			end
 			local near = false
 			for _, position in positions do
-				if (position - door.center).Magnitude &lt;= TRIGGER_DISTANCE then
+				if (position - door.center).Magnitude &lt;= AUTO_CLOSE_DISTANCE then
 					near = true
 					break
 				end
 			end
-			setOpen(door, near)
+			if not near then
+				setOpen(door, false)
+			end
 		end
 	end)
 end
@@ -18573,11 +20291,22 @@ function Doors.count(): number
 	return #doors
 end
 
+--- Acik kapi sayisi (SelfTest: baslangicta hepsi kapali olmali).
+function Doors.openCount(): number
+	local total = 0
+	for _, door in doors do
+		if door.openNow then
+			total += 1
+		end
+	end
+	return total
+end
+
 return Doors
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX64">
+				<Item class="ModuleScript" referent="RBX66">
 					<Properties>
 						<string name="Name">Effects</string>
 						<ProtectedString name="Source">--!strict
@@ -18761,7 +20490,7 @@ return Effects
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX65">
+				<Item class="ModuleScript" referent="RBX67">
 					<Properties>
 						<string name="Name">Lighting</string>
 						<ProtectedString name="Source">--!strict
@@ -18884,14 +20613,34 @@ return Sky
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX66">
+				<Item class="ModuleScript" referent="RBX68">
 					<Properties>
 						<string name="Name">Lobby</string>
 						<ProtectedString name="Source">--!strict
 -- Lobby.luau
 -- ==========
--- Lobi salonunu kurar: giris holü, dort portal kemeri ve ustlerinde
--- SIRADAKI OYUNCU SAYISI.
+-- Lobi salonunu kurar. Salon UC BOLUM:
+--
+--     guney  z -40..-18  GIRIS HOLU     karsilama bankosu, koltuklar,
+--                                       duyuru panolari, saksilar
+--            z = -18     ── kapili ic duvar ──
+--     orta   z -18..14   ANA SALON      cesme, sutun dizileri, heykel,
+--                                       hali yollari, pankartlar
+--            z = 14      ── kapili ic duvar ──
+--     kuzey  z 14..40    PORTAL KANADI  dort kemer, dort portal
+--
+-- Neden bu kadar?
+-- ---------------
+-- Lobi oyunun ILK gordugu oda ve en bos odasiydi: dort duz duvar,
+-- birkac bank, dort portal. Oyuncunun oyun hakkindaki ilk izlenimi
+-- oradan cikiyor. Salon artik bir YOL sunuyor - kapidan gir, bankoyu
+-- gec, cesmenin etrafindan dolan, kemerin altindan portala yurü.
+--
+-- Duvarlar, kapilar ve pencereler VERIDE (`data/lobby.json` -&gt; walls)
+-- ve klinikle AYNI kurucudan geciyor (`src/shared/Walls.luau`). Once
+-- kodda uretilen dort duz duvardi; veriye tasininca `verify_layout`
+-- onlari da olcmeye basladi - kapi onune konan bir esya artik denetimde
+-- yakalaniyor.
 --
 -- Klinigin esya kutuphanesi burada da kullaniliyor (Props.luau); lobi
 -- icin ayri bir esya seti yazmak ayni isi iki kez yapmak olurdu.
@@ -18903,7 +20652,9 @@ local Data = ReplicatedStorage:WaitForChild(&quot;VetData&quot;)
 local Build = require(Shared.Build)
 local Detail = require(Shared.Detail)
 local Loc = require(Shared.Loc)
+local Walls = require(Shared.Walls)
 
+local Doors = require(script.Parent.Doors)
 local Props = require(script.Parent.Props)
 local SkyLighting = require(script.Parent.Lighting)
 
@@ -18924,6 +20675,7 @@ export type Built = {
 	model: Model,
 	portals: { [string]: Portal },
 	spawn: Vector3,
+	doors: Model,
 }
 
 local function colorOf(name: string): Color3
@@ -19028,57 +20780,65 @@ function Lobby.build(parent: Instance): Built
 
 	Build.slab({ -half, -half }, { half, half }, -0.5, 1, colorOf(&quot;ground&quot;), Enum.Material.Grass, root, &quot;Zemin&quot;)
 	Build.slab(min, max, -0.25, 0.5, colorOf(&quot;floor&quot;), Enum.Material.Marble, root, &quot;Doseme&quot;)
-	Detail.tiles(root, min, max, 0.03, 6, colorOf(&quot;floor&quot;), colorOf(&quot;floorTile&quot;), Enum.Material.Marble)
-	Build.slab(min, max, plan.wallHeight - 0.25, 0.5, colorOf(&quot;ceiling&quot;), Enum.Material.SmoothPlastic, root, &quot;Tavan&quot;)
+	Detail.tiles(root, min, max, 0.03, 8, colorOf(&quot;floor&quot;), colorOf(&quot;floorTile&quot;), Enum.Material.Marble)
 
-	-- Orta hali: gozun merkeze gitmesi icin.
-	Build.slab({ -14, -14 }, { 14, 14 }, 0.1, 0.2, colorOf(&quot;carpet&quot;), Enum.Material.Fabric, root, &quot;Hali&quot;)
+	-- Girise giden tas yol: bina disindaki tek zemin parcasi.
+	local path = plan.outdoor.path
+	local pathHalf = path.width * 0.5
+	Build.slab(
+		{ path.from[1] - pathHalf, math.min(path.from[2], path.to[2]) },
+		{ path.from[1] + pathHalf, math.max(path.from[2], path.to[2]) },
+		-0.2, 0.45, colorOf(&quot;path&quot;), Enum.Material.Concrete, root, &quot;Yol&quot;
+	)
 
-	-- Duvarlar: dort kenar, portallarin oldugu kuzey duvari da dahil
-	-- (portal kemerleri duvarin onunde duruyor).
-	local th = plan.wallThickness
-	local sides = {
-		{ Vector3.new(max[1] - min[1] + th * 2, plan.wallHeight, th), Vector3.new((min[1] + max[1]) / 2, plan.wallHeight / 2, min[2]) },
-		{ Vector3.new(max[1] - min[1] + th * 2, plan.wallHeight, th), Vector3.new((min[1] + max[1]) / 2, plan.wallHeight / 2, max[2]) },
-		{ Vector3.new(th, plan.wallHeight, max[2] - min[2]), Vector3.new(min[1], plan.wallHeight / 2, (min[2] + max[2]) / 2) },
-		{ Vector3.new(th, plan.wallHeight, max[2] - min[2]), Vector3.new(max[1], plan.wallHeight / 2, (min[2] + max[2]) / 2) },
-	}
-	for _, side in sides do
+	-- Tavan: ORTA acikligi bos birakiliyor (aydinlik). Duz bir tavan
+	-- 96x80'lik bir salonu kutuya ceviriyordu.
+	local lightMin, lightMax = { -18, -10 }, { 18, 10 }
+	Build.slab(min, { max[1], lightMin[2] }, plan.wallHeight - 0.25, 0.5, colorOf(&quot;ceiling&quot;), Enum.Material.SmoothPlastic, root, &quot;Tavan&quot;)
+	Build.slab({ min[1], lightMax[2] }, max, plan.wallHeight - 0.25, 0.5, colorOf(&quot;ceiling&quot;), Enum.Material.SmoothPlastic, root, &quot;Tavan&quot;)
+	Build.slab({ min[1], lightMin[2] }, { lightMin[1], lightMax[2] }, plan.wallHeight - 0.25, 0.5, colorOf(&quot;ceiling&quot;), Enum.Material.SmoothPlastic, root, &quot;Tavan&quot;)
+	Build.slab({ lightMax[1], lightMin[2] }, { max[1], lightMax[2] }, plan.wallHeight - 0.25, 0.5, colorOf(&quot;ceiling&quot;), Enum.Material.SmoothPlastic, root, &quot;Tavan&quot;)
+
+	-- Aydinlik camı ve kafesi: gunes salonun ortasina dusuyor.
+	local sky = Build.slab(
+		lightMin, lightMax, plan.wallHeight - 0.2, 0.3,
+		colorOf(&quot;glass&quot;), Enum.Material.Glass, root, &quot;Aydinlik&quot;
+	)
+	sky.Transparency = 0.55
+	sky.CanCollide = false
+	sky.CastShadow = false
+	for index = -3, 3 do
 		Build.part({
-			name = &quot;Duvar&quot;,
-			size = side[1],
-			cf = CFrame.new(side[2]),
-			color = colorOf(&quot;wall&quot;),
-			material = Enum.Material.SmoothPlastic,
-			parent = root,
-		})
-	end
-	-- Supurgelik ve kornis
-	for _, side in sides do
-		Build.part({
-			name = &quot;Supurgelik&quot;,
-			size = Vector3.new(side[1].X + 0.2, 0.9, side[1].Z + 0.2),
-			cf = CFrame.new(side[2].X, 0.45, side[2].Z),
-			color = colorOf(&quot;trim&quot;),
-			canCollide = false,
-			castShadow = false,
-			parent = root,
-		})
-		Build.part({
-			name = &quot;Kornis&quot;,
-			size = Vector3.new(side[1].X + 0.3, 0.8, side[1].Z + 0.3),
-			cf = CFrame.new(side[2].X, plan.wallHeight - 0.9, side[2].Z),
+			name = &quot;AydinlikKafesi&quot;,
+			size = Vector3.new(0.4, 0.4, lightMax[2] - lightMin[2]),
+			cf = CFrame.new(index * 5, plan.wallHeight - 0.05, 0),
 			color = colorOf(&quot;trim&quot;),
 			canCollide = false,
 			castShadow = false,
 			parent = root,
 		})
 	end
+	for index = -2, 2 do
+		Build.part({
+			name = &quot;AydinlikKafesi&quot;,
+			size = Vector3.new(lightMax[1] - lightMin[1], 0.4, 0.4),
+			cf = CFrame.new(0, plan.wallHeight - 0.05, index * 4),
+			color = colorOf(&quot;trim&quot;),
+			canCollide = false,
+			castShadow = false,
+			parent = root,
+		})
+	end
 
-	-- Tavan lambalari
+	-- Duvarlar VERIDEN ve klinikle AYNI kurucudan.
+	for _, wall in plan.walls do
+		Walls.build(plan :: any, root, wall, colorOf(&quot;wall&quot;), colorOf(&quot;trim&quot;))
+	end
+
+	-- Tavan lambalari: aydinligin disinda, dort kose. Cok lamba sahneyi
+	-- yikiyor; aydinlik zaten ortayi aydinlatiyor.
 	local lamp = SkyLighting.lamp(&quot;ceiling&quot;)
-	-- Az sayida, genis menzilli armatur: cok lamba sahneyi yikiyor.
-	for _, position in { { -22, -10 }, { 22, -10 }, { 0, 10 } } do
+	for _, position in { { -26, -30 }, { 26, -30 }, { -30, 0 }, { 30, 0 }, { -20, 28 }, { 20, 28 } } do
 		Build.ceilingLight(Vector3.new(position[1], plan.wallHeight - 0.9, position[2]), root, lamp)
 	end
 
@@ -19086,7 +20846,7 @@ function Lobby.build(parent: Instance): Built
 	local welcome = Build.part({
 		name = &quot;Tabela&quot;,
 		size = Vector3.new(30, 4.5, 0.6),
-		cf = CFrame.new(0, 14, min[2] + 0.9),
+		cf = CFrame.new(0, 15.5, min[2] + 0.9),
 		color = colorOf(&quot;trim&quot;),
 		material = Enum.Material.Marble,
 		canCollide = false,
@@ -19098,7 +20858,7 @@ function Lobby.build(parent: Instance): Built
 	local hint = Build.part({
 		name = &quot;Aciklama&quot;,
 		size = Vector3.new(30, 2, 0.4),
-		cf = CFrame.new(0, 10.6, min[2] + 0.9),
+		cf = CFrame.new(0, 12.4, min[2] + 0.9),
 		color = colorOf(&quot;wall&quot;),
 		canCollide = false,
 		castShadow = false,
@@ -19108,6 +20868,14 @@ function Lobby.build(parent: Instance): Built
 
 	local furniture = Build.model(&quot;Esyalar&quot;, root)
 	for _, spec in plan.props do
+		Props.build(
+			spec.id,
+			CFrame.new(spec.at[1], 0, spec.at[2]) * CFrame.Angles(0, math.rad(spec.rot or 0), 0),
+			furniture
+		)
+	end
+	-- Bina disi: yolun iki yani ve bahce.
+	for _, spec in plan.outdoor.props do
 		Props.build(
 			spec.id,
 			CFrame.new(spec.at[1], 0, spec.at[2]) * CFrame.Angles(0, math.rad(spec.rot or 0), 0),
@@ -19132,10 +20900,15 @@ function Lobby.build(parent: Instance): Built
 	spawnPoint.Duration = 0
 	spawnPoint.Parent = root
 
+	-- Kapilar: klinikteki AYNI modul, lobi planiyla. Lobide de kapiyi
+	-- kendin aciyorsun.
+	local doors = Doors.build(root, plan :: any)
+
 	return {
 		model = root,
 		portals = portals,
 		spawn = Vector3.new(plan.spawn.at[1], 0, plan.spawn.at[2]),
+		doors = doors,
 	}
 end
 
@@ -19143,7 +20916,7 @@ return Lobby
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX67">
+				<Item class="ModuleScript" referent="RBX69">
 					<Properties>
 						<string name="Name">OwnerFactory</string>
 						<ProtectedString name="Source">--!strict
@@ -19748,7 +21521,7 @@ return OwnerFactory
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX68">
+				<Item class="ModuleScript" referent="RBX70">
 					<Properties>
 						<string name="Name">Props</string>
 						<ProtectedString name="Source">--!strict
@@ -20618,6 +22391,478 @@ end
 
 -- ── Disari ────────────────────────────────────────────────────────────
 
+-- ── Lobi ──────────────────────────────────────────────────────────────
+-- Lobi eskiden dort portal kemeri, birkac bank ve iki saksidan
+-- ibaretti: oyunun ILK gordugu oda ve en bos odasiydi. Buradaki
+-- esyalarin isi mekani &quot;salon&quot; yapmak - sutun, cesme, banko, heykel,
+-- pankart. Hepsi diger esyalarla ayni butce sozlesmesinden geciyor
+-- (`data/props.json`) ve `verify_layout` ic ice girmediklerini olcuyor.
+
+builders.column = function(model, origin)
+	local p, d = maker(model, origin), makerDecor(model, origin)
+	-- Kaide: iki kademeli, kare. Silindirin dogrudan yere oturmasi
+	-- sutunu &quot;boru&quot; gibi gosteriyordu.
+	p(&quot;Kaide&quot;, Vector3.new(3.4, 0.5, 3.4), Vector3.new(0, 0.25, 0), C.shadowWhite, Enum.Material.Marble)
+	p(&quot;Kaide&quot;, Vector3.new(2.9, 0.55, 2.9), Vector3.new(0, 0.78, 0), C.offWhite, Enum.Material.Marble)
+	Build.pillar({
+		name = &quot;Govde&quot;, size = Vector3.new(2.3, 16.4, 2.3),
+		cf = origin * CFrame.new(0, 9.25, 0), color = C.white,
+		material = Enum.Material.Marble, parent = model,
+	})
+	-- Yivler: silindirin uzerine dizilmis ince cubuklar. Duz bir
+	-- silindir uzaktan plastik boru gibi duruyor; yiv onu tasa
+	-- ceviriyor.
+	for index = 1, 8 do
+		local angle = (index / 8) * math.pi * 2
+		d(&quot;Yiv&quot;, Vector3.new(0.22, 15.6, 0.22),
+			Vector3.new(math.cos(angle) * 1.08, 9.25, math.sin(angle) * 1.08),
+			C.shadowWhite, Enum.Material.Marble)
+	end
+	d(&quot;Bilezik&quot;, Vector3.new(2.6, 0.3, 2.6), Vector3.new(0, 16.9, 0), C.deepTeal, Enum.Material.Marble)
+	p(&quot;Baslik&quot;, Vector3.new(2.9, 0.6, 2.9), Vector3.new(0, 17.4, 0), C.offWhite, Enum.Material.Marble)
+	p(&quot;Baslik&quot;, Vector3.new(3.4, 0.5, 3.4), Vector3.new(0, 17.95, 0), C.shadowWhite, Enum.Material.Marble)
+	d(&quot;Tepe&quot;, Vector3.new(3.0, 0.4, 3.0), Vector3.new(0, 18.4, 0), C.deepTeal, Enum.Material.Marble)
+end
+
+builders.fountain = function(model, origin)
+	local p, d = maker(model, origin), makerDecor(model, origin)
+	-- Sekizgen havuz: sekiz duvar parcasi halka olusturuyor. Tek bir
+	-- silindir kullanmak &quot;havuz&quot; degil &quot;tabak&quot; gorunumu veriyordu.
+	p(&quot;Taban&quot;, Vector3.new(11.6, 0.4, 11.6), Vector3.new(0, 0.2, 0), C.shadowWhite, Enum.Material.Marble)
+	for index = 1, 8 do
+		local angle = (index / 8) * math.pi * 2
+		p(&quot;HavuzDuvari&quot;, Vector3.new(4.6, 1.5, 0.7),
+			Vector3.new(math.cos(angle) * 5.2, 0.95, math.sin(angle) * 5.2),
+			C.white, Enum.Material.Marble, CFrame.Angles(0, -angle, 0))
+		d(&quot;HavuzPahi&quot;, Vector3.new(4.8, 0.24, 0.95),
+			Vector3.new(math.cos(angle) * 5.2, 1.74, math.sin(angle) * 5.2),
+			C.deepTeal, Enum.Material.Marble, CFrame.Angles(0, -angle, 0))
+	end
+	-- Su yuzeyi: hafif saydam ve parlak. Hareketli bir doku asset
+	-- isterdi; burada yuzey rengi ve parlaklik yetiyor.
+	local water = d(&quot;Su&quot;, Vector3.new(10.2, 0.3, 10.2), Vector3.new(0, 1.35, 0), C.water, Enum.Material.Glass)
+	water.Transparency = 0.3
+	water.Reflectance = 0.25
+
+	-- Ust kademe ve fiskiye
+	Build.pillar({
+		name = &quot;Ayak&quot;, size = Vector3.new(1.6, 2.2, 1.6),
+		cf = origin * CFrame.new(0, 2.5, 0), color = C.offWhite,
+		material = Enum.Material.Marble, parent = model,
+	})
+	Build.pillar({
+		name = &quot;UstTas&quot;, size = Vector3.new(4.6, 0.45, 4.6),
+		cf = origin * CFrame.new(0, 3.75, 0), color = C.white,
+		material = Enum.Material.Marble, canCollide = false, castShadow = false, parent = model,
+	})
+	local upper = Build.pillar({
+		name = &quot;UstSu&quot;, size = Vector3.new(4.0, 0.22, 4.0),
+		cf = origin * CFrame.new(0, 4.02, 0), color = C.water,
+		material = Enum.Material.Glass, canCollide = false, castShadow = false, parent = model,
+	})
+	upper.Transparency = 0.28
+	Build.pillar({
+		name = &quot;Fiskiye&quot;, size = Vector3.new(0.5, 2.0, 0.5),
+		cf = origin * CFrame.new(0, 5.1, 0), color = C.paleTeal,
+		material = Enum.Material.Neon, canCollide = false, castShadow = false, parent = model,
+	})
+	-- Kademeden dokulen su: dort ince serit.
+	for index = 1, 4 do
+		local angle = (index / 4) * math.pi * 2 + math.pi / 4
+		local fall = d(&quot;Dokulen&quot;, Vector3.new(0.5, 2.3, 0.5),
+			Vector3.new(math.cos(angle) * 1.9, 2.6, math.sin(angle) * 1.9),
+			C.water, Enum.Material.Glass)
+		fall.Transparency = 0.45
+	end
+end
+
+builders.lobbyDesk = function(model, origin)
+	local p, d = maker(model, origin), makerDecor(model, origin)
+	-- Uc parcali banko: orta govde + iki kanat. Tek bir kutu &quot;banko&quot;
+	-- degil &quot;duvar&quot; gibi duruyordu.
+	p(&quot;Govde&quot;, Vector3.new(9.0, 3.4, 4.6), Vector3.new(0, 1.7, 0), C.wood, Enum.Material.Wood)
+	p(&quot;Kanat&quot;, Vector3.new(3.4, 3.4, 4.0), Vector3.new(-6.0, 1.7, 0.3), C.wood,
+		Enum.Material.Wood, CFrame.Angles(0, math.rad(18), 0))
+	p(&quot;Kanat&quot;, Vector3.new(3.4, 3.4, 4.0), Vector3.new(6.0, 1.7, 0.3), C.wood,
+		Enum.Material.Wood, CFrame.Angles(0, math.rad(-18), 0))
+	Detail.trim(model, origin * CFrame.new(0, 1.7, 0), Vector3.new(9.0, 3.4, 4.6), 0.16, C.darkWood)
+	-- Tezgah tablasi: govdenin uzerinden tasiyor.
+	d(&quot;Tabla&quot;, Vector3.new(15.4, 0.34, 5.4), Vector3.new(0, 3.55, 0.1), C.offWhite, Enum.Material.Marble)
+	d(&quot;TablaPahi&quot;, Vector3.new(15.8, 0.16, 5.8), Vector3.new(0, 3.36, 0.1), C.deepTeal, Enum.Material.Marble)
+	Detail.drawer(model, origin * CFrame.new(-2.4, 1.9, 2.32), 3.4, 1.0, C.midWood, C.chrome)
+	Detail.drawer(model, origin * CFrame.new(2.4, 1.9, 2.32), 3.4, 1.0, C.midWood, C.chrome)
+	Detail.screen(model, origin * CFrame.new(-3.2, 4.5, -0.4) * CFrame.Angles(math.rad(-12), math.rad(14), 0),
+		3.0, 1.9, C.black, C.screen, Loc.get(&quot;lobby.title&quot;))
+	d(&quot;Klavye&quot;, Vector3.new(2.6, 0.14, 1.0), Vector3.new(-3.2, 3.74, 1.3), C.black)
+	-- Zil ve kalemlik: bankoyu &quot;kullanilan bir yer&quot; yapan detaylar.
+	Build.pillar({
+		name = &quot;Zil&quot;, size = Vector3.new(0.9, 0.5, 0.9),
+		cf = origin * CFrame.new(3.4, 3.95, 1.2), color = C.chrome,
+		material = Enum.Material.Metal, canCollide = false, castShadow = false, parent = model,
+	})
+	Build.pillar({
+		name = &quot;Kalemlik&quot;, size = Vector3.new(0.8, 1.0, 0.8),
+		cf = origin * CFrame.new(4.8, 4.2, 0.6), color = C.deepTeal,
+		canCollide = false, castShadow = false, parent = model,
+	})
+	Detail.plate(model, origin * CFrame.new(0, 2.4, 2.42), 6.4, 1.2, C.deepTeal, C.white, Loc.get(&quot;lobby.desk&quot;))
+end
+
+builders.banner = function(model, origin)
+	local p, d = maker(model, origin), makerDecor(model, origin)
+	-- Tavandan sarkan pankart: cubuk + kumas + puskuller.
+	p(&quot;Cubuk&quot;, Vector3.new(5.0, 0.3, 0.3), Vector3.new(0, 5.2, 0), C.darkSteel, Enum.Material.Metal)
+	d(&quot;CubukUcu&quot;, Vector3.new(0.5, 0.5, 0.5), Vector3.new(-2.5, 5.2, 0), C.gold, Enum.Material.Metal)
+	d(&quot;CubukUcu&quot;, Vector3.new(0.5, 0.5, 0.5), Vector3.new(2.5, 5.2, 0), C.gold, Enum.Material.Metal)
+	d(&quot;Kumas&quot;, Vector3.new(4.4, 8.4, 0.14), Vector3.new(0, 0.9, 0), C.deepTeal, Enum.Material.Fabric)
+	d(&quot;KumasKenari&quot;, Vector3.new(4.7, 0.3, 0.2), Vector3.new(0, 5.0, 0), C.gold, Enum.Material.Fabric)
+	d(&quot;KumasKenari&quot;, Vector3.new(4.7, 0.3, 0.2), Vector3.new(0, -3.2, 0), C.gold, Enum.Material.Fabric)
+	-- Alt kenardaki uc puskul: kumasin agirligini gosteriyor.
+	for index = -1, 1 do
+		d(&quot;Puskul&quot;, Vector3.new(0.3, 0.9, 0.3), Vector3.new(index * 1.6, -3.8, 0), C.gold, Enum.Material.Fabric)
+	end
+	Detail.plate(model, origin * CFrame.new(0, 1.6, 0.12), 3.8, 2.4, C.deepTeal, C.white, Loc.get(&quot;lobby.title&quot;))
+end
+
+builders.noticeBoard = function(model, origin)
+	local p, d = maker(model, origin), makerDecor(model, origin)
+	p(&quot;Cerceve&quot;, Vector3.new(6.6, 5.2, 0.36), Vector3.new(0, 0, 0), C.darkWood, Enum.Material.Wood)
+	d(&quot;Mantar&quot;, Vector3.new(6.0, 4.6, 0.14), Vector3.new(0, 0, 0.16), C.sand, Enum.Material.Fabric)
+	Detail.trim(model, origin, Vector3.new(6.6, 5.2, 0.36), 0.14, C.midWood)
+	-- Asili notlar: farkli boy ve renkte kagitlar, hafif egik.
+	local notes = {
+		{ -1.9, 1.0, 1.7, 1.2, C.white, 6 },
+		{ 0.2, 1.2, 1.5, 1.0, C.towel, -4 },
+		{ 2.0, 0.8, 1.6, 1.4, C.white, 3 },
+		{ -1.4, -1.2, 1.9, 1.1, C.paleTeal, -7 },
+		{ 1.5, -1.3, 1.6, 1.2, C.white, 5 },
+	}
+	for _, note in notes do
+		local x, y, w, h, tint, tilt = note[1], note[2], note[3], note[4], note[5], note[6]
+		d(&quot;Not&quot;, Vector3.new(w :: number, h :: number, 0.06),
+			Vector3.new(x :: number, y :: number, 0.26), tint :: Color3,
+			Enum.Material.SmoothPlastic, CFrame.Angles(0, 0, math.rad(tilt :: number)))
+		d(&quot;RaptiyeBasi&quot;, Vector3.new(0.18, 0.18, 0.1),
+			Vector3.new(x :: number, (y :: number) + (h :: number) * 0.36, 0.32), C.accent, Enum.Material.Metal)
+	end
+	Detail.plate(model, origin * CFrame.new(0, 2.9, 0.1), 4.2, 0.9, C.navy, C.white, Loc.get(&quot;lobby.notice&quot;))
+end
+
+builders.statue = function(model, origin)
+	local p, d = maker(model, origin), makerDecor(model, origin)
+	-- Kaide
+	p(&quot;Kaide&quot;, Vector3.new(4.8, 0.5, 4.8), Vector3.new(0, 0.25, 0), C.shadowWhite, Enum.Material.Marble)
+	p(&quot;Kaide&quot;, Vector3.new(4.0, 3.6, 4.0), Vector3.new(0, 2.3, 0), C.offWhite, Enum.Material.Marble)
+	p(&quot;Kaide&quot;, Vector3.new(4.6, 0.4, 4.6), Vector3.new(0, 4.3, 0), C.shadowWhite, Enum.Material.Marble)
+	Detail.plate(model, origin * CFrame.new(0, 2.4, 2.06), 3.2, 1.0, C.navy, C.gold, Loc.get(&quot;lobby.statue&quot;))
+
+	-- Oturan kopek: veteriner klinigi lobisine yakisan tek heykel.
+	-- Govde, gogus, kafa, kulaklar, on ayaklar, kuyruk.
+	local stone = C.white
+	d(&quot;Govde&quot;, Vector3.new(1.7, 2.0, 2.6), Vector3.new(0, 5.6, -0.3), stone, Enum.Material.Marble,
+		CFrame.Angles(math.rad(-12), 0, 0))
+	d(&quot;Gogus&quot;, Vector3.new(1.5, 1.6, 1.4), Vector3.new(0, 6.1, 0.7), stone, Enum.Material.Marble)
+	d(&quot;Kafa&quot;, Vector3.new(1.3, 1.25, 1.4), Vector3.new(0, 7.5, 0.75), stone, Enum.Material.Marble)
+	d(&quot;Burun&quot;, Vector3.new(0.75, 0.6, 0.8), Vector3.new(0, 7.3, 1.5), stone, Enum.Material.Marble)
+	d(&quot;BurunUcu&quot;, Vector3.new(0.35, 0.3, 0.25), Vector3.new(0, 7.4, 1.9), C.shadowWhite, Enum.Material.Marble)
+	for _, side in { -1, 1 } do
+		d(&quot;Kulak&quot;, Vector3.new(0.4, 0.9, 0.55), Vector3.new(side * 0.55, 8.2, 0.6), stone,
+			Enum.Material.Marble, CFrame.Angles(0, 0, math.rad(side * 14)))
+		d(&quot;OnAyak&quot;, Vector3.new(0.45, 1.5, 0.5), Vector3.new(side * 0.5, 5.2, 1.15), stone, Enum.Material.Marble)
+		d(&quot;Pati&quot;, Vector3.new(0.55, 0.35, 0.9), Vector3.new(side * 0.5, 4.65, 1.35), stone, Enum.Material.Marble)
+	end
+	d(&quot;Kuyruk&quot;, Vector3.new(0.4, 0.4, 1.8), Vector3.new(0, 4.9, -1.5), stone, Enum.Material.Marble,
+		CFrame.Angles(math.rad(22), 0, 0))
+end
+
+builders.rugRunner = function(model, origin)
+	local d = makerDecor(model, origin)
+	-- Uzun hali yolu: giristen salona kadar gidiyor ve gozu ileri
+	-- cekiyor. Zeminden 0,1 stud yukarida duruyor ki z-fighting olmasin.
+	d(&quot;Hali&quot;, Vector3.new(9.4, 0.12, 29.4), Vector3.new(0, 0.12, 0), C.carpet, Enum.Material.Fabric)
+	d(&quot;HaliKenari&quot;, Vector3.new(10.0, 0.1, 30.0), Vector3.new(0, 0.06, 0), C.deepTeal, Enum.Material.Fabric)
+	-- Boyuna iki serit ve enine desen cizgileri.
+	for _, side in { -1, 1 } do
+		d(&quot;HaliSeridi&quot;, Vector3.new(0.5, 0.14, 29.0), Vector3.new(side * 3.6, 0.13, 0), C.gold, Enum.Material.Fabric)
+	end
+	for index = -6, 6 do
+		d(&quot;HaliDeseni&quot;, Vector3.new(7.8, 0.14, 0.24), Vector3.new(0, 0.13, index * 2.2), C.paleTeal, Enum.Material.Fabric)
+	end
+end
+
+builders.lobbySofa = function(model, origin)
+	local p, d = maker(model, origin), makerDecor(model, origin)
+	p(&quot;Govde&quot;, Vector3.new(8.4, 1.4, 3.4), Vector3.new(0, 1.5, 0), C.navy, Enum.Material.Fabric)
+	d(&quot;Minder&quot;, Vector3.new(8.0, 0.6, 3.0), Vector3.new(0, 2.4, 0.1), C.pad, Enum.Material.Fabric)
+	d(&quot;Sirtlik&quot;, Vector3.new(8.4, 2.4, 0.7), Vector3.new(0, 3.0, -1.4), C.navy, Enum.Material.Fabric)
+	d(&quot;SirtlikPahi&quot;, Vector3.new(8.4, 0.35, 0.9), Vector3.new(0, 4.15, -1.4), C.pad, Enum.Material.Fabric)
+	for _, side in { -1, 1 } do
+		d(&quot;Kolcak&quot;, Vector3.new(0.7, 1.5, 3.4), Vector3.new(side * 3.85, 2.6, 0), C.navy, Enum.Material.Fabric)
+		d(&quot;KolcakPahi&quot;, Vector3.new(0.9, 0.3, 3.6), Vector3.new(side * 3.85, 3.4, 0), C.pad, Enum.Material.Fabric)
+	end
+	-- Yastiklar ve ahsap ayaklar
+	for _, side in { -1, 1 } do
+		d(&quot;Yastik&quot;, Vector3.new(1.5, 1.4, 0.4), Vector3.new(side * 2.4, 3.1, -0.9), C.paleTeal,
+			Enum.Material.Fabric, CFrame.Angles(math.rad(-14), 0, 0))
+	end
+	for _, sx in { -1, 1 } do
+		for _, sz in { -1, 1 } do
+			Detail.leg(model, origin * CFrame.new(sx * 3.6, 0.8, sz * 1.2), 0.8, 0.36, C.darkWood)
+		end
+	end
+end
+
+builders.planterBox = function(model, origin)
+	local p, d = maker(model, origin), makerDecor(model, origin)
+	p(&quot;Tekne&quot;, Vector3.new(9.4, 2.2, 2.8), Vector3.new(0, 1.1, 0), C.terracotta)
+	Detail.trim(model, origin * CFrame.new(0, 1.1, 0), Vector3.new(9.4, 2.2, 2.8), 0.16, C.darkWood)
+	d(&quot;Toprak&quot;, Vector3.new(8.8, 0.3, 2.3), Vector3.new(0, 2.25, 0), C.soil)
+	-- Uc calilik: her biri birkac yaprak kumesi. Tek bir yesil kutu
+	-- &quot;bitki&quot; degil &quot;kutu&quot; gorunumu veriyordu.
+	for index = -1, 1 do
+		local x = index * 3.0
+		Build.pillar({
+			name = &quot;Calilik&quot;, size = Vector3.new(2.4, 1.8, 2.2),
+			cf = origin * CFrame.new(x, 3.1, 0), color = C.leaf,
+			canCollide = false, castShadow = false, parent = model,
+		})
+		d(&quot;Yaprak&quot;, Vector3.new(1.4, 0.9, 1.3), Vector3.new(x - 0.7, 3.5, 0.4), C.midLeaf,
+			Enum.Material.Grass, CFrame.Angles(0, math.rad(24), math.rad(12)))
+		d(&quot;Yaprak&quot;, Vector3.new(1.3, 0.9, 1.2), Vector3.new(x + 0.7, 3.4, -0.3), C.darkLeaf,
+			Enum.Material.Grass, CFrame.Angles(0, math.rad(-18), math.rad(-10)))
+	end
+	d(&quot;Cicek&quot;, Vector3.new(0.5, 0.5, 0.5), Vector3.new(-1.5, 3.9, 0.5), C.blossom)
+	d(&quot;Cicek&quot;, Vector3.new(0.5, 0.5, 0.5), Vector3.new(2.2, 3.8, -0.4), C.gold)
+end
+
+builders.archFrame = function(model, origin)
+	local p, d = maker(model, origin), makerDecor(model, origin)
+	-- Portal kemeri: iki ayak + basamakli kemer + tepe tasi. Kemer
+	-- egrisi kademeli bloklardan kuruluyor; Roblox'ta egri bir parca
+	-- mesh isterdi ve bu ortamda mesh dogrulanamaz.
+	for _, side in { -1, 1 } do
+		p(&quot;KemerAyagi&quot;, Vector3.new(1.8, 11.0, 1.8), Vector3.new(side * 5.4, 5.5, 0), C.offWhite, Enum.Material.Marble)
+		d(&quot;AyakTabani&quot;, Vector3.new(2.4, 0.6, 2.4), Vector3.new(side * 5.4, 0.3, 0), C.shadowWhite, Enum.Material.Marble)
+		d(&quot;AyakBasligi&quot;, Vector3.new(2.3, 0.55, 2.3), Vector3.new(side * 5.4, 11.2, 0), C.shadowWhite, Enum.Material.Marble)
+	end
+	-- Kemerin kademeleri
+	local steps = { { 4.3, 12.1, 1.8 }, { 3.0, 12.9, 1.7 }, { 1.5, 13.5, 1.6 } }
+	for _, step in steps do
+		local x, y, w = step[1], step[2], step[3]
+		for _, side in { -1, 1 } do
+			d(&quot;KemerTasi&quot;, Vector3.new(w, 1.0, 1.7), Vector3.new(side * x, y, 0), C.white, Enum.Material.Marble)
+		end
+	end
+	d(&quot;KilitTasi&quot;, Vector3.new(2.0, 1.3, 1.9), Vector3.new(0, 13.9, 0), C.deepTeal, Enum.Material.Marble)
+	d(&quot;KemerAlni&quot;, Vector3.new(12.2, 0.5, 1.5), Vector3.new(0, 14.6, 0), C.shadowWhite, Enum.Material.Marble)
+end
+
+-- ── Klinik cephesi ve ic mekan detaylari ─────────────────────────────
+-- Bina disaridan duz bir kutuydu: kapi bir delik, cevresi cimendi.
+-- Buradaki esyalar binaya BIR CEPHE veriyor - sacak, basamaklar,
+-- bayrak diregi, ambulans - ve icerde odalari birbirinden ayiran
+-- yonlendirme tabelalari.
+
+builders.entranceCanopy = function(model, origin)
+	local p, d = maker(model, origin), makerDecor(model, origin)
+	-- Giris sacagi: kapinin onunde, iki direk uzerinde duran genis bir
+	-- ortu. Yagmurda beklenen yer burasi ve bina &quot;girisi olan bir bina&quot;
+	-- gibi duruyor.
+	for _, side in { -1, 1 } do
+		Build.pillar({
+			name = &quot;SacakDiregi&quot;, size = Vector3.new(1.3, 8.4, 1.3),
+			cf = origin * CFrame.new(side * 9.4, 4.2, 4.6), color = C.steel,
+			material = Enum.Material.Metal, parent = model,
+		})
+		d(&quot;DirekTabani&quot;, Vector3.new(2.0, 0.5, 2.0), Vector3.new(side * 9.4, 0.25, 4.6), C.darkSteel, Enum.Material.Metal)
+		d(&quot;DirekBasligi&quot;, Vector3.new(1.7, 0.4, 1.7), Vector3.new(side * 9.4, 8.5, 4.6), C.darkSteel, Enum.Material.Metal)
+		-- Capraz destek: sacagin havada durmasini ACIKLAYAN parca.
+		d(&quot;Destek&quot;, Vector3.new(0.4, 3.6, 0.4), Vector3.new(side * 8.2, 7.4, 2.6), C.darkSteel,
+			Enum.Material.Metal, CFrame.Angles(math.rad(38), 0, math.rad(side * -20)))
+	end
+	p(&quot;Sacak&quot;, Vector3.new(21.0, 0.7, 12.0), Vector3.new(0, 8.9, 0.6), C.deepTeal)
+	d(&quot;SacakAlni&quot;, Vector3.new(21.4, 1.1, 0.5), Vector3.new(0, 8.6, 6.4), C.white)
+	d(&quot;SacakAlni&quot;, Vector3.new(0.5, 1.1, 12.2), Vector3.new(-10.6, 8.6, 0.6), C.white)
+	d(&quot;SacakAlni&quot;, Vector3.new(0.5, 1.1, 12.2), Vector3.new(10.6, 8.6, 0.6), C.white)
+	-- Alt yuzey seritleri: duz bir tavan yerine kaplama izlenimi.
+	for index = -4, 4 do
+		d(&quot;SacakKaplamasi&quot;, Vector3.new(1.6, 0.16, 11.4), Vector3.new(index * 2.2, 8.48, 0.6), C.offWhite)
+	end
+	Detail.plate(model, origin * CFrame.new(0, 8.6, 6.68), 9.0, 1.5, C.deepTeal, C.white, Loc.get(&quot;clinic.name&quot;))
+	-- Sacak altindaki iki lamba
+	for _, side in { -1, 1 } do
+		local bulb = d(&quot;SacakLambasi&quot;, Vector3.new(1.6, 0.3, 1.6), Vector3.new(side * 5.0, 8.35, 2.4), C.white, Enum.Material.Neon)
+		bulb.Name = &quot;SacakLambasi&quot;
+	end
+end
+
+builders.entranceSteps = function(model, origin)
+	local p, d = maker(model, origin), makerDecor(model, origin)
+	-- Uc basamak: bina zemini ile bahce arasindaki gecis. Kapinin
+	-- dogrudan cimene acilmasi binayi &quot;yere konmus&quot; gosteriyordu.
+	for index = 0, 2 do
+		local depth = 4.6 - index * 1.4
+		p(&quot;Basamak&quot;, Vector3.new(19.4 - index * 1.2, 0.42, depth),
+			Vector3.new(0, 0.21 + index * 0.42, -index * 0.7), C.shadowWhite, Enum.Material.Concrete)
+		d(&quot;BasamakPahi&quot;, Vector3.new(19.6 - index * 1.2, 0.14, depth + 0.12),
+			Vector3.new(0, 0.44 + index * 0.42, -index * 0.7), C.offWhite, Enum.Material.Concrete)
+	end
+	-- Iki yanda korkuluk
+	for _, side in { -1, 1 } do
+		d(&quot;Korkuluk&quot;, Vector3.new(0.24, 0.24, 5.0), Vector3.new(side * 9.2, 1.9, 0.2), C.chrome,
+			Enum.Material.Metal, CFrame.Angles(math.rad(-14), 0, 0))
+		d(&quot;KorkulukDikmesi&quot;, Vector3.new(0.2, 1.6, 0.2), Vector3.new(side * 9.2, 1.0, 2.2), C.chrome, Enum.Material.Metal)
+		d(&quot;KorkulukDikmesi&quot;, Vector3.new(0.2, 2.2, 0.2), Vector3.new(side * 9.2, 1.3, -1.6), C.chrome, Enum.Material.Metal)
+	end
+	-- Tekerlekli sandalye rampasi: kapiya ulasmanin ikinci yolu.
+	d(&quot;Rampa&quot;, Vector3.new(3.4, 0.3, 5.2), Vector3.new(-11.6, 0.62, 0), C.shadowWhite,
+		Enum.Material.Concrete, CFrame.Angles(math.rad(-9), 0, 0))
+end
+
+builders.flagPole = function(model, origin)
+	local p, d = maker(model, origin), makerDecor(model, origin)
+	p(&quot;Kaide&quot;, Vector3.new(2.2, 0.7, 2.2), Vector3.new(0, 0.35, 0), C.shadowWhite, Enum.Material.Concrete)
+	d(&quot;KaidePahi&quot;, Vector3.new(2.5, 0.2, 2.5), Vector3.new(0, 0.75, 0), C.offWhite, Enum.Material.Concrete)
+	Build.pillar({
+		name = &quot;Direk&quot;, size = Vector3.new(0.5, 18.0, 0.5),
+		cf = origin * CFrame.new(0, 9.4, 0), color = C.chrome,
+		material = Enum.Material.Metal, parent = model,
+	})
+	d(&quot;Tepe&quot;, Vector3.new(0.7, 0.7, 0.7), Vector3.new(0, 18.6, 0), C.gold, Enum.Material.Metal)
+	-- Bayrak: klinigin renkleri. Ucusma animasyonu yok; kumas kademeli
+	-- parcalarla dalgali duruyor.
+	for index = 0, 4 do
+		d(&quot;Bayrak&quot;, Vector3.new(1.5, 3.4, 0.12),
+			Vector3.new(1.0 + index * 1.45, 16.2, math.sin(index * 0.9) * 0.35), C.deepTeal,
+			Enum.Material.Fabric, CFrame.Angles(0, math.rad(math.sin(index * 0.9) * 14), 0))
+	end
+	d(&quot;BayrakPatisi&quot;, Vector3.new(1.4, 1.4, 0.16), Vector3.new(4.2, 16.2, 0.1), C.white, Enum.Material.Fabric)
+	d(&quot;Halat&quot;, Vector3.new(0.1, 9.0, 0.1), Vector3.new(-0.3, 12.0, 0), C.towel)
+end
+
+builders.ambulance = function(model, origin)
+	local p, d = maker(model, origin), makerDecor(model, origin)
+	-- Hayvan ambulansi: acil vakalarin nereden geldigini anlatan tek
+	-- parca. Klinigin onunde park halinde duruyor.
+	p(&quot;Kasa&quot;, Vector3.new(6.6, 4.4, 9.0), Vector3.new(0, 3.6, -2.0), C.white)
+	p(&quot;Kabin&quot;, Vector3.new(6.4, 3.2, 4.6), Vector3.new(0, 3.0, 4.6), C.white)
+	d(&quot;On&quot;, Vector3.new(6.2, 1.6, 1.4), Vector3.new(0, 1.9, 6.9), C.white)
+	d(&quot;OnCam&quot;, Vector3.new(5.6, 2.0, 0.3), Vector3.new(0, 3.6, 6.85), C.glass, Enum.Material.Glass)
+	d(&quot;YanCam&quot;, Vector3.new(0.3, 1.5, 2.2), Vector3.new(-3.2, 3.6, 4.6), C.glass, Enum.Material.Glass)
+	d(&quot;YanCam&quot;, Vector3.new(0.3, 1.5, 2.2), Vector3.new(3.2, 3.6, 4.6), C.glass, Enum.Material.Glass)
+	d(&quot;ArkaKapi&quot;, Vector3.new(6.0, 3.6, 0.3), Vector3.new(0, 3.4, -6.4), C.shadowWhite)
+	d(&quot;Serit&quot;, Vector3.new(6.8, 0.9, 9.2), Vector3.new(0, 2.6, -2.0), C.accent)
+	d(&quot;Serit&quot;, Vector3.new(6.6, 0.5, 4.8), Vector3.new(0, 2.6, 4.6), C.accent)
+	-- Tepe lambasi
+	d(&quot;TepeLambasi&quot;, Vector3.new(3.6, 0.6, 1.0), Vector3.new(0, 5.9, 3.6), C.accent, Enum.Material.Neon)
+	d(&quot;TepeLambasi&quot;, Vector3.new(1.2, 0.6, 1.0), Vector3.new(0, 5.9, 3.6), C.water, Enum.Material.Neon)
+	-- Tekerlekler
+	for _, sx in { -1, 1 } do
+		for _, sz in { 4.2, -3.6 } do
+			Build.pillar({
+				name = &quot;Teker&quot;, size = Vector3.new(2.2, 0.9, 2.2),
+				cf = origin * CFrame.new(sx * 3.1, 1.1, sz) * CFrame.Angles(0, 0, math.rad(90)),
+				color = C.rubber, canCollide = false, castShadow = false, parent = model,
+			})
+			Build.pillar({
+				name = &quot;Jant&quot;, size = Vector3.new(1.2, 1.0, 1.2),
+				cf = origin * CFrame.new(sx * 3.1, 1.1, sz) * CFrame.Angles(0, 0, math.rad(90)),
+				color = C.chrome, material = Enum.Material.Metal,
+				canCollide = false, castShadow = false, parent = model,
+			})
+		end
+	end
+	Detail.plate(model, origin * CFrame.new(3.32, 3.4, -2.0) * CFrame.Angles(0, math.rad(90), 0),
+		6.0, 1.4, C.deepTeal, C.white, Loc.get(&quot;clinic.name&quot;))
+end
+
+builders.bikeRack = function(model, origin)
+	local p, d = maker(model, origin), makerDecor(model, origin)
+	p(&quot;Ray&quot;, Vector3.new(6.4, 0.3, 0.3), Vector3.new(0, 0.6, -1.0), C.darkSteel, Enum.Material.Metal)
+	p(&quot;Ray&quot;, Vector3.new(6.4, 0.3, 0.3), Vector3.new(0, 0.6, 1.0), C.darkSteel, Enum.Material.Metal)
+	for index = -2, 2 do
+		-- U seklinde bisiklet yuvasi: iki dikme + ust kavis.
+		d(&quot;Yuva&quot;, Vector3.new(0.22, 2.6, 0.22), Vector3.new(index * 1.5, 1.4, -1.0), C.chrome, Enum.Material.Metal)
+		d(&quot;Yuva&quot;, Vector3.new(0.22, 2.6, 0.22), Vector3.new(index * 1.5, 1.4, 1.0), C.chrome, Enum.Material.Metal)
+		d(&quot;YuvaKavisi&quot;, Vector3.new(0.22, 0.22, 2.2), Vector3.new(index * 1.5, 2.65, 0), C.chrome, Enum.Material.Metal)
+	end
+	d(&quot;Zemin&quot;, Vector3.new(6.8, 0.14, 3.0), Vector3.new(0, 0.07, 0), C.shadowWhite, Enum.Material.Concrete)
+end
+
+builders.roomSign = function(model, origin)
+	local p, d = maker(model, origin), makerDecor(model, origin)
+	-- Oda yonlendirme tabelasi: kapinin ustunde, iki yuzu de yazili.
+	-- Klinikte &quot;hangi oda neresi&quot; sorusunun cevabi buydu; onceden yoktu
+	-- ve oyuncu odalari ezberlemek zorundaydi.
+	p(&quot;Govde&quot;, Vector3.new(5.2, 1.7, 0.34), Vector3.new(0, 0, 0), C.deepTeal)
+	Detail.trim(model, origin, Vector3.new(5.2, 1.7, 0.34), 0.12, C.chrome)
+	d(&quot;Aski&quot;, Vector3.new(0.16, 1.1, 0.16), Vector3.new(-1.8, 1.3, 0), C.darkSteel, Enum.Material.Metal)
+	d(&quot;Aski&quot;, Vector3.new(0.16, 1.1, 0.16), Vector3.new(1.8, 1.3, 0), C.darkSteel, Enum.Material.Metal)
+	d(&quot;AskiKirisi&quot;, Vector3.new(4.2, 0.16, 0.16), Vector3.new(0, 1.85, 0), C.darkSteel, Enum.Material.Metal)
+	-- Ok isareti: tabelanin yon gosterdigini anlatiyor.
+	d(&quot;Ok&quot;, Vector3.new(0.9, 0.22, 0.1), Vector3.new(-1.9, 0, 0.2), C.white)
+	d(&quot;OkUcu&quot;, Vector3.new(0.35, 0.35, 0.1), Vector3.new(-2.3, 0, 0.2), C.white, nil, CFrame.Angles(0, 0, math.rad(45)))
+	Build.surfaceText(
+		Build.part({
+			name = &quot;Yuzey&quot;,
+			size = Vector3.new(4.6, 1.2, 0.08),
+			cf = origin * CFrame.new(0.4, 0, 0.2),
+			color = C.deepTeal,
+			canCollide = false,
+			castShadow = false,
+			parent = model,
+		}),
+		Enum.NormalId.Front,
+		Loc.get(&quot;prop.roomSign&quot;),
+		C.white
+	)
+end
+
+builders.wallRail = function(model, origin)
+	local p, d = maker(model, origin), makerDecor(model, origin)
+	-- Duvar korkulugu (lambri kusagi): koridor duvarlarini yatay olarak
+	-- boluyor. Hastane duvarlarinin en taniyan detayi bu serittir.
+	p(&quot;Kusak&quot;, Vector3.new(11.6, 0.55, 0.3), Vector3.new(0, 0, 0), C.darkWood, Enum.Material.Wood)
+	d(&quot;KusakUstu&quot;, Vector3.new(11.8, 0.18, 0.42), Vector3.new(0, 0.32, 0.04), C.wood, Enum.Material.Wood)
+	d(&quot;KusakAlti&quot;, Vector3.new(11.8, 0.14, 0.38), Vector3.new(0, -0.3, 0.02), C.wood, Enum.Material.Wood)
+	-- Tamponlar: sedye carpmasin diye. Duz bir tahta yerine islevi
+	-- gorunen bir parca.
+	for index = -2, 2 do
+		d(&quot;Tampon&quot;, Vector3.new(1.6, 0.42, 0.16), Vector3.new(index * 2.3, 0, 0.2), C.deepTeal, Enum.Material.Fabric)
+	end
+	for index = -1, 1 do
+		d(&quot;Konsol&quot;, Vector3.new(0.26, 0.5, 0.28), Vector3.new(index * 4.4, -0.1, -0.16), C.darkSteel, Enum.Material.Metal)
+	end
+end
+
+builders.magazineTable = function(model, origin)
+	local p, d = maker(model, origin), makerDecor(model, origin)
+	-- Bekleme odasi sehpasi: dergiler ve bir su bardagi. Bekleme
+	-- odasinin &quot;burada beklenir&quot; demesini saglayan detay.
+	d(&quot;Tabla&quot;, Vector3.new(4.4, 0.3, 4.4), Vector3.new(0, 2.3, 0), C.wood, Enum.Material.Wood)
+	Detail.trim(model, origin * CFrame.new(0, 2.3, 0), Vector3.new(4.4, 0.3, 4.4), 0.12, C.darkWood)
+	d(&quot;AltRaf&quot;, Vector3.new(3.6, 0.22, 3.6), Vector3.new(0, 0.9, 0), C.midWood, Enum.Material.Wood)
+	for _, sx in { -1, 1 } do
+		for _, sz in { -1, 1 } do
+			Detail.leg(model, origin * CFrame.new(sx * 1.8, 2.15, sz * 1.8), 2.15, 0.3, C.darkWood)
+		end
+	end
+	-- Ust uste dizilmis dergiler: her biri biraz kaymis.
+	local tints = { C.accent, C.water, C.leaf, C.gold }
+	for index = 0, 3 do
+		d(&quot;Dergi&quot;, Vector3.new(1.9, 0.1, 1.4),
+			Vector3.new(-0.7 + index * 0.12, 2.5 + index * 0.11, 0.4 - index * 0.1),
+			tints[index + 1], Enum.Material.SmoothPlastic,
+			CFrame.Angles(0, math.rad(index * 7 - 10), 0))
+	end
+	Build.pillar({
+		name = &quot;Bardak&quot;, size = Vector3.new(0.7, 0.9, 0.7),
+		cf = origin * CFrame.new(1.4, 2.9, -0.9), color = C.water,
+		material = Enum.Material.Glass, canCollide = false, castShadow = false, parent = model,
+	})
+	d(&quot;AltRafDergi&quot;, Vector3.new(2.6, 0.14, 1.8), Vector3.new(0.2, 1.08, 0), C.towel)
+end
+
 builders.clinicSign = function(model, origin)
 	local p, d = maker(model, origin), makerDecor(model, origin)
 	for _, side in { -7, 7 } do
@@ -21039,7 +23284,7 @@ return Props
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX69">
+				<Item class="ModuleScript" referent="RBX71">
 					<Properties>
 						<string name="Name">StaffFactory</string>
 						<ProtectedString name="Source">--!strict
@@ -21210,15 +23455,15 @@ return StaffFactory
 			</Item>
 		</Item>
 	</Item>
-	<Item class="StarterPlayer" referent="RBX70">
+	<Item class="StarterPlayer" referent="RBX72">
 		<Properties>
 			<string name="Name">StarterPlayer</string>
 		</Properties>
-		<Item class="StarterPlayerScripts" referent="RBX71">
+		<Item class="StarterPlayerScripts" referent="RBX73">
 			<Properties>
 				<string name="Name">StarterPlayerScripts</string>
 			</Properties>
-			<Item class="LocalScript" referent="RBX72">
+			<Item class="LocalScript" referent="RBX74">
 				<Properties>
 					<string name="Name">VetClient</string>
 					<ProtectedString name="Source">--!strict
@@ -21515,7 +23760,7 @@ end)
 print(&quot;[Veteriner] istemci hazir.&quot;)
 </ProtectedString>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX73">
+				<Item class="ModuleScript" referent="RBX75">
 					<Properties>
 						<string name="Name">Camera</string>
 						<ProtectedString name="Source">--!strict
@@ -21766,7 +24011,7 @@ return Camera
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX74">
+				<Item class="ModuleScript" referent="RBX76">
 					<Properties>
 						<string name="Name">Chart</string>
 						<ProtectedString name="Source">--!strict
@@ -22261,7 +24506,7 @@ return Chart
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX75">
+				<Item class="ModuleScript" referent="RBX77">
 					<Properties>
 						<string name="Name">Crosshair</string>
 						<ProtectedString name="Source">--!strict
@@ -22412,7 +24657,7 @@ return Crosshair
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX76">
+				<Item class="ModuleScript" referent="RBX78">
 					<Properties>
 						<string name="Name">DiagnosisPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -22604,7 +24849,7 @@ return DiagnosisPanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX77">
+				<Item class="ModuleScript" referent="RBX79">
 					<Properties>
 						<string name="Name">Fps</string>
 						<ProtectedString name="Source">--!strict
@@ -22723,7 +24968,7 @@ return Fps
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX78">
+				<Item class="ModuleScript" referent="RBX80">
 					<Properties>
 						<string name="Name">Hud</string>
 						<ProtectedString name="Source">--!strict
@@ -23422,7 +25667,7 @@ return Hud
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX79">
+				<Item class="ModuleScript" referent="RBX81">
 					<Properties>
 						<string name="Name">LobbyPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -23713,7 +25958,7 @@ return LobbyPanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX80">
+				<Item class="ModuleScript" referent="RBX82">
 					<Properties>
 						<string name="Name">Notify</string>
 						<ProtectedString name="Source">--!strict
@@ -23899,7 +26144,7 @@ return Notify
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX81">
+				<Item class="ModuleScript" referent="RBX83">
 					<Properties>
 						<string name="Name">ProgressPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -24183,7 +26428,7 @@ return ProgressPanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX82">
+				<Item class="ModuleScript" referent="RBX84">
 					<Properties>
 						<string name="Name">SettingsPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -24457,7 +26702,7 @@ return SettingsPanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX83">
+				<Item class="ModuleScript" referent="RBX85">
 					<Properties>
 						<string name="Name">ShopPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -24883,7 +27128,7 @@ return ShopPanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX84">
+				<Item class="ModuleScript" referent="RBX86">
 					<Properties>
 						<string name="Name">SurgeryPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -25411,7 +27656,7 @@ return SurgeryPanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX85">
+				<Item class="ModuleScript" referent="RBX87">
 					<Properties>
 						<string name="Name">Theme</string>
 						<ProtectedString name="Source">--!strict
@@ -26502,7 +28747,7 @@ return Theme
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX86">
+				<Item class="ModuleScript" referent="RBX88">
 					<Properties>
 						<string name="Name">ToolBar</string>
 						<ProtectedString name="Source">--!strict
@@ -26743,7 +28988,7 @@ return ToolBar
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX87">
+				<Item class="ModuleScript" referent="RBX89">
 					<Properties>
 						<string name="Name">ToolGamePanel</string>
 						<ProtectedString name="Source">--!strict
@@ -27201,7 +29446,7 @@ return ToolGamePanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX88">
+				<Item class="ModuleScript" referent="RBX90">
 					<Properties>
 						<string name="Name">Touch</string>
 						<ProtectedString name="Source">--!strict
@@ -27332,7 +29577,7 @@ return Touch
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX89">
+				<Item class="ModuleScript" referent="RBX91">
 					<Properties>
 						<string name="Name">TreatmentPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -27572,7 +29817,7 @@ return TreatmentPanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX90">
+				<Item class="ModuleScript" referent="RBX92">
 					<Properties>
 						<string name="Name">Tutorial</string>
 						<ProtectedString name="Source">--!strict
@@ -27774,7 +30019,7 @@ return Tutorial
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX91">
+				<Item class="ModuleScript" referent="RBX93">
 					<Properties>
 						<string name="Name">ViewModel</string>
 						<ProtectedString name="Source">--!strict
@@ -28159,7 +30404,7 @@ return ViewModel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX92">
+				<Item class="ModuleScript" referent="RBX94">
 					<Properties>
 						<string name="Name">WardPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -28439,19 +30684,19 @@ return WardPanel
 			</Item>
 		</Item>
 	</Item>
-	<Item class="StarterGui" referent="RBX93">
+	<Item class="StarterGui" referent="RBX95">
 		<Properties>
 			<string name="Name">StarterGui</string>
 			<bool name="ResetPlayerGuiOnSpawn">false</bool>
 		</Properties>
 	</Item>
-	<Item class="Players" referent="RBX94">
+	<Item class="Players" referent="RBX96">
 		<Properties>
 			<string name="Name">Players</string>
 			<bool name="CharacterAutoLoads">false</bool>
 		</Properties>
 	</Item>
-	<Item class="SoundService" referent="RBX95">
+	<Item class="SoundService" referent="RBX97">
 		<Properties>
 			<string name="Name">SoundService</string>
 		</Properties>

@@ -865,6 +865,478 @@ end
 
 -- ── Disari ────────────────────────────────────────────────────────────
 
+-- ── Lobi ──────────────────────────────────────────────────────────────
+-- Lobi eskiden dort portal kemeri, birkac bank ve iki saksidan
+-- ibaretti: oyunun ILK gordugu oda ve en bos odasiydi. Buradaki
+-- esyalarin isi mekani "salon" yapmak - sutun, cesme, banko, heykel,
+-- pankart. Hepsi diger esyalarla ayni butce sozlesmesinden geciyor
+-- (`data/props.json`) ve `verify_layout` ic ice girmediklerini olcuyor.
+
+builders.column = function(model, origin)
+	local p, d = maker(model, origin), makerDecor(model, origin)
+	-- Kaide: iki kademeli, kare. Silindirin dogrudan yere oturmasi
+	-- sutunu "boru" gibi gosteriyordu.
+	p("Kaide", Vector3.new(3.4, 0.5, 3.4), Vector3.new(0, 0.25, 0), C.shadowWhite, Enum.Material.Marble)
+	p("Kaide", Vector3.new(2.9, 0.55, 2.9), Vector3.new(0, 0.78, 0), C.offWhite, Enum.Material.Marble)
+	Build.pillar({
+		name = "Govde", size = Vector3.new(2.3, 16.4, 2.3),
+		cf = origin * CFrame.new(0, 9.25, 0), color = C.white,
+		material = Enum.Material.Marble, parent = model,
+	})
+	-- Yivler: silindirin uzerine dizilmis ince cubuklar. Duz bir
+	-- silindir uzaktan plastik boru gibi duruyor; yiv onu tasa
+	-- ceviriyor.
+	for index = 1, 8 do
+		local angle = (index / 8) * math.pi * 2
+		d("Yiv", Vector3.new(0.22, 15.6, 0.22),
+			Vector3.new(math.cos(angle) * 1.08, 9.25, math.sin(angle) * 1.08),
+			C.shadowWhite, Enum.Material.Marble)
+	end
+	d("Bilezik", Vector3.new(2.6, 0.3, 2.6), Vector3.new(0, 16.9, 0), C.deepTeal, Enum.Material.Marble)
+	p("Baslik", Vector3.new(2.9, 0.6, 2.9), Vector3.new(0, 17.4, 0), C.offWhite, Enum.Material.Marble)
+	p("Baslik", Vector3.new(3.4, 0.5, 3.4), Vector3.new(0, 17.95, 0), C.shadowWhite, Enum.Material.Marble)
+	d("Tepe", Vector3.new(3.0, 0.4, 3.0), Vector3.new(0, 18.4, 0), C.deepTeal, Enum.Material.Marble)
+end
+
+builders.fountain = function(model, origin)
+	local p, d = maker(model, origin), makerDecor(model, origin)
+	-- Sekizgen havuz: sekiz duvar parcasi halka olusturuyor. Tek bir
+	-- silindir kullanmak "havuz" degil "tabak" gorunumu veriyordu.
+	p("Taban", Vector3.new(11.6, 0.4, 11.6), Vector3.new(0, 0.2, 0), C.shadowWhite, Enum.Material.Marble)
+	for index = 1, 8 do
+		local angle = (index / 8) * math.pi * 2
+		p("HavuzDuvari", Vector3.new(4.6, 1.5, 0.7),
+			Vector3.new(math.cos(angle) * 5.2, 0.95, math.sin(angle) * 5.2),
+			C.white, Enum.Material.Marble, CFrame.Angles(0, -angle, 0))
+		d("HavuzPahi", Vector3.new(4.8, 0.24, 0.95),
+			Vector3.new(math.cos(angle) * 5.2, 1.74, math.sin(angle) * 5.2),
+			C.deepTeal, Enum.Material.Marble, CFrame.Angles(0, -angle, 0))
+	end
+	-- Su yuzeyi: hafif saydam ve parlak. Hareketli bir doku asset
+	-- isterdi; burada yuzey rengi ve parlaklik yetiyor.
+	local water = d("Su", Vector3.new(10.2, 0.3, 10.2), Vector3.new(0, 1.35, 0), C.water, Enum.Material.Glass)
+	water.Transparency = 0.3
+	water.Reflectance = 0.25
+
+	-- Ust kademe ve fiskiye
+	Build.pillar({
+		name = "Ayak", size = Vector3.new(1.6, 2.2, 1.6),
+		cf = origin * CFrame.new(0, 2.5, 0), color = C.offWhite,
+		material = Enum.Material.Marble, parent = model,
+	})
+	Build.pillar({
+		name = "UstTas", size = Vector3.new(4.6, 0.45, 4.6),
+		cf = origin * CFrame.new(0, 3.75, 0), color = C.white,
+		material = Enum.Material.Marble, canCollide = false, castShadow = false, parent = model,
+	})
+	local upper = Build.pillar({
+		name = "UstSu", size = Vector3.new(4.0, 0.22, 4.0),
+		cf = origin * CFrame.new(0, 4.02, 0), color = C.water,
+		material = Enum.Material.Glass, canCollide = false, castShadow = false, parent = model,
+	})
+	upper.Transparency = 0.28
+	Build.pillar({
+		name = "Fiskiye", size = Vector3.new(0.5, 2.0, 0.5),
+		cf = origin * CFrame.new(0, 5.1, 0), color = C.paleTeal,
+		material = Enum.Material.Neon, canCollide = false, castShadow = false, parent = model,
+	})
+	-- Kademeden dokulen su: dort ince serit.
+	for index = 1, 4 do
+		local angle = (index / 4) * math.pi * 2 + math.pi / 4
+		local fall = d("Dokulen", Vector3.new(0.5, 2.3, 0.5),
+			Vector3.new(math.cos(angle) * 1.9, 2.6, math.sin(angle) * 1.9),
+			C.water, Enum.Material.Glass)
+		fall.Transparency = 0.45
+	end
+end
+
+builders.lobbyDesk = function(model, origin)
+	local p, d = maker(model, origin), makerDecor(model, origin)
+	-- Uc parcali banko: orta govde + iki kanat. Tek bir kutu "banko"
+	-- degil "duvar" gibi duruyordu.
+	p("Govde", Vector3.new(9.0, 3.4, 4.6), Vector3.new(0, 1.7, 0), C.wood, Enum.Material.Wood)
+	p("Kanat", Vector3.new(3.4, 3.4, 4.0), Vector3.new(-6.0, 1.7, 0.3), C.wood,
+		Enum.Material.Wood, CFrame.Angles(0, math.rad(18), 0))
+	p("Kanat", Vector3.new(3.4, 3.4, 4.0), Vector3.new(6.0, 1.7, 0.3), C.wood,
+		Enum.Material.Wood, CFrame.Angles(0, math.rad(-18), 0))
+	Detail.trim(model, origin * CFrame.new(0, 1.7, 0), Vector3.new(9.0, 3.4, 4.6), 0.16, C.darkWood)
+	-- Tezgah tablasi: govdenin uzerinden tasiyor.
+	d("Tabla", Vector3.new(15.4, 0.34, 5.4), Vector3.new(0, 3.55, 0.1), C.offWhite, Enum.Material.Marble)
+	d("TablaPahi", Vector3.new(15.8, 0.16, 5.8), Vector3.new(0, 3.36, 0.1), C.deepTeal, Enum.Material.Marble)
+	Detail.drawer(model, origin * CFrame.new(-2.4, 1.9, 2.32), 3.4, 1.0, C.midWood, C.chrome)
+	Detail.drawer(model, origin * CFrame.new(2.4, 1.9, 2.32), 3.4, 1.0, C.midWood, C.chrome)
+	Detail.screen(model, origin * CFrame.new(-3.2, 4.5, -0.4) * CFrame.Angles(math.rad(-12), math.rad(14), 0),
+		3.0, 1.9, C.black, C.screen, Loc.get("lobby.title"))
+	d("Klavye", Vector3.new(2.6, 0.14, 1.0), Vector3.new(-3.2, 3.74, 1.3), C.black)
+	-- Zil ve kalemlik: bankoyu "kullanilan bir yer" yapan detaylar.
+	Build.pillar({
+		name = "Zil", size = Vector3.new(0.9, 0.5, 0.9),
+		cf = origin * CFrame.new(3.4, 3.95, 1.2), color = C.chrome,
+		material = Enum.Material.Metal, canCollide = false, castShadow = false, parent = model,
+	})
+	Build.pillar({
+		name = "Kalemlik", size = Vector3.new(0.8, 1.0, 0.8),
+		cf = origin * CFrame.new(4.8, 4.2, 0.6), color = C.deepTeal,
+		canCollide = false, castShadow = false, parent = model,
+	})
+	Detail.plate(model, origin * CFrame.new(0, 2.4, 2.42), 6.4, 1.2, C.deepTeal, C.white, Loc.get("lobby.desk"))
+end
+
+builders.banner = function(model, origin)
+	local p, d = maker(model, origin), makerDecor(model, origin)
+	-- Tavandan sarkan pankart: cubuk + kumas + puskuller.
+	p("Cubuk", Vector3.new(5.0, 0.3, 0.3), Vector3.new(0, 5.2, 0), C.darkSteel, Enum.Material.Metal)
+	d("CubukUcu", Vector3.new(0.5, 0.5, 0.5), Vector3.new(-2.5, 5.2, 0), C.gold, Enum.Material.Metal)
+	d("CubukUcu", Vector3.new(0.5, 0.5, 0.5), Vector3.new(2.5, 5.2, 0), C.gold, Enum.Material.Metal)
+	d("Kumas", Vector3.new(4.4, 8.4, 0.14), Vector3.new(0, 0.9, 0), C.deepTeal, Enum.Material.Fabric)
+	d("KumasKenari", Vector3.new(4.7, 0.3, 0.2), Vector3.new(0, 5.0, 0), C.gold, Enum.Material.Fabric)
+	d("KumasKenari", Vector3.new(4.7, 0.3, 0.2), Vector3.new(0, -3.2, 0), C.gold, Enum.Material.Fabric)
+	-- Alt kenardaki uc puskul: kumasin agirligini gosteriyor.
+	for index = -1, 1 do
+		d("Puskul", Vector3.new(0.3, 0.9, 0.3), Vector3.new(index * 1.6, -3.8, 0), C.gold, Enum.Material.Fabric)
+	end
+	Detail.plate(model, origin * CFrame.new(0, 1.6, 0.12), 3.8, 2.4, C.deepTeal, C.white, Loc.get("lobby.title"))
+end
+
+builders.noticeBoard = function(model, origin)
+	local p, d = maker(model, origin), makerDecor(model, origin)
+	p("Cerceve", Vector3.new(6.6, 5.2, 0.36), Vector3.new(0, 0, 0), C.darkWood, Enum.Material.Wood)
+	d("Mantar", Vector3.new(6.0, 4.6, 0.14), Vector3.new(0, 0, 0.16), C.sand, Enum.Material.Fabric)
+	Detail.trim(model, origin, Vector3.new(6.6, 5.2, 0.36), 0.14, C.midWood)
+	-- Asili notlar: farkli boy ve renkte kagitlar, hafif egik.
+	local notes = {
+		{ -1.9, 1.0, 1.7, 1.2, C.white, 6 },
+		{ 0.2, 1.2, 1.5, 1.0, C.towel, -4 },
+		{ 2.0, 0.8, 1.6, 1.4, C.white, 3 },
+		{ -1.4, -1.2, 1.9, 1.1, C.paleTeal, -7 },
+		{ 1.5, -1.3, 1.6, 1.2, C.white, 5 },
+	}
+	for _, note in notes do
+		local x, y, w, h, tint, tilt = note[1], note[2], note[3], note[4], note[5], note[6]
+		d("Not", Vector3.new(w :: number, h :: number, 0.06),
+			Vector3.new(x :: number, y :: number, 0.26), tint :: Color3,
+			Enum.Material.SmoothPlastic, CFrame.Angles(0, 0, math.rad(tilt :: number)))
+		d("RaptiyeBasi", Vector3.new(0.18, 0.18, 0.1),
+			Vector3.new(x :: number, (y :: number) + (h :: number) * 0.36, 0.32), C.accent, Enum.Material.Metal)
+	end
+	Detail.plate(model, origin * CFrame.new(0, 2.9, 0.1), 4.2, 0.9, C.navy, C.white, Loc.get("lobby.notice"))
+end
+
+builders.statue = function(model, origin)
+	local p, d = maker(model, origin), makerDecor(model, origin)
+	-- Kaide
+	p("Kaide", Vector3.new(4.8, 0.5, 4.8), Vector3.new(0, 0.25, 0), C.shadowWhite, Enum.Material.Marble)
+	p("Kaide", Vector3.new(4.0, 3.6, 4.0), Vector3.new(0, 2.3, 0), C.offWhite, Enum.Material.Marble)
+	p("Kaide", Vector3.new(4.6, 0.4, 4.6), Vector3.new(0, 4.3, 0), C.shadowWhite, Enum.Material.Marble)
+	Detail.plate(model, origin * CFrame.new(0, 2.4, 2.06), 3.2, 1.0, C.navy, C.gold, Loc.get("lobby.statue"))
+
+	-- Oturan kopek: veteriner klinigi lobisine yakisan tek heykel.
+	-- Govde, gogus, kafa, kulaklar, on ayaklar, kuyruk.
+	local stone = C.white
+	d("Govde", Vector3.new(1.7, 2.0, 2.6), Vector3.new(0, 5.6, -0.3), stone, Enum.Material.Marble,
+		CFrame.Angles(math.rad(-12), 0, 0))
+	d("Gogus", Vector3.new(1.5, 1.6, 1.4), Vector3.new(0, 6.1, 0.7), stone, Enum.Material.Marble)
+	d("Kafa", Vector3.new(1.3, 1.25, 1.4), Vector3.new(0, 7.5, 0.75), stone, Enum.Material.Marble)
+	d("Burun", Vector3.new(0.75, 0.6, 0.8), Vector3.new(0, 7.3, 1.5), stone, Enum.Material.Marble)
+	d("BurunUcu", Vector3.new(0.35, 0.3, 0.25), Vector3.new(0, 7.4, 1.9), C.shadowWhite, Enum.Material.Marble)
+	for _, side in { -1, 1 } do
+		d("Kulak", Vector3.new(0.4, 0.9, 0.55), Vector3.new(side * 0.55, 8.2, 0.6), stone,
+			Enum.Material.Marble, CFrame.Angles(0, 0, math.rad(side * 14)))
+		d("OnAyak", Vector3.new(0.45, 1.5, 0.5), Vector3.new(side * 0.5, 5.2, 1.15), stone, Enum.Material.Marble)
+		d("Pati", Vector3.new(0.55, 0.35, 0.9), Vector3.new(side * 0.5, 4.65, 1.35), stone, Enum.Material.Marble)
+	end
+	d("Kuyruk", Vector3.new(0.4, 0.4, 1.8), Vector3.new(0, 4.9, -1.5), stone, Enum.Material.Marble,
+		CFrame.Angles(math.rad(22), 0, 0))
+end
+
+builders.rugRunner = function(model, origin)
+	local d = makerDecor(model, origin)
+	-- Uzun hali yolu: giristen salona kadar gidiyor ve gozu ileri
+	-- cekiyor. Zeminden 0,1 stud yukarida duruyor ki z-fighting olmasin.
+	d("Hali", Vector3.new(9.4, 0.12, 29.4), Vector3.new(0, 0.12, 0), C.carpet, Enum.Material.Fabric)
+	d("HaliKenari", Vector3.new(10.0, 0.1, 30.0), Vector3.new(0, 0.06, 0), C.deepTeal, Enum.Material.Fabric)
+	-- Boyuna iki serit ve enine desen cizgileri.
+	for _, side in { -1, 1 } do
+		d("HaliSeridi", Vector3.new(0.5, 0.14, 29.0), Vector3.new(side * 3.6, 0.13, 0), C.gold, Enum.Material.Fabric)
+	end
+	for index = -6, 6 do
+		d("HaliDeseni", Vector3.new(7.8, 0.14, 0.24), Vector3.new(0, 0.13, index * 2.2), C.paleTeal, Enum.Material.Fabric)
+	end
+end
+
+builders.lobbySofa = function(model, origin)
+	local p, d = maker(model, origin), makerDecor(model, origin)
+	p("Govde", Vector3.new(8.4, 1.4, 3.4), Vector3.new(0, 1.5, 0), C.navy, Enum.Material.Fabric)
+	d("Minder", Vector3.new(8.0, 0.6, 3.0), Vector3.new(0, 2.4, 0.1), C.pad, Enum.Material.Fabric)
+	d("Sirtlik", Vector3.new(8.4, 2.4, 0.7), Vector3.new(0, 3.0, -1.4), C.navy, Enum.Material.Fabric)
+	d("SirtlikPahi", Vector3.new(8.4, 0.35, 0.9), Vector3.new(0, 4.15, -1.4), C.pad, Enum.Material.Fabric)
+	for _, side in { -1, 1 } do
+		d("Kolcak", Vector3.new(0.7, 1.5, 3.4), Vector3.new(side * 3.85, 2.6, 0), C.navy, Enum.Material.Fabric)
+		d("KolcakPahi", Vector3.new(0.9, 0.3, 3.6), Vector3.new(side * 3.85, 3.4, 0), C.pad, Enum.Material.Fabric)
+	end
+	-- Yastiklar ve ahsap ayaklar
+	for _, side in { -1, 1 } do
+		d("Yastik", Vector3.new(1.5, 1.4, 0.4), Vector3.new(side * 2.4, 3.1, -0.9), C.paleTeal,
+			Enum.Material.Fabric, CFrame.Angles(math.rad(-14), 0, 0))
+	end
+	for _, sx in { -1, 1 } do
+		for _, sz in { -1, 1 } do
+			Detail.leg(model, origin * CFrame.new(sx * 3.6, 0.8, sz * 1.2), 0.8, 0.36, C.darkWood)
+		end
+	end
+end
+
+builders.planterBox = function(model, origin)
+	local p, d = maker(model, origin), makerDecor(model, origin)
+	p("Tekne", Vector3.new(9.4, 2.2, 2.8), Vector3.new(0, 1.1, 0), C.terracotta)
+	Detail.trim(model, origin * CFrame.new(0, 1.1, 0), Vector3.new(9.4, 2.2, 2.8), 0.16, C.darkWood)
+	d("Toprak", Vector3.new(8.8, 0.3, 2.3), Vector3.new(0, 2.25, 0), C.soil)
+	-- Uc calilik: her biri birkac yaprak kumesi. Tek bir yesil kutu
+	-- "bitki" degil "kutu" gorunumu veriyordu.
+	for index = -1, 1 do
+		local x = index * 3.0
+		Build.pillar({
+			name = "Calilik", size = Vector3.new(2.4, 1.8, 2.2),
+			cf = origin * CFrame.new(x, 3.1, 0), color = C.leaf,
+			canCollide = false, castShadow = false, parent = model,
+		})
+		d("Yaprak", Vector3.new(1.4, 0.9, 1.3), Vector3.new(x - 0.7, 3.5, 0.4), C.midLeaf,
+			Enum.Material.Grass, CFrame.Angles(0, math.rad(24), math.rad(12)))
+		d("Yaprak", Vector3.new(1.3, 0.9, 1.2), Vector3.new(x + 0.7, 3.4, -0.3), C.darkLeaf,
+			Enum.Material.Grass, CFrame.Angles(0, math.rad(-18), math.rad(-10)))
+	end
+	d("Cicek", Vector3.new(0.5, 0.5, 0.5), Vector3.new(-1.5, 3.9, 0.5), C.blossom)
+	d("Cicek", Vector3.new(0.5, 0.5, 0.5), Vector3.new(2.2, 3.8, -0.4), C.gold)
+end
+
+builders.archFrame = function(model, origin)
+	local p, d = maker(model, origin), makerDecor(model, origin)
+	-- Portal kemeri: iki ayak + basamakli kemer + tepe tasi. Kemer
+	-- egrisi kademeli bloklardan kuruluyor; Roblox'ta egri bir parca
+	-- mesh isterdi ve bu ortamda mesh dogrulanamaz.
+	for _, side in { -1, 1 } do
+		p("KemerAyagi", Vector3.new(1.8, 11.0, 1.8), Vector3.new(side * 5.4, 5.5, 0), C.offWhite, Enum.Material.Marble)
+		d("AyakTabani", Vector3.new(2.4, 0.6, 2.4), Vector3.new(side * 5.4, 0.3, 0), C.shadowWhite, Enum.Material.Marble)
+		d("AyakBasligi", Vector3.new(2.3, 0.55, 2.3), Vector3.new(side * 5.4, 11.2, 0), C.shadowWhite, Enum.Material.Marble)
+	end
+	-- Kemerin kademeleri
+	local steps = { { 4.3, 12.1, 1.8 }, { 3.0, 12.9, 1.7 }, { 1.5, 13.5, 1.6 } }
+	for _, step in steps do
+		local x, y, w = step[1], step[2], step[3]
+		for _, side in { -1, 1 } do
+			d("KemerTasi", Vector3.new(w, 1.0, 1.7), Vector3.new(side * x, y, 0), C.white, Enum.Material.Marble)
+		end
+	end
+	d("KilitTasi", Vector3.new(2.0, 1.3, 1.9), Vector3.new(0, 13.9, 0), C.deepTeal, Enum.Material.Marble)
+	d("KemerAlni", Vector3.new(12.2, 0.5, 1.5), Vector3.new(0, 14.6, 0), C.shadowWhite, Enum.Material.Marble)
+end
+
+-- ── Klinik cephesi ve ic mekan detaylari ─────────────────────────────
+-- Bina disaridan duz bir kutuydu: kapi bir delik, cevresi cimendi.
+-- Buradaki esyalar binaya BIR CEPHE veriyor - sacak, basamaklar,
+-- bayrak diregi, ambulans - ve icerde odalari birbirinden ayiran
+-- yonlendirme tabelalari.
+
+builders.entranceCanopy = function(model, origin)
+	local p, d = maker(model, origin), makerDecor(model, origin)
+	-- Giris sacagi: kapinin onunde, iki direk uzerinde duran genis bir
+	-- ortu. Yagmurda beklenen yer burasi ve bina "girisi olan bir bina"
+	-- gibi duruyor.
+	for _, side in { -1, 1 } do
+		Build.pillar({
+			name = "SacakDiregi", size = Vector3.new(1.3, 8.4, 1.3),
+			cf = origin * CFrame.new(side * 9.4, 4.2, 4.6), color = C.steel,
+			material = Enum.Material.Metal, parent = model,
+		})
+		d("DirekTabani", Vector3.new(2.0, 0.5, 2.0), Vector3.new(side * 9.4, 0.25, 4.6), C.darkSteel, Enum.Material.Metal)
+		d("DirekBasligi", Vector3.new(1.7, 0.4, 1.7), Vector3.new(side * 9.4, 8.5, 4.6), C.darkSteel, Enum.Material.Metal)
+		-- Capraz destek: sacagin havada durmasini ACIKLAYAN parca.
+		d("Destek", Vector3.new(0.4, 3.6, 0.4), Vector3.new(side * 8.2, 7.4, 2.6), C.darkSteel,
+			Enum.Material.Metal, CFrame.Angles(math.rad(38), 0, math.rad(side * -20)))
+	end
+	p("Sacak", Vector3.new(21.0, 0.7, 12.0), Vector3.new(0, 8.9, 0.6), C.deepTeal)
+	d("SacakAlni", Vector3.new(21.4, 1.1, 0.5), Vector3.new(0, 8.6, 6.4), C.white)
+	d("SacakAlni", Vector3.new(0.5, 1.1, 12.2), Vector3.new(-10.6, 8.6, 0.6), C.white)
+	d("SacakAlni", Vector3.new(0.5, 1.1, 12.2), Vector3.new(10.6, 8.6, 0.6), C.white)
+	-- Alt yuzey seritleri: duz bir tavan yerine kaplama izlenimi.
+	for index = -4, 4 do
+		d("SacakKaplamasi", Vector3.new(1.6, 0.16, 11.4), Vector3.new(index * 2.2, 8.48, 0.6), C.offWhite)
+	end
+	Detail.plate(model, origin * CFrame.new(0, 8.6, 6.68), 9.0, 1.5, C.deepTeal, C.white, Loc.get("clinic.name"))
+	-- Sacak altindaki iki lamba
+	for _, side in { -1, 1 } do
+		local bulb = d("SacakLambasi", Vector3.new(1.6, 0.3, 1.6), Vector3.new(side * 5.0, 8.35, 2.4), C.white, Enum.Material.Neon)
+		bulb.Name = "SacakLambasi"
+	end
+end
+
+builders.entranceSteps = function(model, origin)
+	local p, d = maker(model, origin), makerDecor(model, origin)
+	-- Uc basamak: bina zemini ile bahce arasindaki gecis. Kapinin
+	-- dogrudan cimene acilmasi binayi "yere konmus" gosteriyordu.
+	for index = 0, 2 do
+		local depth = 4.6 - index * 1.4
+		p("Basamak", Vector3.new(19.4 - index * 1.2, 0.42, depth),
+			Vector3.new(0, 0.21 + index * 0.42, -index * 0.7), C.shadowWhite, Enum.Material.Concrete)
+		d("BasamakPahi", Vector3.new(19.6 - index * 1.2, 0.14, depth + 0.12),
+			Vector3.new(0, 0.44 + index * 0.42, -index * 0.7), C.offWhite, Enum.Material.Concrete)
+	end
+	-- Iki yanda korkuluk
+	for _, side in { -1, 1 } do
+		d("Korkuluk", Vector3.new(0.24, 0.24, 5.0), Vector3.new(side * 9.2, 1.9, 0.2), C.chrome,
+			Enum.Material.Metal, CFrame.Angles(math.rad(-14), 0, 0))
+		d("KorkulukDikmesi", Vector3.new(0.2, 1.6, 0.2), Vector3.new(side * 9.2, 1.0, 2.2), C.chrome, Enum.Material.Metal)
+		d("KorkulukDikmesi", Vector3.new(0.2, 2.2, 0.2), Vector3.new(side * 9.2, 1.3, -1.6), C.chrome, Enum.Material.Metal)
+	end
+	-- Tekerlekli sandalye rampasi: kapiya ulasmanin ikinci yolu.
+	d("Rampa", Vector3.new(3.4, 0.3, 5.2), Vector3.new(-11.6, 0.62, 0), C.shadowWhite,
+		Enum.Material.Concrete, CFrame.Angles(math.rad(-9), 0, 0))
+end
+
+builders.flagPole = function(model, origin)
+	local p, d = maker(model, origin), makerDecor(model, origin)
+	p("Kaide", Vector3.new(2.2, 0.7, 2.2), Vector3.new(0, 0.35, 0), C.shadowWhite, Enum.Material.Concrete)
+	d("KaidePahi", Vector3.new(2.5, 0.2, 2.5), Vector3.new(0, 0.75, 0), C.offWhite, Enum.Material.Concrete)
+	Build.pillar({
+		name = "Direk", size = Vector3.new(0.5, 18.0, 0.5),
+		cf = origin * CFrame.new(0, 9.4, 0), color = C.chrome,
+		material = Enum.Material.Metal, parent = model,
+	})
+	d("Tepe", Vector3.new(0.7, 0.7, 0.7), Vector3.new(0, 18.6, 0), C.gold, Enum.Material.Metal)
+	-- Bayrak: klinigin renkleri. Ucusma animasyonu yok; kumas kademeli
+	-- parcalarla dalgali duruyor.
+	for index = 0, 4 do
+		d("Bayrak", Vector3.new(1.5, 3.4, 0.12),
+			Vector3.new(1.0 + index * 1.45, 16.2, math.sin(index * 0.9) * 0.35), C.deepTeal,
+			Enum.Material.Fabric, CFrame.Angles(0, math.rad(math.sin(index * 0.9) * 14), 0))
+	end
+	d("BayrakPatisi", Vector3.new(1.4, 1.4, 0.16), Vector3.new(4.2, 16.2, 0.1), C.white, Enum.Material.Fabric)
+	d("Halat", Vector3.new(0.1, 9.0, 0.1), Vector3.new(-0.3, 12.0, 0), C.towel)
+end
+
+builders.ambulance = function(model, origin)
+	local p, d = maker(model, origin), makerDecor(model, origin)
+	-- Hayvan ambulansi: acil vakalarin nereden geldigini anlatan tek
+	-- parca. Klinigin onunde park halinde duruyor.
+	p("Kasa", Vector3.new(6.6, 4.4, 9.0), Vector3.new(0, 3.6, -2.0), C.white)
+	p("Kabin", Vector3.new(6.4, 3.2, 4.6), Vector3.new(0, 3.0, 4.6), C.white)
+	d("On", Vector3.new(6.2, 1.6, 1.4), Vector3.new(0, 1.9, 6.9), C.white)
+	d("OnCam", Vector3.new(5.6, 2.0, 0.3), Vector3.new(0, 3.6, 6.85), C.glass, Enum.Material.Glass)
+	d("YanCam", Vector3.new(0.3, 1.5, 2.2), Vector3.new(-3.2, 3.6, 4.6), C.glass, Enum.Material.Glass)
+	d("YanCam", Vector3.new(0.3, 1.5, 2.2), Vector3.new(3.2, 3.6, 4.6), C.glass, Enum.Material.Glass)
+	d("ArkaKapi", Vector3.new(6.0, 3.6, 0.3), Vector3.new(0, 3.4, -6.4), C.shadowWhite)
+	d("Serit", Vector3.new(6.8, 0.9, 9.2), Vector3.new(0, 2.6, -2.0), C.accent)
+	d("Serit", Vector3.new(6.6, 0.5, 4.8), Vector3.new(0, 2.6, 4.6), C.accent)
+	-- Tepe lambasi
+	d("TepeLambasi", Vector3.new(3.6, 0.6, 1.0), Vector3.new(0, 5.9, 3.6), C.accent, Enum.Material.Neon)
+	d("TepeLambasi", Vector3.new(1.2, 0.6, 1.0), Vector3.new(0, 5.9, 3.6), C.water, Enum.Material.Neon)
+	-- Tekerlekler
+	for _, sx in { -1, 1 } do
+		for _, sz in { 4.2, -3.6 } do
+			Build.pillar({
+				name = "Teker", size = Vector3.new(2.2, 0.9, 2.2),
+				cf = origin * CFrame.new(sx * 3.1, 1.1, sz) * CFrame.Angles(0, 0, math.rad(90)),
+				color = C.rubber, canCollide = false, castShadow = false, parent = model,
+			})
+			Build.pillar({
+				name = "Jant", size = Vector3.new(1.2, 1.0, 1.2),
+				cf = origin * CFrame.new(sx * 3.1, 1.1, sz) * CFrame.Angles(0, 0, math.rad(90)),
+				color = C.chrome, material = Enum.Material.Metal,
+				canCollide = false, castShadow = false, parent = model,
+			})
+		end
+	end
+	Detail.plate(model, origin * CFrame.new(3.32, 3.4, -2.0) * CFrame.Angles(0, math.rad(90), 0),
+		6.0, 1.4, C.deepTeal, C.white, Loc.get("clinic.name"))
+end
+
+builders.bikeRack = function(model, origin)
+	local p, d = maker(model, origin), makerDecor(model, origin)
+	p("Ray", Vector3.new(6.4, 0.3, 0.3), Vector3.new(0, 0.6, -1.0), C.darkSteel, Enum.Material.Metal)
+	p("Ray", Vector3.new(6.4, 0.3, 0.3), Vector3.new(0, 0.6, 1.0), C.darkSteel, Enum.Material.Metal)
+	for index = -2, 2 do
+		-- U seklinde bisiklet yuvasi: iki dikme + ust kavis.
+		d("Yuva", Vector3.new(0.22, 2.6, 0.22), Vector3.new(index * 1.5, 1.4, -1.0), C.chrome, Enum.Material.Metal)
+		d("Yuva", Vector3.new(0.22, 2.6, 0.22), Vector3.new(index * 1.5, 1.4, 1.0), C.chrome, Enum.Material.Metal)
+		d("YuvaKavisi", Vector3.new(0.22, 0.22, 2.2), Vector3.new(index * 1.5, 2.65, 0), C.chrome, Enum.Material.Metal)
+	end
+	d("Zemin", Vector3.new(6.8, 0.14, 3.0), Vector3.new(0, 0.07, 0), C.shadowWhite, Enum.Material.Concrete)
+end
+
+builders.roomSign = function(model, origin)
+	local p, d = maker(model, origin), makerDecor(model, origin)
+	-- Oda yonlendirme tabelasi: kapinin ustunde, iki yuzu de yazili.
+	-- Klinikte "hangi oda neresi" sorusunun cevabi buydu; onceden yoktu
+	-- ve oyuncu odalari ezberlemek zorundaydi.
+	p("Govde", Vector3.new(5.2, 1.7, 0.34), Vector3.new(0, 0, 0), C.deepTeal)
+	Detail.trim(model, origin, Vector3.new(5.2, 1.7, 0.34), 0.12, C.chrome)
+	d("Aski", Vector3.new(0.16, 1.1, 0.16), Vector3.new(-1.8, 1.3, 0), C.darkSteel, Enum.Material.Metal)
+	d("Aski", Vector3.new(0.16, 1.1, 0.16), Vector3.new(1.8, 1.3, 0), C.darkSteel, Enum.Material.Metal)
+	d("AskiKirisi", Vector3.new(4.2, 0.16, 0.16), Vector3.new(0, 1.85, 0), C.darkSteel, Enum.Material.Metal)
+	-- Ok isareti: tabelanin yon gosterdigini anlatiyor.
+	d("Ok", Vector3.new(0.9, 0.22, 0.1), Vector3.new(-1.9, 0, 0.2), C.white)
+	d("OkUcu", Vector3.new(0.35, 0.35, 0.1), Vector3.new(-2.3, 0, 0.2), C.white, nil, CFrame.Angles(0, 0, math.rad(45)))
+	Build.surfaceText(
+		Build.part({
+			name = "Yuzey",
+			size = Vector3.new(4.6, 1.2, 0.08),
+			cf = origin * CFrame.new(0.4, 0, 0.2),
+			color = C.deepTeal,
+			canCollide = false,
+			castShadow = false,
+			parent = model,
+		}),
+		Enum.NormalId.Front,
+		Loc.get("prop.roomSign"),
+		C.white
+	)
+end
+
+builders.wallRail = function(model, origin)
+	local p, d = maker(model, origin), makerDecor(model, origin)
+	-- Duvar korkulugu (lambri kusagi): koridor duvarlarini yatay olarak
+	-- boluyor. Hastane duvarlarinin en taniyan detayi bu serittir.
+	p("Kusak", Vector3.new(11.6, 0.55, 0.3), Vector3.new(0, 0, 0), C.darkWood, Enum.Material.Wood)
+	d("KusakUstu", Vector3.new(11.8, 0.18, 0.42), Vector3.new(0, 0.32, 0.04), C.wood, Enum.Material.Wood)
+	d("KusakAlti", Vector3.new(11.8, 0.14, 0.38), Vector3.new(0, -0.3, 0.02), C.wood, Enum.Material.Wood)
+	-- Tamponlar: sedye carpmasin diye. Duz bir tahta yerine islevi
+	-- gorunen bir parca.
+	for index = -2, 2 do
+		d("Tampon", Vector3.new(1.6, 0.42, 0.16), Vector3.new(index * 2.3, 0, 0.2), C.deepTeal, Enum.Material.Fabric)
+	end
+	for index = -1, 1 do
+		d("Konsol", Vector3.new(0.26, 0.5, 0.28), Vector3.new(index * 4.4, -0.1, -0.16), C.darkSteel, Enum.Material.Metal)
+	end
+end
+
+builders.magazineTable = function(model, origin)
+	local p, d = maker(model, origin), makerDecor(model, origin)
+	-- Bekleme odasi sehpasi: dergiler ve bir su bardagi. Bekleme
+	-- odasinin "burada beklenir" demesini saglayan detay.
+	d("Tabla", Vector3.new(4.4, 0.3, 4.4), Vector3.new(0, 2.3, 0), C.wood, Enum.Material.Wood)
+	Detail.trim(model, origin * CFrame.new(0, 2.3, 0), Vector3.new(4.4, 0.3, 4.4), 0.12, C.darkWood)
+	d("AltRaf", Vector3.new(3.6, 0.22, 3.6), Vector3.new(0, 0.9, 0), C.midWood, Enum.Material.Wood)
+	for _, sx in { -1, 1 } do
+		for _, sz in { -1, 1 } do
+			Detail.leg(model, origin * CFrame.new(sx * 1.8, 2.15, sz * 1.8), 2.15, 0.3, C.darkWood)
+		end
+	end
+	-- Ust uste dizilmis dergiler: her biri biraz kaymis.
+	local tints = { C.accent, C.water, C.leaf, C.gold }
+	for index = 0, 3 do
+		d("Dergi", Vector3.new(1.9, 0.1, 1.4),
+			Vector3.new(-0.7 + index * 0.12, 2.5 + index * 0.11, 0.4 - index * 0.1),
+			tints[index + 1], Enum.Material.SmoothPlastic,
+			CFrame.Angles(0, math.rad(index * 7 - 10), 0))
+	end
+	Build.pillar({
+		name = "Bardak", size = Vector3.new(0.7, 0.9, 0.7),
+		cf = origin * CFrame.new(1.4, 2.9, -0.9), color = C.water,
+		material = Enum.Material.Glass, canCollide = false, castShadow = false, parent = model,
+	})
+	d("AltRafDergi", Vector3.new(2.6, 0.14, 1.8), Vector3.new(0.2, 1.08, 0), C.towel)
+end
+
 builders.clinicSign = function(model, origin)
 	local p, d = maker(model, origin), makerDecor(model, origin)
 	for _, side in { -7, 7 } do

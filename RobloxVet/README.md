@@ -6,8 +6,9 @@ türler ve odalar açılır.
 
 **Yalnızca birinci şahıs** — ellerini ve elindeki aleti görüyorsun.
 Gündüz/gece döngüsü, gece nöbeti zammı, alet mini-oyunları, yatan hastalar,
-maaşlı personel, salgın vardiyaları, laboratuvar ve karantina, kendi
-dekorasyonunu seçtiğin bir klinik. Telefonda da oynanıyor.
+maaşlı personel, salgın vardiyaları, laboratuvar ve karantina, açılan
+kapılar, kendi dekorasyonunu seçtiğin bir klinik. Telefonda da oynanıyor.
+Solo girdiğinde sunucu **gerçekten** sana ait.
 
 Luau · Rojo uyumlu · sunucu otoriter · DataStore kayıtlı · **hiçbir dış
 asset'e bağımlı değil** (tek bir doku, mesh ya da animasyon ID'si yok)
@@ -49,6 +50,7 @@ normal, bozuk değil (neden böyle: aşağıda "Neden her şey kodda").
 | Panelden tıkla | Teşhis koy · Tedavi uygula |
 | **T** | Hastayı taburcu et (gereken bütün tedaviler bitince) |
 | **R** | Laboratuvar tezgâhında numuneyi incele |
+| Kapıda **E** | Kapıyı aç / kapat (ProximityPrompt) |
 | **B** | Mağaza — aletler ve klinik yükseltmeleri |
 | **G** | İlerleme — günlük görevler · başarımlar · istatistikler |
 | **O** | Ayarlar — kamera, sallanma, FOV, koşma, kare sayacı |
@@ -126,6 +128,29 @@ oyun yayınlandığı anda lobiden kliniğe ışınlanma çalışır.
   kilitli kalmaz.
 - Portalların üstünde sırada kaç kişi olduğu **canlı** yazar.
 
+### Solo gerçekten solo: kadro kilidi
+
+Her kadro **kendi** ayrılmış sunucusuna gidiyor; erişim kodu asla yeniden
+kullanılmıyor. Ama kod bunu yalnızca **umuyordu**, hiçbir yerde
+**zorlamıyordu** — erişim kodunu bilen ya da Studio yedeğinde aynı sunucuda
+kalan ikinci bir oyuncu senin kliniğine düşebilirdi.
+
+Artık üç yerde birden zorlanıyor:
+
+1. **Eşleştirme** ışınlanma verisine kadronun **UserId listesini** koyuyor.
+2. **Varış sunucusu** (`src/server/game/Roster.luau`) ilk gelen oyuncunun
+   katılma verisinden kadroyu okuyup kendini o gruba **kilitliyor**. Kadro
+   bir kez kurulunca **genişletilemiyor**; listede olmayan oyuncunun profili
+   bile yüklenmiyor ve birkaç saniye içinde lobiye geri yollanıyor.
+3. **Studio yedeği** (ışınlanma yok): klinik aynı sunucuda açılıyor ama
+   sunucu **ilk gruba ait** oluyor. Eşleştirme duruyor ve sonraki gruplar
+   aynı kliniğe eklenmiyor — sebebini yazılı görüyorlar.
+
+`Roster.claim` ikinci çağrıda `false` dönüyor; `SelfTest` bunu her açılışta
+ölçüyor ve `verify_data` üç yerin de bağlı olduğunu denetliyor. Sessizce
+genişleyen bir kadro, tam da kaçınmak istenen "solo girdim ama yanıma biri
+düştü" durumunu geri getirirdi.
+
 ## Ses ve müzik
 
 Ses sistemi tamamen kurulu: arayüz tıkları, alet başına ayrı ses, tedavi
@@ -184,13 +209,16 @@ Sessiz bir gizem değil, tek satırlık bir düzeltme.
 | **Gündüz/gece** | 12 dakikalık gün; gece az hasta, zamlı ücret, çok acil |
 | **5 adımlık öğretici** | İlk hastada adım adım; adımlar **yapılan işle** açılıyor |
 | **Dokunmatik** | Telefonda oynanabiliyor; arayüz ekrana göre ölçekleniyor |
+| **Açılan kapılar** | 20 kapı (12 klinik + 8 lobi); menteşeden salınım, mandal, ses |
+| **Üç bölümlü lobi** | Giriş holü, çeşmeli ana salon, kemerli portal kanadı |
+| **Özel sunucu** | Solo gerçekten solo: kadro kilidi ışınlanma verisinden geliyor |
 
 ### Görünüm
 
-Klinik ve 35 eşya, **eşya başına en az 8 parçadan** kuruluyor: pahlı
+Klinik ve 53 eşya, **eşya başına en az 8 parçadan** kuruluyor: pahlı
 kenarlar, iki tonlu paneller, kulplar, konik ayaklar, sarkan kablolar,
 tepside sıralı aletler, rafta şişeler, kafeste mandal ve etiket. Ortak
-detaylar `src/shared/Detail.luau` içinde tek yerde — 35 eşya aynı kalite
+detaylar `src/shared/Detail.luau` içinde tek yerde — 53 eşya aynı kalite
 dilinden konuşuyor.
 
 Bina artık kutu değil: **dış duvarlarda 11 pencere** (cam + çerçeve +
@@ -382,9 +410,10 @@ var; gece nöbetinde rozet ücret çarpanını yazıyor.
   `ParticleEmitter` **kullanılmıyor** — dokusu bir asset ve bu ortamda
   doğrulanamaz; yüklenmeyen bir doku emitter'ı sessizce boş bırakır.
   Tweenlenen küçük parçalar hiçbir asset istemiyor.
-- **Kapılar**: her kapı boşluğunda yaklaşınca açılan çift kanat. Kanatlar
-  **çarpışmıyor**: kapalı bir kanat çarpışan bir duvar olsaydı, açılma
-  gecikmesinde oyuncu kapıda sıkışırdı.
+- **Kapılar**: her kapı boşluğunda çift kanat — ve kapıyı **sen
+  açıyorsun**. Önceden yaklaşınca kendiliğinden açılıyorlardı ve bu, kapıyı
+  bir dekora çeviriyordu: oyuncu kapının orada olduğunu bile fark etmeden
+  geçiyordu. Ayrıntısı aşağıda.
 
 ---
 
@@ -565,6 +594,82 @@ ediyor.
 
 ---
 
+## Kapılar açılıyor
+
+Kapının üstünde **"Kapıyı aç"** istemi var. Basınca üç şey aynı anda
+oynuyor:
+
+1. **Kulp mandalı** aşağı dönüyor, sonra geri geliyor,
+2. kanat **menteşeden** 96 derece savruluyor — ortadan değil, gerçek bir
+   kapı gibi; menteşeler de görünüyor (dönme ekseninin görünmesi,
+   animasyonu inandırıcı yapan şey),
+3. mandal sesi, ardından kanat sesi.
+
+Açılırken `Back` yumuşatması: kanat sonunda hafifçe salınıp duruyor.
+Kapanırken `Quad` ve daha yavaş: kapanan kapı savrulmaz, yavaşlayarak
+oturur.
+
+Kimse yakınında değilken açık kapı **6 saniye sonra kendiliğinden**
+kapanıyor. Oyuncunun arkasından kapıyı kapatmasını beklemek, kısa sürede
+bütün kliniği açık kapılı bırakırdı.
+
+Kanatlar hâlâ **çarpışmıyor**: kapalı bir kanat çarpışan bir duvar olsaydı,
+açılma gecikmesinde ya da bir hata durumunda oyuncu kapıda sıkışırdı.
+Görünüm için kapı, oynanış için açık geçit.
+
+Aynı modül **lobide de** çalışıyor: lobi de bölümlere ayrıldı ve
+bölümler arasında açılan kapılar var. İkinci bir kapı modülü yazmak, bir
+kapı hatasını iki yerde birden düzeltmek demek olurdu.
+
+---
+
+## Lobi
+
+Lobi oyunun **ilk gördüğü** oda ve en boş odasıydı: dört düz duvar, birkaç
+bank, dört portal. Oyuncunun oyun hakkındaki ilk izlenimi oradan çıkıyor.
+
+Salon artık **üç bölüm** ve bir **yol** sunuyor:
+
+| | |
+|---|---|
+| **Giriş holü** (z −40…−18) | karşılama bankosu, koltuklar, duyuru panoları, saksılar |
+| ↓ | kapılı iç duvar (üç kapı) |
+| **Ana salon** (z −18…14) | çeşme, 16 sütunluk iki sıra, köpek heykeli, halı yolları, pankartlar |
+| ↓ | kapılı iç duvar (her portala bir kapı) |
+| **Portal kanadı** (z 14…40) | dört mermer kemer, dört portal |
+
+Tavanın ortası **açık**: 36×20'lik bir aydınlık camı ve kafesi var, güneş
+salonun ortasına düşüyor. 96×80'lik bir salonda düz bir tavan mekânı kutuya
+çeviriyordu.
+
+Dışarıda taş yol, lamba direkleri, banklar, ağaçlar ve çalılar.
+
+**Duvarlar artık veride.** Önceden kodda üretilen dört düz duvardı; veriye
+taşınınca `verify_layout` onları da ölçmeye başladı — kapı önüne konan bir
+eşya, pencere önünü kapatan bir pano artık denetimde yakalanıyor. Duvar
+kurucusu klinikle **aynı** (`src/shared/Walls.luau`).
+
+---
+
+## Kliniğin cephesi
+
+Bina dışarıdan düz bir kutuydu: kapı bir delik, çevresi çimen. Artık bir
+**cephesi** var — giriş saçağı (iki direk üzerinde, altında iki lamba),
+üç basamak ve tekerlekli sandalye rampası, iki bayrak direği, park halinde
+bir **hayvan ambulansı** ve bisiklet yeri.
+
+İçerde **oda yönlendirme tabelaları**: kapının üstünde asılı, iki yüzü de
+yazılı, oku ile. Tabelanın yazısı **veriden** geliyor
+(`tag: "sign:room.exam1"`) — eşya kurucusunun oda adlarını bilmesi
+gerekmiyor: tabela genel, yazı özel. Koridor duvarlarında ayrıca lambri
+kuşağı (sedye tamponlarıyla birlikte).
+
+Tabelalar kapı yüksekliğinin **üstünde** duruyor; altında kalsalardı geçişi
+kapatırlardı ve yerleşim denetimi onları reddederdi — nitekim ilk denemede
+reddetti.
+
+---
+
 ## Kamera ve konfor
 
 Oyun **yalnızca birinci şahıs**. Üçüncü şahıs seçeneği bilerek yok: muayene
@@ -671,7 +776,7 @@ Sonucu:
 - Bir asset ID'sinin gerçekten var olduğu bile **doğrulanamazdı**. Ezberden
   bir ID yazmak, oyunda gri/kırık bir model demek olurdu — bu yüzden yazılmadı.
 
-Onun yerine klinik, 35 eşya, 10 hayvan rigi, sahip ve personel NPC'leri **kod ile,
+Onun yerine klinik, lobi, 53 eşya, 10 hayvan rigi, sahip ve personel NPC'leri **kod ile,
 temel parçalardan** (Part / WedgePart / silindir / küre + malzeme, ışık,
 parçacık) kuruluyor. Hiçbir dış dosyaya bağımlı değil; ilk açılışta
 eksiksiz görünüyor.
@@ -741,16 +846,16 @@ hedefleri.
 ## Doğrulama
 
 Studio'ya erişimimiz olmadığı için "çalışıyor" demek yerine **çalıştırılabilir
-denetim** yazıldı. Toplam **12.867 denetim**:
+denetim** yazıldı. Toplam **18.649 denetim**:
 
 ```bash
 python3 build.py
-python3 tools/verify_place.py       #    355  yer dosyası şeması + tazelik
-python3 tools/verify_data.py        #  2.603  veri + personel + olay + öğretici + çeviri
-python3 tools/verify_luau.py        #  1.238  Luau statik denetimleri
-python3 tools/verify_layout.py      #  8.212  3B çakışma, bekleyen hayvan, yatak, sahip, lobi
-python3 tools/verify_ui.py          #    211  EKRAN yerleşimi: panel çakışması, taşma, ölçek
-python3 tools/simulate_economy.py   #    248  ilerleme/ekonomi eğrisi (maaş, olay, kronik dahil)
+python3 tools/verify_place.py       #     363  yer dosyası şeması + tazelik
+python3 tools/verify_data.py        #   2.731  veri + personel + olay + öğretici + kapı + kadro
+python3 tools/verify_luau.py        #   1.275  Luau statik denetimleri
+python3 tools/verify_layout.py      #  13.821  3B çakışma: klinik + LOBİ (duvar, kapı, pencere, bahçe)
+python3 tools/verify_ui.py          #     211  EKRAN yerleşimi: panel çakışması, taşma, ölçek
+python3 tools/simulate_economy.py   #     248  ilerleme/ekonomi eğrisi (maaş, olay, kronik dahil)
 ```
 
 Hepsi hata yoksa `0`, varsa `1` döner (mevcut deponun `Tools/verify_*.py`
@@ -797,6 +902,7 @@ yakaladı:
 | `verify_layout` | 19 model kesişmesi; koğuş kafeslerinin içine **hiçbir hasta sığmıyordu** (iç ölçü 4,8 stud, en büyük hasta 6,4) |
 | `verify_data` | Resepsiyonist personeli **var olmayan** bir bekleme yeri açıyordu: satın alınan yer sessizce hiçbir işe yaramıyordu |
 | `verify_ui` | Yukarıdaki altı panel çakışması |
+| `verify_layout` (lobi) | Lobi yeniden kurulurken **22 çakışma**: sütunlar iç duvarı kesiyordu, karşılama bankosu orta kapının önünü kapatıyordu, pankartlar pencerelerin arkasında kalıyordu; kliniğin cephesinde ambulans ağacın, çalılar bayrak direğinin içindeydi |
 | `simulate_economy` | Dikkatsiz oyuncunun kasası 2 TL eksiye düşüyordu — oyunun yapamayacağı bir şey (modelin hatasıydı, oyunun değil) |
 | `verify_luau` | Kullanımdan önce tanımlanmamış yerel fonksiyonlar; çeviri anahtarı hiç denetlenmeyen ad alanları |
 | `SelfTest` | Rig eklem kümesi, koğuş yatak sayısı, klinik eşik tablosunun sınırları |
@@ -900,9 +1006,10 @@ RobloxVet/
 │   ├── events.json                   salgın / yoğun / sakin / denetim vardiyaları
 │   ├── tutorial.json                 5 adımlık öğretici ve vurgu bölgeleri
 │   ├── assetIds.json                 Creator Store yuvaları (boş)
-│   └── locale/tr.json                522 satır Türkçe metin
+│   └── locale/tr.json                531 satır Türkçe metin
 │
-├── src/shared/                       Net · Validate · Loc · Assets · Build · Detail · Audio
+├── src/shared/                       Net · Validate · Loc · Assets · Build · Walls
+│                                     Detail · Audio
 ├── src/server/
 │   ├── init.server.luau              tek giriş noktası, kurulum sırası
 │   ├── SelfTest.server.luau          açılış denetimleri → Output
@@ -912,7 +1019,8 @@ RobloxVet/
 │   └── game/                         PatientFlow · Diagnosis · Treatment · Surgery
 │                                     ToolGame · Economy · Upgrades · Profile
 │                                     Ward · Staff · ClinicLevel · Events · Tutorial
-│                                     Achievements · Tasks · Leaderboard · Matchmaking
+│                                     Achievements · Tasks · Leaderboard
+│                                     Matchmaking · Roster
 ├── src/client/                       Hud · Chart · DiagnosisPanel · TreatmentPanel
 │                                     SurgeryPanel · ToolGamePanel · ShopPanel
 │                                     WardPanel · ProgressPanel · SettingsPanel

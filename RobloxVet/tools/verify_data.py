@@ -486,6 +486,125 @@ def main() -> int:
     for key in sorted(set(re.findall(r'key = "(touch\.\w+)"', touch_src))):
         check(f"dokunmatik yazisi '{key}' tr.json'da var", key in strings)
 
+    # 9a8. Sunucu ozelligi (data/lobby.json -> privacy)
+    #
+    # "Solo girdim, sunucu bana ozel olsun." Bu bir AYAR degil, bir
+    # SOZ - ve sozu tutan sey kodun uc yerde birden dogru olmasi:
+    # eslestirme kadroyu yolluyor, varis sunucusu onu okuyup kendini
+    # kilitliyor, yedek yolda sunucu ilk gruba ait kaliyor. Uctunden
+    # biri kayarsa ozel sunucu ozel olmaz ve bunu ancak iki oyuncuyla
+    # canli denemede fark ederdik.
+    lobby_file = load("lobby.json")
+    privacy = lobby_file["privacy"]
+    check("lobby.json gizlilik bolumu tanimliyor", isinstance(privacy, dict))
+    check("kadro disi oyuncuya bir kac saniye taniniyor", 0 < privacy["returnDelaySeconds"] <= 15)
+    check("kadro disi mesaji bos degil", len(privacy["kickMessage"]) > 10)
+
+    with open(os.path.join(ROOT, "src", "server", "game", "Matchmaking.luau"), "r", encoding="utf-8") as handle:
+        match_src = handle.read()
+    with open(os.path.join(ROOT, "src", "server", "game", "Roster.luau"), "r", encoding="utf-8") as handle:
+        roster_src = handle.read()
+    with open(os.path.join(ROOT, "src", "server", "init.server.luau"), "r", encoding="utf-8") as handle:
+        init_src = handle.read()
+
+    check(
+        "her kadro icin YENI bir sunucu rezerve ediliyor",
+        "TeleportService:ReserveServer(game.PlaceId)" in match_src,
+    )
+    check(
+        "isinlanma verisine kadro listesi konuyor",
+        "roster = roster" in match_src,
+    )
+    check(
+        "varis sunucusu kadroyu isinlanma verisinden okuyor",
+        "GetJoinData" in roster_src and "data.roster" in roster_src,
+    )
+    check(
+        "kurulmus kadro genisletilemiyor (Roster.claim erken donuyor)",
+        "if claimed then\n\t\treturn false" in roster_src,
+    )
+    check("klinik sunucusunda kadro bekcisi baslatiliyor", "Roster.start()" in init_src)
+    check(
+        "kadro disi oyuncu icin profil yuklenmiyor",
+        "not Roster.allows(player)" in init_src,
+    )
+    # Studio yedegi: klinik ayni sunucuda acilinca eslestirme DURMALI.
+    check(
+        "yedek yolda eslestirme duruyor (Matchmaking.halt)",
+        "Matchmaking.halt(" in init_src and "function Matchmaking.halt" in match_src,
+    )
+    check(
+        "yedek yolda sunucu ilk gruba ait oluyor",
+        "Roster.claimPlayers(group" in init_src,
+    )
+    check("durdurulmus eslestirme yeni katilim kabul etmiyor", "if haltedKey ~= nil then" in match_src)
+    check("durdurma sebebi tr.json'da var", "lobby.serverTaken" in strings)
+
+    # 9a9. Kapilar (src/server/world/Doors.luau)
+    #
+    # Kapinin BASARAK acilmasi bir oynanis karari: once yaklasinca
+    # kendiliginden aciliyorlardi ve oyuncu kapinin orada oldugunu bile
+    # fark etmiyordu. Kod o karardan geri kaymasin diye olculuyor.
+    with open(os.path.join(ROOT, "src", "server", "world", "Doors.luau"), "r", encoding="utf-8") as handle:
+        doors_src = handle.read()
+    check("kapilarda ProximityPrompt var", "Instance.new(\"ProximityPrompt\")" in doors_src)
+    check("kapi istemi bir eylem yaziyor", "prompt.doorOpen" in doors_src and "prompt.doorClose" in doors_src)
+    for key in ("prompt.door", "prompt.doorOpen", "prompt.doorClose"):
+        check(f"kapi yazisi '{key}' tr.json'da var", key in strings)
+    # Animasyonun uc parcasi: kanat, kulp mandali ve ses.
+    check("kanat menteseden donuyor", "hinge * CFrame.Angles" in doors_src)
+    check("kulp mandali donuyor", "turnHandle" in doors_src)
+    check("kapi sesi caliniyor", "doorLatch" in doors_src and "doorOpen" in doors_src)
+    door_audio = load("audio.json")
+    for cue in ("doorLatch", "doorOpen", "doorClose"):
+        check(f"ses ipucu '{cue}' audio.json'da var", cue in door_audio["cues"])
+    # Acilan kapi kendiliginden kapanmali; yoksa klinik kisa surede
+    # butun kapilari acik bir bina olur.
+    check("acik kapi kendiliginden kapaniyor", "AUTO_CLOSE_SECONDS" in doors_src)
+    check("kapi kanatlari carpismiyor", doors_src.count("canCollide = false") >= 6)
+
+    # 9a10. Cephe ve yonlendirme
+    #
+    # Bina disaridan duz bir kutuydu ve icerde hangi odanin neresi
+    # oldugunu soyleyen hicbir sey yoktu. Ikisi de veriye eklendi;
+    # burada GERCEKTEN yerinde olduklari olculuyor - yoksa "cephe
+    # ekledik" demek, klasorde duran bir kurucudan ibaret kalirdi.
+    outdoor_ids = {entry["id"] for entry in clinic["outdoor"]["props"]}
+    for needed in ("entranceCanopy", "entranceSteps", "flagPole", "ambulance"):
+        check(f"klinik cephesinde '{needed}' var", needed in outdoor_ids)
+
+    signs = []
+    for room in clinic["rooms"]:
+        for entry in room["props"]:
+            if entry["id"] == "roomSign":
+                signs.append((room["id"], entry))
+    check(f"oda yonlendirme tabelasi var ({len(signs)} tane)", len(signs) >= 4)
+    room_keys = {room["nameKey"] for room in clinic["rooms"]}
+    for room_id, entry in signs:
+        tag = entry.get("tag", "")
+        key = tag[len("sign:"):] if tag.startswith("sign:") else None
+        check(f"{room_id} tabelasi bir oda adi gosteriyor", key is not None)
+        if key is None:
+            continue
+        check(f"{room_id} tabelasindaki '{key}' tr.json'da var", key in strings)
+        check(f"{room_id} tabelasindaki '{key}' gercek bir odanin adi", key in room_keys)
+
+    # Tabela kapinin USTUNDE durmali: kapi yuksekliginin altinda kalan
+    # bir tabela gecisi kapatir ve yerlesim denetimi onu reddeder.
+    prop_budgets = load("props.json")["props"]
+    sign_budget = next(b for b in prop_budgets if b["id"] == "roomSign")
+    check(
+        f"oda tabelasi kapi yuksekliginin ustunde ({sign_budget['base']} > {clinic['doorHeight']})",
+        sign_budget["base"] > clinic["doorHeight"],
+    )
+    # Gecise engel olmayan esyalar disinda hicbir sey kapi muafiyeti
+    # almamali: muafiyet kapi tikama denetimini SUSTURUYOR.
+    exempt = {b["id"] for b in prop_budgets if b.get("spansDoorway")}
+    check(
+        f"kapi muafiyeti olan esyalar sinirli ({sorted(exempt)})",
+        exempt <= {"clinicSign", "entranceCanopy", "entranceSteps", "archFrame"},
+    )
+
     # 9a2. Personel (data/staff.json)
     #
     # Yukseltmelerdeki kalibin aynisi: veri ile KODUN OKUDUGU etki

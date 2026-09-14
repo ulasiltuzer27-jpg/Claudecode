@@ -524,9 +524,264 @@
       ],
       "base": 6.5,
       "againstWall": true
+    },
+    {
+      "id": "column",
+      "size": [
+        3.6,
+        3.6,
+        19.0
+      ],
+      "offset": [
+        0,
+        0
+      ],
+      "base": 0,
+      "againstWall": false
+    },
+    {
+      "id": "fountain",
+      "size": [
+        12.0,
+        12.0,
+        6.4
+      ],
+      "offset": [
+        0,
+        0
+      ],
+      "base": 0,
+      "againstWall": false
+    },
+    {
+      "id": "lobbyDesk",
+      "size": [
+        16.0,
+        6.0,
+        4.2
+      ],
+      "offset": [
+        0,
+        0
+      ],
+      "base": 0,
+      "againstWall": false
+    },
+    {
+      "id": "banner",
+      "size": [
+        5.0,
+        0.6,
+        11.0
+      ],
+      "offset": [
+        0,
+        0
+      ],
+      "base": 6.0,
+      "againstWall": true
+    },
+    {
+      "id": "noticeBoard",
+      "size": [
+        7.0,
+        0.8,
+        5.6
+      ],
+      "offset": [
+        0,
+        0
+      ],
+      "base": 4.0,
+      "againstWall": true
+    },
+    {
+      "id": "statue",
+      "size": [
+        5.2,
+        5.2,
+        9.4
+      ],
+      "offset": [
+        0,
+        0
+      ],
+      "base": 0,
+      "againstWall": false
+    },
+    {
+      "id": "rugRunner",
+      "size": [
+        10.0,
+        20.0,
+        0.2
+      ],
+      "offset": [
+        0,
+        0
+      ],
+      "base": 0,
+      "againstWall": false
+    },
+    {
+      "id": "lobbySofa",
+      "size": [
+        9.0,
+        4.4,
+        3.6
+      ],
+      "offset": [
+        0,
+        0
+      ],
+      "base": 0,
+      "againstWall": false
+    },
+    {
+      "id": "planterBox",
+      "size": [
+        10.0,
+        3.2,
+        3.4
+      ],
+      "offset": [
+        0,
+        0
+      ],
+      "base": 0,
+      "againstWall": false
+    },
+    {
+      "id": "archFrame",
+      "size": [
+        13.0,
+        2.2,
+        15.0
+      ],
+      "offset": [
+        0,
+        0
+      ],
+      "base": 0,
+      "againstWall": false,
+      "spansDoorway": true
+    },
+    {
+      "id": "entranceCanopy",
+      "size": [
+        22.0,
+        9.0,
+        13.0
+      ],
+      "offset": [
+        0,
+        0
+      ],
+      "base": 0,
+      "againstWall": false,
+      "spansDoorway": true
+    },
+    {
+      "id": "entranceSteps",
+      "size": [
+        20.0,
+        5.0,
+        1.2
+      ],
+      "offset": [
+        0,
+        0
+      ],
+      "base": 0,
+      "againstWall": false,
+      "spansDoorway": true
+    },
+    {
+      "id": "flagPole",
+      "size": [
+        2.4,
+        2.4,
+        20.0
+      ],
+      "offset": [
+        0,
+        0
+      ],
+      "base": 0,
+      "againstWall": false
+    },
+    {
+      "id": "ambulance",
+      "size": [
+        7.4,
+        15.0,
+        7.2
+      ],
+      "offset": [
+        0,
+        0
+      ],
+      "base": 0,
+      "againstWall": false
+    },
+    {
+      "id": "bikeRack",
+      "size": [
+        7.0,
+        2.6,
+        3.4
+      ],
+      "offset": [
+        0,
+        0
+      ],
+      "base": 0,
+      "againstWall": false
+    },
+    {
+      "id": "roomSign",
+      "size": [
+        5.6,
+        0.7,
+        2.0
+      ],
+      "offset": [
+        0,
+        0
+      ],
+      "base": 9.9,
+      "againstWall": true
+    },
+    {
+      "id": "wallRail",
+      "size": [
+        8.0,
+        0.7,
+        1.0
+      ],
+      "offset": [
+        0,
+        0
+      ],
+      "base": 3.2,
+      "againstWall": true
+    },
+    {
+      "id": "magazineTable",
+      "size": [
+        5.0,
+        5.0,
+        2.6
+      ],
+      "offset": [
+        0,
+        0
+      ],
+      "base": 0,
+      "againstWall": false
     }
   ],
   "_yuzey_notu": "surface = masanin uzerine hayvan konabilen yuzeyi [uzunluk, genislik]. Buyuk bir hayvan kucuk bir masaya konamaz; PatientFlow bunu denetliyor ve verify_layout her turun EN AZ BIR masaya sigdigini dogruluyor.",
-  "_gecit_notu": "spansDoorway = bu esya bilerek bir kapinin uzerinden geciyor (giris tabelasi bir kemer gibi yolun ustunde duruyor); kapi tikama denetiminden muaf.",
+  "_gecit_notu": "spansDoorway = bu esya bilerek bir kapinin ONUNDEN, USTUNDEN ya da ALTINDAN geciyor (giris tabelasi bir kemer gibi yolun ustunde, giris sacagi kapinin onunde, basamaklar kapinin esiginde duruyor); kapi tikama denetiminden muaf. Muafiyet YALNIZCA gecise engel OLMAYAN esyalar icin: uzerinden yurunen, altindan gecilen.",
   "_barinak_notu": "`shelter` [genislik, derinlik]: hayvanin ICINDE durdugu esya (kogus padoku). Yatak noktasi bu esyanin icinde kaliyor ve bu bir CAKISMA DEGIL - tools/verify_layout.py yatak noktasini barinagin ic olcusune sigdirip sigmadigini denetliyor, sonra o barinagi cakisma testinden muaf tutuyor. Muafiyet yalnizca o yatagin kendi barinagi icin gecerli: baska bir esya yatak noktasina giremiyor."
 }

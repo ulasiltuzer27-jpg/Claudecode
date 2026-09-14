@@ -439,17 +439,65 @@ def main() -> int:
             and box.z1 <= lobby_max[1] + 0.8,
         )
 
-    # Portal pedi: oyuncunun uzerine basacagi yer bos olmali.
+    # 6e. LOBI DUVARLARI, KAPILARI VE PENCERELERI
+    #
+    # Lobi eskiden dort duz duvardan ibaretti ve kapisi yoktu; duvarlar
+    # kodda uretiliyordu, veride degildi. Salon bolumlenip kapilar
+    # gelince duvarlar da veriye tasindi - ve veriye tasinan her sey
+    # klinikte oldugu gibi OLCULEBILIR hale geldi.
+    lobby_wall_thickness = lobby["wallThickness"]
+    lobby_wall_height = lobby["wallHeight"]
+    lobby_door_height = lobby["doorHeight"]
+    lobby_walls = []
+    for index, wall in enumerate(lobby["walls"]):
+        horizontal = abs(wall["to"][1] - wall["from"][1]) < 1e-6
+        if horizontal:
+            fixed = wall["from"][1]
+            low, high = sorted((wall["from"][0], wall["to"][0]))
+            box = Box(low, high, 0, lobby_wall_height, fixed - lobby_wall_thickness / 2, fixed + lobby_wall_thickness / 2)
+        else:
+            fixed = wall["from"][0]
+            low, high = sorted((wall["from"][1], wall["to"][1]))
+            box = Box(fixed - lobby_wall_thickness / 2, fixed + lobby_wall_thickness / 2, 0, lobby_wall_height, low, high)
+        lobby_walls.append((index, wall, box, horizontal, fixed))
+
+    check(f"lobi en az 4 duvar bildiriyor ({len(lobby_walls)})", len(lobby_walls) >= 4)
+    lobby_doors = sum(len(wall.get("doors", [])) for _, wall, _b, _h, _f in lobby_walls)
+    check(f"lobide acilacak kapi var ({lobby_doors})", lobby_doors >= 1)
+
+    # Portal yapisi ve pedi.
+    #
+    # Portal KODLA kuruluyor (Lobby.buildPortal), veriyle degil; bu
+    # yuzden olculeri buraya YAZILI olarak giriyor. Iki kutu birden
+    # denetleniyor: oyuncunun uzerine basacagi ped ve portalin kendi
+    # govdesi (sutunlar, kiris, perde, tabela). Once yalnizca ped
+    # olculuyordu ve portalin GOVDESI bir esyanin icinden gecebilirdi.
+    PORTAL_HALF_WIDTH = 6.5   # sutun disi: (9 / 2) + 1.1 + pay
+    PORTAL_HEIGHT = 16.0      # kiris ve tabela dahil
     for portal in lobby["portals"]:
-        pad = Box(
-            portal["at"][0] - 5.5, portal["at"][0] + 5.5, 0, 13,
-            portal["at"][1] - 6, portal["at"][1] - 0.4,
-        )
+        px, pz = portal["at"]
+        pad = Box(px - PORTAL_HALF_WIDTH, px + PORTAL_HALF_WIDTH, 0, 13, pz - 6, pz - 0.4)
+        body = Box(px - PORTAL_HALF_WIDTH, px + PORTAL_HALF_WIDTH, 0, PORTAL_HEIGHT, pz - 1.2, pz + 1.2)
         for entry, box in lobby_placed:
             check(
                 f"lobi portali '{portal['id']}' onu acik — {entry['id']}@{entry['at']} degil",
                 not box.overlaps(pad),
             )
+            check(
+                f"lobi portali '{portal['id']}' govdesi bos — {entry['id']}@{entry['at']} degil",
+                not box.overlaps(body),
+            )
+        # Portal bir duvarin icinde durmamali.
+        for index, _wall, wall_box, _h, _f in lobby_walls:
+            check(
+                f"lobi portali '{portal['id']}' duvar#{index}'in icinde degil",
+                not body.overlaps(wall_box),
+            )
+        check(
+            f"lobi portali '{portal['id']}' salonun icinde",
+            lobby_min[0] <= px - PORTAL_HALF_WIDTH and px + PORTAL_HALF_WIDTH <= lobby_max[0]
+            and lobby_min[1] <= pz - 6 and pz + 1.2 <= lobby_max[1],
+        )
     for a, b in itertools.combinations(lobby["portals"], 2):
         gap = abs(a["at"][0] - b["at"][0]) + abs(a["at"][1] - b["at"][1])
         check(f"lobi portalleri '{a['id']}' ve '{b['id']}' ayri duruyor", gap >= 12)
@@ -458,6 +506,100 @@ def main() -> int:
     spawn_box = Box(spawn[0] - 8, spawn[0] + 8, 0, 6, spawn[1] - 6, spawn[1] + 6)
     for entry, box in lobby_placed:
         check(f"lobi dogma alani bos — {entry['id']}@{entry['at']} degil", not box.overlaps(spawn_box))
+
+    for entry, box in lobby_placed:
+        budget = budgets[entry["id"]]
+        for index, _wall, wall_box, _h, _f in lobby_walls:
+            depth = box.penetration(wall_box)
+            if depth <= 0:
+                continue
+            if budget["againstWall"]:
+                check(
+                    f"lobi: {entry['id']}@{entry['at']} duvar#{index}'e dayali, icine gomulu degil ({depth:.2f} stud)",
+                    depth <= lobby_wall_thickness / 2 + tolerance,
+                )
+            else:
+                check(f"lobi: {entry['id']}@{entry['at']} duvar#{index}'i kesmiyor ({depth:.2f} stud)", False)
+
+    # Kapi bosluklari: iki yaninda 4 stud derinlik bos.
+    for index, wall, _wall_box, horizontal, fixed in lobby_walls:
+        for door in wall.get("doors", []):
+            half = door["width"] / 2
+            if horizontal:
+                gate = Box(door["at"] - half, door["at"] + half, 0, lobby_door_height, fixed - clearance, fixed + clearance)
+            else:
+                gate = Box(fixed - clearance, fixed + clearance, 0, lobby_door_height, door["at"] - half, door["at"] + half)
+            for entry, box in lobby_placed:
+                if budgets[entry["id"]].get("spansDoorway"):
+                    continue
+                check(
+                    f"lobi kapisi (duvar#{index}, at={door['at']}) onu acik — {entry['id']}@{entry['at']} degil",
+                    not box.overlaps(gate),
+                )
+            check(f"lobi kapisi (duvar#{index}, at={door['at']}) duvarin icinde", door["width"] > 0)
+
+    # Pencerelerin onu acik mi?
+    for index, wall, _wall_box, horizontal, fixed in lobby_walls:
+        for window in wall.get("windows", []):
+            half = window["width"] / 2
+            y0, y1 = window["sill"], window["sill"] + window["height"]
+            check(
+                f"lobi penceresi (duvar#{index}, at={window['at']}) duvarin icinde",
+                y1 <= lobby_wall_height - 0.7,
+            )
+            if horizontal:
+                pane = Box(window["at"] - half, window["at"] + half, y0, y1, fixed - 1.2, fixed + 1.2)
+            else:
+                pane = Box(fixed - 1.2, fixed + 1.2, y0, y1, window["at"] - half, window["at"] + half)
+            for entry, box in lobby_placed:
+                check(
+                    f"lobi penceresi (duvar#{index}, at={window['at']}) acik — {entry['id']}@{entry['at']} degil",
+                    not box.overlaps(pane),
+                )
+
+    # Ayni duvardaki bosluklar birbirine girmemeli.
+    for index, wall, _wall_box, _h, _f in lobby_walls:
+        spans = [(d["at"] - d["width"] / 2, d["at"] + d["width"] / 2, "kapi") for d in wall.get("doors", [])]
+        spans += [(w["at"] - w["width"] / 2, w["at"] + w["width"] / 2, "pencere") for w in wall.get("windows", [])]
+        for a, b in itertools.combinations(spans, 2):
+            check(
+                f"lobi duvar#{index}: {a[2]} ({a[0]:.1f}..{a[1]:.1f}) ile {b[2]} ({b[0]:.1f}..{b[1]:.1f}) ust uste degil",
+                a[1] <= b[0] + 1e-6 or b[1] <= a[0] + 1e-6,
+            )
+
+    # 6f. LOBININ DIS ESYALARI binaya girmesin.
+    lobby_building = Box(
+        lobby_min[0] - lobby_wall_thickness,
+        lobby_max[0] + lobby_wall_thickness,
+        0,
+        lobby_wall_height,
+        lobby_min[1] - lobby_wall_thickness,
+        lobby_max[1] + lobby_wall_thickness,
+    )
+    lobby_outdoor = []
+    for entry in lobby.get("outdoor", {}).get("props", []):
+        budget = budgets.get(entry["id"])
+        check(f"lobi dis esyasi '{entry['id']}' butce bildiriyor", budget is not None)
+        if budget is None:
+            continue
+        box = prop_box(budget, entry["at"], entry.get("rot", 0))
+        lobby_outdoor.append((entry, box))
+        check(f"lobi dis esyasi {entry['id']}@{entry['at']} binanin disinda", not box.overlaps(lobby_building))
+    for (ea, ba), (eb, bb) in itertools.combinations(lobby_outdoor, 2):
+        check(
+            f"lobi disi: {ea['id']}@{ea['at']} ile {eb['id']}@{eb['at']} ic ice degil",
+            not ba.overlaps(bb),
+        )
+
+    # Girise giden yol acik kalmali: kapiya cikan yolu kapatan bir agac,
+    # oyuncunun ilk gordugu sey olurdu.
+    path = lobby.get("outdoor", {}).get("path")
+    if path is not None:
+        half = path["width"] / 2
+        z0, z1 = sorted((path["from"][1], path["to"][1]))
+        lane = Box(path["from"][0] - half, path["from"][0] + half, 0, 8, z0, z1)
+        for entry, box in lobby_outdoor:
+            check(f"lobi yolu acik — {entry['id']}@{entry['at']} degil", not box.overlaps(lane))
 
     # 7. Istasyonun cevresinde veterinerin duracagi yer
     stand = 3.0

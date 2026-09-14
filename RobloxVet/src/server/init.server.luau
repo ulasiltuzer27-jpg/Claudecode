@@ -49,6 +49,7 @@ local Leaderboard = require(script.game.Leaderboard)
 local Matchmaking = require(script.game.Matchmaking)
 local PatientFlow = require(script.game.PatientFlow)
 local Profile = require(script.game.Profile)
+local Roster = require(script.game.Roster)
 local Staff = require(script.game.Staff)
 local Surgery = require(script.game.Surgery)
 local Tasks = require(script.game.Tasks)
@@ -225,6 +226,10 @@ local function startLobby()
 		return
 	end
 
+	-- Lobinin kapilari da acilir: otomatik kapanma dongusu burada
+	-- basliyor (istemler kurulum aninda baglandi).
+	Doors.start()
+
 	for _, portal in (lobbyBuilt :: Lobby.Built).portals do
 		local id = portal.id
 		portal.prompt.Triggered:Connect(function(player: Player)
@@ -235,11 +240,24 @@ local function startLobby()
 
 	Matchmaking.start(pushLobbyAll, function(group: { Player }, modeId: string)
 		-- Isinlanma yapilamadi (Studio / yayinlanmamis yer): klinigi
-		-- burada ac ve gruba haber ver.
+		-- BURADA ac. Sunucu artik bu gruba ait; eslestirme duruyor ve
+		-- sonraki gruplar ayni klinige EKLENMIYOR.
+		--
+		-- Sessizce eklemek en kolayi olurdu ve tam da kullanicinin
+		-- istemedigi sey oydu: "solo girdim ama baska bir solo oyuncu
+		-- yanima dustu".
+		Roster.claimPlayers(group, modeId)
+		Matchmaking.halt("lobby.serverTaken")
 		for _, player in group do
 			Net.toPlayer("Notify", player, "warn", "notify.teleportFallback", {})
 		end
 		startClinic()
+		-- Lobide kalan herkes sebebini gorsun.
+		for _, player in Players:GetPlayers() do
+			if not Roster.allows(player) then
+				Net.toPlayer("Notify", player, "bad", "notify.serverTaken", {})
+			end
+		end
 	end)
 
 	print("[Veteriner] LOBI hazir — mod secilince ayrilmis sunucuya isinlanilacak.")
@@ -248,6 +266,13 @@ end
 Profile.startAutosave()
 
 if mode == "clinic" then
+	-- AYRILMIS SUNUCU. Kadro isinlanma verisinden kuruluyor ve kadro
+	-- disindaki her oyuncu lobiye geri yollaniyor: "solo" gercekten
+	-- solo, "ikili" gercekten ikili.
+	Roster.start()
+	for _, player in Players:GetPlayers() do
+		Roster.adopt(player)
+	end
 	startClinic()
 else
 	startLobby()
@@ -340,6 +365,13 @@ Events.onChanged(function(active)
 end)
 
 local function onPlayerAdded(player: Player)
+	-- Kadro disi oyuncu icin profil bile yuklenmiyor: `Roster.start`
+	-- onu birazdan lobiye geri yollayacak ve o arada oyuna dokunmasi
+	-- gerekmiyor.
+	if mode == "clinic" and not Roster.allows(player) then
+		warn(("[init] '%s' bu kadroda degil — lobiye geri yollaniyor."):format(player.Name))
+		return
+	end
 	local entry = Profile.load(player)
 	Leaderboard.attach(player)
 	Tasks.ensure(entry.data, player.UserId)

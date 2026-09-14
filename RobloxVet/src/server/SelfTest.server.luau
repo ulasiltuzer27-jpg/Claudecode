@@ -43,6 +43,7 @@ local Tasks = require(script.Parent.game.Tasks)
 local Staff = require(script.Parent.game.Staff)
 local ClinicLevel = require(script.Parent.game.ClinicLevel)
 local Events = require(script.Parent.game.Events)
+local Roster = require(script.Parent.game.Roster)
 local Tutorial = require(script.Parent.game.Tutorial)
 local Surgery = require(script.Parent.game.Surgery)
 local Ward = require(script.Parent.game.Ward)
@@ -576,6 +577,11 @@ do
 		doorCount += #(wall.doors or {})
 	end
 	check(("kurulan kapi sayisi plandakiyle ayni (%d)"):format(doorCount), Doors.count() == doorCount)
+	-- Kapilar BASARAK aciliyor: baslangicta hepsi kapali olmali.
+	-- Acik dogan bir kapi, "kapiyi ac" eyleminin hic olmamasiyla ayni
+	-- sey olurdu.
+	check("butun kapilar kapali basliyor", Doors.openCount() == 0)
+	check("her kapi bosluguna kanat kuruldu", Doors.count() > 0)
 
 	-- Hayvan tepkileri ve sahip jestleri: PatientFlow'un yolladigi her
 	-- ad tanimli olmali; bilinmeyen ad sessizce hicbir sey oynatmiyor.
@@ -739,6 +745,63 @@ do
 		ClinicLevel.levelForXp(ClinicLevel.xpForLevel(ClinicLevel.MAX) * 10) == ClinicLevel.MAX
 	)
 	check("klinik bos sunucuda 1. seviyede", ClinicLevel.activeLevel({}) == 1)
+
+	-- LOBI: salon veride tarif ediliyor mu ve esyalar gercekten
+	-- kuruluyor mu? Lobi eskiden kodda uretilen dort duz duvardi;
+	-- veriye tasinip olculebilir hale geldi.
+	check("lobi duvarlari veride", #lobbyPlan.walls >= 4)
+	check("lobi kapisi var", (function(): boolean
+		local total = 0
+		for _, wall in lobbyPlan.walls do
+			total += #(wall.doors or {})
+		end
+		return total >= 1
+	end)())
+	check("lobide en az 20 esya var", #lobbyPlan.props >= 20)
+	check("lobi disinda bahce var", #lobbyPlan.outdoor.props >= 6)
+	check("lobi dort mod sunuyor", #lobbyPlan.portals == 4)
+	do
+		local known: { [string]: boolean } = {}
+		for _, entry in propData.props do
+			known[entry.id] = true
+		end
+		for _, spec in lobbyPlan.props do
+			check(("lobi esyasi '%s' butce bildiriyor"):format(spec.id), known[spec.id] == true)
+		end
+		for _, spec in lobbyPlan.outdoor.props do
+			check(("lobi dis esyasi '%s' butce bildiriyor"):format(spec.id), known[spec.id] == true)
+		end
+	end
+	-- Kapi ve pencere kurucusu bu uc rengi ariyor; biri eksikse duvar
+	-- kurulurken sessizce siyaha duserdi.
+	for _, name in { "wallTrim", "windowFrame", "glass" } do
+		check(("lobi rengi '%s' tanimli"):format(name), lobbyPlan.colors[name] ~= nil)
+	end
+
+	-- SUNUCU OZELLIGI: kadro gercekten kilitleniyor mu?
+	--
+	-- Bu, "solo girdim ama yanima baska bir solo oyuncu dustu"
+	-- sikayetinin kodla verilmis cevabi. Bir kez kurulan kadronun
+	-- GENISLETILEMEDIGINI olcuyoruz; genisletilebilseydi ozel sunucu
+	-- ozel olmazdi.
+	do
+		local before = Roster.claimed()
+		if before then
+			-- Ayrilmis sunucuda kadro zaten kurulmus olabilir; o zaman
+			-- yalnizca degismezligi olculuyor.
+			local size = Roster.size()
+			check("kurulmus kadro genisletilemiyor", not Roster.claim({ -1, -2 }, "solo"))
+			check("kadro boyu degismedi", Roster.size() == size)
+		else
+			check("kadrosuz sunucu herkese acik", Roster.size() == 0)
+			check("kadro bir kez kurulabiliyor", Roster.claim({ 101, 102 }, "duo"))
+			check("kadro boyu dogru", Roster.size() == 2)
+			check("kadro modu kaydedildi", Roster.modeId() == "duo")
+			check("kadro ikinci kez kurulamiyor", not Roster.claim({ 103 }, "solo"))
+			check("ikinci deneme kadroyu genisletmedi", Roster.size() == 2)
+			check("kadro modu degismedi", Roster.modeId() == "duo")
+		end
+	end
 
 	-- Ogretici: adimlar SIRAYLA ilerliyor mu ve beklenmeyen bir eylem
 	-- adim atlatiyor mu? Atlanan adim, ogretilmemis adimdir.
