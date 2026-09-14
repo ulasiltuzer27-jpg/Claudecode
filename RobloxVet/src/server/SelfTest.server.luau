@@ -41,6 +41,7 @@ local Economy = require(script.Parent.game.Economy)
 local Profile = require(script.Parent.game.Profile)
 local Tasks = require(script.Parent.game.Tasks)
 local Staff = require(script.Parent.game.Staff)
+local Geometry = require(Shared.Geometry)
 local ClinicLevel = require(script.Parent.game.ClinicLevel)
 local Events = require(script.Parent.game.Events)
 local Roster = require(script.Parent.game.Roster)
@@ -569,6 +570,40 @@ do
 	end
 	for _, theme in decorData.themes do
 		check(("tema '%s' magazada taniniyor"):format(theme.id), Upgrades.knownDecor(theme.id))
+	end
+
+	-- ── KURULAN DUNYANIN OLCUMU ──────────────────────────────────────
+	--
+	-- Buraya kadarki her denetim PLANI olcuyor. Bu denetim kurulan
+	-- DUNYAYI olcuyor: gercek parcalarin gercek CFrame ve Size
+	-- degerleriyle.
+	--
+	-- Yazilma sebebi bir hataydi: cimen zemin butun haritayi kapliyor
+	-- ve bina dosemelerinin icinden geciyordu (0,5 stud). Plan
+	-- dogruydu, kurulan sey degildi - ve o sirada calisan alti
+	-- dogrulayicinin hicbiri farki goremezdi, cunku hepsi plana
+	-- bakiyordu.
+	--
+	-- Yalnizca CARPISAN ve donmemis parcalar olculuyor: detay parcalari
+	-- (vida, yaprak, supurgelik) bilerek ic ice ve onlari hata saymak
+	-- denetimi sahte uyariyla doldururdu.
+	do
+		local world = workspace:FindFirstChild("Klinik") or workspace:FindFirstChild("Lobi")
+		check("kurulan dunya bulundu", world ~= nil)
+		if world ~= nil then
+			local solids = Geometry.solidCount(world)
+			-- Sifir parca olcen bir denetim HER ZAMAN gecer; olcumun
+			-- gercekten bir sey olctugu once dogrulaniyor.
+			check(("olculen kati govde sayisi anlamli (%d)"):format(solids), solids >= 50)
+
+			local hits = Geometry.overlaps(world)
+			check(("kurulan dunyada ic ice giren kati govde yok (%d bulundu)"):format(#hits), #hits == 0)
+			for _, hit in hits do
+				-- Her cakisma AYRI bir satir: Output'ta neyin neyle
+				-- girdigi tek bakista gorunsun.
+				check("IC ICE: " .. Geometry.describe(hit), false)
+			end
+		end
 	end
 
 	-- Kapilar: plandaki her kapi bosluguna bir cift kanat.

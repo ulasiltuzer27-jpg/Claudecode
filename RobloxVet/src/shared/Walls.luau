@@ -27,6 +27,11 @@ export type Blueprint = {
 	wallThickness: number,
 	doorHeight: number,
 	colors: { [string]: { number } },
+	levels: {
+		skirtHeight: number,
+		corniceHeight: number,
+		trimBulge: number,
+	},
 }
 
 local EPSILON = 1e-3
@@ -44,7 +49,8 @@ function Walls.segment(
 	yFrom: number,
 	yTo: number,
 	color: Color3,
-	name: string?
+	name: string?,
+	thickness: number?
 )
 	local length = axisTo - axisFrom
 	if length <= EPSILON then
@@ -57,14 +63,14 @@ function Walls.segment(
 
 	local center = (axisFrom + axisTo) * 0.5
 	local y = (yFrom + yTo) * 0.5
-	local thickness = blueprint.wallThickness
+	local depth = thickness or blueprint.wallThickness
 
 	local size, position
 	if horizontal then
-		size = Vector3.new(length, height, thickness)
+		size = Vector3.new(length, height, depth)
 		position = Vector3.new(center, y, fixed)
 	else
-		size = Vector3.new(thickness, height, length)
+		size = Vector3.new(depth, height, length)
 		position = Vector3.new(fixed, y, center)
 	end
 
@@ -212,31 +218,60 @@ function Walls.build(blueprint: Blueprint, parent: Instance, wall: any, color: C
 		return a.at < b.at
 	end)
 
+	-- SUPURGELIK, GOVDE VE KORNIS UST USTE DEGIL, USTUSTE YIGILI.
+	--
+	-- Eskiden supurgelik ile kornis duvarin ICINE, tam ayni kalinlikta
+	-- ve ayni yere konuyordu: iki yuzey birebir cakisiyordu ve Roblox'ta
+	-- boyle bir cift titrer (z-fighting). Artik duvar govdesi supurgelik
+	-- ile kornisin ARASINDA basliyor ve bitiyor; seritler de duvardan
+	-- biraz TASIYOR (gercek bir supurgelik gibi), yani hicbir yuzey
+	-- ayni duzlemde degil.
+	local levels = blueprint.levels
+	local skirtTop = levels.skirtHeight
+	local corniceBottom = blueprint.wallHeight - levels.corniceHeight
+	local trimDepth = blueprint.wallThickness + levels.trimBulge
+
+	--- Bir duvar parcasi: supurgelik + govde + kornis bandi. Kapi ve
+	--- pencere bosluklarinda yalnizca denk gelen bantlar ciziliyor.
+	local function stack(from: number, to: number, yFrom: number, yTo: number)
+		if to - from <= EPSILON or yTo - yFrom <= EPSILON then
+			return
+		end
+		local low = math.max(yFrom, 0)
+		local high = math.min(yTo, blueprint.wallHeight)
+		if low < skirtTop then
+			Walls.segment(blueprint, parent, horizontal, fixed, from, to, low, math.min(high, skirtTop), trim, "Supurgelik", trimDepth)
+		end
+		Walls.segment(
+			blueprint, parent, horizontal, fixed, from, to,
+			math.max(low, skirtTop), math.min(high, corniceBottom), color
+		)
+		if high > corniceBottom then
+			Walls.segment(blueprint, parent, horizontal, fixed, from, to, math.max(low, corniceBottom), high, trim, "TavanKornisi", trimDepth)
+		end
+	end
+
 	local frameColor = Build.color(blueprint.colors.windowFrame)
 	local cursor = axisFrom
 	for _, opening in openings do
 		local left = opening.at - opening.width * 0.5
 		local right = opening.at + opening.width * 0.5
-		Walls.segment(blueprint, parent, horizontal, fixed, cursor, left, 0, blueprint.wallHeight, color)
+		stack(cursor, left, 0, blueprint.wallHeight)
 
 		if opening.kind == "door" then
-			Walls.segment(blueprint, parent, horizontal, fixed, left, right, blueprint.doorHeight, blueprint.wallHeight, color)
+			-- Kapinin USTU: supurgelik oraya UZANMIYOR. Uzansaydi
+			-- kapinin onunden gecen bir serit olurdu.
+			stack(left, right, blueprint.doorHeight, blueprint.wallHeight)
 			doorFrame(blueprint, parent, horizontal, fixed, opening.at, opening.width, trim)
 		else
 			-- Pencerenin alti ve ustu duvar olarak devam ediyor.
-			Walls.segment(blueprint, parent, horizontal, fixed, left, right, 0, opening.sill, color)
-			Walls.segment(blueprint, parent, horizontal, fixed, left, right, opening.sill + opening.height, blueprint.wallHeight, color)
+			stack(left, right, 0, opening.sill)
+			stack(left, right, opening.sill + opening.height, blueprint.wallHeight)
 			windowGlass(blueprint, parent, horizontal, fixed, opening.at, opening.width, opening.sill, opening.height, frameColor)
 		end
 		cursor = right
 	end
-	Walls.segment(blueprint, parent, horizontal, fixed, cursor, axisTo, 0, blueprint.wallHeight, color)
-
-	-- Supurgelik: duvarin dibinde ince bir serit. Tek renkli duvarlari
-	-- kirar, mekan daha bitmis gorunur.
-	Walls.segment(blueprint, parent, horizontal, fixed, axisFrom, axisTo, 0, 0.6, trim, "Supurgelik")
-	-- Tavan kornisi: ust kenarda ikinci serit.
-	Walls.segment(blueprint, parent, horizontal, fixed, axisFrom, axisTo, blueprint.wallHeight - 0.7, blueprint.wallHeight, trim, "TavanKornisi")
+	stack(cursor, axisTo, 0, blueprint.wallHeight)
 end
 
 return Walls

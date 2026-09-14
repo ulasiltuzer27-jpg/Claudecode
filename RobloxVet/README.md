@@ -796,6 +796,19 @@ modelin yerine mesh'i koyar. Yuva `0` ise (varsayılan) hiçbir şey değişmez;
 yazdığın ID yüklenemezse kod sessizce prosedürel modele döner — **oyun hiçbir
 durumda bozulmaz**. Aynı şey sesler ve görseller için de geçerli.
 
+> **Şu an hiçbir Creator ID eklenmedi.** `data/assetIds.json` içindeki 25
+> yuvanın **hepsi `0`** ve `data/audio.json` içindeki bütün `assetId`'ler de
+> `0`. Yani etkinleştirmen, kaydetmen ya da yapıştırman gereken bir ID **yok**
+> — oyun tamamen prosedürel çalışıyor.
+>
+> Seslerde gördüğün `rbxasset://sounds/...` yolları Creator Store varlığı
+> değil, **Roblox'un kendi içinde gelen** dosyaları; ID istemiyorlar ve sahiplik
+> gerektirmiyorlar. Müzik yuvaları `0` olduğu için **müzik sessiz** — oraya bir
+> ID yapıştırırsan çalar.
+>
+> Bir ID eklersen tek yapman gereken `python3 build.py` çalıştırıp
+> `dist/VeterinerSimulatoru.rbxlx` dosyasını Studio'da yeniden açmak.
+
 ### `.rbxlx` neden yalnızca script taşıyor
 
 Yer dosyasının XML'i sadece şunları içeriyor: servisler + `Folder` / `Script` /
@@ -846,14 +859,15 @@ hedefleri.
 ## Doğrulama
 
 Studio'ya erişimimiz olmadığı için "çalışıyor" demek yerine **çalıştırılabilir
-denetim** yazıldı. Toplam **18.649 denetim**:
+denetim** yazıldı. Toplam **18.854 denetim** — artı oyun içinde kurulan
+dünyayı ölçen `SelfTest`:
 
 ```bash
 python3 build.py
-python3 tools/verify_place.py       #     363  yer dosyası şeması + tazelik
+python3 tools/verify_place.py       #     367  yer dosyası şeması + tazelik
 python3 tools/verify_data.py        #   2.731  veri + personel + olay + öğretici + kapı + kadro
-python3 tools/verify_luau.py        #   1.275  Luau statik denetimleri
-python3 tools/verify_layout.py      #  13.821  3B çakışma: klinik + LOBİ (duvar, kapı, pencere, bahçe)
+python3 tools/verify_luau.py        #   1.285  Luau statik denetimleri
+python3 tools/verify_layout.py      #  14.012  3B çakışma: klinik + LOBİ + YAPISAL katmanlar
 python3 tools/verify_ui.py          #     211  EKRAN yerleşimi: panel çakışması, taşma, ölçek
 python3 tools/simulate_economy.py   #     248  ilerleme/ekonomi eğrisi (maaş, olay, kronik dahil)
 ```
@@ -902,10 +916,49 @@ yakaladı:
 | `verify_layout` | 19 model kesişmesi; koğuş kafeslerinin içine **hiçbir hasta sığmıyordu** (iç ölçü 4,8 stud, en büyük hasta 6,4) |
 | `verify_data` | Resepsiyonist personeli **var olmayan** bir bekleme yeri açıyordu: satın alınan yer sessizce hiçbir işe yaramıyordu |
 | `verify_ui` | Yukarıdaki altı panel çakışması |
+| `verify_layout` (yapı) | Çimen zemin binanın altından geçip oda döşemelerinin içine giriyordu; duvarlar tavan plakalarını deliyordu |
 | `verify_layout` (lobi) | Lobi yeniden kurulurken **22 çakışma**: sütunlar iç duvarı kesiyordu, karşılama bankosu orta kapının önünü kapatıyordu, pankartlar pencerelerin arkasında kalıyordu; kliniğin cephesinde ambulans ağacın, çalılar bayrak direğinin içindeydi |
 | `simulate_economy` | Dikkatsiz oyuncunun kasası 2 TL eksiye düşüyordu — oyunun yapamayacağı bir şey (modelin hatasıydı, oyunun değil) |
 | `verify_luau` | Kullanımdan önce tanımlanmamış yerel fonksiyonlar; çeviri anahtarı hiç denetlenmeyen ad alanları |
 | `SelfTest` | Rig eklem kümesi, koğuş yatak sayısı, klinik eşik tablosunun sınırları |
+
+### Çimen döşemenin içinden geçiyordu — ve altı doğrulayıcı bunu görmedi
+
+Oyuncu lobide "çimen ile blok iç içe giriyor" dedi ve haklıydı. Ölçüldü:
+
+| | |
+|---|---|
+| Çimen ↔ oda döşemesi | **0,50 stud** iç içe |
+| Çimen ↔ yol | 0,13 / 0,43 stud iç içe |
+| Duvar ↔ tavan plakası | 0,50 stud iç içe |
+| Süpürgelik ↔ duvar | **tam aynı yerde** (Roblox'ta titrer) |
+
+Sebep tek bir satırdı: çimen zemin **tek bir büyük plaka** olarak bütün
+haritayı kaplıyordu — **binanın altını da**. Oda döşemeleri o plakanın
+içinde kalıyordu.
+
+**Asıl mesele bu hatanın kendisi değil, görülmemiş olması.** O sırada çalışan
+altı doğrulayıcının hiçbiri yakalayamazdı, çünkü hepsi **eşyalara** bakıyordu:
+zemin, döşeme, karo, yol, duvar, tavan ve çatı kodla kuruluyordu ve hiçbir
+yerde ölçülmüyordu.
+
+Üç şey birden değişti:
+
+1. **Çimen artık bir çerçeve** (`Build.groundFrame`): binanın dikdörtgeni
+   dışarıda kalıyor, döşemeye değmiyor bile. Yol çimenin **üstünde** duruyor,
+   içinde değil. Tavan plakaları duvarların **içine çekiliyor**. Süpürgelik ve
+   korniş duvarın içine gömülü değil, gövdenin **altında ve üstünde** — üç bant
+   birbirine değiyor, üst üste binmiyor.
+2. **Sayılar veriye taşındı** (`levels`). Luau kurucusu da `verify_layout` de
+   aynı tablodan okuyor; ikisi kayarsa denetim düşer.
+3. **Oyun kendi kendini ölçüyor.** `src/shared/Geometry.luau` + `SelfTest`:
+   kurulan dünyadaki **gerçek** parçaları gerçek `CFrame`/`Size` değerleriyle
+   tarayıp iç içe giren katı gövdeleri Output'a yazıyor. Plan doğru ama kurulan
+   şey yanlışsa — tam olarak burada olan buydu — artık **orada** görünüyor.
+
+Yalnızca **çarpışan** ve dönmemiş parçalar ölçülüyor: detay parçaları (vida,
+yaprak, kumaş) bilerek iç içe ve onları hata saymak denetimi yüzlerce sahte
+uyarıyla doldururdu.
 
 ### Çakışan modeller: ölçülüp düzeltildi ve bir daha olamaz
 
@@ -1009,7 +1062,7 @@ RobloxVet/
 │   └── locale/tr.json                531 satır Türkçe metin
 │
 ├── src/shared/                       Net · Validate · Loc · Assets · Build · Walls
-│                                     Detail · Audio
+│                                     Geometry · Detail · Audio
 ├── src/server/
 │   ├── init.server.luau              tek giriş noktası, kurulum sırası
 │   ├── SelfTest.server.luau          açılış denetimleri → Output

@@ -1558,5 +1558,31 @@
   "_pencere_notu": "Duvarlardaki cam bosluklari. at = duvar ekseni uzerindeki merkez, sill = yerden yukseklik, height = pencere yuksekligi. Clinic.luau kapi boslugu ile AYNI mantikla aciyor; verify_layout pencerenin onunun esyayla kapanmadigini denetliyor.",
   "_zemin_notu": "floorTile: odanin zemininde dama deseni karo boyutu. 0 = desen yok.",
   "_isik_notu": "Oda basina tavan lambasi bilerek AZ: 25 lamba sahneyi yikiyordu (her nokta 4-6 lambadan aydinlaniyor, isik toplaniyordu). Az sayida, genis menzilli, GOLGESIZ armatur + ortam isigi yeterli. Toplam dinamik isik butcesi data/lighting.json > maxDynamicLights.",
-  "_sahip_notu": "ownerPoints = hayvan sahiplerinin bekledigi yerler. Kuyruk noktalarinin yanina hesapla koymak yetmiyordu: 8 stud arayla dizilen hayvanlarin arasinda 2,8 stud'luk bir NPC'ye yer kalmiyor. Ayri bir sira olarak veride duruyor ve verify_layout bos oldugunu denetliyor."
+  "_sahip_notu": "ownerPoints = hayvan sahiplerinin bekledigi yerler. Kuyruk noktalarinin yanina hesapla koymak yetmiyordu: 8 stud arayla dizilen hayvanlarin arasinda 2,8 stud'luk bir NPC'ye yer kalmiyor. Ayri bir sira olarak veride duruyor ve verify_layout bos oldugunu denetliyor.",
+  "levels": {
+    "_comment": "(VERI) YAPISAL KATMANLARIN Y BANTLARI. Luau kurucusu da Python denetimi de BURADAN okuyor.",
+    "_neden_notu": "Bu sayilar once yalnizca kodda vardi ve hicbir denetim onlara bakmiyordu: cimen zemini butun haritayi kapliyordu ve BINANIN ALTINDAN gecerek oda dosemelerinin icine giriyordu (0,5 stud). Oyuncu bunu ilk bakista gordu, alti dogrulayici gormedi. Veriye tasininca olculebilir hale geldi.",
+    "_temas_notu": "Bantlar UST USTE BINMIYOR, DEGIYOR: bir katmanin ustu digerinin altiyla ayni sayi. Roblox'ta ayni yerde duran iki yuzey titresir (z-fighting); degen yuzeyler titresmez.",
+    "ground": {
+      "y": -0.5,
+      "thickness": 1.0
+    },
+    "floor": {
+      "y": -0.25,
+      "thickness": 0.5
+    },
+    "tile": {
+      "y": 0.03,
+      "thickness": 0.06
+    },
+    "path": {
+      "y": 0.06,
+      "thickness": 0.12
+    },
+    "_kaplama_notu": "skirt: supurgelik, cornice: tavan kornisi. Duvar GOVDESI ikisinin ARASINDA duruyor - ust uste degil. Eskiden supurgelik duvarin icine gomulu ve ayni kalinliktaydi: iki yuzey tam ayni yerdeydi ve titrerdi.",
+    "skirtHeight": 0.6,
+    "corniceHeight": 0.7,
+    "trimBulge": 0.14,
+    "_tavan_notu": "Oda tavani duvarlarin ICINE cekiliyor (inset = wallThickness/2): cekilmeseydi tavan plakasi duvarin ust 0,5 studunun icinden gecerdi."
+  }
 }

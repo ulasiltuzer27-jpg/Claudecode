@@ -1053,14 +1053,16 @@ builders.rugRunner = function(model, origin)
 	local d = makerDecor(model, origin)
 	-- Uzun hali yolu: giristen salona kadar gidiyor ve gozu ileri
 	-- cekiyor. Zeminden 0,1 stud yukarida duruyor ki z-fighting olmasin.
-	d("Hali", Vector3.new(9.4, 0.12, 29.4), Vector3.new(0, 0.12, 0), C.carpet, Enum.Material.Fabric)
-	d("HaliKenari", Vector3.new(10.0, 0.1, 30.0), Vector3.new(0, 0.06, 0), C.deepTeal, Enum.Material.Fabric)
+	-- Hali zemin KAROLARININ ustunde duruyor. Karolar 0..0,06
+	-- arasinda; hali 0,06'dan basliyor, yani icine girmiyor.
+	d("HaliKenari", Vector3.new(10.0, 0.1, 20.0), Vector3.new(0, 0.11, 0), C.deepTeal, Enum.Material.Fabric)
+	d("Hali", Vector3.new(9.4, 0.12, 19.4), Vector3.new(0, 0.22, 0), C.carpet, Enum.Material.Fabric)
 	-- Boyuna iki serit ve enine desen cizgileri.
 	for _, side in { -1, 1 } do
-		d("HaliSeridi", Vector3.new(0.5, 0.14, 29.0), Vector3.new(side * 3.6, 0.13, 0), C.gold, Enum.Material.Fabric)
+		d("HaliSeridi", Vector3.new(0.5, 0.14, 19.0), Vector3.new(side * 3.6, 0.29, 0), C.gold, Enum.Material.Fabric)
 	end
-	for index = -6, 6 do
-		d("HaliDeseni", Vector3.new(7.8, 0.14, 0.24), Vector3.new(0, 0.13, index * 2.2), C.paleTeal, Enum.Material.Fabric)
+	for index = -4, 4 do
+		d("HaliDeseni", Vector3.new(7.8, 0.14, 0.24), Vector3.new(0, 0.29, index * 2.2), C.paleTeal, Enum.Material.Fabric)
 	end
 end
 

@@ -84,19 +84,30 @@ end
 
 
 --- Bahce, yol ve disarisi.
+---
+--- Cimen zemin bir CERCEVE: binanin altini bos birakiyor. Once tek bir
+--- buyuk plakaydi ve bina dosemelerinin icinden geciyordu (0,5 stud) -
+--- oyuncunun gordugu ilk hata buydu. Sayilar `plan.levels` icinde ve
+--- ayni sayilari `tools/verify_layout.py` de okuyor.
 local function buildGrounds(parent: Instance)
 	local half = plan.groundSize * 0.5
-	Build.slab(
+	local levels = plan.levels
+	local min, max = plan.bounds.min, plan.bounds.max
+	Build.groundFrame(
 		{ -half, -half },
 		{ half, half },
-		plan.floorY - 0.5,
-		1,
+		min,
+		max,
+		plan.floorY + levels.ground.y,
+		levels.ground.thickness,
 		colorOf("ground"),
 		Enum.Material.Grass,
 		parent,
 		"Zemin"
 	)
 
+	-- Yol cimenin USTUNDE duruyor (icinde degil): yolun alti, zeminin
+	-- ustuyle ayni sayi.
 	local path = plan.outdoor.path
 	local halfWidth = path.width * 0.5
 	local zMin = math.min(path.from[2], path.to[2])
@@ -104,8 +115,8 @@ local function buildGrounds(parent: Instance)
 	Build.slab(
 		{ path.from[1] - halfWidth, zMin },
 		{ path.from[1] + halfWidth, zMax },
-		plan.floorY + 0.02,
-		0.3,
+		plan.floorY + levels.path.y,
+		levels.path.thickness,
 		colorOf("path"),
 		Enum.Material.Concrete,
 		parent,
@@ -203,8 +214,8 @@ function Clinic.build(parent: Instance): Built
 		Build.slab(
 			room.min,
 			room.max,
-			plan.floorY - 0.25,
-			0.5,
+			plan.floorY + plan.levels.floor.y,
+			plan.levels.floor.thickness,
 			Build.color(room.floorColor),
 			materialOf(room.floorMaterial),
 			structure,
@@ -218,7 +229,7 @@ function Clinic.build(parent: Instance): Built
 				structure,
 				room.min,
 				room.max,
-				plan.floorY + 0.03,
+				plan.floorY + plan.levels.tile.y,
 				room.floorTile,
 				Build.color(room.floorColor),
 				Build.color(room.floorTileColor),
@@ -227,11 +238,16 @@ function Clinic.build(parent: Instance): Built
 		end
 
 		if plan.ceiling then
+			-- Tavan plakasi duvarlarin ICINE cekiliyor. Cekilmeseydi
+			-- duvarin ust 0,5 studunun icinden gecerdi: odanin siniri
+			-- duvarin ORTA cizgisi, duvarin kendisi ise o cizginin iki
+			-- yanina tasiyor.
+			local inset = plan.wallThickness * 0.5
 			Build.slab(
-				room.min,
-				room.max,
-				plan.wallHeight - 0.25,
-				0.5,
+				{ room.min[1] + inset, room.min[2] + inset },
+				{ room.max[1] - inset, room.max[2] - inset },
+				plan.wallHeight - plan.levels.corniceHeight * 0.5,
+				plan.levels.corniceHeight,
 				colorOf("ceiling"),
 				Enum.Material.SmoothPlastic,
 				structure,

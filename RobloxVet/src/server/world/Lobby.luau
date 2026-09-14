@@ -160,30 +160,47 @@ function Lobby.build(parent: Instance): Built
 	local min, max = plan.bounds.min, plan.bounds.max
 	local half = plan.groundSize * 0.5
 
-	Build.slab({ -half, -half }, { half, half }, -0.5, 1, colorOf("ground"), Enum.Material.Grass, root, "Zemin")
-	Build.slab(min, max, -0.25, 0.5, colorOf("floor"), Enum.Material.Marble, root, "Doseme")
-	Detail.tiles(root, min, max, 0.03, 8, colorOf("floor"), colorOf("floorTile"), Enum.Material.Marble)
+	-- Cimen zemin bir CERCEVE: binanin altini bos birakiyor. Once tek
+	-- bir buyuk plakaydi ve salonun dosemesinin icinden geciyordu
+	-- (0,5 stud). Sayilar `plan.levels` icinde; ayni sayilari
+	-- `tools/verify_layout.py` de okuyor.
+	local levels = plan.levels
+	Build.groundFrame(
+		{ -half, -half }, { half, half }, min, max,
+		levels.ground.y, levels.ground.thickness,
+		colorOf("ground"), Enum.Material.Grass, root, "Zemin"
+	)
+	Build.slab(min, max, levels.floor.y, levels.floor.thickness, colorOf("floor"), Enum.Material.Marble, root, "Doseme")
+	Detail.tiles(root, min, max, levels.tile.y, 8, colorOf("floor"), colorOf("floorTile"), Enum.Material.Marble)
 
-	-- Girise giden tas yol: bina disindaki tek zemin parcasi.
+	-- Girise giden tas yol: cimenin USTUNDE duruyor, icinde degil.
 	local path = plan.outdoor.path
 	local pathHalf = path.width * 0.5
 	Build.slab(
 		{ path.from[1] - pathHalf, math.min(path.from[2], path.to[2]) },
 		{ path.from[1] + pathHalf, math.max(path.from[2], path.to[2]) },
-		-0.2, 0.45, colorOf("path"), Enum.Material.Concrete, root, "Yol"
+		levels.path.y, levels.path.thickness,
+		colorOf("path"), Enum.Material.Concrete, root, "Yol"
 	)
 
 	-- Tavan: ORTA acikligi bos birakiliyor (aydinlik). Duz bir tavan
 	-- 96x80'lik bir salonu kutuya ceviriyordu.
+	-- Tavan plakalari duvarlarin ICINE cekiliyor (inset): cekilmeseydi
+	-- duvarin ust yarim studunun icinden gecerlerdi.
 	local lightMin, lightMax = { -18, -10 }, { 18, 10 }
-	Build.slab(min, { max[1], lightMin[2] }, plan.wallHeight - 0.25, 0.5, colorOf("ceiling"), Enum.Material.SmoothPlastic, root, "Tavan")
-	Build.slab({ min[1], lightMax[2] }, max, plan.wallHeight - 0.25, 0.5, colorOf("ceiling"), Enum.Material.SmoothPlastic, root, "Tavan")
-	Build.slab({ min[1], lightMin[2] }, { lightMin[1], lightMax[2] }, plan.wallHeight - 0.25, 0.5, colorOf("ceiling"), Enum.Material.SmoothPlastic, root, "Tavan")
-	Build.slab({ lightMax[1], lightMin[2] }, { max[1], lightMax[2] }, plan.wallHeight - 0.25, 0.5, colorOf("ceiling"), Enum.Material.SmoothPlastic, root, "Tavan")
+	local inset = plan.wallThickness * 0.5
+	local ceilY = plan.wallHeight - levels.corniceHeight * 0.5
+	local ceilT = levels.corniceHeight
+	local inner = { min[1] + inset, min[2] + inset }
+	local outer = { max[1] - inset, max[2] - inset }
+	Build.slab(inner, { outer[1], lightMin[2] }, ceilY, ceilT, colorOf("ceiling"), Enum.Material.SmoothPlastic, root, "Tavan")
+	Build.slab({ inner[1], lightMax[2] }, outer, ceilY, ceilT, colorOf("ceiling"), Enum.Material.SmoothPlastic, root, "Tavan")
+	Build.slab({ inner[1], lightMin[2] }, { lightMin[1], lightMax[2] }, ceilY, ceilT, colorOf("ceiling"), Enum.Material.SmoothPlastic, root, "Tavan")
+	Build.slab({ lightMax[1], lightMin[2] }, { outer[1], lightMax[2] }, ceilY, ceilT, colorOf("ceiling"), Enum.Material.SmoothPlastic, root, "Tavan")
 
 	-- Aydinlik camı ve kafesi: gunes salonun ortasina dusuyor.
 	local sky = Build.slab(
-		lightMin, lightMax, plan.wallHeight - 0.2, 0.3,
+		lightMin, lightMax, ceilY, ceilT * 0.4,
 		colorOf("glass"), Enum.Material.Glass, root, "Aydinlik"
 	)
 	sky.Transparency = 0.55
@@ -193,7 +210,7 @@ function Lobby.build(parent: Instance): Built
 		Build.part({
 			name = "AydinlikKafesi",
 			size = Vector3.new(0.4, 0.4, lightMax[2] - lightMin[2]),
-			cf = CFrame.new(index * 5, plan.wallHeight - 0.05, 0),
+			cf = CFrame.new(index * 5, ceilY, 0),
 			color = colorOf("trim"),
 			canCollide = false,
 			castShadow = false,
@@ -204,7 +221,7 @@ function Lobby.build(parent: Instance): Built
 		Build.part({
 			name = "AydinlikKafesi",
 			size = Vector3.new(lightMax[1] - lightMin[1], 0.4, 0.4),
-			cf = CFrame.new(0, plan.wallHeight - 0.05, index * 4),
+			cf = CFrame.new(0, ceilY, index * 4),
 			color = colorOf("trim"),
 			canCollide = false,
 			castShadow = false,

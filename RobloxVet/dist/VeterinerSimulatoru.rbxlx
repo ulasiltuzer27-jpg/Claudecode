@@ -624,6 +624,44 @@ function Build.ceilingLight(position: Vector3, parent: Instance, lamp: LampConfi
 end
 
 --- Yatay dikdortgen zemin/tavan levhasi. min/max [x,z] cinsinden.
+--- ZEMIN CERCEVESI: binanin ALTINI bos birakan dis zemin.
+---
+--- Neden cerceve?
+--- --------------
+--- Once tek bir buyuk cimen plakasi vardi ve butun haritayi kapliyordu -
+--- BINANIN ALTINI da. Oda dosemeleri o plakanin icinde kaliyor, cimen
+--- dosemenin arasindan gorunuyordu. Oyuncunun &quot;cimen ile blok ic ice
+--- giriyor&quot; dedigi sey buydu.
+---
+--- Dort parca: guney, kuzey, bati, dogu. Binanin dikdortgeni disarida
+--- kaliyor, yani hicbir yerde dosemeye degmiyor bile.
+function Build.groundFrame(
+	outerMin: { number },
+	outerMax: { number },
+	innerMin: { number },
+	innerMax: { number },
+	y: number,
+	thickness: number,
+	color: Color3,
+	material: Enum.Material,
+	parent: Instance,
+	name: string
+): { Part }
+	local pieces: { Part } = {}
+	local function piece(minXZ: { number }, maxXZ: { number })
+		if maxXZ[1] - minXZ[1] &lt;= 1e-3 or maxXZ[2] - minXZ[2] &lt;= 1e-3 then
+			return
+		end
+		table.insert(pieces, Build.slab(minXZ, maxXZ, y, thickness, color, material, parent, name))
+	end
+
+	piece({ outerMin[1], outerMin[2] }, { outerMax[1], innerMin[2] })
+	piece({ outerMin[1], innerMax[2] }, { outerMax[1], outerMax[2] })
+	piece({ outerMin[1], innerMin[2] }, { innerMin[1], innerMax[2] })
+	piece({ innerMax[1], innerMin[2] }, { outerMax[1], innerMax[2] })
+	return pieces
+end
+
 function Build.slab(
 	minXZ: { number },
 	maxXZ: { number },
@@ -966,6 +1004,161 @@ return Detail
 			</Item>
 			<Item class="ModuleScript" referent="RBX8">
 				<Properties>
+					<string name="Name">Geometry</string>
+					<ProtectedString name="Source">--!strict
+-- Geometry.luau
+-- =============
+-- Kurulmus dunyayi OLCEN denetim: hangi parcalar gercekten ic ice?
+--
+-- Neden gerekti?
+-- --------------
+-- `tools/verify_layout.py` esyalarin YER BUTCELERINI olcuyor ve
+-- yapisal katmanlarin Y bantlarini denetliyor. Ikisi de plandan
+-- okuyor - yani BENIM PLANIMI denetliyor, kurulan dunyayi degil.
+-- Aradaki farki oyuncu gordu: cimen zemin butun haritayi kapliyordu ve
+-- bina dosemelerinin icinden geciyordu. Plan dogruydu; kurulan sey
+-- degildi.
+--
+-- Burasi o acigi kapatiyor: oyun kendi kurdugu parcalari, gercek
+-- CFrame ve Size degerleriyle olcuyor. Plan ile kod arasinda bir kayma
+-- olursa burada goruluyor.
+--
+-- Neden yalnizca CARPISAN parcalar?
+-- ---------------------------------
+-- Detay parcalari (`CanCollide = false`) BILEREK ic ice: bir vida
+-- panelin icinde durur, bir yaprak dalin icinden cikar, supurgelik
+-- duvardan tasar. Onlari &quot;hata&quot; saymak, denetimi yuzlerce sahte
+-- uyariyla doldurup ise yaramaz hale getirirdi.
+--
+-- Carpisan parcalar ise oyuncunun icinden GECEMEDIGI, gozle gordugu
+-- kati govde: duvar, doseme, tavan, cati, zemin, masa govdesi. Onlarin
+-- ic ice girmesi her zaman hatadir.
+--
+-- Neden kutu %2 kuculuyor?
+-- ------------------------
+-- Katmanlar bilerek BIRBIRINE DEGIYOR (dosemenin ustu = karonun alti).
+-- Degen iki yuzey, kayan nokta hesabinda &quot;kesisiyor&quot; gorunebilir.
+-- Kutuyu biraz kucultunce degme kesisme sayilmiyor, gercek girisim ise
+-- hala yakalaniyor.
+
+local Workspace = game:GetService(&quot;Workspace&quot;)
+
+local Geometry = {}
+
+export type Hit = {
+	a: BasePart,
+	b: BasePart,
+	depth: number,
+}
+
+-- Bundan kucuk girisimler degme sayiliyor.
+local SHRINK = 0.98
+local MIN_DEPTH = 0.05
+
+--- Iki eksen hizali kutunun en kucuk eksendeki girisim derinligi.
+--- Donmus parcalar icin bu deger KABA kalir; o yuzden yalnizca
+--- eksen hizali (donmemis) parcalar olculuyor.
+local function penetration(a: BasePart, b: BasePart): number
+	local aMin, aMax = a.Position - a.Size * 0.5, a.Position + a.Size * 0.5
+	local bMin, bMax = b.Position - b.Size * 0.5, b.Position + b.Size * 0.5
+	local x = math.min(aMax.X, bMax.X) - math.max(aMin.X, bMin.X)
+	local y = math.min(aMax.Y, bMax.Y) - math.max(aMin.Y, bMin.Y)
+	local z = math.min(aMax.Z, bMax.Z) - math.max(aMin.Z, bMin.Z)
+	return math.min(x, y, z)
+end
+
+--- Parca eksen hizali mi? (Donmus parcalarda kutu olcumu yaniltir.)
+local function axisAligned(part: BasePart): boolean
+	local _, _, _, r00, r01, r02, r10, r11, r12, r20, r21, r22 = part.CFrame:GetComponents()
+	for _, value in { r00, r01, r02, r10, r11, r12, r20, r21, r22 } do
+		local rounded = math.round(value)
+		if math.abs(value - rounded) &gt; 1e-3 or math.abs(rounded) &gt; 1 then
+			return false
+		end
+	end
+	return true
+end
+
+--- Bir modeldeki KATI govdenin kendi icinde kesisip kesismedigini
+--- olcer. Donen liste bos degilse gercek bir modelleme hatasi var.
+---
+--- `ignore(a, b)` verilirse o cift atlaniyor: bilerek ic ice duran
+--- (ornegin kapi kanadi ile cercevesi) ciftler icin.
+function Geometry.overlaps(root: Instance, limit: number?, ignore: ((BasePart, BasePart) -&gt; boolean)?): { Hit }
+	local solids: { BasePart } = {}
+	for _, item in root:GetDescendants() do
+		if item:IsA(&quot;BasePart&quot;) and item.CanCollide and item.Transparency &lt; 0.95 and axisAligned(item) then
+			table.insert(solids, item)
+		end
+	end
+
+	local params = OverlapParams.new()
+	params.FilterType = Enum.RaycastFilterType.Include
+	params.FilterDescendantsInstances = { root }
+	params.MaxParts = 24
+
+	local hits: { Hit } = {}
+	local seen: { [string]: boolean } = {}
+	local cap = limit or 12
+
+	for _, part in solids do
+		local found = Workspace:GetPartBoundsInBox(part.CFrame, part.Size * SHRINK, params)
+		for _, other in found do
+			if other == part or not other.CanCollide or other.Transparency &gt;= 0.95 then
+				continue
+			end
+			if not axisAligned(other) then
+				continue
+			end
+			local depth = penetration(part, other)
+			if depth &lt; MIN_DEPTH then
+				continue
+			end
+			if ignore ~= nil and (ignore(part, other) or ignore(other, part)) then
+				continue
+			end
+			-- Her cift bir kez: adres sirasi sabit bir anahtar veriyor.
+			local first, second = part, other
+			if tostring(first) &gt; tostring(second) then
+				first, second = second, first
+			end
+			local key = first:GetFullName() .. &quot;|&quot; .. second:GetFullName()
+			if seen[key] then
+				continue
+			end
+			seen[key] = true
+			table.insert(hits, { a = first, b = second, depth = depth })
+			if #hits &gt;= cap then
+				return hits
+			end
+		end
+	end
+	return hits
+end
+
+--- Insan okunur tek satir: &quot;Duvar ile Doseme_reception 0,50 stud&quot;.
+function Geometry.describe(hit: Hit): string
+	return (&quot;%s &lt;-&gt; %s  (%.2f stud)&quot;):format(hit.a.Name, hit.b.Name, hit.depth)
+end
+
+--- Olculen kati govde sayisi (denetimin GERCEKTEN bir sey olctugunu
+--- gostermek icin: sifir parca olcen bir denetim her zaman &quot;gecer&quot;).
+function Geometry.solidCount(root: Instance): number
+	local total = 0
+	for _, item in root:GetDescendants() do
+		if item:IsA(&quot;BasePart&quot;) and item.CanCollide and item.Transparency &lt; 0.95 and axisAligned(item) then
+			total += 1
+		end
+	end
+	return total
+end
+
+return Geometry
+</ProtectedString>
+				</Properties>
+			</Item>
+			<Item class="ModuleScript" referent="RBX9">
+				<Properties>
 					<string name="Name">Loc</string>
 					<ProtectedString name="Source">--!strict
 -- Loc.luau
@@ -1032,7 +1225,7 @@ return Loc
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX9">
+			<Item class="ModuleScript" referent="RBX10">
 				<Properties>
 					<string name="Name">Net</string>
 					<ProtectedString name="Source">--!strict
@@ -1195,7 +1388,7 @@ return Net
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX10">
+			<Item class="ModuleScript" referent="RBX11">
 				<Properties>
 					<string name="Name">Validate</string>
 					<ProtectedString name="Source">--!strict
@@ -1289,7 +1482,7 @@ return Validate
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX11">
+			<Item class="ModuleScript" referent="RBX12">
 				<Properties>
 					<string name="Name">Walls</string>
 					<ProtectedString name="Source">--!strict
@@ -1321,6 +1514,11 @@ export type Blueprint = {
 	wallThickness: number,
 	doorHeight: number,
 	colors: { [string]: { number } },
+	levels: {
+		skirtHeight: number,
+		corniceHeight: number,
+		trimBulge: number,
+	},
 }
 
 local EPSILON = 1e-3
@@ -1338,7 +1536,8 @@ function Walls.segment(
 	yFrom: number,
 	yTo: number,
 	color: Color3,
-	name: string?
+	name: string?,
+	thickness: number?
 )
 	local length = axisTo - axisFrom
 	if length &lt;= EPSILON then
@@ -1351,14 +1550,14 @@ function Walls.segment(
 
 	local center = (axisFrom + axisTo) * 0.5
 	local y = (yFrom + yTo) * 0.5
-	local thickness = blueprint.wallThickness
+	local depth = thickness or blueprint.wallThickness
 
 	local size, position
 	if horizontal then
-		size = Vector3.new(length, height, thickness)
+		size = Vector3.new(length, height, depth)
 		position = Vector3.new(center, y, fixed)
 	else
-		size = Vector3.new(thickness, height, length)
+		size = Vector3.new(depth, height, length)
 		position = Vector3.new(fixed, y, center)
 	end
 
@@ -1506,31 +1705,60 @@ function Walls.build(blueprint: Blueprint, parent: Instance, wall: any, color: C
 		return a.at &lt; b.at
 	end)
 
+	-- SUPURGELIK, GOVDE VE KORNIS UST USTE DEGIL, USTUSTE YIGILI.
+	--
+	-- Eskiden supurgelik ile kornis duvarin ICINE, tam ayni kalinlikta
+	-- ve ayni yere konuyordu: iki yuzey birebir cakisiyordu ve Roblox'ta
+	-- boyle bir cift titrer (z-fighting). Artik duvar govdesi supurgelik
+	-- ile kornisin ARASINDA basliyor ve bitiyor; seritler de duvardan
+	-- biraz TASIYOR (gercek bir supurgelik gibi), yani hicbir yuzey
+	-- ayni duzlemde degil.
+	local levels = blueprint.levels
+	local skirtTop = levels.skirtHeight
+	local corniceBottom = blueprint.wallHeight - levels.corniceHeight
+	local trimDepth = blueprint.wallThickness + levels.trimBulge
+
+	--- Bir duvar parcasi: supurgelik + govde + kornis bandi. Kapi ve
+	--- pencere bosluklarinda yalnizca denk gelen bantlar ciziliyor.
+	local function stack(from: number, to: number, yFrom: number, yTo: number)
+		if to - from &lt;= EPSILON or yTo - yFrom &lt;= EPSILON then
+			return
+		end
+		local low = math.max(yFrom, 0)
+		local high = math.min(yTo, blueprint.wallHeight)
+		if low &lt; skirtTop then
+			Walls.segment(blueprint, parent, horizontal, fixed, from, to, low, math.min(high, skirtTop), trim, &quot;Supurgelik&quot;, trimDepth)
+		end
+		Walls.segment(
+			blueprint, parent, horizontal, fixed, from, to,
+			math.max(low, skirtTop), math.min(high, corniceBottom), color
+		)
+		if high &gt; corniceBottom then
+			Walls.segment(blueprint, parent, horizontal, fixed, from, to, math.max(low, corniceBottom), high, trim, &quot;TavanKornisi&quot;, trimDepth)
+		end
+	end
+
 	local frameColor = Build.color(blueprint.colors.windowFrame)
 	local cursor = axisFrom
 	for _, opening in openings do
 		local left = opening.at - opening.width * 0.5
 		local right = opening.at + opening.width * 0.5
-		Walls.segment(blueprint, parent, horizontal, fixed, cursor, left, 0, blueprint.wallHeight, color)
+		stack(cursor, left, 0, blueprint.wallHeight)
 
 		if opening.kind == &quot;door&quot; then
-			Walls.segment(blueprint, parent, horizontal, fixed, left, right, blueprint.doorHeight, blueprint.wallHeight, color)
+			-- Kapinin USTU: supurgelik oraya UZANMIYOR. Uzansaydi
+			-- kapinin onunden gecen bir serit olurdu.
+			stack(left, right, blueprint.doorHeight, blueprint.wallHeight)
 			doorFrame(blueprint, parent, horizontal, fixed, opening.at, opening.width, trim)
 		else
 			-- Pencerenin alti ve ustu duvar olarak devam ediyor.
-			Walls.segment(blueprint, parent, horizontal, fixed, left, right, 0, opening.sill, color)
-			Walls.segment(blueprint, parent, horizontal, fixed, left, right, opening.sill + opening.height, blueprint.wallHeight, color)
+			stack(left, right, 0, opening.sill)
+			stack(left, right, opening.sill + opening.height, blueprint.wallHeight)
 			windowGlass(blueprint, parent, horizontal, fixed, opening.at, opening.width, opening.sill, opening.height, frameColor)
 		end
 		cursor = right
 	end
-	Walls.segment(blueprint, parent, horizontal, fixed, cursor, axisTo, 0, blueprint.wallHeight, color)
-
-	-- Supurgelik: duvarin dibinde ince bir serit. Tek renkli duvarlari
-	-- kirar, mekan daha bitmis gorunur.
-	Walls.segment(blueprint, parent, horizontal, fixed, axisFrom, axisTo, 0, 0.6, trim, &quot;Supurgelik&quot;)
-	-- Tavan kornisi: ust kenarda ikinci serit.
-	Walls.segment(blueprint, parent, horizontal, fixed, axisFrom, axisTo, blueprint.wallHeight - 0.7, blueprint.wallHeight, trim, &quot;TavanKornisi&quot;)
+	stack(cursor, axisTo, 0, blueprint.wallHeight)
 end
 
 return Walls
@@ -1538,11 +1766,11 @@ return Walls
 				</Properties>
 			</Item>
 		</Item>
-		<Item class="Folder" referent="RBX12">
+		<Item class="Folder" referent="RBX13">
 			<Properties>
 				<string name="Name">VetData</string>
 			</Properties>
-			<Item class="ModuleScript" referent="RBX13">
+			<Item class="ModuleScript" referent="RBX14">
 				<Properties>
 					<string name="Name">achievements</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -1785,7 +2013,7 @@ return {
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX14">
+			<Item class="ModuleScript" referent="RBX15">
 				<Properties>
 					<string name="Name">animals</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -2564,7 +2792,7 @@ return {
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX15">
+			<Item class="ModuleScript" referent="RBX16">
 				<Properties>
 					<string name="Name">assetIds</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -2607,7 +2835,7 @@ return {
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX16">
+			<Item class="ModuleScript" referent="RBX17">
 				<Properties>
 					<string name="Name">audio</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -3000,7 +3228,7 @@ return {
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX17">
+			<Item class="ModuleScript" referent="RBX18">
 				<Properties>
 					<string name="Name">clinic</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -4561,11 +4789,32 @@ return {
 			},
 		},
 	},
+	[&quot;levels&quot;] = {
+		[&quot;ground&quot;] = {
+			[&quot;y&quot;] = -0.5,
+			[&quot;thickness&quot;] = 1,
+		},
+		[&quot;floor&quot;] = {
+			[&quot;y&quot;] = -0.25,
+			[&quot;thickness&quot;] = 0.5,
+		},
+		[&quot;tile&quot;] = {
+			[&quot;y&quot;] = 0.03,
+			[&quot;thickness&quot;] = 0.06,
+		},
+		[&quot;path&quot;] = {
+			[&quot;y&quot;] = 0.06,
+			[&quot;thickness&quot;] = 0.12,
+		},
+		[&quot;skirtHeight&quot;] = 0.6,
+		[&quot;corniceHeight&quot;] = 0.7,
+		[&quot;trimBulge&quot;] = 0.14,
+	},
 }
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX18">
+			<Item class="ModuleScript" referent="RBX19">
 				<Properties>
 					<string name="Name">clinicLevels</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -4627,7 +4876,7 @@ return {
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX19">
+			<Item class="ModuleScript" referent="RBX20">
 				<Properties>
 					<string name="Name">conditions</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -5542,7 +5791,7 @@ return {
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX20">
+			<Item class="ModuleScript" referent="RBX21">
 				<Properties>
 					<string name="Name">daycycle</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -5605,7 +5854,7 @@ return {
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX21">
+			<Item class="ModuleScript" referent="RBX22">
 				<Properties>
 					<string name="Name">decor</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -5809,7 +6058,7 @@ return {
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX22">
+			<Item class="ModuleScript" referent="RBX23">
 				<Properties>
 					<string name="Name">economy</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -5992,7 +6241,7 @@ return {
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX23">
+			<Item class="ModuleScript" referent="RBX24">
 				<Properties>
 					<string name="Name">events</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -6063,7 +6312,7 @@ return {
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX24">
+			<Item class="ModuleScript" referent="RBX25">
 				<Properties>
 					<string name="Name">lighting</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -6194,7 +6443,7 @@ return {
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX25">
+			<Item class="ModuleScript" referent="RBX26">
 				<Properties>
 					<string name="Name">lobby</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -7118,15 +7367,36 @@ return {
 			},
 		},
 	},
+	[&quot;levels&quot;] = {
+		[&quot;ground&quot;] = {
+			[&quot;y&quot;] = -0.5,
+			[&quot;thickness&quot;] = 1,
+		},
+		[&quot;floor&quot;] = {
+			[&quot;y&quot;] = -0.25,
+			[&quot;thickness&quot;] = 0.5,
+		},
+		[&quot;tile&quot;] = {
+			[&quot;y&quot;] = 0.03,
+			[&quot;thickness&quot;] = 0.06,
+		},
+		[&quot;path&quot;] = {
+			[&quot;y&quot;] = 0.06,
+			[&quot;thickness&quot;] = 0.12,
+		},
+		[&quot;skirtHeight&quot;] = 0.6,
+		[&quot;corniceHeight&quot;] = 0.7,
+		[&quot;trimBulge&quot;] = 0.14,
+	},
 }
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="Folder" referent="RBX26">
+			<Item class="Folder" referent="RBX27">
 				<Properties>
 					<string name="Name">locale</string>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX27">
+				<Item class="ModuleScript" referent="RBX28">
 					<Properties>
 						<string name="Name">tr</string>
 						<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -7674,7 +7944,7 @@ return {
 					</Properties>
 				</Item>
 			</Item>
-			<Item class="ModuleScript" referent="RBX28">
+			<Item class="ModuleScript" referent="RBX29">
 				<Properties>
 					<string name="Name">props</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -8293,7 +8563,7 @@ return {
 			[&quot;size&quot;] = {
 				10,
 				20,
-				0.2,
+				0.45,
 			},
 			[&quot;offset&quot;] = {
 				0,
@@ -8464,7 +8734,7 @@ return {
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX29">
+			<Item class="ModuleScript" referent="RBX30">
 				<Properties>
 					<string name="Name">settings</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -8565,7 +8835,7 @@ return {
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX30">
+			<Item class="ModuleScript" referent="RBX31">
 				<Properties>
 					<string name="Name">staff</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -8699,7 +8969,7 @@ return {
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX31">
+			<Item class="ModuleScript" referent="RBX32">
 				<Properties>
 					<string name="Name">symptoms</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -8911,7 +9181,7 @@ return {
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX32">
+			<Item class="ModuleScript" referent="RBX33">
 				<Properties>
 					<string name="Name">tasks</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -9035,7 +9305,7 @@ return {
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX33">
+			<Item class="ModuleScript" referent="RBX34">
 				<Properties>
 					<string name="Name">tools</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -9331,7 +9601,7 @@ return {
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX34">
+			<Item class="ModuleScript" referent="RBX35">
 				<Properties>
 					<string name="Name">treatments</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -9507,7 +9777,7 @@ return {
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX35">
+			<Item class="ModuleScript" referent="RBX36">
 				<Properties>
 					<string name="Name">tutorial</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -9556,7 +9826,7 @@ return {
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX36">
+			<Item class="ModuleScript" referent="RBX37">
 				<Properties>
 					<string name="Name">upgrades</string>
 					<ProtectedString name="Source">-- URETILEN DOSYA - ELLE DUZENLEMEYIN.
@@ -9681,11 +9951,11 @@ return {
 			</Item>
 		</Item>
 	</Item>
-	<Item class="ServerScriptService" referent="RBX37">
+	<Item class="ServerScriptService" referent="RBX38">
 		<Properties>
 			<string name="Name">ServerScriptService</string>
 		</Properties>
-		<Item class="Script" referent="RBX38">
+		<Item class="Script" referent="RBX39">
 			<Properties>
 				<string name="Name">VetServer</string>
 				<ProtectedString name="Source">--!strict
@@ -10264,7 +10534,7 @@ end
 print((&quot;[Veteriner] sunucu hazir — mod: %s&quot;):format(mode))
 </ProtectedString>
 			</Properties>
-			<Item class="Script" referent="RBX39">
+			<Item class="Script" referent="RBX40">
 				<Properties>
 					<string name="Name">SelfTest</string>
 					<ProtectedString name="Source">--!strict
@@ -10310,6 +10580,7 @@ local Economy = require(script.Parent.game.Economy)
 local Profile = require(script.Parent.game.Profile)
 local Tasks = require(script.Parent.game.Tasks)
 local Staff = require(script.Parent.game.Staff)
+local Geometry = require(Shared.Geometry)
 local ClinicLevel = require(script.Parent.game.ClinicLevel)
 local Events = require(script.Parent.game.Events)
 local Roster = require(script.Parent.game.Roster)
@@ -10840,6 +11111,40 @@ do
 		check((&quot;tema '%s' magazada taniniyor&quot;):format(theme.id), Upgrades.knownDecor(theme.id))
 	end
 
+	-- ── KURULAN DUNYANIN OLCUMU ──────────────────────────────────────
+	--
+	-- Buraya kadarki her denetim PLANI olcuyor. Bu denetim kurulan
+	-- DUNYAYI olcuyor: gercek parcalarin gercek CFrame ve Size
+	-- degerleriyle.
+	--
+	-- Yazilma sebebi bir hataydi: cimen zemin butun haritayi kapliyor
+	-- ve bina dosemelerinin icinden geciyordu (0,5 stud). Plan
+	-- dogruydu, kurulan sey degildi - ve o sirada calisan alti
+	-- dogrulayicinin hicbiri farki goremezdi, cunku hepsi plana
+	-- bakiyordu.
+	--
+	-- Yalnizca CARPISAN ve donmemis parcalar olculuyor: detay parcalari
+	-- (vida, yaprak, supurgelik) bilerek ic ice ve onlari hata saymak
+	-- denetimi sahte uyariyla doldururdu.
+	do
+		local world = workspace:FindFirstChild(&quot;Klinik&quot;) or workspace:FindFirstChild(&quot;Lobi&quot;)
+		check(&quot;kurulan dunya bulundu&quot;, world ~= nil)
+		if world ~= nil then
+			local solids = Geometry.solidCount(world)
+			-- Sifir parca olcen bir denetim HER ZAMAN gecer; olcumun
+			-- gercekten bir sey olctugu once dogrulaniyor.
+			check((&quot;olculen kati govde sayisi anlamli (%d)&quot;):format(solids), solids &gt;= 50)
+
+			local hits = Geometry.overlaps(world)
+			check((&quot;kurulan dunyada ic ice giren kati govde yok (%d bulundu)&quot;):format(#hits), #hits == 0)
+			for _, hit in hits do
+				-- Her cakisma AYRI bir satir: Output'ta neyin neyle
+				-- girdigi tek bakista gorunsun.
+				check(&quot;IC ICE: &quot; .. Geometry.describe(hit), false)
+			end
+		end
+	end
+
 	-- Kapilar: plandaki her kapi bosluguna bir cift kanat.
 	local doorCount = 0
 	for _, wall in clinicPlan.walls do
@@ -11226,11 +11531,11 @@ end
 </ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="Folder" referent="RBX40">
+			<Item class="Folder" referent="RBX41">
 				<Properties>
 					<string name="Name">game</string>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX41">
+				<Item class="ModuleScript" referent="RBX42">
 					<Properties>
 						<string name="Name">Achievements</string>
 						<ProtectedString name="Source">--!strict
@@ -11390,7 +11695,7 @@ return Achievements
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX42">
+				<Item class="ModuleScript" referent="RBX43">
 					<Properties>
 						<string name="Name">ClinicLevel</string>
 						<ProtectedString name="Source">--!strict
@@ -11521,7 +11826,7 @@ return ClinicLevel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX43">
+				<Item class="ModuleScript" referent="RBX44">
 					<Properties>
 						<string name="Name">Diagnosis</string>
 						<ProtectedString name="Source">--!strict
@@ -11683,7 +11988,7 @@ return Diagnosis
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX44">
+				<Item class="ModuleScript" referent="RBX45">
 					<Properties>
 						<string name="Name">Economy</string>
 						<ProtectedString name="Source">--!strict
@@ -11800,7 +12105,7 @@ return Economy
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX45">
+				<Item class="ModuleScript" referent="RBX46">
 					<Properties>
 						<string name="Name">Events</string>
 						<ProtectedString name="Source">--!strict
@@ -12073,7 +12378,7 @@ return Events
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX46">
+				<Item class="ModuleScript" referent="RBX47">
 					<Properties>
 						<string name="Name">Leaderboard</string>
 						<ProtectedString name="Source">--!strict
@@ -12149,7 +12454,7 @@ return Leaderboard
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX47">
+				<Item class="ModuleScript" referent="RBX48">
 					<Properties>
 						<string name="Name">Matchmaking</string>
 						<ProtectedString name="Source">--!strict
@@ -12426,7 +12731,7 @@ return Matchmaking
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX48">
+				<Item class="ModuleScript" referent="RBX49">
 					<Properties>
 						<string name="Name">PatientFlow</string>
 						<ProtectedString name="Source">--!strict
@@ -14789,7 +15094,7 @@ return PatientFlow
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX49">
+				<Item class="ModuleScript" referent="RBX50">
 					<Properties>
 						<string name="Name">Profile</string>
 						<ProtectedString name="Source">--!strict
@@ -15397,7 +15702,7 @@ return Profile
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX50">
+				<Item class="ModuleScript" referent="RBX51">
 					<Properties>
 						<string name="Name">Roster</string>
 						<ProtectedString name="Source">--!strict
@@ -15574,7 +15879,7 @@ return Roster
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX51">
+				<Item class="ModuleScript" referent="RBX52">
 					<Properties>
 						<string name="Name">Staff</string>
 						<ProtectedString name="Source">--!strict
@@ -15803,7 +16108,7 @@ return Staff
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX52">
+				<Item class="ModuleScript" referent="RBX53">
 					<Properties>
 						<string name="Name">Surgery</string>
 						<ProtectedString name="Source">--!strict
@@ -16099,7 +16404,7 @@ return Surgery
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX53">
+				<Item class="ModuleScript" referent="RBX54">
 					<Properties>
 						<string name="Name">Tasks</string>
 						<ProtectedString name="Source">--!strict
@@ -16279,7 +16584,7 @@ return Tasks
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX54">
+				<Item class="ModuleScript" referent="RBX55">
 					<Properties>
 						<string name="Name">ToolGame</string>
 						<ProtectedString name="Source">--!strict
@@ -16546,7 +16851,7 @@ return ToolGame
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX55">
+				<Item class="ModuleScript" referent="RBX56">
 					<Properties>
 						<string name="Name">Treatment</string>
 						<ProtectedString name="Source">--!strict
@@ -16710,7 +17015,7 @@ return Treatment
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX56">
+				<Item class="ModuleScript" referent="RBX57">
 					<Properties>
 						<string name="Name">Tutorial</string>
 						<ProtectedString name="Source">--!strict
@@ -16812,7 +17117,7 @@ return Tutorial
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX57">
+				<Item class="ModuleScript" referent="RBX58">
 					<Properties>
 						<string name="Name">Upgrades</string>
 						<ProtectedString name="Source">--!strict
@@ -17088,7 +17393,7 @@ return Upgrades
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX58">
+				<Item class="ModuleScript" referent="RBX59">
 					<Properties>
 						<string name="Name">Ward</string>
 						<ProtectedString name="Source">--!strict
@@ -17339,11 +17644,11 @@ return Ward
 					</Properties>
 				</Item>
 			</Item>
-			<Item class="Folder" referent="RBX59">
+			<Item class="Folder" referent="RBX60">
 				<Properties>
 					<string name="Name">world</string>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX60">
+				<Item class="ModuleScript" referent="RBX61">
 					<Properties>
 						<string name="Name">AnimalAnimator</string>
 						<ProtectedString name="Source">--!strict
@@ -18010,7 +18315,7 @@ return Animator
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX61">
+				<Item class="ModuleScript" referent="RBX62">
 					<Properties>
 						<string name="Name">AnimalFactory</string>
 						<ProtectedString name="Source">--!strict
@@ -19037,7 +19342,7 @@ return AnimalFactory
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX62">
+				<Item class="ModuleScript" referent="RBX63">
 					<Properties>
 						<string name="Name">Clinic</string>
 						<ProtectedString name="Source">--!strict
@@ -19126,19 +19431,30 @@ end
 
 
 --- Bahce, yol ve disarisi.
+---
+--- Cimen zemin bir CERCEVE: binanin altini bos birakiyor. Once tek bir
+--- buyuk plakaydi ve bina dosemelerinin icinden geciyordu (0,5 stud) -
+--- oyuncunun gordugu ilk hata buydu. Sayilar `plan.levels` icinde ve
+--- ayni sayilari `tools/verify_layout.py` de okuyor.
 local function buildGrounds(parent: Instance)
 	local half = plan.groundSize * 0.5
-	Build.slab(
+	local levels = plan.levels
+	local min, max = plan.bounds.min, plan.bounds.max
+	Build.groundFrame(
 		{ -half, -half },
 		{ half, half },
-		plan.floorY - 0.5,
-		1,
+		min,
+		max,
+		plan.floorY + levels.ground.y,
+		levels.ground.thickness,
 		colorOf(&quot;ground&quot;),
 		Enum.Material.Grass,
 		parent,
 		&quot;Zemin&quot;
 	)
 
+	-- Yol cimenin USTUNDE duruyor (icinde degil): yolun alti, zeminin
+	-- ustuyle ayni sayi.
 	local path = plan.outdoor.path
 	local halfWidth = path.width * 0.5
 	local zMin = math.min(path.from[2], path.to[2])
@@ -19146,8 +19462,8 @@ local function buildGrounds(parent: Instance)
 	Build.slab(
 		{ path.from[1] - halfWidth, zMin },
 		{ path.from[1] + halfWidth, zMax },
-		plan.floorY + 0.02,
-		0.3,
+		plan.floorY + levels.path.y,
+		levels.path.thickness,
 		colorOf(&quot;path&quot;),
 		Enum.Material.Concrete,
 		parent,
@@ -19245,8 +19561,8 @@ function Clinic.build(parent: Instance): Built
 		Build.slab(
 			room.min,
 			room.max,
-			plan.floorY - 0.25,
-			0.5,
+			plan.floorY + plan.levels.floor.y,
+			plan.levels.floor.thickness,
 			Build.color(room.floorColor),
 			materialOf(room.floorMaterial),
 			structure,
@@ -19260,7 +19576,7 @@ function Clinic.build(parent: Instance): Built
 				structure,
 				room.min,
 				room.max,
-				plan.floorY + 0.03,
+				plan.floorY + plan.levels.tile.y,
 				room.floorTile,
 				Build.color(room.floorColor),
 				Build.color(room.floorTileColor),
@@ -19269,11 +19585,16 @@ function Clinic.build(parent: Instance): Built
 		end
 
 		if plan.ceiling then
+			-- Tavan plakasi duvarlarin ICINE cekiliyor. Cekilmeseydi
+			-- duvarin ust 0,5 studunun icinden gecerdi: odanin siniri
+			-- duvarin ORTA cizgisi, duvarin kendisi ise o cizginin iki
+			-- yanina tasiyor.
+			local inset = plan.wallThickness * 0.5
 			Build.slab(
-				room.min,
-				room.max,
-				plan.wallHeight - 0.25,
-				0.5,
+				{ room.min[1] + inset, room.min[2] + inset },
+				{ room.max[1] - inset, room.max[2] - inset },
+				plan.wallHeight - plan.levels.corniceHeight * 0.5,
+				plan.levels.corniceHeight,
 				colorOf(&quot;ceiling&quot;),
 				Enum.Material.SmoothPlastic,
 				structure,
@@ -19397,7 +19718,7 @@ return Clinic
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX63">
+				<Item class="ModuleScript" referent="RBX64">
 					<Properties>
 						<string name="Name">DayCycle</string>
 						<ProtectedString name="Source">--!strict
@@ -19626,7 +19947,7 @@ return DayCycle
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX64">
+				<Item class="ModuleScript" referent="RBX65">
 					<Properties>
 						<string name="Name">Decor</string>
 						<ProtectedString name="Source">--!strict
@@ -19867,7 +20188,7 @@ return Decor
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX65">
+				<Item class="ModuleScript" referent="RBX66">
 					<Properties>
 						<string name="Name">Doors</string>
 						<ProtectedString name="Source">--!strict
@@ -20306,7 +20627,7 @@ return Doors
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX66">
+				<Item class="ModuleScript" referent="RBX67">
 					<Properties>
 						<string name="Name">Effects</string>
 						<ProtectedString name="Source">--!strict
@@ -20490,7 +20811,7 @@ return Effects
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX67">
+				<Item class="ModuleScript" referent="RBX68">
 					<Properties>
 						<string name="Name">Lighting</string>
 						<ProtectedString name="Source">--!strict
@@ -20613,7 +20934,7 @@ return Sky
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX68">
+				<Item class="ModuleScript" referent="RBX69">
 					<Properties>
 						<string name="Name">Lobby</string>
 						<ProtectedString name="Source">--!strict
@@ -20778,30 +21099,47 @@ function Lobby.build(parent: Instance): Built
 	local min, max = plan.bounds.min, plan.bounds.max
 	local half = plan.groundSize * 0.5
 
-	Build.slab({ -half, -half }, { half, half }, -0.5, 1, colorOf(&quot;ground&quot;), Enum.Material.Grass, root, &quot;Zemin&quot;)
-	Build.slab(min, max, -0.25, 0.5, colorOf(&quot;floor&quot;), Enum.Material.Marble, root, &quot;Doseme&quot;)
-	Detail.tiles(root, min, max, 0.03, 8, colorOf(&quot;floor&quot;), colorOf(&quot;floorTile&quot;), Enum.Material.Marble)
+	-- Cimen zemin bir CERCEVE: binanin altini bos birakiyor. Once tek
+	-- bir buyuk plakaydi ve salonun dosemesinin icinden geciyordu
+	-- (0,5 stud). Sayilar `plan.levels` icinde; ayni sayilari
+	-- `tools/verify_layout.py` de okuyor.
+	local levels = plan.levels
+	Build.groundFrame(
+		{ -half, -half }, { half, half }, min, max,
+		levels.ground.y, levels.ground.thickness,
+		colorOf(&quot;ground&quot;), Enum.Material.Grass, root, &quot;Zemin&quot;
+	)
+	Build.slab(min, max, levels.floor.y, levels.floor.thickness, colorOf(&quot;floor&quot;), Enum.Material.Marble, root, &quot;Doseme&quot;)
+	Detail.tiles(root, min, max, levels.tile.y, 8, colorOf(&quot;floor&quot;), colorOf(&quot;floorTile&quot;), Enum.Material.Marble)
 
-	-- Girise giden tas yol: bina disindaki tek zemin parcasi.
+	-- Girise giden tas yol: cimenin USTUNDE duruyor, icinde degil.
 	local path = plan.outdoor.path
 	local pathHalf = path.width * 0.5
 	Build.slab(
 		{ path.from[1] - pathHalf, math.min(path.from[2], path.to[2]) },
 		{ path.from[1] + pathHalf, math.max(path.from[2], path.to[2]) },
-		-0.2, 0.45, colorOf(&quot;path&quot;), Enum.Material.Concrete, root, &quot;Yol&quot;
+		levels.path.y, levels.path.thickness,
+		colorOf(&quot;path&quot;), Enum.Material.Concrete, root, &quot;Yol&quot;
 	)
 
 	-- Tavan: ORTA acikligi bos birakiliyor (aydinlik). Duz bir tavan
 	-- 96x80'lik bir salonu kutuya ceviriyordu.
+	-- Tavan plakalari duvarlarin ICINE cekiliyor (inset): cekilmeseydi
+	-- duvarin ust yarim studunun icinden gecerlerdi.
 	local lightMin, lightMax = { -18, -10 }, { 18, 10 }
-	Build.slab(min, { max[1], lightMin[2] }, plan.wallHeight - 0.25, 0.5, colorOf(&quot;ceiling&quot;), Enum.Material.SmoothPlastic, root, &quot;Tavan&quot;)
-	Build.slab({ min[1], lightMax[2] }, max, plan.wallHeight - 0.25, 0.5, colorOf(&quot;ceiling&quot;), Enum.Material.SmoothPlastic, root, &quot;Tavan&quot;)
-	Build.slab({ min[1], lightMin[2] }, { lightMin[1], lightMax[2] }, plan.wallHeight - 0.25, 0.5, colorOf(&quot;ceiling&quot;), Enum.Material.SmoothPlastic, root, &quot;Tavan&quot;)
-	Build.slab({ lightMax[1], lightMin[2] }, { max[1], lightMax[2] }, plan.wallHeight - 0.25, 0.5, colorOf(&quot;ceiling&quot;), Enum.Material.SmoothPlastic, root, &quot;Tavan&quot;)
+	local inset = plan.wallThickness * 0.5
+	local ceilY = plan.wallHeight - levels.corniceHeight * 0.5
+	local ceilT = levels.corniceHeight
+	local inner = { min[1] + inset, min[2] + inset }
+	local outer = { max[1] - inset, max[2] - inset }
+	Build.slab(inner, { outer[1], lightMin[2] }, ceilY, ceilT, colorOf(&quot;ceiling&quot;), Enum.Material.SmoothPlastic, root, &quot;Tavan&quot;)
+	Build.slab({ inner[1], lightMax[2] }, outer, ceilY, ceilT, colorOf(&quot;ceiling&quot;), Enum.Material.SmoothPlastic, root, &quot;Tavan&quot;)
+	Build.slab({ inner[1], lightMin[2] }, { lightMin[1], lightMax[2] }, ceilY, ceilT, colorOf(&quot;ceiling&quot;), Enum.Material.SmoothPlastic, root, &quot;Tavan&quot;)
+	Build.slab({ lightMax[1], lightMin[2] }, { outer[1], lightMax[2] }, ceilY, ceilT, colorOf(&quot;ceiling&quot;), Enum.Material.SmoothPlastic, root, &quot;Tavan&quot;)
 
 	-- Aydinlik camı ve kafesi: gunes salonun ortasina dusuyor.
 	local sky = Build.slab(
-		lightMin, lightMax, plan.wallHeight - 0.2, 0.3,
+		lightMin, lightMax, ceilY, ceilT * 0.4,
 		colorOf(&quot;glass&quot;), Enum.Material.Glass, root, &quot;Aydinlik&quot;
 	)
 	sky.Transparency = 0.55
@@ -20811,7 +21149,7 @@ function Lobby.build(parent: Instance): Built
 		Build.part({
 			name = &quot;AydinlikKafesi&quot;,
 			size = Vector3.new(0.4, 0.4, lightMax[2] - lightMin[2]),
-			cf = CFrame.new(index * 5, plan.wallHeight - 0.05, 0),
+			cf = CFrame.new(index * 5, ceilY, 0),
 			color = colorOf(&quot;trim&quot;),
 			canCollide = false,
 			castShadow = false,
@@ -20822,7 +21160,7 @@ function Lobby.build(parent: Instance): Built
 		Build.part({
 			name = &quot;AydinlikKafesi&quot;,
 			size = Vector3.new(lightMax[1] - lightMin[1], 0.4, 0.4),
-			cf = CFrame.new(0, plan.wallHeight - 0.05, index * 4),
+			cf = CFrame.new(0, ceilY, index * 4),
 			color = colorOf(&quot;trim&quot;),
 			canCollide = false,
 			castShadow = false,
@@ -20916,7 +21254,7 @@ return Lobby
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX69">
+				<Item class="ModuleScript" referent="RBX70">
 					<Properties>
 						<string name="Name">OwnerFactory</string>
 						<ProtectedString name="Source">--!strict
@@ -21521,7 +21859,7 @@ return OwnerFactory
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX70">
+				<Item class="ModuleScript" referent="RBX71">
 					<Properties>
 						<string name="Name">Props</string>
 						<ProtectedString name="Source">--!strict
@@ -22579,14 +22917,16 @@ builders.rugRunner = function(model, origin)
 	local d = makerDecor(model, origin)
 	-- Uzun hali yolu: giristen salona kadar gidiyor ve gozu ileri
 	-- cekiyor. Zeminden 0,1 stud yukarida duruyor ki z-fighting olmasin.
-	d(&quot;Hali&quot;, Vector3.new(9.4, 0.12, 29.4), Vector3.new(0, 0.12, 0), C.carpet, Enum.Material.Fabric)
-	d(&quot;HaliKenari&quot;, Vector3.new(10.0, 0.1, 30.0), Vector3.new(0, 0.06, 0), C.deepTeal, Enum.Material.Fabric)
+	-- Hali zemin KAROLARININ ustunde duruyor. Karolar 0..0,06
+	-- arasinda; hali 0,06'dan basliyor, yani icine girmiyor.
+	d(&quot;HaliKenari&quot;, Vector3.new(10.0, 0.1, 20.0), Vector3.new(0, 0.11, 0), C.deepTeal, Enum.Material.Fabric)
+	d(&quot;Hali&quot;, Vector3.new(9.4, 0.12, 19.4), Vector3.new(0, 0.22, 0), C.carpet, Enum.Material.Fabric)
 	-- Boyuna iki serit ve enine desen cizgileri.
 	for _, side in { -1, 1 } do
-		d(&quot;HaliSeridi&quot;, Vector3.new(0.5, 0.14, 29.0), Vector3.new(side * 3.6, 0.13, 0), C.gold, Enum.Material.Fabric)
+		d(&quot;HaliSeridi&quot;, Vector3.new(0.5, 0.14, 19.0), Vector3.new(side * 3.6, 0.29, 0), C.gold, Enum.Material.Fabric)
 	end
-	for index = -6, 6 do
-		d(&quot;HaliDeseni&quot;, Vector3.new(7.8, 0.14, 0.24), Vector3.new(0, 0.13, index * 2.2), C.paleTeal, Enum.Material.Fabric)
+	for index = -4, 4 do
+		d(&quot;HaliDeseni&quot;, Vector3.new(7.8, 0.14, 0.24), Vector3.new(0, 0.29, index * 2.2), C.paleTeal, Enum.Material.Fabric)
 	end
 end
 
@@ -23284,7 +23624,7 @@ return Props
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX71">
+				<Item class="ModuleScript" referent="RBX72">
 					<Properties>
 						<string name="Name">StaffFactory</string>
 						<ProtectedString name="Source">--!strict
@@ -23455,15 +23795,15 @@ return StaffFactory
 			</Item>
 		</Item>
 	</Item>
-	<Item class="StarterPlayer" referent="RBX72">
+	<Item class="StarterPlayer" referent="RBX73">
 		<Properties>
 			<string name="Name">StarterPlayer</string>
 		</Properties>
-		<Item class="StarterPlayerScripts" referent="RBX73">
+		<Item class="StarterPlayerScripts" referent="RBX74">
 			<Properties>
 				<string name="Name">StarterPlayerScripts</string>
 			</Properties>
-			<Item class="LocalScript" referent="RBX74">
+			<Item class="LocalScript" referent="RBX75">
 				<Properties>
 					<string name="Name">VetClient</string>
 					<ProtectedString name="Source">--!strict
@@ -23760,7 +24100,7 @@ end)
 print(&quot;[Veteriner] istemci hazir.&quot;)
 </ProtectedString>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX75">
+				<Item class="ModuleScript" referent="RBX76">
 					<Properties>
 						<string name="Name">Camera</string>
 						<ProtectedString name="Source">--!strict
@@ -24011,7 +24351,7 @@ return Camera
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX76">
+				<Item class="ModuleScript" referent="RBX77">
 					<Properties>
 						<string name="Name">Chart</string>
 						<ProtectedString name="Source">--!strict
@@ -24506,7 +24846,7 @@ return Chart
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX77">
+				<Item class="ModuleScript" referent="RBX78">
 					<Properties>
 						<string name="Name">Crosshair</string>
 						<ProtectedString name="Source">--!strict
@@ -24657,7 +24997,7 @@ return Crosshair
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX78">
+				<Item class="ModuleScript" referent="RBX79">
 					<Properties>
 						<string name="Name">DiagnosisPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -24849,7 +25189,7 @@ return DiagnosisPanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX79">
+				<Item class="ModuleScript" referent="RBX80">
 					<Properties>
 						<string name="Name">Fps</string>
 						<ProtectedString name="Source">--!strict
@@ -24968,7 +25308,7 @@ return Fps
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX80">
+				<Item class="ModuleScript" referent="RBX81">
 					<Properties>
 						<string name="Name">Hud</string>
 						<ProtectedString name="Source">--!strict
@@ -25667,7 +26007,7 @@ return Hud
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX81">
+				<Item class="ModuleScript" referent="RBX82">
 					<Properties>
 						<string name="Name">LobbyPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -25958,7 +26298,7 @@ return LobbyPanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX82">
+				<Item class="ModuleScript" referent="RBX83">
 					<Properties>
 						<string name="Name">Notify</string>
 						<ProtectedString name="Source">--!strict
@@ -26144,7 +26484,7 @@ return Notify
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX83">
+				<Item class="ModuleScript" referent="RBX84">
 					<Properties>
 						<string name="Name">ProgressPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -26428,7 +26768,7 @@ return ProgressPanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX84">
+				<Item class="ModuleScript" referent="RBX85">
 					<Properties>
 						<string name="Name">SettingsPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -26702,7 +27042,7 @@ return SettingsPanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX85">
+				<Item class="ModuleScript" referent="RBX86">
 					<Properties>
 						<string name="Name">ShopPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -27128,7 +27468,7 @@ return ShopPanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX86">
+				<Item class="ModuleScript" referent="RBX87">
 					<Properties>
 						<string name="Name">SurgeryPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -27656,7 +27996,7 @@ return SurgeryPanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX87">
+				<Item class="ModuleScript" referent="RBX88">
 					<Properties>
 						<string name="Name">Theme</string>
 						<ProtectedString name="Source">--!strict
@@ -28747,7 +29087,7 @@ return Theme
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX88">
+				<Item class="ModuleScript" referent="RBX89">
 					<Properties>
 						<string name="Name">ToolBar</string>
 						<ProtectedString name="Source">--!strict
@@ -28988,7 +29328,7 @@ return ToolBar
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX89">
+				<Item class="ModuleScript" referent="RBX90">
 					<Properties>
 						<string name="Name">ToolGamePanel</string>
 						<ProtectedString name="Source">--!strict
@@ -29446,7 +29786,7 @@ return ToolGamePanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX90">
+				<Item class="ModuleScript" referent="RBX91">
 					<Properties>
 						<string name="Name">Touch</string>
 						<ProtectedString name="Source">--!strict
@@ -29577,7 +29917,7 @@ return Touch
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX91">
+				<Item class="ModuleScript" referent="RBX92">
 					<Properties>
 						<string name="Name">TreatmentPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -29817,7 +30157,7 @@ return TreatmentPanel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX92">
+				<Item class="ModuleScript" referent="RBX93">
 					<Properties>
 						<string name="Name">Tutorial</string>
 						<ProtectedString name="Source">--!strict
@@ -30019,7 +30359,7 @@ return Tutorial
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX93">
+				<Item class="ModuleScript" referent="RBX94">
 					<Properties>
 						<string name="Name">ViewModel</string>
 						<ProtectedString name="Source">--!strict
@@ -30404,7 +30744,7 @@ return ViewModel
 </ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX94">
+				<Item class="ModuleScript" referent="RBX95">
 					<Properties>
 						<string name="Name">WardPanel</string>
 						<ProtectedString name="Source">--!strict
@@ -30684,19 +31024,19 @@ return WardPanel
 			</Item>
 		</Item>
 	</Item>
-	<Item class="StarterGui" referent="RBX95">
+	<Item class="StarterGui" referent="RBX96">
 		<Properties>
 			<string name="Name">StarterGui</string>
 			<bool name="ResetPlayerGuiOnSpawn">false</bool>
 		</Properties>
 	</Item>
-	<Item class="Players" referent="RBX96">
+	<Item class="Players" referent="RBX97">
 		<Properties>
 			<string name="Name">Players</string>
 			<bool name="CharacterAutoLoads">false</bool>
 		</Properties>
 	</Item>
-	<Item class="SoundService" referent="RBX97">
+	<Item class="SoundService" referent="RBX98">
 		<Properties>
 			<string name="Name">SoundService</string>
 		</Properties>

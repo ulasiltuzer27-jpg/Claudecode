@@ -123,6 +123,7 @@ def prop_box(budget, at, rot) -> Box:
 
 def main() -> int:
     clinic = load("clinic.json")
+    lobby_plan = load("lobby.json")
     props = load("props.json")
     animals = load("animals.json")["animals"]
 
@@ -167,6 +168,90 @@ def main() -> int:
             budget,
             room,
         ))
+
+    # 1b. YAPISAL KATMANLAR
+    #
+    # Bu denetim ailesi SONRADAN yazildi ve yazilma sebebi bir hataydi:
+    # cimen zemin butun haritayi kapliyordu ve BINANIN ALTINDAN gecerek
+    # oda dosemelerinin icine giriyordu (0,5 stud). Oyuncu bunu ilk
+    # bakista gordu; o sirada calisan alti dogrulayicinin hicbiri
+    # gormedi, cunku hepsi yalnizca ESYALARA bakiyordu. Zemin, doseme,
+    # karo, yol, duvar, tavan ve cati ise KODLA kuruluyordu ve hicbir
+    # yerde olculmuyordu.
+    #
+    # Artik olculuyor: Y bantlari `levels` icinde (Luau kurucusu da ayni
+    # tablodan okuyor), ayak izleri ise burada plandan cikariliyor.
+    def check_structure(label: str, plan: dict, has_rooms: bool) -> None:
+        levels = plan["levels"]
+        floor_y = plan.get("floorY", 0)
+        wall_height = plan["wallHeight"]
+        wall_t = plan["wallThickness"]
+        bounds_min, bounds_max = plan["bounds"]["min"], plan["bounds"]["max"]
+        half = plan["groundSize"] / 2
+
+        def band(layer: str) -> tuple[float, float]:
+            spec = levels[layer]
+            return (floor_y + spec["y"] - spec["thickness"] / 2, floor_y + spec["y"] + spec["thickness"] / 2)
+
+        ground = band("ground")
+        floor = band("floor")
+        tile = band("tile")
+        path = band("path")
+
+        # Zemin CERCEVE: binanin dikdortgeni disarida kaliyor. Cerceve
+        # parcalarinin hicbiri bina ayak iziyle kesismemeli.
+        building = Box(bounds_min[0], bounds_max[0], ground[0], ground[1], bounds_min[1], bounds_max[1])
+        frame = [
+            Box(-half, half, ground[0], ground[1], -half, bounds_min[1]),
+            Box(-half, half, ground[0], ground[1], bounds_max[1], half),
+            Box(-half, bounds_min[0], ground[0], ground[1], bounds_min[1], bounds_max[1]),
+            Box(bounds_max[0], half, ground[0], ground[1], bounds_min[1], bounds_max[1]),
+        ]
+        for index, piece in enumerate(frame):
+            check(
+                f"{label}: cimen zemin parcasi #{index} binanin ALTINA girmiyor",
+                not piece.overlaps(building),
+            )
+        check(
+            f"{label}: cimen zemin binayi cevreliyor (disari {half:.0f} stud)",
+            half > max(abs(bounds_min[0]), abs(bounds_max[0]), abs(bounds_min[1]), abs(bounds_max[1])),
+        )
+
+        # Ust uste binen ayak izlerinde Y bantlari CAKISMAMALI.
+        def gap(a: tuple[float, float], b: tuple[float, float]) -> float:
+            return min(a[1], b[1]) - max(a[0], b[0])
+
+        check(f"{label}: doseme ile karo ic ice degil ({gap(floor, tile):+.3f})", gap(floor, tile) <= 1e-9)
+        check(f"{label}: cimen ile yol ic ice degil ({gap(ground, path):+.3f})", gap(ground, path) <= 1e-9)
+        check(f"{label}: karo dosemenin USTUNDE", tile[0] >= floor[1] - 1e-9)
+        check(f"{label}: yol cimenin USTUNDE", path[0] >= ground[1] - 1e-9)
+        check(f"{label}: doseme ust yuzeyi zemin seviyesinde", abs(floor[1] - floor_y) < 1e-9)
+        check(f"{label}: cimen ust yuzeyi zemin seviyesinde", abs(ground[1] - floor_y) < 1e-9)
+
+        # Duvar govdesi supurgelik ile kornisin ARASINDA: uc bant
+        # birbirine deger, ust uste binmez.
+        skirt = (0.0, levels["skirtHeight"])
+        cornice = (wall_height - levels["corniceHeight"], wall_height)
+        body = (skirt[1], cornice[0])
+        check(f"{label}: supurgelik ile duvar govdesi ic ice degil", gap(skirt, body) <= 1e-9)
+        check(f"{label}: duvar govdesi ile kornis ic ice degil", gap(body, cornice) <= 1e-9)
+        check(f"{label}: duvar govdesi icin yer kaliyor", body[1] > body[0])
+        check(f"{label}: kaplama seritleri duvardan TASIYOR (titreme olmasin)", levels["trimBulge"] > 0)
+
+        # Tavan plakasi duvarlarin icine cekiliyor.
+        inset = wall_t * 0.5
+        check(f"{label}: tavan duvarlarin icine cekiliyor ({inset:.2f} stud)", inset > 0)
+        if has_rooms:
+            for room in plan["rooms"]:
+                width = room["max"][0] - room["min"][0] - inset * 2
+                depth = room["max"][1] - room["min"][1] - inset * 2
+                check(f"{label}: '{room['id']}' tavani cekildikten sonra hala var", width > 0 and depth > 0)
+            # Cati tavanin USTUNDE baslamali.
+            roof_bottom = wall_height + 0.5 - 0.5
+            check(f"{label}: cati tavanin ustunde", roof_bottom >= cornice[0] - 1e-9)
+
+    check_structure("klinik", clinic, True)
+    check_structure("lobi", lobby_plan, False)
 
     # 2. Esya x esya
     for (ra, ea, ba, _, _), (rb, eb, bb, _, _) in itertools.combinations(placed, 2):
@@ -219,6 +304,43 @@ def main() -> int:
                     f"{room_id}/{entry['id']}@{entry['at']} duvar#{index}'i kesmiyor ({depth:.2f} stud)",
                     False,
                 )
+
+    # 4b. TAVANA VE CATIYA CARPAN ESYA
+    #
+    # Esyalarin BIRBIRIYLE ve duvarlarla cakismasi olculuyordu ama
+    # yukari dogru hicbir sinir yoktu: tavani delen bir dolap ya da
+    # catinin sacagina giren bir agac denetimden gecerdi.
+    ceiling_bottom = clinic["wallHeight"] - clinic["levels"]["corniceHeight"]
+    for room_id, entry, box, budget, room in placed:
+        if room is None:
+            continue
+        top = budget["base"] + budget["size"][2]
+        check(
+            f"{room_id}/{entry['id']}@{entry['at']} tavani delmiyor "
+            f"({top:.1f} < {ceiling_bottom:.1f})",
+            top <= ceiling_bottom + 1e-6,
+        )
+
+    roof_overhang = 1.5
+    roof_bottom = clinic["wallHeight"]
+    roof_box = Box(
+        clinic["bounds"]["min"][0] - roof_overhang,
+        clinic["bounds"]["max"][0] + roof_overhang,
+        roof_bottom,
+        roof_bottom + 1.5,
+        clinic["bounds"]["min"][1] - roof_overhang,
+        clinic["bounds"]["max"][1] + roof_overhang,
+    )
+    for entry in clinic["outdoor"]["props"]:
+        budget = budgets.get(entry["id"])
+        if budget is None:
+            continue
+        flat = prop_box(budget, entry["at"], entry.get("rot", 0))
+        tall = Box(flat.x0, flat.x1, budget["base"], budget["base"] + budget["size"][2], flat.z0, flat.z1)
+        check(
+            f"dis esya {entry['id']}@{entry['at']} catinin sacagina girmiyor",
+            not tall.overlaps(roof_box),
+        )
 
     # 5. Kapi bosluklari acik mi? Kapinin iki yaninda 4 stud derinlik.
     clearance = 4.0
@@ -415,7 +537,7 @@ def main() -> int:
     )
 
     # 6d. LOBI — klinikte denetlenen her sey lobide de denetleniyor.
-    lobby = load("lobby.json")
+    lobby = lobby_plan
     lobby_min, lobby_max = lobby["bounds"]["min"], lobby["bounds"]["max"]
     lobby_placed = []
     for entry in lobby["props"]:
@@ -566,6 +688,17 @@ def main() -> int:
                 f"lobi duvar#{index}: {a[2]} ({a[0]:.1f}..{a[1]:.1f}) ile {b[2]} ({b[0]:.1f}..{b[1]:.1f}) ust uste degil",
                 a[1] <= b[0] + 1e-6 or b[1] <= a[0] + 1e-6,
             )
+
+    # 6e2. Lobide de tavani delen esya olmasin.
+    lobby_ceiling_bottom = lobby["wallHeight"] - lobby["levels"]["corniceHeight"]
+    for entry, box in lobby_placed:
+        budget = budgets[entry["id"]]
+        top = budget["base"] + budget["size"][2]
+        check(
+            f"lobi: {entry['id']}@{entry['at']} tavani delmiyor "
+            f"({top:.1f} < {lobby_ceiling_bottom:.1f})",
+            top <= lobby_ceiling_bottom + 1e-6,
+        )
 
     # 6f. LOBININ DIS ESYALARI binaya girmesin.
     lobby_building = Box(

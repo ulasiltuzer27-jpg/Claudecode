@@ -220,6 +220,44 @@ function Build.ceilingLight(position: Vector3, parent: Instance, lamp: LampConfi
 end
 
 --- Yatay dikdortgen zemin/tavan levhasi. min/max [x,z] cinsinden.
+--- ZEMIN CERCEVESI: binanin ALTINI bos birakan dis zemin.
+---
+--- Neden cerceve?
+--- --------------
+--- Once tek bir buyuk cimen plakasi vardi ve butun haritayi kapliyordu -
+--- BINANIN ALTINI da. Oda dosemeleri o plakanin icinde kaliyor, cimen
+--- dosemenin arasindan gorunuyordu. Oyuncunun "cimen ile blok ic ice
+--- giriyor" dedigi sey buydu.
+---
+--- Dort parca: guney, kuzey, bati, dogu. Binanin dikdortgeni disarida
+--- kaliyor, yani hicbir yerde dosemeye degmiyor bile.
+function Build.groundFrame(
+	outerMin: { number },
+	outerMax: { number },
+	innerMin: { number },
+	innerMax: { number },
+	y: number,
+	thickness: number,
+	color: Color3,
+	material: Enum.Material,
+	parent: Instance,
+	name: string
+): { Part }
+	local pieces: { Part } = {}
+	local function piece(minXZ: { number }, maxXZ: { number })
+		if maxXZ[1] - minXZ[1] <= 1e-3 or maxXZ[2] - minXZ[2] <= 1e-3 then
+			return
+		end
+		table.insert(pieces, Build.slab(minXZ, maxXZ, y, thickness, color, material, parent, name))
+	end
+
+	piece({ outerMin[1], outerMin[2] }, { outerMax[1], innerMin[2] })
+	piece({ outerMin[1], innerMax[2] }, { outerMax[1], outerMax[2] })
+	piece({ outerMin[1], innerMin[2] }, { innerMin[1], innerMax[2] })
+	piece({ innerMax[1], innerMin[2] }, { outerMax[1], innerMax[2] })
+	return pieces
+end
+
 function Build.slab(
 	minXZ: { number },
 	maxXZ: { number },
