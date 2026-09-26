@@ -14,6 +14,9 @@ namespace IdleRestaurant.Gameplay.Customers
         /// <summary>Masada, siparişin hazırlanmasını bekliyor.</summary>
         WaitingForOrder,
 
+        /// <summary>Siparişi geldi, masada yiyor; bitince parayı bırakıp kalkar.</summary>
+        Eating,
+
         /// <summary>Çıkışa yürüyor (ödeyip veya ödemeden).</summary>
         Leaving
     }
@@ -28,16 +31,20 @@ namespace IdleRestaurant.Gameplay.Customers
         /// <summary>Sipariş için en uzun bekleme (sn); dolarsa ödemeden çıkar. 0 = sınırsız.</summary>
         public float patienceSeconds;
 
-        public CustomerVisitSettings(float minWaitSeconds, float patienceSeconds)
+        /// <summary>Sipariş geldikten sonra masada yeme süresi (sn). 0 = servis edilince hemen öder ve kalkar.</summary>
+        public float eatSeconds;
+
+        public CustomerVisitSettings(float minWaitSeconds, float patienceSeconds, float eatSeconds = 0f)
         {
             this.minWaitSeconds = minWaitSeconds;
             this.patienceSeconds = patienceSeconds;
+            this.eatSeconds = eatSeconds;
         }
     }
 
     /// <summary>
     /// Tek bir müşterinin ziyareti: kapıdan masaya yürü → siparişi bekle →
-    /// servis edilince çık.
+    /// ye → parayı bırak → çık.
     ///
     /// ── Sipariş ne zaman hazır ──────────────────────────────────────────────
     /// Masanın istasyonu bir üretim döngüsünü tamamladığında. Böylece müşteri
@@ -46,12 +53,13 @@ namespace IdleRestaurant.Gameplay.Customers
     ///
     /// ── Hareket ─────────────────────────────────────────────────────────────
     /// Vector3.MoveTowards ile düz çizgide; 2D ve 3D sahnede aynı çalışır
-    /// (2D'de kapı ve masaları aynı z'de tutun). Animasyon veya sprite
-    /// çevirme için <see cref="MoveDirection"/> ve <see cref="State"/> okunabilir.
+    /// (2D'de kapı ve masaları aynı z'de tutun). Görünüm (zıplama, eğilme,
+    /// Animator) <see cref="CustomerVisual"/>'dadır; <see cref="State"/>,
+    /// <see cref="MoveDirection"/> ve olaylardan beslenir, kökün konumuna dokunmaz.
     ///
     /// ── Sorumluluk sınırı ───────────────────────────────────────────────────
-    /// Müşteri parayı kendisi eklemez: servis edildiğinde
-    /// <see cref="onOrderServed"/> ile duyurur, bıraktığı parayı ekonomi
+    /// Müşteri parayı kendisi eklemez: yemeğini bitirince
+    /// <see cref="onCheckout"/> ile duyurur, bıraktığı parayı ekonomi
     /// ayarlarını tutan <see cref="CustomerSpawner"/> hesaplar.
     /// </summary>
     [DisallowMultipleComponent]
@@ -68,13 +76,21 @@ namespace IdleRestaurant.Gameplay.Customers
         private Transform _exitPoint;
         private CustomerVisitSettings _settings;
         private float _waitTimer;
+        private float _eatTimer;
         private bool _orderReady;
         private bool _listeningToStation;
         private bool _served;
         private Vector3 _moveDirection;
 
-        /// <summary>Sipariş servis edildiğinde (müşteri, siparişi hazırlayan istasyon) ile tetiklenir.</summary>
+        /// <summary>Sipariş masaya geldiğinde (müşteri, siparişi hazırlayan istasyon) ile tetiklenir; müşteri yemeye başlar.</summary>
         public event Action<CustomerController, Station> onOrderServed;
+
+        /// <summary>
+        /// Müşteri yemeğini bitirip parayı bıraktığında, kalkmadan hemen önce
+        /// tetiklenir. Spawner ödemeyi burada ekler. Ödemeden ayrılan
+        /// (sabrı biten, masası kapanan) müşteride tetiklenmez.
+        /// </summary>
+        public event Action<CustomerController, Station> onCheckout;
 
         /// <summary>Müşteri çıkışa vardığında tetiklenir; spawner onu havuza döndürür.</summary>
         public event Action<CustomerController> onExited;
@@ -84,11 +100,17 @@ namespace IdleRestaurant.Gameplay.Customers
         public bool WasServed => _served;
         public bool IsMoving => State == CustomerState.WalkingToSeat || State == CustomerState.Leaving;
 
+        /// <summary>Masada: siparişi bekliyor veya yiyor.</summary>
+        public bool IsAtSeat => State == CustomerState.WaitingForOrder || State == CustomerState.Eating;
+
         /// <summary>Son karedeki hareket yönü (birim vektör); dururken sıfır.</summary>
         public Vector3 MoveDirection => _moveDirection;
 
         /// <summary>Beklemede geçen süre (sn).</summary>
         public float WaitTime => _waitTimer;
+
+        /// <summary>Yemekte geçen süre (sn).</summary>
+        public float EatTime => _eatTimer;
 
         /// <summary>
         /// Yeni bir ziyaret başlatır. Masa çağırandan önce
@@ -134,6 +156,9 @@ namespace IdleRestaurant.Gameplay.Customers
                     break;
                 case CustomerState.WaitingForOrder:
                     UpdateWaiting(deltaTime);
+                    break;
+                case CustomerState.Eating:
+                    UpdateEating(deltaTime);
                     break;
                 case CustomerState.Leaving:
                     UpdateLeaving(deltaTime);
@@ -201,11 +226,41 @@ namespace IdleRestaurant.Gameplay.Customers
         private void Serve()
         {
             _served = true;
-            Station station = _station;
             StopListeningToStation();
+            State = CustomerState.Eating;
+            _eatTimer = 0f;
+            onOrderServed?.Invoke(this, _station);
+
+            // Dinleyici müşteriyi göndermiş veya kapatmış olabilir.
+            if (State == CustomerState.Eating && _settings.eatSeconds <= 0f)
+            {
+                Checkout();
+            }
+        }
+
+        private void UpdateEating(float deltaTime)
+        {
+            // Yemek sırasında istasyon kilitlenirse (prestij) müşteri ödemeden kalkar:
+            // sıfırlanmış oyuna önceki turun parası eklenmesin.
+            if (!_seat.IsServiceAvailable)
+            {
+                Leave();
+                return;
+            }
+
+            _eatTimer += deltaTime;
+            if (_eatTimer >= _settings.eatSeconds)
+            {
+                Checkout();
+            }
+        }
+
+        private void Checkout()
+        {
+            Station station = _station;
             ReleaseSeat();
             State = CustomerState.Leaving;
-            onOrderServed?.Invoke(this, station);
+            onCheckout?.Invoke(this, station);
         }
 
         private void UpdateLeaving(float deltaTime)
@@ -269,6 +324,7 @@ namespace IdleRestaurant.Gameplay.Customers
             _station = null;
             _exitPoint = null;
             _waitTimer = 0f;
+            _eatTimer = 0f;
             _orderReady = false;
             _served = false;
             _moveDirection = Vector3.zero;

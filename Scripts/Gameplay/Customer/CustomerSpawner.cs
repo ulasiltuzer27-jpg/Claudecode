@@ -7,7 +7,7 @@ namespace IdleRestaurant.Gameplay.Customers
 {
     /// <summary>
     /// Müşteri akışını yönetir: aralıklarla kapıda müşteri doğurur, boş ve
-    /// hizmet veren bir masaya yönlendirir, servis edilen müşterinin
+    /// hizmet veren bir masaya yönlendirir, yemeğini bitiren müşterinin
     /// bıraktığı parayı ekler ve çıkan müşteriyi havuza geri alır.
     ///
     /// ── Boş masa yoksa ──────────────────────────────────────────────────────
@@ -59,6 +59,9 @@ namespace IdleRestaurant.Gameplay.Customers
         [Tooltip("Sipariş için en uzun bekleme (sn); dolarsa müşteri ödemeden çıkar. 0 = sınırsız.")]
         [SerializeField, Min(0f)] private float patienceSeconds = 0f;
 
+        [Tooltip("Sipariş geldikten sonra müşterinin masada yeme süresi (sn); para yemek bitince bırakılır. 0 = hemen öder.")]
+        [SerializeField, Min(0f)] private float eatSeconds = 1.5f;
+
         [Tooltip("Bırakılan para = istasyonun döngü başı geliri × bu değer. 0 = müşteriler yalnızca görsel.")]
         [SerializeField, Min(0f)] private float paymentMultiplier = 1f;
 
@@ -71,7 +74,7 @@ namespace IdleRestaurant.Gameplay.Customers
         /// <summary>Bir müşteri kapıdan girdiğinde tetiklenir.</summary>
         public event Action<CustomerController> onCustomerSpawned;
 
-        /// <summary>Servis edilen müşteri para bıraktığında (müşteri, tutar) ile tetiklenir; uçan para yazısı vb. için.</summary>
+        /// <summary>Müşteri yemeğini bitirip para bıraktığında (müşteri, tutar) ile tetiklenir; uçan para yazısı vb. için.</summary>
         public event Action<CustomerController, double> onCustomerPaid;
 
         public bool IsRunning => _currency != null && isActiveAndEnabled;
@@ -151,10 +154,10 @@ namespace IdleRestaurant.Gameplay.Customers
                 return null;
             }
 
-            customer.onOrderServed += HandleOrderServed;
+            customer.onCheckout += HandleCheckout;
             customer.onExited += HandleExited;
             customer.Begin(seat, exitPoint != null ? exitPoint : entryPoint,
-                new CustomerVisitSettings(minWaitSeconds, patienceSeconds));
+                new CustomerVisitSettings(minWaitSeconds, patienceSeconds, eatSeconds));
 
             _active.Add(customer);
             onCustomerSpawned?.Invoke(customer);
@@ -172,7 +175,7 @@ namespace IdleRestaurant.Gameplay.Customers
 
         // ── Müşteri olayları ───────────────────────────────────────────────────
 
-        private void HandleOrderServed(CustomerController customer, Station station)
+        private void HandleCheckout(CustomerController customer, Station station)
         {
             if (station == null || paymentMultiplier <= 0f)
             {
@@ -223,7 +226,7 @@ namespace IdleRestaurant.Gameplay.Customers
                 return;
             }
 
-            customer.onOrderServed -= HandleOrderServed;
+            customer.onCheckout -= HandleCheckout;
             customer.onExited -= HandleExited;
             _active.Remove(customer);
 
@@ -289,7 +292,7 @@ namespace IdleRestaurant.Gameplay.Customers
             {
                 if (_active[i] != null)
                 {
-                    _active[i].onOrderServed -= HandleOrderServed;
+                    _active[i].onCheckout -= HandleCheckout;
                     _active[i].onExited -= HandleExited;
                 }
             }
