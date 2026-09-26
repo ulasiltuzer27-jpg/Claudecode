@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using IdleRestaurant.Ads;
 using IdleRestaurant.Audio;
 using IdleRestaurant.Core;
@@ -38,11 +39,19 @@ namespace IdleRestaurant.EditorTools
     /// Bir bileşende alan adı değişirse araç sessizce eksik sahne üretmez;
     /// hangi alanın bulunamadığını söyleyerek durur.
     ///
+    /// ── Asset'ler ───────────────────────────────────────────────────────────
+    /// Sahneye bağlanan her asset (StationData, SoundLibrary, görevler,
+    /// prefab, malzemeler) önce diske yazılır, SaveAssets + Refresh yapılır,
+    /// sonra diskteki yolundan yeniden yüklenir. Sahne yalnızca diskte
+    /// karşılığı olan nesnelere bağlanır; bellekte kalmış bir kopyaya değil.
+    ///
     /// ── Tekrar çalıştırma ───────────────────────────────────────────────────
     /// Sahne her seferinde baştan üretilir (üzerine yazılır). Assets/GameData
     /// altındaki asset'ler ise VARSA KORUNUR: tasarımcının değiştirdiği
-    /// fiyatlar, görevler ve prefab ikinci çalıştırmada ezilmez. Sıfırdan
-    /// üretmek için Assets/GameData klasörünü silin.
+    /// fiyatlar, görevler ve prefab ikinci çalıştırmada ezilmez. Beklenen
+    /// yolda yüklenemeyen bir dosya (script'i kayıp, başka tipte) varsa çöp
+    /// kutusuna taşınıp yeniden üretilir. Sıfırdan üretmek için
+    /// Assets/GameData klasörünü silin.
     /// </summary>
     public static class SceneSetupTool
     {
@@ -56,6 +65,7 @@ namespace IdleRestaurant.EditorTools
         private const string MaterialsFolder = DataRoot + "/Materials";
         private const string PrefabsFolder = DataRoot + "/Prefabs";
         private const string CustomerPrefabPath = PrefabsFolder + "/CustomerPrefab.prefab";
+        private const string SoundLibraryPath = AudioFolder + "/SoundLibrary.asset";
         private const string TmpImportMenu = "Window/TextMeshPro/Import TMP Essential Resources";
 
         // Kamera (istenen değerler) ve restoranın ekrandaki yeri.
@@ -78,6 +88,35 @@ namespace IdleRestaurant.EditorTools
             new StationSpec("burger_counter", "Burger Tezgahı", 10d, 2d, 1.5f, 1, new Color(0.86f, 0.36f, 0.24f), new Color(0.72f, 0.45f, 0.2f)),
             new StationSpec("coffee_bar", "Kahve Barı", 50d, 8d, 2.0f, 0, new Color(0.45f, 0.3f, 0.2f), new Color(0.2f, 0.13f, 0.1f)),
             new StationSpec("pizza_oven", "Pizza Fırını", 200d, 25d, 3.5f, 0, new Color(0.3f, 0.55f, 0.35f), new Color(0.72f, 0.33f, 0.22f))
+        };
+
+        /// <summary>
+        /// Başlangıç görev zinciri: para kazan → 5 kez yükselt → daha çok para
+        /// kazan → ilk prestij. Zincir tekrarlandıkça hedefler büyür.
+        /// </summary>
+        private static readonly QuestSpec[] QuestChain =
+        {
+            new QuestSpec("q01_earn_100", ScriptableObject.CreateInstance<EarnMoneyQuestDefinition>, 100d, 3d, 50d, 3d, 0f),
+            new QuestSpec("q02_upgrade_5", ScriptableObject.CreateInstance<UpgradeStationQuestDefinition>, 5d, 1.5d, 100d, 2d, 10f),
+            new QuestSpec("q03_earn_1000", ScriptableObject.CreateInstance<EarnMoneyQuestDefinition>, 1000d, 3d, 300d, 3d, 20f),
+            new QuestSpec("q04_first_prestige", ScriptableObject.CreateInstance<PrestigeQuestDefinition>, 1d, 1d, 0d, 1d, 120f)
+        };
+
+        /// <summary>İstasyonlardan bağımsız malzemeler; istasyon malzemeleri <see cref="Stations"/>'tan gelir.</summary>
+        private static readonly MaterialSpec[] SharedMaterials =
+        {
+            new MaterialSpec(MaterialName.Floor, new Color(0.93f, 0.84f, 0.69f)),
+            new MaterialSpec(MaterialName.Rug, new Color(0.8f, 0.45f, 0.35f)),
+            new MaterialSpec(MaterialName.Wall, new Color(0.98f, 0.93f, 0.85f)),
+            new MaterialSpec(MaterialName.Wood, new Color(0.36f, 0.23f, 0.15f)),
+            new MaterialSpec(MaterialName.CounterTop, new Color(0.95f, 0.95f, 0.92f)),
+            new MaterialSpec(MaterialName.EntryMat, new Color(0.35f, 0.65f, 0.4f)),
+            new MaterialSpec(MaterialName.ExitMat, new Color(0.8f, 0.3f, 0.28f)),
+            new MaterialSpec(MaterialName.Plant, new Color(0.3f, 0.6f, 0.3f)),
+            new MaterialSpec(MaterialName.Pot, new Color(0.75f, 0.42f, 0.28f)),
+            new MaterialSpec(MaterialName.Spot, new Color(0.99f, 0.8f, 0.35f)),
+            new MaterialSpec(MaterialName.Customer, new Color(0.3f, 0.5f, 0.85f)),
+            new MaterialSpec(MaterialName.CustomerHat, new Color(0.97f, 0.97f, 0.97f))
         };
 
         // ── Menü ───────────────────────────────────────────────────────────────
@@ -149,27 +188,44 @@ namespace IdleRestaurant.EditorTools
         /// <summary>
         /// Asıl üretim; menüden bağımsızdır (diyalog göstermez), otomasyonla
         /// da çağrılabilir. Hata durumunda istisna atar.
+        ///
+        /// Sıra bilinçli:
+        /// <list type="number">
+        /// <item>Önce boş sahne açılır. NewScene(Single) açık sahnenin
+        ///       kullanmadığı asset'leri bellekten atar ve yalnızca yerel
+        ///       değişkenlerde tutulan referansları görmez. Asset'ler bundan
+        ///       önce hazırlanırsa ScriptableObject ve prefab bileşeni
+        ///       sarmalayıcıları "null" olur. Malzemeler yeniden yüklenebildiği
+        ///       için zemin ve duvarlar yine çizilir, ama istasyon bağlanırken
+        ///       "Station.data için atanacak nesne yok" hatası çıkar.</item>
+        /// <item>Asset'ler Assets/GameData altına yazılır; ardından SaveAssets + Refresh.</item>
+        /// <item>Sahneye bağlanacak her asset diskteki yolundan yeniden yüklenir.
+        ///       Yüklenemeyen asset, yolu ve beklenen tipi söyleyerek üretimi durdurur.</item>
+        /// </list>
         /// </summary>
         public static SceneSetupResult Generate()
         {
+            Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+
             AssetTracker tracker = new AssetTracker();
             EnsureFolders();
+            EnsureMaterials(tracker);
+            EnsureStationData(tracker);
+            EnsureAsset<SoundLibrary>(SoundLibraryPath, tracker, ScriptableObject.CreateInstance<SoundLibrary>);
+            EnsureQuests(tracker);
+            EnsureCustomerPrefab(tracker);
 
-            Palette palette = CreateMaterials(tracker);
-            StationData[] stationData = CreateStationData(tracker);
-            SoundLibrary soundLibrary = LoadOrCreate<SoundLibrary>(AudioFolder + "/SoundLibrary.asset", tracker, null);
-            List<QuestDefinition> quests = CreateQuests(tracker);
-            CustomerController customerPrefab = CreateCustomerPrefab(palette, tracker);
             AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
 
-            Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            GameAssets assets = LoadGameAssets();
 
             Camera camera = CreateCamera();
             CreateLighting();
             Vector3 origin = FindRestaurantOrigin(camera);
-            RestaurantRefs restaurant = CreateRestaurant(origin, stationData, palette);
-            CustomerSpawner spawner = CreateCustomerSpawner(restaurant, customerPrefab);
-            ManagerRefs managers = CreateManagers(soundLibrary, quests);
+            RestaurantRefs restaurant = CreateRestaurant(origin, assets.Stations, assets.Palette);
+            CustomerSpawner spawner = CreateCustomerSpawner(restaurant, assets.CustomerPrefab);
+            ManagerRefs managers = CreateManagers(assets.SoundLibrary, assets.Quests);
             UIManager uiManager = CreateUserInterface(restaurant);
             WireGameManager(managers, uiManager, restaurant, spawner);
 
@@ -187,7 +243,7 @@ namespace IdleRestaurant.EditorTools
             return new SceneSetupResult(ScenePath, tracker.Created, tracker.Reused, managers.GameManager, uiManager);
         }
 
-        // ── Klasörler ve asset'ler ─────────────────────────────────────────────
+        // ── Klasörler ──────────────────────────────────────────────────────────
 
         private static void EnsureFolders()
         {
@@ -208,70 +264,75 @@ namespace IdleRestaurant.EditorTools
             }
         }
 
+        private static string MaterialPath(string name) => $"{MaterialsFolder}/{name}.mat";
+
+        private static string StationDataPath(string stationId) => $"{StationsFolder}/{stationId}.asset";
+
+        private static string QuestPath(string questId) => $"{QuestsFolder}/{questId}.asset";
+
+        // ── Asset'leri diske yazma ─────────────────────────────────────────────
+
         /// <summary>
-        /// Asset varsa olduğu gibi döndürür; yoksa oluşturur, <paramref name="configure"/>
-        /// ile ayarlar ve kaydeder. Var olan asset'e dokunulmaz.
+        /// Yolda <typeparamref name="T"/> olarak yüklenebilen bir asset varsa
+        /// ona dokunmaz (tasarımcının değişiklikleri korunur); yoksa
+        /// <paramref name="create"/> ile üretip o yola yazar.
         /// </summary>
-        private static T LoadOrCreate<T>(string path, AssetTracker tracker, Action<T> configure) where T : ScriptableObject
+        private static void EnsureAsset<T>(string path, AssetTracker tracker, Func<T> create) where T : Object
         {
-            T existing = AssetDatabase.LoadAssetAtPath<T>(path);
-            if (existing != null)
+            if (AssetDatabase.LoadAssetAtPath<T>(path) != null)
             {
                 tracker.Reused++;
-                return existing;
+                return;
             }
 
-            T asset = ScriptableObject.CreateInstance<T>();
-            if (configure != null)
-            {
-                configure(asset);
-            }
-
-            AssetDatabase.CreateAsset(asset, path);
+            DiscardUnusableAsset(path, typeof(T));
+            AssetDatabase.CreateAsset(create(), path);
             tracker.Created++;
-            return asset;
         }
 
-        private static Palette CreateMaterials(AssetTracker tracker)
+        /// <summary>
+        /// Yolda beklenen tipte yüklenemeyen bir dosya varsa (script'i silinmiş
+        /// ya da adı değişmiş bir ScriptableObject, başka tipte bir asset) çöp
+        /// kutusuna taşır; yerine yenisi yazılabilsin. Kalıcı silme yalnızca
+        /// çöp kutusu kullanılamazsa yapılır.
+        /// </summary>
+        private static void DiscardUnusableAsset(string path, Type expectedType)
+        {
+            if (AssetDatabase.LoadMainAssetAtPath(path) == null && !File.Exists(path))
+            {
+                return;
+            }
+
+            Debug.LogWarning($"[SceneSetupTool] {path} bir {expectedType.Name} olarak yüklenemiyor; çöp kutusuna taşınıp yeniden üretiliyor.");
+            if (!AssetDatabase.MoveAssetToTrash(path) && !AssetDatabase.DeleteAsset(path))
+            {
+                throw new InvalidOperationException($"{path} kaldırılamadı. Dosyayı elle silip aracı yeniden çalıştırın.");
+            }
+        }
+
+        private static void EnsureMaterials(AssetTracker tracker)
         {
             Shader shader = FindLitShader();
-            Palette palette = new Palette
-            {
-                Floor = CreateMaterial("Floor", new Color(0.93f, 0.84f, 0.69f), shader, tracker),
-                Rug = CreateMaterial("Rug", new Color(0.8f, 0.45f, 0.35f), shader, tracker),
-                Wall = CreateMaterial("Wall", new Color(0.98f, 0.93f, 0.85f), shader, tracker),
-                Wood = CreateMaterial("Wood", new Color(0.36f, 0.23f, 0.15f), shader, tracker),
-                CounterTop = CreateMaterial("CounterTop", new Color(0.95f, 0.95f, 0.92f), shader, tracker),
-                EntryMat = CreateMaterial("EntryMat", new Color(0.35f, 0.65f, 0.4f), shader, tracker),
-                ExitMat = CreateMaterial("ExitMat", new Color(0.8f, 0.3f, 0.28f), shader, tracker),
-                Plant = CreateMaterial("Plant", new Color(0.3f, 0.6f, 0.3f), shader, tracker),
-                Pot = CreateMaterial("Pot", new Color(0.75f, 0.42f, 0.28f), shader, tracker),
-                Spot = CreateMaterial("CustomerSpot", new Color(0.99f, 0.8f, 0.35f), shader, tracker),
-                Customer = CreateMaterial("Customer", new Color(0.3f, 0.5f, 0.85f), shader, tracker),
-                CustomerHat = CreateMaterial("CustomerHat", new Color(0.97f, 0.97f, 0.97f), shader, tracker),
-                StationBodies = new Material[Stations.Length],
-                StationAccents = new Material[Stations.Length]
-            };
 
-            for (int i = 0; i < Stations.Length; i++)
+            foreach (MaterialSpec spec in SharedMaterials)
             {
-                palette.StationBodies[i] = CreateMaterial("Station_" + Stations[i].Id, Stations[i].BodyColor, shader, tracker);
-                palette.StationAccents[i] = CreateMaterial("Accent_" + Stations[i].Id, Stations[i].AccentColor, shader, tracker);
+                EnsureMaterial(spec.Name, spec.Color, shader, tracker);
             }
 
-            return palette;
+            foreach (StationSpec station in Stations)
+            {
+                EnsureMaterial(MaterialName.StationBody(station.Id), station.BodyColor, shader, tracker);
+                EnsureMaterial(MaterialName.StationAccent(station.Id), station.AccentColor, shader, tracker);
+            }
         }
 
-        private static Material CreateMaterial(string name, Color color, Shader shader, AssetTracker tracker)
+        private static void EnsureMaterial(string name, Color color, Shader shader, AssetTracker tracker)
         {
-            string path = MaterialsFolder + "/" + name + ".mat";
-            Material existing = AssetDatabase.LoadAssetAtPath<Material>(path);
-            if (existing != null)
-            {
-                tracker.Reused++;
-                return existing;
-            }
+            EnsureAsset(MaterialPath(name), tracker, () => CreateMaterial(color, shader));
+        }
 
+        private static Material CreateMaterial(Color color, Shader shader)
+        {
             Material material = new Material(shader) { color = color };
 
             // Standart "plastik" parlaklık low-poly görünüme yakışmıyor; mat yüzey.
@@ -285,8 +346,6 @@ namespace IdleRestaurant.EditorTools
                 material.SetFloat("_Smoothness", 0.15f);
             }
 
-            AssetDatabase.CreateAsset(material, path);
-            tracker.Created++;
             return material;
         }
 
@@ -317,15 +376,13 @@ namespace IdleRestaurant.EditorTools
             return standard;
         }
 
-        private static StationData[] CreateStationData(AssetTracker tracker)
+        private static void EnsureStationData(AssetTracker tracker)
         {
-            StationData[] result = new StationData[Stations.Length];
-
-            for (int i = 0; i < Stations.Length; i++)
+            foreach (StationSpec spec in Stations)
             {
-                StationSpec spec = Stations[i];
-                result[i] = LoadOrCreate<StationData>($"{StationsFolder}/{spec.Id}.asset", tracker, data =>
+                EnsureAsset(StationDataPath(spec.Id), tracker, () =>
                 {
+                    StationData data = ScriptableObject.CreateInstance<StationData>();
                     using (Wiring wiring = new Wiring(data))
                     {
                         wiring.String("stationId", spec.Id)
@@ -335,56 +392,52 @@ namespace IdleRestaurant.EditorTools
                             .Float("cycleTime", spec.CycleTime)
                             .Double("costMultiplier", StationData.DefaultCostMultiplier);
                     }
+
+                    return data;
                 });
             }
-
-            return result;
         }
 
         /// <summary>
-        /// Başlangıç görev zinciri: para kazan → 5 kez yükselt → daha çok para
-        /// kazan → ilk prestij. Zincir tekrarlandıkça hedefler büyür.
+        /// Görevler QuestDefinition tipiyle aranır: tasarımcı bir görevin
+        /// türünü değiştirdiyse (ör. para kazan → yükselt) o asset korunur.
         /// </summary>
-        private static List<QuestDefinition> CreateQuests(AssetTracker tracker)
+        private static void EnsureQuests(AssetTracker tracker)
         {
-            return new List<QuestDefinition>
+            foreach (QuestSpec spec in QuestChain)
             {
-                Quest<EarnMoneyQuestDefinition>("q01_earn_100", 100d, 3d, 50d, 3d, 0f, tracker),
-                Quest<UpgradeStationQuestDefinition>("q02_upgrade_5", 5d, 1.5d, 100d, 2d, 10f, tracker),
-                Quest<EarnMoneyQuestDefinition>("q03_earn_1000", 1000d, 3d, 300d, 3d, 20f, tracker),
-                Quest<PrestigeQuestDefinition>("q04_first_prestige", 1d, 1d, 0d, 1d, 120f, tracker)
-            };
-        }
-
-        private static QuestDefinition Quest<T>(string id, double target, double targetScale, double reward,
-            double rewardScale, float incomeSeconds, AssetTracker tracker) where T : QuestDefinition
-        {
-            return LoadOrCreate<T>($"{QuestsFolder}/{id}.asset", tracker, quest =>
-            {
-                using (Wiring wiring = new Wiring(quest))
+                EnsureAsset(QuestPath(spec.Id), tracker, () =>
                 {
-                    wiring.String("questId", id)
-                        .Double("targetAmount", target)
-                        .Double("targetScalePerCycle", targetScale)
-                        .Double("rewardAmount", reward)
-                        .Double("rewardScalePerCycle", rewardScale)
-                        .Float("rewardIncomeSeconds", incomeSeconds);
-                }
-            });
+                    QuestDefinition quest = spec.Create();
+                    using (Wiring wiring = new Wiring(quest))
+                    {
+                        wiring.String("questId", spec.Id)
+                            .Double("targetAmount", spec.Target)
+                            .Double("targetScalePerCycle", spec.TargetScale)
+                            .Double("rewardAmount", spec.Reward)
+                            .Double("rewardScalePerCycle", spec.RewardScale)
+                            .Float("rewardIncomeSeconds", spec.RewardIncomeSeconds);
+                    }
+
+                    return quest;
+                });
+            }
         }
 
         /// <summary>
         /// Kök boş nesne + gövde kapsülü. Kök y=0'da durur: müşteri hedefe
         /// yürürken kapsülün yarısı zemine gömülmez.
         /// </summary>
-        private static CustomerController CreateCustomerPrefab(Palette palette, AssetTracker tracker)
+        private static void EnsureCustomerPrefab(AssetTracker tracker)
         {
-            CustomerController existing = AssetDatabase.LoadAssetAtPath<CustomerController>(CustomerPrefabPath);
-            if (existing != null)
+            GameObject existing = AssetDatabase.LoadAssetAtPath<GameObject>(CustomerPrefabPath);
+            if (existing != null && existing.TryGetComponent(out CustomerController _))
             {
                 tracker.Reused++;
-                return existing;
+                return;
             }
+
+            DiscardUnusableAsset(CustomerPrefabPath, typeof(CustomerController));
 
             GameObject root = new GameObject("Customer");
             CustomerController controller = root.AddComponent<CustomerController>();
@@ -393,8 +446,10 @@ namespace IdleRestaurant.EditorTools
                 wiring.Float("moveSpeed", 2.2f).Float("arrivalDistance", 0.05f);
             }
 
-            Block("Body", PrimitiveType.Capsule, root.transform, new Vector3(0f, 0.45f, 0f), new Vector3(0.45f, 0.45f, 0.45f), palette.Customer);
-            Block("Hat", PrimitiveType.Cylinder, root.transform, new Vector3(0f, 0.93f, 0f), new Vector3(0.32f, 0.05f, 0.32f), palette.CustomerHat);
+            Block("Body", PrimitiveType.Capsule, root.transform, new Vector3(0f, 0.45f, 0f), new Vector3(0.45f, 0.45f, 0.45f),
+                LoadMaterial(MaterialName.Customer));
+            Block("Hat", PrimitiveType.Cylinder, root.transform, new Vector3(0f, 0.93f, 0f), new Vector3(0.32f, 0.05f, 0.32f),
+                LoadMaterial(MaterialName.CustomerHat));
 
             GameObject prefab = PrefabUtility.SaveAsPrefabAsset(root, CustomerPrefabPath);
             Object.DestroyImmediate(root);
@@ -405,7 +460,95 @@ namespace IdleRestaurant.EditorTools
             }
 
             tracker.Created++;
-            return prefab.GetComponent<CustomerController>();
+        }
+
+        // ── Asset'leri diskten yükleme ─────────────────────────────────────────
+
+        /// <summary>SaveAssets + Refresh'ten sonra: sahneye bağlanacak her asset, diskteki yolundan.</summary>
+        private static GameAssets LoadGameAssets()
+        {
+            GameAssets assets = new GameAssets
+            {
+                Palette = LoadPalette(),
+                Stations = new StationData[Stations.Length],
+                SoundLibrary = LoadRequired<SoundLibrary>(SoundLibraryPath),
+                Quests = new List<QuestDefinition>(QuestChain.Length),
+                CustomerPrefab = LoadCustomerPrefab()
+            };
+
+            for (int i = 0; i < Stations.Length; i++)
+            {
+                assets.Stations[i] = LoadRequired<StationData>(StationDataPath(Stations[i].Id));
+            }
+
+            foreach (QuestSpec spec in QuestChain)
+            {
+                assets.Quests.Add(LoadRequired<QuestDefinition>(QuestPath(spec.Id)));
+            }
+
+            return assets;
+        }
+
+        private static Palette LoadPalette()
+        {
+            Palette palette = new Palette
+            {
+                Floor = LoadMaterial(MaterialName.Floor),
+                Rug = LoadMaterial(MaterialName.Rug),
+                Wall = LoadMaterial(MaterialName.Wall),
+                Wood = LoadMaterial(MaterialName.Wood),
+                CounterTop = LoadMaterial(MaterialName.CounterTop),
+                EntryMat = LoadMaterial(MaterialName.EntryMat),
+                ExitMat = LoadMaterial(MaterialName.ExitMat),
+                Plant = LoadMaterial(MaterialName.Plant),
+                Pot = LoadMaterial(MaterialName.Pot),
+                Spot = LoadMaterial(MaterialName.Spot),
+                StationBodies = new Material[Stations.Length],
+                StationAccents = new Material[Stations.Length]
+            };
+
+            for (int i = 0; i < Stations.Length; i++)
+            {
+                palette.StationBodies[i] = LoadMaterial(MaterialName.StationBody(Stations[i].Id));
+                palette.StationAccents[i] = LoadMaterial(MaterialName.StationAccent(Stations[i].Id));
+            }
+
+            return palette;
+        }
+
+        private static Material LoadMaterial(string name)
+        {
+            return LoadRequired<Material>(MaterialPath(name));
+        }
+
+        private static CustomerController LoadCustomerPrefab()
+        {
+            if (!LoadRequired<GameObject>(CustomerPrefabPath).TryGetComponent(out CustomerController controller))
+            {
+                throw new InvalidOperationException($"{CustomerPrefabPath} kökünde CustomerController yok.");
+            }
+
+            return controller;
+        }
+
+        /// <summary>
+        /// Asset'i diskteki yolundan yükler. Yüklenemezse yolu, beklenen tipi
+        /// ve yolda bulunanı söyleyerek durur; sahneye asla null bağlanmaz.
+        /// </summary>
+        private static T LoadRequired<T>(string path) where T : Object
+        {
+            T asset = AssetDatabase.LoadAssetAtPath<T>(path);
+            if (asset != null)
+            {
+                return asset;
+            }
+
+            Object found = AssetDatabase.LoadMainAssetAtPath(path);
+            string foundText = found != null ? found.GetType().Name : File.Exists(path) ? "yüklenemeyen bir dosya" : "dosya yok";
+            throw new InvalidOperationException(
+                $"{path} bir {typeof(T).Name} olarak yüklenemedi (bulunan: {foundText}). " +
+                $"{typeof(T).Name} script dosyasının adı sınıf adıyla aynı olmalı ve proje hatasız derlenmeli. " +
+                $"Sorun sürerse {DataRoot} klasörünü silip aracı yeniden çalıştırın.");
         }
 
         // ── Kamera ve ışık ─────────────────────────────────────────────────────
@@ -539,7 +682,14 @@ namespace IdleRestaurant.EditorTools
             Station station = stationObject.AddComponent<Station>();
             using (Wiring wiring = new Wiring(station))
             {
-                wiring.Ref("data", data).Int("startingLevel", spec.StartingLevel);
+                wiring.Ref(Station.DataFieldName, data).Int(Station.StartingLevelFieldName, spec.StartingLevel);
+            }
+
+            // Yazılan alan gerçekten Station.Data'nın okuduğu alan mı?
+            if (station.Data != data)
+            {
+                throw new InvalidOperationException(
+                    $"Station.{Station.DataFieldName} yazıldı ama Station.Data {data.name} döndürmüyor; alan adı ile özellik uyuşmuyor.");
             }
 
             CustomerSeat seat = stationObject.AddComponent<CustomerSeat>();
@@ -1282,17 +1432,18 @@ namespace IdleRestaurant.EditorTools
 
             public Wiring Ref(string field, Object value)
             {
-                if (value == null)
-                {
-                    throw new InvalidOperationException($"{_serialized.targetObject.GetType().Name}.{field} için atanacak nesne yok.");
-                }
-
+                RequireValue(field, value);
                 Find(field).objectReferenceValue = value;
                 return this;
             }
 
             public Wiring RefList<T>(string field, IList<T> values) where T : Object
             {
+                for (int i = 0; i < values.Count; i++)
+                {
+                    RequireValue($"{field}[{i}]", values[i]);
+                }
+
                 SerializedProperty property = Find(field);
                 property.arraySize = values.Count;
                 for (int i = 0; i < values.Count; i++)
@@ -1301,6 +1452,21 @@ namespace IdleRestaurant.EditorTools
                 }
 
                 return this;
+            }
+
+            /// <summary>
+            /// Unity'de yok edilmiş veya bellekten atılmış bir nesne de null
+            /// sayılır. Böyle bir referans sahneye "None" olarak kaydedilirdi;
+            /// onun yerine hangi alanın boş kaldığını söyleyerek durur.
+            /// </summary>
+            private void RequireValue(string field, Object value)
+            {
+                if (value == null)
+                {
+                    throw new InvalidOperationException(
+                        $"{_serialized.targetObject.GetType().Name}.{field} için atanacak nesne yok " +
+                        "(null, yok edilmiş ya da bellekten atılmış). Bağlanacak asset veya bileşen üretilemedi.");
+                }
             }
 
             public Wiring String(string field, string value)
@@ -1367,6 +1533,72 @@ namespace IdleRestaurant.EditorTools
             }
         }
 
+        private readonly struct QuestSpec
+        {
+            public readonly string Id;
+            public readonly Func<QuestDefinition> Create;
+            public readonly double Target;
+            public readonly double TargetScale;
+            public readonly double Reward;
+            public readonly double RewardScale;
+            public readonly float RewardIncomeSeconds;
+
+            public QuestSpec(string id, Func<QuestDefinition> create, double target, double targetScale, double reward,
+                double rewardScale, float rewardIncomeSeconds)
+            {
+                Id = id;
+                Create = create;
+                Target = target;
+                TargetScale = targetScale;
+                Reward = reward;
+                RewardScale = rewardScale;
+                RewardIncomeSeconds = rewardIncomeSeconds;
+            }
+        }
+
+        private readonly struct MaterialSpec
+        {
+            public readonly string Name;
+            public readonly Color Color;
+
+            public MaterialSpec(string name, Color color)
+            {
+                Name = name;
+                Color = color;
+            }
+        }
+
+        /// <summary>Assets/GameData/Materials altındaki malzeme adları.</summary>
+        private static class MaterialName
+        {
+            public const string Floor = "Floor";
+            public const string Rug = "Rug";
+            public const string Wall = "Wall";
+            public const string Wood = "Wood";
+            public const string CounterTop = "CounterTop";
+            public const string EntryMat = "EntryMat";
+            public const string ExitMat = "ExitMat";
+            public const string Plant = "Plant";
+            public const string Pot = "Pot";
+            public const string Spot = "CustomerSpot";
+            public const string Customer = "Customer";
+            public const string CustomerHat = "CustomerHat";
+
+            public static string StationBody(string stationId) => "Station_" + stationId;
+
+            public static string StationAccent(string stationId) => "Accent_" + stationId;
+        }
+
+        /// <summary>Diskten yeniden yüklenmiş, sahneye bağlanacak asset'ler.</summary>
+        private sealed class GameAssets
+        {
+            public Palette Palette;
+            public StationData[] Stations;
+            public SoundLibrary SoundLibrary;
+            public List<QuestDefinition> Quests;
+            public CustomerController CustomerPrefab;
+        }
+
         private sealed class Palette
         {
             public Material Floor;
@@ -1379,8 +1611,6 @@ namespace IdleRestaurant.EditorTools
             public Material Plant;
             public Material Pot;
             public Material Spot;
-            public Material Customer;
-            public Material CustomerHat;
             public Material[] StationBodies;
             public Material[] StationAccents;
         }

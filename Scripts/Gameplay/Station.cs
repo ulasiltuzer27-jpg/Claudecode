@@ -23,6 +23,15 @@ namespace IdleRestaurant.Gameplay
     [DisallowMultipleComponent]
     public sealed class Station : MonoBehaviour
     {
+        /// <summary>
+        /// Serileştirilmiş alan adları. Editör araçları (SceneSetupTool)
+        /// SerializedObject.FindProperty'ye bunları verir; alan yeniden
+        /// adlandırılırsa nameof sayesinde araç da derleme zamanında güncellenir.
+        /// </summary>
+        public const string DataFieldName = nameof(data);
+
+        public const string StartingLevelFieldName = nameof(startingLevel);
+
         [SerializeField] private StationData data = null;
 
         [Tooltip("Kayıt yoksa (ilk açılış) bu istasyonun seviyesi. 0 = kilitli. " +
