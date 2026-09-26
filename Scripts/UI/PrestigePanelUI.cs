@@ -226,6 +226,8 @@ namespace IdleRestaurant.UI
 
         private void OnPrestigeClicked()
         {
+            NotifyClick();
+
             if (!_prestige.CanPrestige)
             {
                 return;
@@ -246,6 +248,8 @@ namespace IdleRestaurant.UI
 
         private void OnBuyClicked(UpgradeRow row)
         {
+            NotifyClick();
+
             if (_prestige == null || _prestige.IsUpgradeMaxed(row.upgradeId))
             {
                 return;
@@ -254,6 +258,14 @@ namespace IdleRestaurant.UI
             if (!_prestige.TryPurchaseUpgrade(row.upgradeId) && _ui != null)
             {
                 _ui.ShowToast(texts.notEnoughGems);
+            }
+        }
+
+        private void NotifyClick()
+        {
+            if (_ui != null)
+            {
+                _ui.NotifyButtonClicked();
             }
         }
 

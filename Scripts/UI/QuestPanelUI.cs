@@ -123,6 +123,11 @@ namespace IdleRestaurant.UI
 
         private void OnClaimClicked()
         {
+            if (_ui != null)
+            {
+                _ui.NotifyButtonClicked();
+            }
+
             if (_quests != null)
             {
                 _quests.ClaimActiveQuest();

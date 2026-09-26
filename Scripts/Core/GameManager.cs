@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using IdleRestaurant.Ads;
+using IdleRestaurant.Audio;
 using IdleRestaurant.Data;
 using IdleRestaurant.Gameplay;
+using IdleRestaurant.Gameplay.Customers;
 using IdleRestaurant.Gameplay.Quests;
 using IdleRestaurant.UI;
 using UnityEngine;
@@ -16,8 +18,9 @@ namespace IdleRestaurant.Core
     /// ── Başlatma sırası ─────────────────────────────────────────────────────
     /// Tüm başlatma tek bir yerde, <see cref="Start"/>'ta ve sabit sırayla:
     /// kayıt oku → bakiyeyi kur → istasyonları seviyeleriyle başlat →
-    /// prestij ve görev sistemlerini bağla ve geri yükle → kayıt sağlayıcısını
-    /// bağla → UI'ı bağla → çevrimdışı kazancı ver → hemen kaydet. Parçalar
+    /// prestij, görev ve ses sistemlerini bağla ve geri yükle → kayıt
+    /// sağlayıcısını bağla → UI'ı bağla → ses olaylarını ve müşteri akışını
+    /// başlat → çevrimdışı kazancı ver → hemen kaydet. Parçalar
     /// birbirinin Awake/Start'ına güvenmiyor; Unity'nin bileşenler arası
     /// çağrı sırası tanımsız.
     ///
@@ -49,6 +52,15 @@ namespace IdleRestaurant.Core
 
         [Tooltip("İsteğe bağlı. Yoksa görev sistemi devre dışı.")]
         [SerializeField] private QuestManager questManager;
+
+        [Tooltip("İsteğe bağlı. Yoksa ses ve titreşim yok.")]
+        [SerializeField] private AudioManager audioManager;
+
+        [Tooltip("İsteğe bağlı. Oyun olaylarını AudioManager'a bağlar; yoksa ses yalnızca elle çalınır.")]
+        [SerializeField] private AudioEventBinder audioEventBinder;
+
+        [Tooltip("İsteğe bağlı. Yoksa müşteri akışı yok.")]
+        [SerializeField] private CustomerSpawner customerSpawner;
 
         [Header("İstasyonlar")]
         [Tooltip("Boş bırakılırsa sahnedeki tüm Station bileşenleri (pasifler dahil) otomatik bulunur.")]
@@ -111,6 +123,12 @@ namespace IdleRestaurant.Core
 
         /// <summary>Sahnede görev sistemi yoksa null.</summary>
         public QuestManager Quests => questManager;
+
+        /// <summary>Sahnede ses sistemi yoksa null.</summary>
+        public AudioManager Audio => audioManager;
+
+        /// <summary>Sahnede müşteri akışı yoksa null.</summary>
+        public CustomerSpawner Customers => customerSpawner;
 
         public IReadOnlyList<Station> Stations => stations;
         public bool IsInitialized => _isInitialized;
@@ -220,6 +238,11 @@ namespace IdleRestaurant.Core
                 _questSignals = null;
             }
 
+            if (audioManager != null)
+            {
+                audioManager.onSettingsChanged -= HandleAudioSettingsChanged;
+            }
+
             if (saveManager != null)
             {
                 // Yok olmuş sahneden kayıt alınmasın: OnDestroy sırası tanımsız,
@@ -228,6 +251,7 @@ namespace IdleRestaurant.Core
                 saveManager.onResumedAfterPause -= HandleResumedAfterPause;
                 saveManager.UnregisterSaveable(prestigeManager);
                 saveManager.UnregisterSaveable(questManager);
+                saveManager.UnregisterSaveable(audioManager);
             }
         }
 
@@ -260,6 +284,9 @@ namespace IdleRestaurant.Core
             uiManager = Resolve(uiManager);
             prestigeManager = Resolve(prestigeManager);
             questManager = Resolve(questManager);
+            audioManager = Resolve(audioManager);
+            audioEventBinder = Resolve(audioEventBinder);
+            customerSpawner = Resolve(customerSpawner);
 
             stations.RemoveAll(station => station == null);
             if (stations.Count == 0)
@@ -299,8 +326,14 @@ namespace IdleRestaurant.Core
             RefreshStationMultipliers();
             RecalculateIncomePerSecond();
 
-            // Kayıt sırası: prestij (çarpanları duyurur) → görevler.
+            // Kayıt sırası: prestij (çarpanları duyurur) → görevler → ses.
             saveManager.RestoreSaveables(state);
+
+            if (audioManager != null)
+            {
+                // Geri yüklemeden SONRA: yüklemenin kendi ayar olayı kayıt tetiklemesin.
+                audioManager.onSettingsChanged += HandleAudioSettingsChanged;
+            }
 
             if (hasSave && save.speedBoostRemainingSeconds > 0f)
             {
@@ -314,6 +347,8 @@ namespace IdleRestaurant.Core
             {
                 uiManager.Initialize(this);
             }
+
+            StartPresentationSystems();
 
             _isInitialized = true;
             onGameInitialized?.Invoke();
@@ -367,8 +402,9 @@ namespace IdleRestaurant.Core
 
         /// <summary>
         /// Prestij ve görev sistemlerine bağımlılıklarını verir, olaylarına
-        /// abone olur ve onları kayda katar. Kayıt sırası geri yükleme
-        /// sırasıdır: görevler prestij çarpanlarını içeren geliri okur.
+        /// abone olur ve onları (ses ayarlarıyla birlikte) kayda katar. Kayıt
+        /// sırası geri yükleme sırasıdır: görevler prestij çarpanlarını içeren
+        /// geliri okur; ses bağımsız, sona kaydolur.
         /// </summary>
         private void InitializeProgressionSystems()
         {
@@ -387,6 +423,43 @@ namespace IdleRestaurant.Core
                 questManager.Initialize(currencyManager, _questSignals, () => _totalIncomePerSecond);
                 saveManager.RegisterSaveable(questManager);
             }
+
+            if (audioManager != null)
+            {
+                saveManager.RegisterSaveable(audioManager);
+            }
+        }
+
+        /// <summary>
+        /// Oyun durumu tamamen kurulduktan sonra başlayan sistemler: ses
+        /// olayları (yükleme sırasındaki seviye/bakiye ayarları ses
+        /// çıkarmasın) ve müşteri akışı (masalar istasyon seviyesine bakar).
+        /// Çevrimdışı kazançtan önce çağrılır ki "para toplama" sesi duyulsun.
+        /// </summary>
+        private void StartPresentationSystems()
+        {
+            if (audioEventBinder != null)
+            {
+                if (audioManager != null)
+                {
+                    audioEventBinder.Bind(audioManager, this);
+                }
+                else
+                {
+                    Debug.LogWarning("[GameManager] AudioEventBinder var ama AudioManager yok; oyun olayları ses çıkarmayacak.", this);
+                }
+            }
+
+            if (customerSpawner != null)
+            {
+                customerSpawner.Initialize(currencyManager);
+            }
+        }
+
+        private void HandleAudioSettingsChanged()
+        {
+            // Ayar değişikliği seyrek; hemen yazılır ki uygulama kapanırsa kaybolmasın.
+            saveManager.Save();
         }
 
         private void WarnAboutDuplicateStationIds()

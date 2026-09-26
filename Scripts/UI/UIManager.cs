@@ -121,6 +121,21 @@ namespace IdleRestaurant.UI
         private int _lastBoostSecondsShown = -1;
         private Coroutine _toastRoutine;
 
+        /// <summary>
+        /// Oyuncu UIManager'ın veya panellerinin bir butonuna bastığında
+        /// tetiklenir. Ses/titreşim bunu dinler; UI ses sistemini tanımaz.
+        /// </summary>
+        public event Action onButtonClicked;
+
+        /// <summary>
+        /// Paneller kendi butonları için çağırır; böylece tüm tıklamalar tek
+        /// bir olaydan geçer.
+        /// </summary>
+        public void NotifyButtonClicked()
+        {
+            onButtonClicked?.Invoke();
+        }
+
         // ── Unity yaşam döngüsü ────────────────────────────────────────────────
 
         private void Awake()
@@ -331,6 +346,8 @@ namespace IdleRestaurant.UI
 
         private void OnUpgradeClicked(StationView view)
         {
+            NotifyButtonClicked();
+
             if (view.station == null || view.station.IsMaxLevel)
             {
                 return;
@@ -344,6 +361,8 @@ namespace IdleRestaurant.UI
 
         private void OnOfflineCollectClicked()
         {
+            NotifyButtonClicked();
+
             // Para zaten eklendi; kapatmak yalnızca 2x hakkından vazgeçmek.
             _game.ClearPendingOfflineEarnings();
             SetActive(offlinePopup, false);
@@ -351,6 +370,8 @@ namespace IdleRestaurant.UI
 
         private void OnOfflineDoubleClicked()
         {
+            NotifyButtonClicked();
+
             if (_adRequestInFlight)
             {
                 return;
@@ -386,6 +407,8 @@ namespace IdleRestaurant.UI
 
         private void OnSpeedBoostClicked()
         {
+            NotifyButtonClicked();
+
             if (_adRequestInFlight || !_game.CanExtendSpeedBoost)
             {
                 return;

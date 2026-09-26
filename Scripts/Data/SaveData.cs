@@ -19,8 +19,11 @@ namespace IdleRestaurant.Data
         ///
         /// v1 → v2: <see cref="lifetimeEarnings"/>, <see cref="prestige"/>,
         /// <see cref="quests"/> eklendi. Bkz. <see cref="UpgradeToCurrentVersion"/>.
+        /// v2 → v3: <see cref="audio"/> eklendi. Türetilecek bir şey yok: eksik
+        /// bölüm <see cref="AudioSaveData.hasSettings"/> = false okunur ve ses
+        /// sistemi kendi varsayılanlarıyla başlar.
         /// </summary>
-        public const int CurrentVersion = 2;
+        public const int CurrentVersion = 3;
 
         public int version = CurrentVersion;
 
@@ -51,6 +54,8 @@ namespace IdleRestaurant.Data
         public PrestigeSaveData prestige = new PrestigeSaveData();
 
         public QuestSaveData quests = new QuestSaveData();
+
+        public AudioSaveData audio = new AudioSaveData();
 
         /// <summary>Kimliği verilen istasyonun kayıtlı seviyesini arar.</summary>
         public bool TryGetStationLevel(string stationId, out int level)
@@ -141,6 +146,13 @@ namespace IdleRestaurant.Data
             }
 
             quests.Sanitize();
+
+            if (audio == null)
+            {
+                audio = new AudioSaveData();
+            }
+
+            audio.Sanitize();
         }
 
         /// <summary>NaN, sonsuz ve negatif miktarları 0'a çeker.</summary>
@@ -275,6 +287,35 @@ namespace IdleRestaurant.Data
 
             progress = SaveData.SanitizeAmount(progress);
             reward = SaveData.SanitizeAmount(reward);
+        }
+    }
+
+    /// <summary>
+    /// Ses ve titreşim tercihleri. İlerlemeyle aynı dosyada durur; "İlerlemeyi
+    /// sıfırla" bu tercihleri de varsayılana döndürür.
+    /// </summary>
+    [Serializable]
+    public sealed class AudioSaveData
+    {
+        /// <summary>
+        /// Bu bölüm gerçekten yazıldı mı. v3 öncesi kayıtlarda false okunur;
+        /// o zaman ses sistemi Inspector'daki varsayılanları kullanır. Aksi
+        /// halde eski oyuncular ses seviyesi 0 ile başlayabilirdi.
+        /// </summary>
+        public bool hasSettings;
+
+        public float volume = 1f;
+        public bool muted;
+        public bool hapticsEnabled = true;
+
+        public void Sanitize()
+        {
+            if (float.IsNaN(volume) || float.IsInfinity(volume))
+            {
+                volume = 1f;
+            }
+
+            volume = Math.Max(0f, Math.Min(1f, volume));
         }
     }
 }
