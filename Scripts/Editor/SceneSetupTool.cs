@@ -29,10 +29,12 @@ namespace IdleRestaurant.EditorTools
     /// Ürettikleri:
     /// <list type="bullet">
     /// <item>Assets/GameData altında pastel malzemeler, 3 StationData, SoundLibrary, 4 başlangıç görevi ve
-    ///       CustomerPrefab (CustomerVisual ile zıplayıp yalpalayan, gözlü sevimli müşteri)</item>
-    /// <item>Assets/Scenes/MainGame.unity: izometrik ortografik kamera, sıcak ışık, açık ahşap parke zeminli,
-    ///       nane yeşili/krem duvarlı restoran, üzerinde tabak/bardak olan 3 istasyon, kapılar, müşteri akışı,
-    ///       tüm yöneticiler ve 1080x1920 dikey arayüz</item>
+    ///       CustomerPrefab (CustomerVisual ile zıplayıp yalpalayan, her gelişte farklı kıyafet rengi ve
+    ///       şapkayla gelen, gözlü sevimli müşteri)</item>
+    /// <item>Assets/Scenes/MainGame.unity: izometrik ortografik kamera, sıcak ışık, sıcak ahşap parke zeminli,
+    ///       nane yeşili/krem duvarlı restoran; her biri kendi renginde tepsi, yiyecek, içecek ve soslarla
+    ///       ayırt edilen 3 istasyon; saksı bitkisi, lamba direkleri, çiçeklik ve tablolar; kapılar, müşteri
+    ///       akışı, tüm yöneticiler (müzik prosedürel döngüyle hemen çalar) ve müzik ayarlı 1080x1920 arayüz</item>
     /// <item>Sahneyi Build Settings'in başına ekler ve varsayılan yönü dikey yapar</item>
     /// </list>
     ///
@@ -93,6 +95,8 @@ namespace IdleRestaurant.EditorTools
         /// <summary>Tezgah üst yüzeyinin yüksekliği; servis takımı bunun üstüne konur.</summary>
         private const float CounterTopHeight = 0.98f;
 
+        private const float TrayThickness = 0.016f;
+
         private const float PlankWidth = 0.5f;
         private const float PlankLength = 1.5f;
         private const float PlankGap = 0.03f;
@@ -105,11 +109,14 @@ namespace IdleRestaurant.EditorTools
         private static readonly StationSpec[] Stations =
         {
             new StationSpec("burger_counter", "Burger Tezgahı", 10d, 2d, 1.5f, 1,
-                new Color(0.98f, 0.71f, 0.58f), new Color(0.93f, 0.66f, 0.36f), new Color(0.96f, 0.56f, 0.55f)),
+                new Color(0.98f, 0.71f, 0.58f), new Color(0.93f, 0.66f, 0.36f), new Color(0.96f, 0.56f, 0.55f),
+                new Color(0.93f, 0.42f, 0.38f)),
             new StationSpec("coffee_bar", "Kahve Barı", 50d, 8d, 2.0f, 0,
-                new Color(0.84f, 0.71f, 0.6f), new Color(0.55f, 0.38f, 0.28f), new Color(0.45f, 0.3f, 0.2f)),
+                new Color(0.84f, 0.71f, 0.6f), new Color(0.55f, 0.38f, 0.28f), new Color(0.45f, 0.3f, 0.2f),
+                new Color(0.78f, 0.56f, 0.36f)),
             new StationSpec("pizza_oven", "Pizza Fırını", 200d, 25d, 3.5f, 0,
-                new Color(0.66f, 0.84f, 0.69f), new Color(0.9f, 0.55f, 0.44f), new Color(0.99f, 0.88f, 0.52f))
+                new Color(0.66f, 0.84f, 0.69f), new Color(0.9f, 0.55f, 0.44f), new Color(0.99f, 0.88f, 0.52f),
+                new Color(0.42f, 0.7f, 0.47f))
         };
 
         /// <summary>
@@ -153,10 +160,55 @@ namespace IdleRestaurant.EditorTools
             new MaterialSpec(MaterialName.Customer, new Color(0.56f, 0.73f, 0.96f), 0.25f),
             new MaterialSpec(MaterialName.CustomerHat, new Color(0.99f, 0.8f, 0.84f)),
             new MaterialSpec(MaterialName.Eye, new Color(0.16f, 0.13f, 0.13f), 0.6f),
-            new MaterialSpec(MaterialName.Blush, new Color(1f, 0.64f, 0.68f))
+            new MaterialSpec(MaterialName.Blush, new Color(1f, 0.64f, 0.68f)),
+
+            // Tezgah üstü yiyecek ve soslar.
+            new MaterialSpec(MaterialName.Bun, new Color(0.95f, 0.7f, 0.4f), 0.3f),
+            new MaterialSpec(MaterialName.Patty, new Color(0.5f, 0.3f, 0.22f)),
+            new MaterialSpec(MaterialName.Lettuce, new Color(0.56f, 0.8f, 0.42f)),
+            new MaterialSpec(MaterialName.Croissant, new Color(0.93f, 0.72f, 0.42f), 0.35f),
+            new MaterialSpec(MaterialName.Crust, new Color(0.96f, 0.8f, 0.52f)),
+            new MaterialSpec(MaterialName.Cheese, new Color(1f, 0.87f, 0.46f), 0.3f),
+            new MaterialSpec(MaterialName.Pepperoni, new Color(0.83f, 0.33f, 0.28f), 0.3f),
+            new MaterialSpec(MaterialName.Ketchup, new Color(0.88f, 0.24f, 0.22f), 0.45f),
+            new MaterialSpec(MaterialName.Mustard, new Color(0.98f, 0.82f, 0.3f), 0.45f),
+            new MaterialSpec(MaterialName.Glass, new Color(0.86f, 0.95f, 0.98f), 0.8f),
+
+            // Dekor.
+            new MaterialSpec(MaterialName.PlantDark, new Color(0.42f, 0.66f, 0.48f)),
+            new MaterialSpec(MaterialName.LampShade, new Color(1f, 0.94f, 0.8f)),
+            new MaterialSpec(MaterialName.LampBulb, new Color(1f, 0.97f, 0.86f), 0.8f),
+            new MaterialSpec(MaterialName.Brass, new Color(0.86f, 0.71f, 0.46f), 0.65f),
+            new MaterialSpec(MaterialName.ArtPeach, new Color(0.98f, 0.76f, 0.62f)),
+            new MaterialSpec(MaterialName.ArtSky, new Color(0.64f, 0.82f, 0.93f)),
+            new MaterialSpec(MaterialName.FlowerPink, new Color(0.98f, 0.62f, 0.74f)),
+            new MaterialSpec(MaterialName.FlowerYellow, new Color(1f, 0.88f, 0.4f))
         };
 
         private static readonly Color BackgroundColor = new Color(0.98f, 0.88f, 0.79f);
+
+        /// <summary>Müşteri kıyafet renkleri; CustomerVisual her gelişte birini seçer.</summary>
+        private static readonly Color[] CustomerBodyColors =
+        {
+            new Color(0.56f, 0.73f, 0.96f),
+            new Color(0.6f, 0.86f, 0.74f),
+            new Color(0.78f, 0.68f, 0.95f),
+            new Color(0.99f, 0.73f, 0.6f),
+            new Color(0.99f, 0.86f, 0.5f),
+            new Color(0.97f, 0.6f, 0.62f),
+            new Color(0.62f, 0.85f, 0.93f)
+        };
+
+        /// <summary>Şapka renkleri.</summary>
+        private static readonly Color[] CustomerHatColors =
+        {
+            new Color(0.99f, 0.95f, 0.86f),
+            new Color(0.99f, 0.78f, 0.84f),
+            new Color(0.42f, 0.5f, 0.72f),
+            new Color(0.7f, 0.9f, 0.8f),
+            new Color(0.85f, 0.78f, 0.97f),
+            new Color(1f, 1f, 1f)
+        };
 
         // ── Menü ───────────────────────────────────────────────────────────────
 
@@ -364,6 +416,7 @@ namespace IdleRestaurant.EditorTools
                 EnsureMaterial(new MaterialSpec(MaterialName.StationBody(station.Id), station.BodyColor), shader, tracker);
                 EnsureMaterial(new MaterialSpec(MaterialName.StationAccent(station.Id), station.AccentColor), shader, tracker);
                 EnsureMaterial(new MaterialSpec(MaterialName.Drink(station.Id), station.DrinkColor, 0.5f), shader, tracker);
+                EnsureMaterial(new MaterialSpec(MaterialName.Tray(station.Id), station.TrayColor, 0.4f), shader, tracker);
             }
         }
 
@@ -481,22 +534,31 @@ namespace IdleRestaurant.EditorTools
         /// collider yok; rigidbody'siz hareket eden collider fizik motorunu her
         /// karede yorar ve müşterinin çarpışmaya ihtiyacı yok.
         ///
-        /// Var olan prefab CustomerVisual içermiyorsa aracın önceki sürümünden
-        /// kalmıştır; çöp kutusuna taşınıp yenisi üretilir.
+        /// Görünüm çeşitliliği: gövdeye her gelişte bir kıyafet rengi, üç şapka
+        /// varyantından biri (bere, kasket, silindir şapka; bazen şapkasız),
+        /// şapka rengi ve hafif boy farkı (CustomerVisual → Appearance).
+        ///
+        /// Var olan prefab CustomerVisual içermiyorsa veya görünüm çeşitliliği
+        /// tanımlı değilse aracın önceki bir sürümünden kalmıştır; çöp kutusuna
+        /// taşınıp yenisi üretilir.
         /// </summary>
         private static void EnsureCustomerPrefab(AssetTracker tracker)
         {
             GameObject existing = AssetDatabase.LoadAssetAtPath<GameObject>(CustomerPrefabPath);
             bool hasController = existing != null && existing.TryGetComponent(out CustomerController _);
-            if (hasController && existing.TryGetComponent(out CustomerVisual _))
+            CustomerVisual existingVisual = null;
+            bool hasVisual = hasController && existing.TryGetComponent(out existingVisual);
+            if (hasVisual && HasAppearanceVariety(existingVisual))
             {
                 tracker.Reused++;
                 return;
             }
 
-            DiscardAsset(CustomerPrefabPath, hasController
-                ? "aracın önceki sürümünden kalmış (CustomerVisual yok)"
-                : "bir müşteri prefab'ı olarak kullanılamıyor (CustomerController yok)");
+            DiscardAsset(CustomerPrefabPath, !hasController
+                ? "bir müşteri prefab'ı olarak kullanılamıyor (CustomerController yok)"
+                : hasVisual
+                    ? "aracın önceki sürümünden kalmış (görünüm çeşitliliği yok)"
+                    : "aracın önceki sürümünden kalmış (CustomerVisual yok)");
 
             GameObject root = new GameObject("Customer");
             CustomerController controller = root.AddComponent<CustomerController>();
@@ -513,10 +575,22 @@ namespace IdleRestaurant.EditorTools
             Material blush = LoadMaterial(MaterialName.Blush);
 
             // Kapsül: yarıçap 0.225, boy 0.9. Yüz +Z'de; CustomerVisual modeli gidiş yönüne çevirir.
-            Detail("Body", PrimitiveType.Capsule, model, new Vector3(0f, 0.45f, 0f), new Vector3(0.45f, 0.45f, 0.45f),
+            GameObject body = Detail("Body", PrimitiveType.Capsule, model, new Vector3(0f, 0.45f, 0f), new Vector3(0.45f, 0.45f, 0.45f),
                 LoadMaterial(MaterialName.Customer));
-            Detail("Hat", PrimitiveType.Cylinder, model, new Vector3(0f, 0.93f, 0f), new Vector3(0.34f, 0.05f, 0.34f), hat);
-            Detail("Pompom", PrimitiveType.Sphere, model, new Vector3(0f, 1f, 0f), new Vector3(0.12f, 0.12f, 0.12f), hat);
+
+            // Şapka varyantları; CustomerVisual her gelişte birini açar.
+            Transform beanie = Group("Hat_Beanie", model, Vector3.zero);
+            Detail("Band", PrimitiveType.Cylinder, beanie, new Vector3(0f, 0.93f, 0f), new Vector3(0.34f, 0.05f, 0.34f), hat);
+            Detail("Pompom", PrimitiveType.Sphere, beanie, new Vector3(0f, 1f, 0f), new Vector3(0.12f, 0.12f, 0.12f), hat);
+
+            Transform cap = Group("Hat_Cap", model, Vector3.zero);
+            Detail("Crown", PrimitiveType.Sphere, cap, new Vector3(0f, 0.88f, 0f), new Vector3(0.4f, 0.22f, 0.4f), hat);
+            Detail("Visor", PrimitiveType.Cube, cap, new Vector3(0f, 0.84f, 0.2f), new Vector3(0.24f, 0.015f, 0.16f), hat);
+
+            Transform topHat = Group("Hat_Top", model, Vector3.zero);
+            Detail("Brim", PrimitiveType.Cylinder, topHat, new Vector3(0f, 0.9f, 0f), new Vector3(0.4f, 0.01f, 0.4f), hat);
+            Detail("Crown", PrimitiveType.Cylinder, topHat, new Vector3(0f, 1f, 0f), new Vector3(0.26f, 0.1f, 0.26f), hat);
+
             Detail("Eye_L", PrimitiveType.Sphere, model, new Vector3(-0.075f, 0.6f, 0.2f), new Vector3(0.065f, 0.065f, 0.065f), eye);
             Detail("Eye_R", PrimitiveType.Sphere, model, new Vector3(0.075f, 0.6f, 0.2f), new Vector3(0.065f, 0.065f, 0.065f), eye);
             Detail("Cheek_L", PrimitiveType.Sphere, model, new Vector3(-0.125f, 0.52f, 0.18f), new Vector3(0.07f, 0.035f, 0.03f), blush);
@@ -526,6 +600,12 @@ namespace IdleRestaurant.EditorTools
             using (Wiring wiring = new Wiring(visual))
             {
                 wiring.Ref("model", model);
+
+                SerializedProperty appearance = wiring.Find("appearance");
+                Wiring.Objects(Wiring.Relative(appearance, "bodyRenderers"), new Object[] { body.GetComponent<MeshRenderer>() });
+                Wiring.Colors(Wiring.Relative(appearance, "bodyColors"), CustomerBodyColors);
+                Wiring.Objects(Wiring.Relative(appearance, "hats"), new Object[] { beanie.gameObject, cap.gameObject, topHat.gameObject });
+                Wiring.Colors(Wiring.Relative(appearance, "hatColors"), CustomerHatColors);
             }
 
             GameObject prefab = PrefabUtility.SaveAsPrefabAsset(root, CustomerPrefabPath);
@@ -537,6 +617,14 @@ namespace IdleRestaurant.EditorTools
             }
 
             tracker.Created++;
+        }
+
+        private static bool HasAppearanceVariety(CustomerVisual visual)
+        {
+            CustomerAppearance appearance = visual.Appearance;
+            return appearance != null
+                   && ((appearance.hats != null && appearance.hats.Length > 0)
+                       || (appearance.bodyColors != null && appearance.bodyColors.Length > 0));
         }
 
         // ── Asset'leri diskten yükleme ─────────────────────────────────────────
@@ -592,9 +680,28 @@ namespace IdleRestaurant.EditorTools
                 Ceramic = LoadMaterial(MaterialName.Ceramic),
                 Napkin = LoadMaterial(MaterialName.Napkin),
                 Cutlery = LoadMaterial(MaterialName.Cutlery),
+                Bun = LoadMaterial(MaterialName.Bun),
+                Patty = LoadMaterial(MaterialName.Patty),
+                Lettuce = LoadMaterial(MaterialName.Lettuce),
+                Croissant = LoadMaterial(MaterialName.Croissant),
+                Crust = LoadMaterial(MaterialName.Crust),
+                Cheese = LoadMaterial(MaterialName.Cheese),
+                Pepperoni = LoadMaterial(MaterialName.Pepperoni),
+                Ketchup = LoadMaterial(MaterialName.Ketchup),
+                Mustard = LoadMaterial(MaterialName.Mustard),
+                Glass = LoadMaterial(MaterialName.Glass),
+                PlantDark = LoadMaterial(MaterialName.PlantDark),
+                LampShade = LoadMaterial(MaterialName.LampShade),
+                LampBulb = LoadMaterial(MaterialName.LampBulb),
+                Brass = LoadMaterial(MaterialName.Brass),
+                ArtPeach = LoadMaterial(MaterialName.ArtPeach),
+                ArtSky = LoadMaterial(MaterialName.ArtSky),
+                FlowerPink = LoadMaterial(MaterialName.FlowerPink),
+                FlowerYellow = LoadMaterial(MaterialName.FlowerYellow),
                 StationBodies = new Material[Stations.Length],
                 StationAccents = new Material[Stations.Length],
-                Drinks = new Material[Stations.Length]
+                Drinks = new Material[Stations.Length],
+                Trays = new Material[Stations.Length]
             };
 
             for (int i = 0; i < Stations.Length; i++)
@@ -602,6 +709,7 @@ namespace IdleRestaurant.EditorTools
                 palette.StationBodies[i] = LoadMaterial(MaterialName.StationBody(Stations[i].Id));
                 palette.StationAccents[i] = LoadMaterial(MaterialName.StationAccent(Stations[i].Id));
                 palette.Drinks[i] = LoadMaterial(MaterialName.Drink(Stations[i].Id));
+                palette.Trays[i] = LoadMaterial(MaterialName.Tray(Stations[i].Id));
             }
 
             return palette;
@@ -732,6 +840,7 @@ namespace IdleRestaurant.EditorTools
             Wall("Wall_Left", environment, new Vector3(0f, 0f, half + 0.1f), false, palette);
             Plant(environment, new Vector3(-half + 0.45f, 0f, half - 0.45f), palette);
             Plant(environment, new Vector3(half - 0.45f, 0f, half - 0.45f), palette);
+            Decorations(environment, palette);
 
             RestaurantRefs refs = new RestaurantRefs
             {
@@ -840,7 +949,8 @@ namespace IdleRestaurant.EditorTools
                     break;
             }
 
-            Tableware(stationObject.transform, palette.Drinks[index], palette);
+            Tableware(stationObject.transform, index, palette);
+            Condiments(stationObject.transform, index, palette);
 
             Transform spot = new GameObject("CustomerSpot").transform;
             spot.SetParent(stationObject.transform, false);
@@ -871,22 +981,173 @@ namespace IdleRestaurant.EditorTools
         }
 
         /// <summary>
-        /// Tezgahın müşteri tarafındaki (-z) kenarda küçük bir servis takımı:
-        /// peçete + çatal, tabak ve içecekli bardak. Hepsi placeholder; kendi
-        /// modellerinizle değiştirilebilir.
+        /// Tezgahın müşteri tarafındaki (-z) kenarda istasyona özel servis
+        /// takımı: istasyon renginde tepsi, tabakta o istasyonun yiyeceği
+        /// (mini burger / kruvasan / pizza), içeceği (pipetli gazoz / fincan
+        /// tabaklı kahve / limonlu limonata), yanında peçete ve çatal. Hepsi
+        /// placeholder; kendi modellerinizle değiştirilebilir.
         /// </summary>
-        private static void Tableware(Transform station, Material drink, Palette palette)
+        private static void Tableware(Transform station, int index, Palette palette)
         {
-            Transform set = new GameObject("Tableware").transform;
-            set.SetParent(station, false);
-            set.localPosition = new Vector3(0f, CounterTopHeight, -0.33f);
+            Transform set = Group("Tableware", station, new Vector3(0f, CounterTopHeight, -0.33f));
 
-            Detail("Napkin", PrimitiveType.Cube, set, new Vector3(-0.56f, 0.002f, 0f), new Vector3(0.13f, 0.004f, 0.2f), palette.Napkin);
-            Detail("Fork", PrimitiveType.Cube, set, new Vector3(-0.56f, 0.007f, 0f), new Vector3(0.025f, 0.006f, 0.16f), palette.Cutlery);
-            Detail("Plate", PrimitiveType.Cylinder, set, new Vector3(-0.3f, 0.01f, 0f), new Vector3(0.24f, 0.01f, 0.24f), palette.Ceramic);
-            Detail("Cup", PrimitiveType.Cylinder, set, new Vector3(0.36f, 0.055f, 0f), new Vector3(0.09f, 0.055f, 0.09f), palette.Ceramic);
-            Detail("Drink", PrimitiveType.Cylinder, set, new Vector3(0.36f, 0.112f, 0f), new Vector3(0.075f, 0.002f, 0.075f), drink);
-            Detail("Handle", PrimitiveType.Cube, set, new Vector3(0.415f, 0.055f, 0f), new Vector3(0.02f, 0.05f, 0.02f), palette.Ceramic);
+            Detail("Tray", PrimitiveType.Cube, set, new Vector3(-0.05f, TrayThickness * 0.5f, 0f), new Vector3(0.95f, TrayThickness, 0.3f), palette.Trays[index]);
+            Detail("Napkin", PrimitiveType.Cube, set, new Vector3(-0.6f, 0.002f, 0f), new Vector3(0.12f, 0.004f, 0.2f), palette.Napkin);
+            Detail("Fork", PrimitiveType.Cube, set, new Vector3(-0.6f, 0.007f, 0f), new Vector3(0.022f, 0.006f, 0.16f), palette.Cutlery);
+            Detail("Plate", PrimitiveType.Cylinder, set, new Vector3(-0.3f, TrayThickness + 0.01f, 0f), new Vector3(0.24f, 0.01f, 0.24f), palette.Ceramic);
+
+            Transform food = Group("Food", set, new Vector3(-0.3f, TrayThickness + 0.02f, 0f));
+            Transform cup = Group("Cup", set, new Vector3(0.25f, TrayThickness, 0f));
+            Material drink = palette.Drinks[index];
+
+            switch (index)
+            {
+                case 0:
+                    // Mini burger + pipetli gazoz.
+                    Detail("BunBottom", PrimitiveType.Cylinder, food, new Vector3(0f, 0.012f, 0f), new Vector3(0.15f, 0.012f, 0.15f), palette.Bun);
+                    Detail("Patty", PrimitiveType.Cylinder, food, new Vector3(0f, 0.034f, 0f), new Vector3(0.16f, 0.01f, 0.16f), palette.Patty);
+                    Detail("Lettuce", PrimitiveType.Cylinder, food, new Vector3(0f, 0.047f, 0f), new Vector3(0.165f, 0.003f, 0.165f), palette.Lettuce);
+                    Detail("BunTop", PrimitiveType.Sphere, food, new Vector3(0f, 0.055f, 0f), new Vector3(0.15f, 0.07f, 0.15f), palette.Bun);
+
+                    Detail("SodaCup", PrimitiveType.Cylinder, cup, new Vector3(0f, 0.07f, 0f), new Vector3(0.08f, 0.07f, 0.08f), palette.Ceramic);
+                    Detail("Drink", PrimitiveType.Cylinder, cup, new Vector3(0f, 0.142f, 0f), new Vector3(0.066f, 0.002f, 0.066f), drink);
+                    Rotate(Detail("Straw", PrimitiveType.Cylinder, cup, new Vector3(0.012f, 0.17f, 0f), new Vector3(0.012f, 0.05f, 0.012f), palette.Ketchup), 0f, 0f, -12f);
+                    break;
+                case 1:
+                    // Kruvasan + fincan tabaklı kahve.
+                    Rotate(Detail("Croissant", PrimitiveType.Capsule, food, new Vector3(0f, 0.035f, 0f), new Vector3(0.075f, 0.08f, 0.075f), palette.Croissant), 0f, 20f, 90f);
+
+                    Detail("Saucer", PrimitiveType.Cylinder, cup, new Vector3(0f, 0.005f, 0f), new Vector3(0.14f, 0.005f, 0.14f), palette.Ceramic);
+                    Detail("Mug", PrimitiveType.Cylinder, cup, new Vector3(0f, 0.06f, 0f), new Vector3(0.09f, 0.05f, 0.09f), palette.Ceramic);
+                    Detail("Drink", PrimitiveType.Cylinder, cup, new Vector3(0f, 0.112f, 0f), new Vector3(0.075f, 0.002f, 0.075f), drink);
+                    Detail("Handle", PrimitiveType.Cube, cup, new Vector3(0.055f, 0.06f, 0f), new Vector3(0.02f, 0.045f, 0.02f), palette.Ceramic);
+                    break;
+                default:
+                    // Pizza + limonata.
+                    Detail("Crust", PrimitiveType.Cylinder, food, new Vector3(0f, 0.008f, 0f), new Vector3(0.21f, 0.008f, 0.21f), palette.Crust);
+                    Detail("Cheese", PrimitiveType.Cylinder, food, new Vector3(0f, 0.018f, 0f), new Vector3(0.18f, 0.004f, 0.18f), palette.Cheese);
+                    Detail("Pepperoni_1", PrimitiveType.Cylinder, food, new Vector3(0.04f, 0.022f, 0.03f), new Vector3(0.04f, 0.003f, 0.04f), palette.Pepperoni);
+                    Detail("Pepperoni_2", PrimitiveType.Cylinder, food, new Vector3(-0.045f, 0.022f, 0.01f), new Vector3(0.04f, 0.003f, 0.04f), palette.Pepperoni);
+                    Detail("Pepperoni_3", PrimitiveType.Cylinder, food, new Vector3(0.005f, 0.022f, -0.05f), new Vector3(0.04f, 0.003f, 0.04f), palette.Pepperoni);
+
+                    Detail("Glass", PrimitiveType.Cylinder, cup, new Vector3(0f, 0.07f, 0f), new Vector3(0.08f, 0.07f, 0.08f), palette.Glass);
+                    Detail("Drink", PrimitiveType.Cylinder, cup, new Vector3(0f, 0.142f, 0f), new Vector3(0.068f, 0.002f, 0.068f), drink);
+                    Rotate(Detail("Lemon", PrimitiveType.Cylinder, cup, new Vector3(0.035f, 0.14f, 0f), new Vector3(0.05f, 0.004f, 0.05f), palette.Cheese), 90f, 0f, 0f);
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Tezgahın arka yarısında, simgenin yanında istasyona özel küçük
+        /// objeler: burger → ketçap ve hardal, kahve → şeker kavanozu ve süt
+        /// sürahisi, pizza → pul biber ve kekik serpme şişeleri.
+        /// </summary>
+        private static void Condiments(Transform station, int index, Palette palette)
+        {
+            Transform group = Group("Condiments", station, new Vector3(0f, CounterTopHeight, 0f));
+
+            switch (index)
+            {
+                case 0:
+                    Bottle(group, "Ketchup", new Vector3(0.47f, 0f, 0.15f), palette.Ketchup, palette.Ketchup);
+                    Bottle(group, "Mustard", new Vector3(0.58f, 0f, 0.1f), palette.Mustard, palette.Mustard);
+                    break;
+                case 1:
+                    Detail("SugarJar", PrimitiveType.Cylinder, group, new Vector3(-0.47f, 0.05f, 0.15f), new Vector3(0.09f, 0.05f, 0.09f), palette.Ceramic);
+                    Detail("SugarLid", PrimitiveType.Sphere, group, new Vector3(-0.47f, 0.105f, 0.15f), new Vector3(0.07f, 0.03f, 0.07f), palette.Brass);
+                    Detail("MilkJug", PrimitiveType.Cylinder, group, new Vector3(0.47f, 0.06f, 0.15f), new Vector3(0.07f, 0.06f, 0.07f), palette.Ceramic);
+                    break;
+                default:
+                    Bottle(group, "Chili", new Vector3(0.57f, 0f, 0.2f), palette.Ketchup, palette.Cutlery);
+                    Bottle(group, "Oregano", new Vector3(-0.57f, 0f, 0.2f), palette.PlantDark, palette.Cutlery);
+                    break;
+            }
+        }
+
+        private static void Bottle(Transform parent, string name, Vector3 localPosition, Material body, Material cap)
+        {
+            Detail(name, PrimitiveType.Cylinder, parent, localPosition + new Vector3(0f, 0.06f, 0f), new Vector3(0.06f, 0.06f, 0.06f), body);
+            Detail(name + "Cap", PrimitiveType.Cylinder, parent, localPosition + new Vector3(0f, 0.13f, 0f), new Vector3(0.035f, 0.012f, 0.035f), cap);
+        }
+
+        // ── Dekor ──────────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Köşe ve boşluklara küçük dekor: ön sol köşede büyük saksı bitkisi,
+        /// iki lamba direği, sağ ön köşede çiçeklik, sağ duvarda iki tablo.
+        /// Yerleri kamera açısına göre seçildi: hiçbiri istasyonları, müşteri
+        /// noktalarını veya yürüme yollarını ekranda kapatmaz. Işık kaynağı
+        /// değiller (mobilde ek ışık pahalı); abajur rengi sıcak ve açık.
+        /// </summary>
+        private static void Decorations(Transform parent, Palette palette)
+        {
+            float half = FloorSize * 0.5f;
+            TallPlant(parent, new Vector3(-half + 0.45f, 0f, -half + 0.45f), palette);
+            FloorLamp(parent, "FloorLamp_Right", new Vector3(half - 0.35f, 0f, -1.3f), palette);
+            FloorLamp(parent, "FloorLamp_Left", new Vector3(-half + 0.35f, 0f, -1.9f), palette);
+            FlowerStand(parent, new Vector3(half - 0.45f, 0f, -half + 0.45f), palette);
+
+            // Sağ duvarın iç yüzü x = half'te; tablolar krem üst bölümde.
+            Picture(parent, "Picture_Peach", new Vector3(half - 0.015f, 1.05f, 0.35f), palette.ArtPeach, palette);
+            Picture(parent, "Picture_Sky", new Vector3(half - 0.015f, 1f, -0.45f), palette.ArtSky, palette);
+        }
+
+        private static void TallPlant(Transform parent, Vector3 localPosition, Palette palette)
+        {
+            Transform plant = Group("Plant_Tall", parent, localPosition);
+            Block("Pot", PrimitiveType.Cylinder, plant, new Vector3(0f, 0.22f, 0f), new Vector3(0.46f, 0.22f, 0.46f), palette.Pot);
+            Detail("PotRim", PrimitiveType.Cylinder, plant, new Vector3(0f, 0.45f, 0f), new Vector3(0.5f, 0.025f, 0.5f), palette.Pot);
+            Detail("Soil", PrimitiveType.Cylinder, plant, new Vector3(0f, 0.46f, 0f), new Vector3(0.42f, 0.01f, 0.42f), palette.FloorBase);
+            Detail("Stem", PrimitiveType.Cylinder, plant, new Vector3(0f, 0.62f, 0f), new Vector3(0.05f, 0.16f, 0.05f), palette.PlantDark);
+            Detail("Leaves_Low", PrimitiveType.Sphere, plant, new Vector3(0.08f, 0.74f, 0.05f), new Vector3(0.55f, 0.42f, 0.55f), palette.PlantDark);
+            Detail("Leaves_Mid", PrimitiveType.Sphere, plant, new Vector3(-0.07f, 0.9f, -0.04f), new Vector3(0.45f, 0.38f, 0.45f), palette.Plant);
+            Detail("Leaves_Top", PrimitiveType.Sphere, plant, new Vector3(0.02f, 1.04f, 0.02f), new Vector3(0.3f, 0.28f, 0.3f), palette.Plant);
+        }
+
+        private static void FloorLamp(Transform parent, string name, Vector3 localPosition, Palette palette)
+        {
+            Transform lamp = Group(name, parent, localPosition);
+            Detail("Base", PrimitiveType.Cylinder, lamp, new Vector3(0f, 0.015f, 0f), new Vector3(0.28f, 0.015f, 0.28f), palette.Brass);
+            Detail("Pole", PrimitiveType.Cylinder, lamp, new Vector3(0f, 0.7f, 0f), new Vector3(0.035f, 0.7f, 0.035f), palette.Brass);
+            Detail("Bulb", PrimitiveType.Sphere, lamp, new Vector3(0f, 1.36f, 0f), new Vector3(0.1f, 0.1f, 0.1f), palette.LampBulb);
+            Detail("Shade", PrimitiveType.Cylinder, lamp, new Vector3(0f, 1.45f, 0f), new Vector3(0.34f, 0.1f, 0.34f), palette.LampShade);
+        }
+
+        private static void FlowerStand(Transform parent, Vector3 localPosition, Palette palette)
+        {
+            Transform stand = Group("FlowerStand", parent, localPosition);
+            Detail("Foot", PrimitiveType.Cylinder, stand, new Vector3(0f, 0.01f, 0f), new Vector3(0.3f, 0.01f, 0.3f), palette.Wood);
+            Detail("Leg", PrimitiveType.Cylinder, stand, new Vector3(0f, 0.31f, 0f), new Vector3(0.06f, 0.3f, 0.06f), palette.Wood);
+            Detail("Top", PrimitiveType.Cylinder, stand, new Vector3(0f, 0.62f, 0f), new Vector3(0.42f, 0.015f, 0.42f), palette.Wood);
+            Detail("Vase", PrimitiveType.Cylinder, stand, new Vector3(0f, 0.71f, 0f), new Vector3(0.12f, 0.075f, 0.12f), palette.ArtSky);
+            Detail("Leaves", PrimitiveType.Sphere, stand, new Vector3(0f, 0.8f, 0f), new Vector3(0.16f, 0.06f, 0.16f), palette.Plant);
+            Detail("Flower_1", PrimitiveType.Sphere, stand, new Vector3(0.03f, 0.84f, 0.02f), new Vector3(0.09f, 0.09f, 0.09f), palette.FlowerPink);
+            Detail("Flower_2", PrimitiveType.Sphere, stand, new Vector3(-0.04f, 0.86f, -0.02f), new Vector3(0.08f, 0.08f, 0.08f), palette.FlowerYellow);
+            Detail("Flower_3", PrimitiveType.Sphere, stand, new Vector3(0f, 0.89f, -0.05f), new Vector3(0.07f, 0.07f, 0.07f), palette.FlowerPink);
+        }
+
+        /// <summary>Sağ duvara (+x) asılı, -x'e (odaya) bakan çerçeveli tablo.</summary>
+        private static void Picture(Transform parent, string name, Vector3 localPosition, Material art, Palette palette)
+        {
+            Transform picture = Group(name, parent, localPosition);
+            Detail("Frame", PrimitiveType.Cube, picture, Vector3.zero, new Vector3(0.03f, 0.42f, 0.34f), palette.Wood);
+            Detail("Art", PrimitiveType.Cube, picture, new Vector3(-0.017f, 0f, 0f), new Vector3(0.005f, 0.34f, 0.26f), art);
+            Detail("Sun", PrimitiveType.Sphere, picture, new Vector3(-0.02f, 0.06f, 0.05f), new Vector3(0.006f, 0.1f, 0.1f), palette.Trim);
+        }
+
+        /// <summary>Boş bir düzenleme nesnesi (grup) oluşturur.</summary>
+        private static Transform Group(string name, Transform parent, Vector3 localPosition)
+        {
+            Transform group = new GameObject(name).transform;
+            group.SetParent(parent, false);
+            group.localPosition = localPosition;
+            return group;
+        }
+
+        private static GameObject Rotate(GameObject target, float x, float y, float z)
+        {
+            target.transform.localRotation = Quaternion.Euler(x, y, z);
+            return target;
         }
 
         /// <param name="frameParent">Çerçeve ve paspasın ebeveyni (statik ortam).</param>
@@ -1327,27 +1588,34 @@ namespace IdleRestaurant.EditorTools
         private static SettingsPanelUI BuildSettingsPanel(Transform ui)
         {
             Image box;
-            GameObject root = Modal("SettingsPanel", ui, 900f, 1320f, out box);
+            GameObject root = Modal("SettingsPanel", ui, 900f, 1560f, out box);
 
             TMP_Text title = CreateText("Title", box.transform, "Ayarlar", 56f, UiStyle.DarkText, TextAlignmentOptions.Center, true);
             AnchorTopStretch(title.rectTransform, 40f, 80f, 40f, 40f);
 
             TMP_Text sfxLabel;
             Toggle sfx = ToggleRow("SfxToggle", box.transform, "Ses: Açık", 150f, out sfxLabel);
+            TMP_Text musicLabel;
+            Toggle music = ToggleRow("MusicToggle", box.transform, "Müzik: Açık", 260f, out musicLabel);
+
+            TMP_Text musicVolumeLabel = CreateText("MusicVolumeLabel", box.transform, "Müzik Sesi: %80", 34f, UiStyle.MutedText, TextAlignmentOptions.Left, false);
+            AnchorTopStretch(musicVolumeLabel.rectTransform, 370f, 50f, 80f, 80f);
+            Slider musicVolume = SliderRow("MusicVolumeSlider", box.transform, 425f);
+
             TMP_Text hapticsLabel;
-            Toggle haptics = ToggleRow("HapticsToggle", box.transform, "Titreşim: Açık", 270f, out hapticsLabel);
+            Toggle haptics = ToggleRow("HapticsToggle", box.transform, "Titreşim: Açık", 510f, out hapticsLabel);
 
             TMP_Text policyLabel;
             Button privacyPolicy = CreateButton("PrivacyPolicyButton", box.transform, "Gizlilik Politikası", UiStyle.Neutral, 38f, out policyLabel);
-            AnchorTopStretch(privacyPolicy.GetComponent<RectTransform>(), 420f, 120f, 80f, 80f);
+            AnchorTopStretch(privacyPolicy.GetComponent<RectTransform>(), 650f, 120f, 80f, 80f);
 
             TMP_Text optionsLabel;
             Button privacyOptions = CreateButton("PrivacyOptionsButton", box.transform, "Gizlilik Tercihleri", UiStyle.Neutral, 38f, out optionsLabel);
-            AnchorTopStretch(privacyOptions.GetComponent<RectTransform>(), 560f, 120f, 80f, 80f);
+            AnchorTopStretch(privacyOptions.GetComponent<RectTransform>(), 790f, 120f, 80f, 80f);
 
             TMP_Text resetLabel;
             Button reset = CreateButton("ResetProgressButton", box.transform, "İlerlemeyi Sıfırla", UiStyle.Red, 38f, out resetLabel);
-            AnchorTopStretch(reset.GetComponent<RectTransform>(), 700f, 120f, 80f, 80f);
+            AnchorTopStretch(reset.GetComponent<RectTransform>(), 930f, 120f, 80f, 80f);
 
             TMP_Text version = CreateText("Version", box.transform, "", 28f, UiStyle.MutedText, TextAlignmentOptions.Center, false);
             AnchorBottomStretch(version.rectTransform, 170f, 44f, 40f, 40f);
@@ -1383,7 +1651,13 @@ namespace IdleRestaurant.EditorTools
                     .Ref("resetCancelButton", cancel)
                     .Ref("privacyPolicyButton", privacyPolicy)
                     .Ref("privacyOptionsButton", privacyOptions)
-                    .Ref("versionText", version);
+                    .Ref("versionText", version)
+                    .Ref("musicVolumeSlider", musicVolume)
+                    .Ref("musicVolumeLabel", musicVolumeLabel);
+
+                SerializedProperty musicSwitch = wiring.Find("musicSwitch");
+                Wiring.Relative(musicSwitch, "toggle").objectReferenceValue = music;
+                Wiring.Relative(musicSwitch, "label").objectReferenceValue = musicLabel;
 
                 SerializedProperty sfxSwitch = wiring.Find("sfxSwitch");
                 Wiring.Relative(sfxSwitch, "toggle").objectReferenceValue = sfx;
@@ -1502,6 +1776,53 @@ namespace IdleRestaurant.EditorTools
             labelRect.offsetMin = new Vector2(120f, 0f);
             labelRect.offsetMax = Vector2.zero;
             return toggle;
+        }
+
+        /// <summary>
+        /// uGUI kaydırıcısı: arka plan çubuğu, dolgu ve yuvarlak tutamak.
+        /// Aralık 0-1, başlangıç %80 (AudioManager varsayılanı; açılışta kayıttaki değere çekilir).
+        /// </summary>
+        private static Slider SliderRow(string name, Transform parent, float top)
+        {
+            RectTransform row = CreateRect(name, parent);
+            AnchorTopStretch(row, top, 60f, 80f, 80f);
+            Slider slider = row.gameObject.AddComponent<Slider>();
+
+            Image background = Panel("Background", row, UiStyle.ProgressBack, true);
+            StretchVertically(background.rectTransform, 18f, 0f);
+
+            RectTransform fillArea = CreateRect("Fill Area", row);
+            StretchVertically(fillArea, 18f, 14f);
+            Image fill = Panel("Fill", fillArea, UiStyle.Green, true);
+            Stretch(fill.rectTransform, 0f);
+
+            RectTransform handleArea = CreateRect("Handle Slide Area", row);
+            StretchVertically(handleArea, 0f, 28f);
+            Image handle = Panel("Handle", handleArea, Color.white, false);
+            handle.sprite = UiStyle.KnobSprite;
+            handle.rectTransform.anchorMin = new Vector2(0f, 0f);
+            handle.rectTransform.anchorMax = new Vector2(0f, 1f);
+            handle.rectTransform.sizeDelta = new Vector2(56f, 0f);
+
+            slider.fillRect = fill.rectTransform;
+            slider.handleRect = handle.rectTransform;
+            slider.targetGraphic = handle;
+            slider.direction = Slider.Direction.LeftToRight;
+            slider.minValue = 0f;
+            slider.maxValue = 1f;
+            slider.wholeNumbers = false;
+            slider.value = 0.8f;
+            return slider;
+        }
+
+        /// <summary>Yatayda <paramref name="horizontalMargin"/> içeride, dikeyde <paramref name="verticalMargin"/> içeride esner.</summary>
+        private static void StretchVertically(RectTransform rect, float verticalMargin, float horizontalMargin)
+        {
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.offsetMin = new Vector2(horizontalMargin, verticalMargin);
+            rect.offsetMax = new Vector2(-horizontalMargin, -verticalMargin);
         }
 
         /// <summary>
@@ -1652,6 +1973,33 @@ namespace IdleRestaurant.EditorTools
                 return this;
             }
 
+            /// <summary>Nesne dizisini (ör. Renderer[], GameObject[]) doldurur; boş eleman kabul etmez.</summary>
+            public static void Objects(SerializedProperty array, IList<Object> values)
+            {
+                for (int i = 0; i < values.Count; i++)
+                {
+                    if (values[i] == null)
+                    {
+                        throw new InvalidOperationException($"{array.propertyPath}[{i}] için atanacak nesne yok.");
+                    }
+                }
+
+                array.arraySize = values.Count;
+                for (int i = 0; i < values.Count; i++)
+                {
+                    array.GetArrayElementAtIndex(i).objectReferenceValue = values[i];
+                }
+            }
+
+            public static void Colors(SerializedProperty array, IList<Color> values)
+            {
+                array.arraySize = values.Count;
+                for (int i = 0; i < values.Count; i++)
+                {
+                    array.GetArrayElementAtIndex(i).colorValue = values[i];
+                }
+            }
+
             public Wiring RefList<T>(string field, IList<T> values) where T : Object
             {
                 for (int i = 0; i < values.Count; i++)
@@ -1737,8 +2085,11 @@ namespace IdleRestaurant.EditorTools
             /// <summary>Tezgahtaki bardağın içeceği (burger: gazoz, kahve: kahve, pizza: limonata).</summary>
             public readonly Color DrinkColor;
 
+            /// <summary>Servis tepsisinin rengi; istasyonu bir bakışta ayırt ettirir.</summary>
+            public readonly Color TrayColor;
+
             public StationSpec(string id, string name, double baseCost, double baseIncome, float cycleTime,
-                int startingLevel, Color bodyColor, Color accentColor, Color drinkColor)
+                int startingLevel, Color bodyColor, Color accentColor, Color drinkColor, Color trayColor)
             {
                 Id = id;
                 Name = name;
@@ -1749,6 +2100,7 @@ namespace IdleRestaurant.EditorTools
                 BodyColor = bodyColor;
                 AccentColor = accentColor;
                 DrinkColor = drinkColor;
+                TrayColor = trayColor;
             }
         }
 
@@ -1816,12 +2168,32 @@ namespace IdleRestaurant.EditorTools
             public const string CustomerHat = "CustomerHat";
             public const string Eye = "Eye";
             public const string Blush = "Blush";
+            public const string Bun = "Food_Bun";
+            public const string Patty = "Food_Patty";
+            public const string Lettuce = "Food_Lettuce";
+            public const string Croissant = "Food_Croissant";
+            public const string Crust = "Food_Crust";
+            public const string Cheese = "Food_Cheese";
+            public const string Pepperoni = "Food_Pepperoni";
+            public const string Ketchup = "Sauce_Ketchup";
+            public const string Mustard = "Sauce_Mustard";
+            public const string Glass = "Glass";
+            public const string PlantDark = "Plant_Dark";
+            public const string LampShade = "Lamp_Shade";
+            public const string LampBulb = "Lamp_Bulb";
+            public const string Brass = "Brass";
+            public const string ArtPeach = "Art_Peach";
+            public const string ArtSky = "Art_Sky";
+            public const string FlowerPink = "Flower_Pink";
+            public const string FlowerYellow = "Flower_Yellow";
 
             public static string StationBody(string stationId) => "Station_" + stationId;
 
             public static string StationAccent(string stationId) => "Accent_" + stationId;
 
             public static string Drink(string stationId) => "Drink_" + stationId;
+
+            public static string Tray(string stationId) => "Tray_" + stationId;
         }
 
         /// <summary>Diskten yeniden yüklenmiş, sahneye bağlanacak asset'ler.</summary>
@@ -1853,9 +2225,28 @@ namespace IdleRestaurant.EditorTools
             public Material Ceramic;
             public Material Napkin;
             public Material Cutlery;
+            public Material Bun;
+            public Material Patty;
+            public Material Lettuce;
+            public Material Croissant;
+            public Material Crust;
+            public Material Cheese;
+            public Material Pepperoni;
+            public Material Ketchup;
+            public Material Mustard;
+            public Material Glass;
+            public Material PlantDark;
+            public Material LampShade;
+            public Material LampBulb;
+            public Material Brass;
+            public Material ArtPeach;
+            public Material ArtSky;
+            public Material FlowerPink;
+            public Material FlowerYellow;
             public Material[] StationBodies;
             public Material[] StationAccents;
             public Material[] Drinks;
+            public Material[] Trays;
         }
 
         private sealed class RestaurantRefs
@@ -1940,6 +2331,8 @@ namespace IdleRestaurant.EditorTools
             public static Sprite RoundedSprite => AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/UISprite.psd");
 
             public static Sprite CheckmarkSprite => AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Checkmark.psd");
+
+            public static Sprite KnobSprite => AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Knob.psd");
         }
     }
 

@@ -6,7 +6,9 @@ namespace IdleRestaurant.Gameplay.Customers
     /// Müşterinin görünümü: yürürken "Wobble &amp; Hop" (küçük sıçramalar,
     /// sağa-sola yalpalama, esneyip basılma), masada bekleme ve yeme
     /// pozları, parayı bırakınca sevinç zıplaması. İsteğe bağlı bir
-    /// Animator'a da aynı durumları bool parametre olarak iletir.
+    /// Animator'a da aynı durumları bool parametre olarak iletir. Havuzdan
+    /// her çıkışta <see cref="appearance"/> yeni bir kıyafet rengi, şapka
+    /// ve boy seçer; kapıdan giren müşteriler birbirinden farklı görünür.
     ///
     /// ── Neyi hareket ettirir ────────────────────────────────────────────────
     /// Yalnızca <see cref="model"/>'i (gövde, şapka, göz... hepsinin ebeveyni).
@@ -94,6 +96,10 @@ namespace IdleRestaurant.Gameplay.Customers
         [Tooltip("Lokma alırken öne eğilme (derece).")]
         [SerializeField, Range(0f, 45f)] private float eatNodAngle = 12f;
 
+        [Header("Görünüm çeşitliliği")]
+        [Tooltip("Her gelişte rastgele kıyafet rengi, şapka (veya şapkasız) ve boy.")]
+        [SerializeField] private CustomerAppearance appearance = new CustomerAppearance();
+
         [Header("Ödeme tepkisi")]
         [Tooltip("Sevinç zıplamasının süresi (sn).")]
         [SerializeField, Min(0.05f)] private float cheerDuration = 0.5f;
@@ -110,6 +116,7 @@ namespace IdleRestaurant.Gameplay.Customers
         private Vector3 _restPosition;
         private Quaternion _restRotation;
         private Vector3 _restScale;
+        private float _sizeScale = 1f;
 
         private float _walkWeight;
         private float _seatWeight;
@@ -134,6 +141,7 @@ namespace IdleRestaurant.Gameplay.Customers
         public Transform Model => model;
         public Animator Animator => animator;
         public bool ProceduralMotionActive => _motionEnabled;
+        public CustomerAppearance Appearance => appearance;
 
         /// <summary>Sevinç zıplaması sürüyor mu.</summary>
         public bool IsCheering => _cheerTime >= 0f;
@@ -167,6 +175,7 @@ namespace IdleRestaurant.Gameplay.Customers
             }
 
             _motionEnabled = proceduralMotion && _hasRestPose;
+            appearance.Initialize();
         }
 
         private void OnEnable()
@@ -192,7 +201,12 @@ namespace IdleRestaurant.Gameplay.Customers
 
             // Animator etkinleşince parametreleri varsayılana döner; yeniden gönder.
             _animatorSynced = false;
-            ApplyRestPose();
+
+            _sizeScale = appearance.Randomize();
+            if (_hasRestPose)
+            {
+                SetLocalPose(_restPosition, _restRotation, _restScale * _sizeScale);
+            }
         }
 
         private void OnDisable()
@@ -314,7 +328,7 @@ namespace IdleRestaurant.Gameplay.Customers
 
             SetLocalPose(_restPosition + Vector3.up * height,
                 Quaternion.Euler(0f, _yaw, 0f) * Quaternion.Euler(pitch, 0f, roll) * _restRotation,
-                Vector3.Scale(_restScale, new Vector3(1f - stretch * 0.5f, 1f + stretch, 1f - stretch * 0.5f)));
+                Vector3.Scale(_restScale * _sizeScale, new Vector3(1f - stretch * 0.5f, 1f + stretch, 1f - stretch * 0.5f)));
         }
 
         private void ApplyRestPose()

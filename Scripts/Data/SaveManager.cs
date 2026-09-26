@@ -63,6 +63,7 @@ namespace IdleRestaurant.Data
         private readonly List<ISaveable> _saveables = new List<ISaveable>();
         private Func<SaveData> _stateProvider;
         private float _autoSaveTimer;
+        private float _requestedSaveTime = -1f;
         private long _pausedAtUtcTicks;
         private string _savePath;
         private string _tempPath;
@@ -109,6 +110,21 @@ namespace IdleRestaurant.Data
         {
             _stateProvider = provider;
             _autoSaveTimer = 0f;
+            _requestedSaveTime = -1f;
+        }
+
+        /// <summary>Bekleyen bir <see cref="RequestSave"/> var mı.</summary>
+        public bool HasPendingSaveRequest => _requestedSaveTime >= 0f;
+
+        /// <summary>
+        /// <paramref name="delaySeconds"/> sonra kaydeder; bu sürede gelen her
+        /// yeni istek süreyi baştan başlatır. Kaydırıcı gibi art arda değişen
+        /// ayarlar diske her adımda yazılmaz, sürükleme bitince tek kayıt olur.
+        /// Arada yapılan normal bir kayıt (otomatik, duraklatma) isteği karşılar.
+        /// </summary>
+        public void RequestSave(float delaySeconds)
+        {
+            _requestedSaveTime = Time.unscaledTime + Mathf.Max(0f, delaySeconds);
         }
 
         /// <summary>
@@ -184,6 +200,7 @@ namespace IdleRestaurant.Data
             data.Sanitize();
 
             _autoSaveTimer = 0f;
+            _requestedSaveTime = -1f;
             return WriteToDisk(data);
         }
 
@@ -401,7 +418,18 @@ namespace IdleRestaurant.Data
 
         private void Update()
         {
-            if (_stateProvider == null || autoSaveInterval <= 0f)
+            if (_stateProvider == null)
+            {
+                return;
+            }
+
+            if (_requestedSaveTime >= 0f && Time.unscaledTime >= _requestedSaveTime)
+            {
+                Save();
+                return;
+            }
+
+            if (autoSaveInterval <= 0f)
             {
                 return;
             }

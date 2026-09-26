@@ -10,7 +10,7 @@ using static IdleRestaurant.UI.UIUtility;
 namespace IdleRestaurant.UI
 {
     /// <summary>
-    /// Ayarlar paneli: ses ve titreşim anahtarları, ilerlemeyi sıfırlama,
+    /// Ayarlar paneli: ses, müzik (anahtar + seviye kaydırıcısı) ve titreşim, ilerlemeyi sıfırlama,
     /// gizlilik politikası bağlantısı ve (rıza gereken bölgelerde) Google UMP
     /// gizlilik tercihleri. <see cref="UIManager"/> başlatır ve ayarlar
     /// butonuyla açıp kapatır.
@@ -31,6 +31,11 @@ namespace IdleRestaurant.UI
     /// "Evet, Sıfırla". Son onay butonu <see cref="finalConfirmDelay"/>
     /// saniye kilitli kalır: aynı yere hızlı iki dokunuş iki aşamayı birden
     /// geçemesin.
+    ///
+    /// ── Müzik seviyesi ──────────────────────────────────────────────────────
+    /// Kaydırıcının aralığı (min-max) ne olursa olsun 0-1'e çevrilir. Müzik
+    /// kapalıyken kaydırıcı pasifleşir. Sürükleme tıklama sesi çalmaz; kayıt
+    /// GameManager'da kısa gecikmeyle birleştirilir, her adımda diske yazılmaz.
     ///
     /// Ayar değişiklikleri AudioManager üzerinden kaydedilir; bu panel kayıt
     /// sistemini tanımaz.
@@ -65,6 +70,11 @@ namespace IdleRestaurant.UI
             public string sfxOff = "Ses: Kapalı";
             public string hapticsOn = "Titreşim: Açık";
             public string hapticsOff = "Titreşim: Kapalı";
+            public string musicOn = "Müzik: Açık";
+            public string musicOff = "Müzik: Kapalı";
+
+            [Tooltip("{0} = yüzde (0-100)")]
+            public string musicVolumeFormat = "Müzik Sesi: %{0}";
 
             public string resetStep1Message = "Restoranın, paran, Gem'lerin, görevlerin ve ayarların silinecek. Devam etmek istiyor musun?";
             public string resetStep1Confirm = "Devam";
@@ -88,6 +98,15 @@ namespace IdleRestaurant.UI
         [Header("Ses ve titreşim")]
         [SerializeField] private SettingSwitch sfxSwitch = new SettingSwitch();
         [SerializeField] private SettingSwitch hapticsSwitch = new SettingSwitch();
+
+        [Header("Müzik")]
+        [SerializeField] private SettingSwitch musicSwitch = new SettingSwitch();
+
+        [Tooltip("Müzik seviyesi. Aralığı serbest; değer 0-1'e çevrilir.")]
+        [SerializeField] private Slider musicVolumeSlider = null;
+
+        [Tooltip("Seviye metni (ör. 'Müzik Sesi: %80'). İsteğe bağlı.")]
+        [SerializeField] private TMP_Text musicVolumeLabel = null;
 
         [Tooltip("Cihazda titreşim yoksa titreşim anahtarını gizle. Editörde hep görünür.")]
         [SerializeField] private bool hideHapticsWhenUnsupported = true;
@@ -167,6 +186,12 @@ namespace IdleRestaurant.UI
                 _audio.onSettingsChanged += RefreshSwitches;
                 BindSwitch(sfxSwitch, OnSfxChanged, () => !_audio.IsMuted);
                 BindSwitch(hapticsSwitch, OnHapticsChanged, () => _audio.HapticsEnabled);
+                BindSwitch(musicSwitch, OnMusicChanged, () => !_audio.IsMusicMuted);
+
+                if (musicVolumeSlider != null)
+                {
+                    musicVolumeSlider.onValueChanged.AddListener(OnMusicVolumeChanged);
+                }
             }
 
             BindButton(closeButton, OnCloseClicked);
@@ -266,6 +291,13 @@ namespace IdleRestaurant.UI
 
             UnbindSwitch(sfxSwitch);
             UnbindSwitch(hapticsSwitch);
+            UnbindSwitch(musicSwitch);
+
+            if (musicVolumeSlider != null)
+            {
+                musicVolumeSlider.onValueChanged.RemoveListener(OnMusicVolumeChanged);
+            }
+
             UnbindButton(closeButton, OnCloseClicked);
             UnbindButton(resetButton, OnResetClicked);
             UnbindButton(resetConfirmButton, OnResetConfirmClicked);
@@ -312,10 +344,37 @@ namespace IdleRestaurant.UI
             }
         }
 
+        private void OnMusicChanged(bool on)
+        {
+            if (on)
+            {
+                _audio.SetMusicMuted(false);
+                NotifyClick();
+            }
+            else
+            {
+                NotifyClick();
+                _audio.SetMusicMuted(true);
+            }
+        }
+
+        private void OnMusicVolumeChanged(float value)
+        {
+            if (_audio == null || musicVolumeSlider == null)
+            {
+                return;
+            }
+
+            _audio.SetMusicVolume(Mathf.InverseLerp(musicVolumeSlider.minValue, musicVolumeSlider.maxValue, value));
+        }
+
         private void RefreshSwitches()
         {
             bool hasAudio = _audio != null;
             SetSwitchVisible(sfxSwitch, hasAudio);
+            SetSwitchVisible(musicSwitch, hasAudio);
+            SetActive(musicVolumeSlider != null ? musicVolumeSlider.gameObject : null, hasAudio);
+            SetActive(musicVolumeLabel != null ? musicVolumeLabel.gameObject : null, hasAudio);
 
             bool hapticsVisible = hasAudio && (Application.isEditor || !hideHapticsWhenUnsupported || _audio.HapticsSupported);
             SetSwitchVisible(hapticsSwitch, hapticsVisible);
@@ -327,6 +386,21 @@ namespace IdleRestaurant.UI
 
             ShowSwitchState(sfxSwitch, !_audio.IsMuted, texts.sfxOn, texts.sfxOff);
             ShowSwitchState(hapticsSwitch, _audio.HapticsEnabled, texts.hapticsOn, texts.hapticsOff);
+            ShowSwitchState(musicSwitch, !_audio.IsMusicMuted, texts.musicOn, texts.musicOff);
+            ShowMusicVolume();
+        }
+
+        private void ShowMusicVolume()
+        {
+            float volume = _audio.MusicVolume;
+            if (musicVolumeSlider != null)
+            {
+                // Bildirimsiz: kaydırıcıyı kodla konumlamak ayarı yeniden yazmasın.
+                musicVolumeSlider.SetValueWithoutNotify(Mathf.Lerp(musicVolumeSlider.minValue, musicVolumeSlider.maxValue, volume));
+                musicVolumeSlider.interactable = !_audio.IsMusicMuted;
+            }
+
+            SetText(musicVolumeLabel, Format(texts.musicVolumeFormat, Mathf.RoundToInt(volume * 100f)));
         }
 
         private static void BindSwitch(SettingSwitch setting, Action<bool> apply, Func<bool> currentState)

@@ -39,6 +39,9 @@ namespace IdleRestaurant.Core
     [DisallowMultipleComponent]
     public sealed class GameManager : MonoBehaviour
     {
+        /// <summary>Ses/müzik ayarı değişikliğinden sonra kaydın beklediği süre (sn).</summary>
+        public const float SettingsSaveDelay = 0.5f;
+
         public static GameManager Instance { get; private set; }
 
         [Header("Yöneticiler (boşsa aynı nesnede, sonra sahnede aranır)")]
@@ -458,8 +461,9 @@ namespace IdleRestaurant.Core
 
         private void HandleAudioSettingsChanged()
         {
-            // Ayar değişikliği seyrek; hemen yazılır ki uygulama kapanırsa kaybolmasın.
-            saveManager.Save();
+            // Kısa gecikmeyle: müzik kaydırıcısı sürüklenirken her adımda diske
+            // yazılmasın. Uygulama bu arada kapanırsa duraklatma kaydı yakalar.
+            saveManager.RequestSave(SettingsSaveDelay);
         }
 
         private void WarnAboutDuplicateStationIds()

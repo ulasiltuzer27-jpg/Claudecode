@@ -10,8 +10,12 @@ namespace IdleRestaurant.Audio
     /// Library ile oluşturulur ve <see cref="AudioManager"/>'a atanır.
     ///
     /// Yeni varlık beş türün hepsiyle, önerilen titreşim ve aralıklarla
-    /// gelir; yalnızca klipleri sürüklemek yeter. Klibi olmayan tür sessiz
-    /// kalır ama titreşimi yine çalışır.
+    /// gelir; yalnızca klipleri sürüklemek yeter. Klibi olmayan türe
+    /// AudioManager (izin verildiyse) prosedürel bir ses üretir; o da kapalıysa
+    /// tür sessiz kalır ama titreşimi yine çalışır.
+    ///
+    /// Arka plan müziği <see cref="Music"/>'te: parçalar, karıştırma seviyesi,
+    /// fade süreleri ve döngü. Parça yoksa AudioManager prosedürel bir döngü çalar.
     /// </summary>
     [CreateAssetMenu(fileName = "SoundLibrary", menuName = "Idle Restaurant/Audio/Sound Library", order = 20)]
     public sealed class SoundLibrary : ScriptableObject
@@ -61,11 +65,58 @@ namespace IdleRestaurant.Audio
             }
         }
 
+        /// <summary>Arka plan müziği (BGM) ayarları.</summary>
+        [Serializable]
+        public sealed class MusicSettings
+        {
+            [Tooltip("Çalınacak parçalar. Boşsa AudioManager (izin verildiyse) prosedürel bir döngü üretir.")]
+            public AudioClip[] tracks = new AudioClip[0];
+
+            [Tooltip("Müziğin karıştırmadaki seviyesi; oyuncunun müzik ayarıyla çarpılır. Efektleri bastırmasın diye düşük tutun.")]
+            [Range(0f, 1f)] public float volume = 0.45f;
+
+            [Tooltip("Başlarken ve sessizden çıkarken yükselme süresi (sn).")]
+            [Min(0f)] public float fadeInSeconds = 1.5f;
+
+            [Tooltip("Dururken, parça değişirken ve sessize alınırken alçalma süresi (sn).")]
+            [Min(0f)] public float fadeOutSeconds = 0.8f;
+
+            [Tooltip("Açık: parça başa sararak sürer. Kapalı: bitince sıradaki parçaya geçilir (liste başa sarar).")]
+            public bool loop = true;
+
+            /// <summary>
+            /// <paramref name="index"/>'ten başlayarak ilk dolu parçayı bulur.
+            /// </summary>
+            /// <returns>Parçanın sırası; hiç parça yoksa -1.</returns>
+            public int FindTrack(int index)
+            {
+                if (tracks == null || tracks.Length == 0)
+                {
+                    return -1;
+                }
+
+                for (int i = 0; i < tracks.Length; i++)
+                {
+                    int candidate = ((index + i) % tracks.Length + tracks.Length) % tracks.Length;
+                    if (tracks[candidate] != null)
+                    {
+                        return candidate;
+                    }
+                }
+
+                return -1;
+            }
+        }
+
         [SerializeField] private List<SoundEntry> entries = CreateDefaultEntries();
+
+        [SerializeField] private MusicSettings music = new MusicSettings();
 
         private SoundEntry[] _lookup;
 
         public IReadOnlyList<SoundEntry> Entries => entries;
+
+        public MusicSettings Music => music;
 
         /// <summary>Türün kaydını döndürür; kütüphanede yoksa null.</summary>
         public SoundEntry GetEntry(SfxType type)

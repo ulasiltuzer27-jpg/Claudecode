@@ -22,6 +22,9 @@ namespace IdleRestaurant.Data
         /// v2 → v3: <see cref="audio"/> eklendi. Türetilecek bir şey yok: eksik
         /// bölüm <see cref="AudioSaveData.hasSettings"/> = false okunur ve ses
         /// sistemi kendi varsayılanlarıyla başlar.
+        /// v3 içinde: müzik ayarları eklendi; sürüm artmadı, çünkü eksik alanlar
+        /// <see cref="AudioSaveData.hasMusicSettings"/> = false okunur ve müzik
+        /// yine Inspector varsayılanlarıyla başlar.
         /// </summary>
         public const int CurrentVersion = 3;
 
@@ -308,14 +311,30 @@ namespace IdleRestaurant.Data
         public bool muted;
         public bool hapticsEnabled = true;
 
+        /// <summary>
+        /// Müzik alanları yazıldı mı. Müzik desteğinden önceki kayıtlarda false
+        /// okunur; müzik o zaman Inspector'daki varsayılan seviye ve açık/kapalı
+        /// ayarıyla başlar (JsonUtility'nin boş alan için verdiği değerle değil).
+        /// </summary>
+        public bool hasMusicSettings;
+
+        public float musicVolume = 1f;
+        public bool musicMuted;
+
         public void Sanitize()
         {
-            if (float.IsNaN(volume) || float.IsInfinity(volume))
+            volume = Clamp01OrDefault(volume);
+            musicVolume = Clamp01OrDefault(musicVolume);
+        }
+
+        private static float Clamp01OrDefault(float value)
+        {
+            if (float.IsNaN(value) || float.IsInfinity(value))
             {
-                volume = 1f;
+                return 1f;
             }
 
-            volume = Math.Max(0f, Math.Min(1f, volume));
+            return Math.Max(0f, Math.Min(1f, value));
         }
     }
 }
