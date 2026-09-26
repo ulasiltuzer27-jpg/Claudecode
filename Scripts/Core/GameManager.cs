@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using IdleRestaurant.Ads;
 using IdleRestaurant.Data;
 using IdleRestaurant.Gameplay;
+using IdleRestaurant.Gameplay.Quests;
 using IdleRestaurant.UI;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -14,10 +15,17 @@ namespace IdleRestaurant.Core
     ///
     /// ── Başlatma sırası ─────────────────────────────────────────────────────
     /// Tüm başlatma tek bir yerde, <see cref="Start"/>'ta ve sabit sırayla:
-    /// kayıt oku → bakiyeyi kur → istasyonları seviyeleriyle başlat → kayıt
-    /// sağlayıcısını bağla → UI'ı bağla → çevrimdışı kazancı ver → hemen
-    /// kaydet. Parçalar birbirinin Awake/Start'ına güvenmiyor; Unity'nin
-    /// bileşenler arası çağrı sırası tanımsız.
+    /// kayıt oku → bakiyeyi kur → istasyonları seviyeleriyle başlat →
+    /// prestij ve görev sistemlerini bağla ve geri yükle → kayıt sağlayıcısını
+    /// bağla → UI'ı bağla → çevrimdışı kazancı ver → hemen kaydet. Parçalar
+    /// birbirinin Awake/Start'ına güvenmiyor; Unity'nin bileşenler arası
+    /// çağrı sırası tanımsız.
+    ///
+    /// ── Hız ve gelir çarpanları ─────────────────────────────────────────────
+    /// İstasyonlara giden hız = reklam hızlandırıcısı × kalıcı hız (prestij);
+    /// gelir = kalıcı gelir çarpanı. İkisini birleştiren tek yer
+    /// <see cref="RefreshStationMultipliers"/>; çarpanı üreten sistemler
+    /// (reklam, prestij) istasyonlara doğrudan dokunmaz.
     ///
     /// ── Sahne ömrü ──────────────────────────────────────────────────────────
     /// DontDestroyOnLoad KULLANILMIYOR: GameManager sahnedeki istasyonlara
@@ -35,6 +43,12 @@ namespace IdleRestaurant.Core
         [SerializeField] private SaveManager saveManager;
         [SerializeField] private AdManager adManager;
         [SerializeField] private UIManager uiManager;
+
+        [Tooltip("İsteğe bağlı. Yoksa prestij ve kalıcı çarpanlar devre dışı.")]
+        [SerializeField] private PrestigeManager prestigeManager;
+
+        [Tooltip("İsteğe bağlı. Yoksa görev sistemi devre dışı.")]
+        [SerializeField] private QuestManager questManager;
 
         [Header("İstasyonlar")]
         [Tooltip("Boş bırakılırsa sahnedeki tüm Station bileşenleri (pasifler dahil) otomatik bulunur.")]
@@ -60,6 +74,7 @@ namespace IdleRestaurant.Core
         /// </summary>
         private readonly List<StationSaveData> _orphanedStationEntries = new List<StationSaveData>();
 
+        private QuestSignalHub _questSignals;
         private double _totalIncomePerSecond;
         private float _speedBoostRemaining;
         private double _pendingOfflineBonus;
@@ -67,7 +82,10 @@ namespace IdleRestaurant.Core
         private bool _isInitialized;
         private bool _isDuplicate;
 
-        /// <summary>Hızlandırıcı hariç saniye başı toplam gelir değiştiğinde tetiklenir.</summary>
+        /// <summary>
+        /// <see cref="TotalIncomePerSecond"/> değiştiğinde tetiklenir (seviye,
+        /// kalıcı çarpan veya prestij sıfırlaması).
+        /// </summary>
         public event Action<double> onIncomePerSecondChanged;
 
         /// <summary>
@@ -87,11 +105,27 @@ namespace IdleRestaurant.Core
         public SaveManager SaveSystem => saveManager;
         public AdManager Ads => adManager;
         public UIManager UI => uiManager;
+
+        /// <summary>Sahnede prestij sistemi yoksa null.</summary>
+        public PrestigeManager Prestige => prestigeManager;
+
+        /// <summary>Sahnede görev sistemi yoksa null.</summary>
+        public QuestManager Quests => questManager;
+
         public IReadOnlyList<Station> Stations => stations;
         public bool IsInitialized => _isInitialized;
 
-        /// <summary>Hızlandırıcı hariç saniye başı toplam gelir (çevrimdışı hesabın tabanı).</summary>
+        /// <summary>
+        /// Saniye başı toplam gelir: kalıcı (prestij) çarpanlar dahil, reklam
+        /// hızlandırıcısı hariç. Çevrimdışı hesabın tabanı.
+        /// </summary>
         public double TotalIncomePerSecond => _totalIncomePerSecond;
+
+        /// <summary>Prestij yükseltmelerinden gelen kalıcı hız çarpanı; sistem yoksa 1.</summary>
+        public float PermanentSpeedMultiplier => prestigeManager != null ? prestigeManager.SpeedMultiplier : 1f;
+
+        /// <summary>Prestij yükseltmelerinden gelen kalıcı gelir çarpanı; sistem yoksa 1.</summary>
+        public double PermanentIncomeMultiplier => prestigeManager != null ? prestigeManager.IncomeMultiplier : 1d;
 
         /// <summary>Hızlandırıcı dahil, şu an gerçekte kazanılan saniye başı gelir.</summary>
         public double EffectiveIncomePerSecond => _totalIncomePerSecond * CurrentSpeedMultiplier;
@@ -173,12 +207,27 @@ namespace IdleRestaurant.Core
                 }
             }
 
+            if (prestigeManager != null)
+            {
+                prestigeManager.onMultipliersChanged -= HandleMultipliersChanged;
+                prestigeManager.onPrestigePerformed -= HandlePrestigePerformed;
+                prestigeManager.onUpgradePurchased -= HandlePermanentUpgradePurchased;
+            }
+
+            if (_questSignals != null)
+            {
+                _questSignals.Dispose();
+                _questSignals = null;
+            }
+
             if (saveManager != null)
             {
                 // Yok olmuş sahneden kayıt alınmasın: OnDestroy sırası tanımsız,
                 // istasyonlar bizden önce gitmiş olabilir.
                 saveManager.SetStateProvider(null);
                 saveManager.onResumedAfterPause -= HandleResumedAfterPause;
+                saveManager.UnregisterSaveable(prestigeManager);
+                saveManager.UnregisterSaveable(questManager);
             }
         }
 
@@ -209,6 +258,8 @@ namespace IdleRestaurant.Core
             saveManager = Resolve(saveManager);
             adManager = Resolve(adManager);
             uiManager = Resolve(uiManager);
+            prestigeManager = Resolve(prestigeManager);
+            questManager = Resolve(questManager);
 
             stations.RemoveAll(station => station == null);
             if (stations.Count == 0)
@@ -236,9 +287,20 @@ namespace IdleRestaurant.Core
             SaveData save;
             bool hasSave = saveManager.TryLoad(out save);
 
+            SaveData state = hasSave ? save : null;
+
             currencyManager.SetBalance(hasSave ? save.currency : currencyManager.StartingBalance);
-            InitializeStations(hasSave ? save : null);
+            currencyManager.SetLifetimeEarnings(hasSave ? save.lifetimeEarnings : 0d);
+            InitializeStations(state);
+            InitializeProgressionSystems();
+
+            // Görev ödülleri geri yüklenirken o anki geliri okur; gelir,
+            // prestij çarpanları geri yüklenmeden önce de geçerli olmalı.
+            RefreshStationMultipliers();
             RecalculateIncomePerSecond();
+
+            // Kayıt sırası: prestij (çarpanları duyurur) → görevler.
+            saveManager.RestoreSaveables(state);
 
             if (hasSave && save.speedBoostRemainingSeconds > 0f)
             {
@@ -303,6 +365,30 @@ namespace IdleRestaurant.Core
             }
         }
 
+        /// <summary>
+        /// Prestij ve görev sistemlerine bağımlılıklarını verir, olaylarına
+        /// abone olur ve onları kayda katar. Kayıt sırası geri yükleme
+        /// sırasıdır: görevler prestij çarpanlarını içeren geliri okur.
+        /// </summary>
+        private void InitializeProgressionSystems()
+        {
+            if (prestigeManager != null)
+            {
+                prestigeManager.Initialize(currencyManager, stations);
+                prestigeManager.onMultipliersChanged += HandleMultipliersChanged;
+                prestigeManager.onPrestigePerformed += HandlePrestigePerformed;
+                prestigeManager.onUpgradePurchased += HandlePermanentUpgradePurchased;
+                saveManager.RegisterSaveable(prestigeManager);
+            }
+
+            if (questManager != null)
+            {
+                _questSignals = new QuestSignalHub(currencyManager, stations, prestigeManager);
+                questManager.Initialize(currencyManager, _questSignals, () => _totalIncomePerSecond);
+                saveManager.RegisterSaveable(questManager);
+            }
+        }
+
         private void WarnAboutDuplicateStationIds()
         {
             HashSet<string> seen = new HashSet<string>();
@@ -327,9 +413,11 @@ namespace IdleRestaurant.Core
 
         private SaveData CaptureSaveData()
         {
+            // Prestij ve görev bölümlerini SaveManager, kaydolan ISaveable'lardan ekler.
             SaveData data = new SaveData
             {
                 currency = currencyManager.Balance,
+                lifetimeEarnings = currencyManager.LifetimeEarnings,
                 speedBoostRemainingSeconds = _speedBoostRemaining
             };
 
@@ -388,8 +476,51 @@ namespace IdleRestaurant.Core
                 }
             }
 
-            _totalIncomePerSecond = total;
+            // İstasyonun IncomePerSecond'ı hız çarpanı içermez; kalıcı olanı
+            // burada uygulanıyor, geçici reklam hızlandırıcısı bilerek dışarıda.
+            _totalIncomePerSecond = total * PermanentSpeedMultiplier;
             onIncomePerSecondChanged?.Invoke(_totalIncomePerSecond);
+        }
+
+        // ── Prestij ────────────────────────────────────────────────────────────
+
+        private void HandleMultipliersChanged()
+        {
+            RefreshStationMultipliers();
+            RecalculateIncomePerSecond();
+        }
+
+        private void HandlePrestigePerformed(double gemsEarned)
+        {
+            // Sıfırlanan turun çevrimdışı kazancı yeni turda 2x'lenmesin.
+            ClearPendingOfflineEarnings();
+            saveManager.Save();
+        }
+
+        private void HandlePermanentUpgradePurchased(PermanentUpgradeDefinition upgrade, int newLevel)
+        {
+            // Gem harcaması hemen yazılır; çökme satın alınanı geri almasın.
+            saveManager.Save();
+        }
+
+        /// <summary>
+        /// İstasyonlara giden çarpanları yeniden kurar: hız = reklam
+        /// hızlandırıcısı × kalıcı hız, gelir = kalıcı gelir.
+        /// </summary>
+        private void RefreshStationMultipliers()
+        {
+            float speed = CurrentSpeedMultiplier * PermanentSpeedMultiplier;
+            double income = PermanentIncomeMultiplier;
+
+            for (int i = 0; i < stations.Count; i++)
+            {
+                Station station = stations[i];
+                if (station != null)
+                {
+                    station.SetSpeedMultiplier(speed);
+                    station.SetIncomeMultiplier(income);
+                }
+            }
         }
 
         // ── Çevrimdışı kazanç ──────────────────────────────────────────────────
@@ -513,7 +644,7 @@ namespace IdleRestaurant.Core
 
             if (!wasActive)
             {
-                ApplySpeedMultiplier(speedBoostMultiplier);
+                RefreshStationMultipliers();
                 onSpeedBoostChanged?.Invoke(true);
             }
         }
@@ -532,19 +663,8 @@ namespace IdleRestaurant.Core
             }
 
             _speedBoostRemaining = 0f;
-            ApplySpeedMultiplier(1f);
+            RefreshStationMultipliers();
             onSpeedBoostChanged?.Invoke(false);
-        }
-
-        private void ApplySpeedMultiplier(float multiplier)
-        {
-            for (int i = 0; i < stations.Count; i++)
-            {
-                if (stations[i] != null)
-                {
-                    stations[i].SetSpeedMultiplier(multiplier);
-                }
-            }
         }
 
         // ── Geliştirici kısayolları (Inspector'da bileşen menüsünden) ──────────

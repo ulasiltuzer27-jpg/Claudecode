@@ -9,6 +9,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
+using static IdleRestaurant.UI.UIUtility;
 
 namespace IdleRestaurant.UI
 {
@@ -103,6 +104,10 @@ namespace IdleRestaurant.UI
         [SerializeField] private TMP_Text toastText;
         [SerializeField, Min(0.5f)] private float toastDuration = 2f;
 
+        [Header("Paneller (isteğe bağlı)")]
+        [SerializeField] private QuestPanelUI questPanel;
+        [SerializeField] private PrestigePanelUI prestigePanel;
+
         [Header("Metinler")]
         [SerializeField] private UITexts texts = new UITexts();
 
@@ -177,6 +182,18 @@ namespace IdleRestaurant.UI
 
             BindStationViews();
             RefreshAll();
+
+            // Paneller kendi sistemlerinin olaylarını kendileri dinler; UIManager
+            // yalnızca başlatır. Sistem sahnede yoksa panel boş durumunu gösterir.
+            if (questPanel != null)
+            {
+                questPanel.Initialize(game.Quests, this);
+            }
+
+            if (prestigePanel != null)
+            {
+                prestigePanel.Initialize(game.Prestige, game.Currency, this);
+            }
         }
 
         private void BindStationViews()
@@ -264,6 +281,13 @@ namespace IdleRestaurant.UI
         private void HandleIncomePerSecondChanged(double incomePerSecond)
         {
             RefreshIncomePerSecond();
+
+            // Toplam gelir seviye dışında kalıcı çarpanlarla da değişir (prestij
+            // yükseltmesi); istasyon satırlarındaki gelir ve süre de yenilenmeli.
+            foreach (StationView view in _viewsByStation.Values)
+            {
+                RefreshStationView(view);
+            }
         }
 
         private void HandleStationLevelChanged(Station station)
@@ -601,55 +625,6 @@ namespace IdleRestaurant.UI
             }
 
             return string.Format(CultureInfo.InvariantCulture, "{0}{1}", secs, texts.secondShort);
-        }
-
-        /// <summary>
-        /// Inspector'dan düzenlenen biçim metinleri için güvenli string.Format:
-        /// hatalı bir "{2}" oyunu FormatException ile düşürmesin.
-        /// </summary>
-        private static string Format(string format, params object[] args)
-        {
-            try
-            {
-                return string.Format(CultureInfo.InvariantCulture, format ?? string.Empty, args);
-            }
-            catch (FormatException)
-            {
-                Debug.LogWarning($"[UIManager] Geçersiz metin biçimi: '{format}'");
-                return string.Join(" ", args);
-            }
-        }
-
-        private static void BindButton(Button button, UnityAction action)
-        {
-            if (button != null)
-            {
-                button.onClick.AddListener(action);
-            }
-        }
-
-        private static void UnbindButton(Button button, UnityAction action)
-        {
-            if (button != null)
-            {
-                button.onClick.RemoveListener(action);
-            }
-        }
-
-        private static void SetText(TMP_Text target, string value)
-        {
-            if (target != null)
-            {
-                target.text = value;
-            }
-        }
-
-        private static void SetActive(GameObject target, bool active)
-        {
-            if (target != null && target.activeSelf != active)
-            {
-                target.SetActive(active);
-            }
         }
     }
 }

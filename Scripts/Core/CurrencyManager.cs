@@ -29,6 +29,7 @@ namespace IdleRestaurant.Core
         [SerializeField] private double startingBalance = 10d;
 
         private double _balance;
+        private double _lifetimeEarnings;
 
         /// <summary>
         /// Bakiye her değiştiğinde yeni bakiyeyle tetiklenir. UI metinleri ve
@@ -36,8 +37,21 @@ namespace IdleRestaurant.Core
         /// </summary>
         public event Action<double> onCurrencyChanged;
 
+        /// <summary>
+        /// Oyuncu para KAZANDIĞINDA (üretim, çevrimdışı, ödül) kazanılan
+        /// tutarla tetiklenir. Harcama ve <see cref="SetBalance"/> tetiklemez;
+        /// "X para kazan" görevleri buna bağlanır.
+        /// </summary>
+        public event Action<double> onCurrencyEarned;
+
         public double Balance => _balance;
         public double StartingBalance => startingBalance;
+
+        /// <summary>
+        /// Oyun boyunca kazanılan toplam para. Harcamayla ve prestij
+        /// sıfırlamasıyla azalmaz; prestij Gem formülünün girdisi.
+        /// </summary>
+        public double LifetimeEarnings => _lifetimeEarnings;
 
         /// <summary>
         /// Bakiyeyi doğrudan ayarlar. Yalnızca başlatma/kayıt yükleme içindir;
@@ -48,6 +62,12 @@ namespace IdleRestaurant.Core
         {
             _balance = Sanitize(value);
             onCurrencyChanged?.Invoke(_balance);
+        }
+
+        /// <summary>Ömür boyu kazancı doğrudan ayarlar. Yalnızca kayıt yükleme içindir.</summary>
+        public void SetLifetimeEarnings(double value)
+        {
+            _lifetimeEarnings = Sanitize(value);
         }
 
         /// <summary>Bakiyeye para ekler. Geçersiz veya sıfır/negatif tutarlar yok sayılır.</summary>
@@ -61,7 +81,9 @@ namespace IdleRestaurant.Core
 
             // double.MaxValue + büyük sayı = Infinity; Math.Min onu geri kırpar.
             _balance = Math.Min(_balance + amount, MaxBalance);
+            _lifetimeEarnings = Math.Min(_lifetimeEarnings + amount, MaxBalance);
             onCurrencyChanged?.Invoke(_balance);
+            onCurrencyEarned?.Invoke(amount);
             return true;
         }
 

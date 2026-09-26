@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 
@@ -13,6 +14,11 @@ namespace IdleRestaurant.Data
     /// <see cref="SetStateProvider"/> ile verilen bir fonksiyondan ister.
     /// Böylece OnApplicationPause gibi Unity mesajları nereden gelirse
     /// gelsin, kayıt her zaman o anki gerçek durumu yazar.
+    ///
+    /// Sağlayıcının kurduğu temel kayda, <see cref="RegisterSaveable"/> ile
+    /// kaydolan sistemler (prestij, görevler, ...) kendi bölümlerini ekler.
+    /// Yeni bir sistem bu sınıfa veya GameManager'ın kayıt koduna dokunmadan
+    /// kayda katılır.
     ///
     /// ── Atomik yazım ────────────────────────────────────────────────────────
     /// Kayıt önce <c>.tmp</c> dosyasına yazılır, eski kayıt <c>.bak</c>
@@ -54,6 +60,7 @@ namespace IdleRestaurant.Data
                  "para kazanmayı engeller. 0 = sınırsız.")]
         [SerializeField, Min(0f)] private float maxOfflineHours = 12f;
 
+        private readonly List<ISaveable> _saveables = new List<ISaveable>();
         private Func<SaveData> _stateProvider;
         private float _autoSaveTimer;
         private long _pausedAtUtcTicks;
@@ -104,6 +111,42 @@ namespace IdleRestaurant.Data
             _autoSaveTimer = 0f;
         }
 
+        /// <summary>
+        /// Bir sistemi kayda katar. Kayıt sırası geri yükleme sırasıdır:
+        /// başka bir sistemin durumuna bağlı olan sistem sonra kaydolmalı.
+        /// </summary>
+        public void RegisterSaveable(ISaveable saveable)
+        {
+            if (saveable != null && !_saveables.Contains(saveable))
+            {
+                _saveables.Add(saveable);
+            }
+        }
+
+        public void UnregisterSaveable(ISaveable saveable)
+        {
+            _saveables.Remove(saveable);
+        }
+
+        /// <summary>
+        /// Kaydolan tüm sistemlerin durumunu kayıt sırasıyla geri yükler.
+        /// <paramref name="data"/> null ise (ilk açılış) her sistem varsayılanla başlar.
+        /// </summary>
+        public void RestoreSaveables(SaveData data)
+        {
+            for (int i = 0; i < _saveables.Count; i++)
+            {
+                try
+                {
+                    _saveables[i].RestoreState(data);
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError($"[SaveManager] {_saveables[i].GetType().Name} geri yüklenemedi: {e}");
+                }
+            }
+        }
+
         // ── Kaydetme ───────────────────────────────────────────────────────────
 
         /// <summary>Anlık durumu diske yazar. Durum sağlayıcı yoksa veya yazım başarısızsa false.</summary>
@@ -118,15 +161,21 @@ namespace IdleRestaurant.Data
             try
             {
                 data = _stateProvider();
+                if (data == null)
+                {
+                    return false;
+                }
+
+                // Bir sistem hata verirse kayıt YAZILMAZ: o sistemin bölümü
+                // varsayılanla diske gidip önceki geçerli veriyi ezerdi.
+                for (int i = 0; i < _saveables.Count; i++)
+                {
+                    _saveables[i].CaptureState(data);
+                }
             }
             catch (Exception e)
             {
                 Debug.LogError($"[SaveManager] Kaydedilecek durum alınamadı: {e}");
-                return false;
-            }
-
-            if (data == null)
-            {
                 return false;
             }
 
@@ -229,6 +278,7 @@ namespace IdleRestaurant.Data
                                      "tanınmayan alanlar bir sonraki kayıtta kaybolacak.");
                 }
 
+                parsed.UpgradeToCurrentVersion();
                 parsed.Sanitize();
                 data = parsed;
                 return true;

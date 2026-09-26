@@ -33,10 +33,18 @@ namespace IdleRestaurant.Gameplay
         private Coroutine _productionRoutine;
         private float _cycleElapsed;
         private float _speedMultiplier = 1f;
+        private double _incomeMultiplier = 1d;
         private bool _initialized;
 
-        /// <summary>Seviye değiştiğinde (yükseltme veya kayıt yükleme) tetiklenir.</summary>
+        /// <summary>Seviye değiştiğinde (yükseltme, kayıt yükleme, prestij sıfırlaması) tetiklenir.</summary>
         public event Action<Station> onLevelChanged;
+
+        /// <summary>
+        /// YALNIZCA oyuncu <see cref="TryUpgrade"/> ile seviye satın aldığında
+        /// tetiklenir. Kayıt yükleme ve prestij sıfırlaması tetiklemez; "N kez
+        /// yükselt" görevleri buna bağlanır.
+        /// </summary>
+        public event Action<Station> onUpgraded;
 
         /// <summary>Bir veya daha fazla üretim döngüsü tamamlandığında, kazanılan toplam tutarla tetiklenir.</summary>
         public event Action<Station, double> onProductionCompleted;
@@ -49,6 +57,7 @@ namespace IdleRestaurant.Gameplay
         public bool IsInitialized => _initialized;
         public bool IsUnlocked => Level > 0;
         public float SpeedMultiplier => _speedMultiplier;
+        public double IncomeMultiplier => _incomeMultiplier;
 
         /// <summary>Hızlandırıcı dahil, bir üretim döngüsünün şu anki süresi (saniye).</summary>
         public float CurrentCycleTime => data != null ? data.CycleTime / _speedMultiplier : 0f;
@@ -75,15 +84,19 @@ namespace IdleRestaurant.Gameplay
         /// </summary>
         public bool IsMaxLevel => Level == int.MaxValue || !IsFinite(UpgradeCost);
 
-        /// <summary>Bir üretim döngüsünün şu anki kazancı: baseIncome * Level.</summary>
+        /// <summary>
+        /// Bir üretim döngüsünün şu anki kazancı: baseIncome * Level (* kalıcı
+        /// gelir çarpanı; çarpan yoksa 1).
+        /// </summary>
         public double CurrentIncome => GetIncome(Level);
 
         /// <summary>Yükseltmeden sonraki döngü kazancı; UI'da "sonraki seviye" önizlemesi için.</summary>
         public double NextLevelIncome => Level == int.MaxValue ? CurrentIncome : GetIncome(Level + 1);
 
         /// <summary>
-        /// Hızlandırıcı HARİÇ saniye başı gelir. Çevrimdışı kazanç bununla
-        /// hesaplanır: reklam hızlandırıcısı geçici, oyuncu yokken işlemez.
+        /// Hız çarpanları HARİÇ, temel döngü süresiyle saniye başı gelir (gelir
+        /// çarpanı dahil). Hangi hız çarpanlarının kalıcı olduğunu istasyon
+        /// bilmez; GameManager kalıcı olanları toplama kendisi uygular.
         /// </summary>
         public double IncomePerSecond => data != null ? CurrentIncome / data.CycleTime : 0d;
 
@@ -112,7 +125,7 @@ namespace IdleRestaurant.Gameplay
 
         public double GetIncome(int level)
         {
-            return data != null ? data.BaseIncome * Math.Max(0, level) : 0d;
+            return data != null ? data.BaseIncome * Math.Max(0, level) * _incomeMultiplier : 0d;
         }
 
         /// <summary>
@@ -171,7 +184,22 @@ namespace IdleRestaurant.Gameplay
             }
 
             ApplyLevel(Level + 1, notify: true);
+            onUpgraded?.Invoke(this);
             return true;
+        }
+
+        /// <summary>
+        /// Döngü başı kazancı çarpar (1.25 = +%25). Prestij yükseltmeleri
+        /// gibi kalıcı bonuslar için; seviyeyi değiştirmez.
+        /// </summary>
+        public void SetIncomeMultiplier(double multiplier)
+        {
+            if (double.IsNaN(multiplier) || double.IsInfinity(multiplier) || multiplier <= 0d)
+            {
+                multiplier = 1d;
+            }
+
+            _incomeMultiplier = multiplier;
         }
 
         /// <summary>

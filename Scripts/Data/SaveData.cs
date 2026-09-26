@@ -7,22 +7,31 @@ namespace IdleRestaurant.Data
     /// Diske yazılan oyun durumu. <see cref="UnityEngine.JsonUtility"/> ile
     /// serileştirildiği için alanlar public ve özellik (property) değil:
     /// JsonUtility yalnızca alanları görür, Dictionary'yi de desteklemez —
-    /// istasyonlar bu yüzden liste olarak tutuluyor.
+    /// istasyonlar ve yükseltmeler bu yüzden liste olarak tutuluyor.
     /// </summary>
     [Serializable]
     public sealed class SaveData
     {
         /// <summary>
         /// Kayıt biçimi sürümü. Alan eklemek sürüm artırmayı gerektirmez
-        /// (eksik alan varsayılan değerle okunur); anlamı değişen bir alan
-        /// gerektirir.
+        /// (eksik alan varsayılan değerle okunur); anlamı değişen veya eski
+        /// kayıtta türetilmesi gereken bir alan gerektirir.
+        ///
+        /// v1 → v2: <see cref="lifetimeEarnings"/>, <see cref="prestige"/>,
+        /// <see cref="quests"/> eklendi. Bkz. <see cref="UpgradeToCurrentVersion"/>.
         /// </summary>
-        public const int CurrentVersion = 1;
+        public const int CurrentVersion = 2;
 
         public int version = CurrentVersion;
 
         /// <summary>Toplam para.</summary>
         public double currency;
+
+        /// <summary>
+        /// Oyuncunun oyun boyunca kazandığı toplam para. Harcamayla ve
+        /// prestijle AZALMAZ; Gem formülünün girdisi.
+        /// </summary>
+        public double lifetimeEarnings;
 
         /// <summary>
         /// Son kaydın zamanı, <see cref="DateTime.UtcNow"/>.Ticks. UTC çünkü
@@ -38,6 +47,10 @@ namespace IdleRestaurant.Data
         public float speedBoostRemainingSeconds;
 
         public List<StationSaveData> stations = new List<StationSaveData>();
+
+        public PrestigeSaveData prestige = new PrestigeSaveData();
+
+        public QuestSaveData quests = new QuestSaveData();
 
         /// <summary>Kimliği verilen istasyonun kayıtlı seviyesini arar.</summary>
         public bool TryGetStationLevel(string stationId, out int level)
@@ -60,15 +73,35 @@ namespace IdleRestaurant.Data
         }
 
         /// <summary>
+        /// Eski sürümden okunan bir kaydı bugünkü anlamlarına taşır.
+        /// Yüklemeden hemen sonra, <see cref="Sanitize"/>'dan önce çağrılır.
+        /// Daha YENİ bir sürümün kaydına dokunmaz.
+        /// </summary>
+        public void UpgradeToCurrentVersion()
+        {
+            if (version >= CurrentVersion)
+            {
+                return;
+            }
+
+            if (version < 2)
+            {
+                // v1 ömür boyu kazancı tutmuyordu. Eldeki para bunun kanıtlanabilir
+                // alt sınırı; sıfırdan başlatmak eski oyuncuyu Gem'den mahrum ederdi.
+                lifetimeEarnings = Math.Max(lifetimeEarnings, currency);
+            }
+
+            version = CurrentVersion;
+        }
+
+        /// <summary>
         /// Elle düzenlenmiş veya yarım kalmış bir dosyadan gelen geçersiz
         /// değerleri düzeltir. Yüklemeden hemen sonra çağrılır.
         /// </summary>
         public void Sanitize()
         {
-            if (double.IsNaN(currency) || double.IsInfinity(currency) || currency < 0d)
-            {
-                currency = 0d;
-            }
+            currency = SanitizeAmount(currency);
+            lifetimeEarnings = SanitizeAmount(lifetimeEarnings);
 
             if (lastExitUtcTicks < 0L || lastExitUtcTicks > DateTime.MaxValue.Ticks)
             {
@@ -94,6 +127,26 @@ namespace IdleRestaurant.Data
                     stations[i].level = 0;
                 }
             }
+
+            if (prestige == null)
+            {
+                prestige = new PrestigeSaveData();
+            }
+
+            prestige.Sanitize();
+
+            if (quests == null)
+            {
+                quests = new QuestSaveData();
+            }
+
+            quests.Sanitize();
+        }
+
+        /// <summary>NaN, sonsuz ve negatif miktarları 0'a çeker.</summary>
+        internal static double SanitizeAmount(double value)
+        {
+            return double.IsNaN(value) || double.IsInfinity(value) || value < 0d ? 0d : value;
         }
     }
 
@@ -112,6 +165,116 @@ namespace IdleRestaurant.Data
         {
             this.stationId = stationId;
             this.level = level;
+        }
+    }
+
+    /// <summary>Prestij sisteminin kalıcı durumu.</summary>
+    [Serializable]
+    public sealed class PrestigeSaveData
+    {
+        /// <summary>Harcanabilir Gem bakiyesi.</summary>
+        public double gems;
+
+        /// <summary>
+        /// Prestijle bugüne kadar alınan toplam Gem (harcamayla azalmaz).
+        /// Bekleyen Gem = formül(ömür boyu kazanç) - bu değer; aynı kazancın
+        /// iki kez ödenmesini bu alan engelliyor.
+        /// </summary>
+        public double totalGemsEarned;
+
+        public int prestigeCount;
+
+        public List<PermanentUpgradeSaveData> upgrades = new List<PermanentUpgradeSaveData>();
+
+        public void Sanitize()
+        {
+            gems = SaveData.SanitizeAmount(gems);
+            totalGemsEarned = SaveData.SanitizeAmount(totalGemsEarned);
+
+            if (prestigeCount < 0)
+            {
+                prestigeCount = 0;
+            }
+
+            if (upgrades == null)
+            {
+                upgrades = new List<PermanentUpgradeSaveData>();
+            }
+
+            upgrades.RemoveAll(entry => entry == null || string.IsNullOrEmpty(entry.upgradeId) || entry.level <= 0);
+        }
+    }
+
+    /// <summary>Satın alınmış tek bir kalıcı yükseltmenin seviyesi.</summary>
+    [Serializable]
+    public sealed class PermanentUpgradeSaveData
+    {
+        public string upgradeId;
+        public int level;
+
+        public PermanentUpgradeSaveData()
+        {
+        }
+
+        public PermanentUpgradeSaveData(string upgradeId, int level)
+        {
+            this.upgradeId = upgradeId;
+            this.level = level;
+        }
+    }
+
+    /// <summary>Görev zincirinin kalıcı durumu.</summary>
+    [Serializable]
+    public sealed class QuestSaveData
+    {
+        /// <summary>Etkin görevin kimliği. Zincir sırası değişse bile doğru göreve dönmek için.</summary>
+        public string questId;
+
+        /// <summary>Kimlik bulunamazsa (görev silindi) kullanılan yedek konum.</summary>
+        public int chainIndex;
+
+        /// <summary>Zincirin kaçıncı kez tekrarlandığı; hedef ve ödül ölçeklemesinin girdisi.</summary>
+        public int cycle;
+
+        public double progress;
+
+        /// <summary>
+        /// Görev başlarken sabitlenen ödül. Ödül o anki gelire bağlı olabildiği
+        /// için yeniden hesaplanmıyor; oyuncu uygulamayı kapatıp açınca ödül
+        /// değişmesin.
+        /// </summary>
+        public double reward;
+
+        /// <summary>Hedefe ulaşılmış, ödül henüz alınmamış.</summary>
+        public bool awaitingClaim;
+
+        /// <summary>Tekrarsız zincirin son görevi de bitti.</summary>
+        public bool chainFinished;
+
+        public int completedCount;
+
+        /// <summary>Kayıtta bir görev konumu var mı (v1 kayıtlarında ve yeni oyunda yok).</summary>
+        public bool HasPosition => chainFinished || chainIndex > 0 || cycle > 0 || !string.IsNullOrEmpty(questId);
+
+        public void Sanitize()
+        {
+            if (chainIndex < 0)
+            {
+                chainIndex = 0;
+            }
+
+            if (cycle < 0)
+            {
+                cycle = 0;
+            }
+
+            if (completedCount < 0)
+            {
+                completedCount = 0;
+            }
+
+            progress = SaveData.SanitizeAmount(progress);
+            reward = SaveData.SanitizeAmount(reward);
         }
     }
 }
