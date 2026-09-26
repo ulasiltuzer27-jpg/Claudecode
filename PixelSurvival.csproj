@@ -104,6 +104,14 @@
     <Exec Command="dotnet tool restore" />
   </Target>
 
+  <!-- Scripts/ ayri bir Unity projesinin (Idle Restaurant Tycoon) kaynaklari:
+       UnityEngine/TextMeshPro'ya bagli, bu MonoGame derlemesine girmemeli.
+       SDK tarzi proje tum **/*.cs'leri otomatik aldigi icin acikca cikariliyor. -->
+  <ItemGroup>
+    <Compile Remove="Scripts/**" />
+    <None Remove="Scripts/**" />
+  </ItemGroup>
+
   <!-- Asama 1 kapsam kilidi: Entities/ Systems/ World/ Networking/ Inventory/
        UI/ Localization/ Accessibility/ Achievements/ klasorleri bilerek bos.
        .cs eklendiginde SDK otomatik derlemeye dahil eder, ek ayar gerekmez. -->
