@@ -38,17 +38,17 @@ namespace IdleRestaurant.Audio
 
         [Header("Sesler")]
         [Tooltip("Create → Idle Restaurant → Audio → Sound Library. Boşsa ses çalmaz, titreşim yine çalışır.")]
-        [SerializeField] private SoundLibrary soundLibrary;
+        [SerializeField] private SoundLibrary soundLibrary = null;
 
         [Tooltip("Aynı anda çalabilecek en fazla efekt. Dolunca en eski ses kesilir.")]
         [SerializeField, Range(1, 32)] private int voiceCount = 8;
 
         [Tooltip("İsteğe bağlı: efektlerin gideceği AudioMixer grubu.")]
-        [SerializeField] private AudioMixerGroup outputGroup;
+        [SerializeField] private AudioMixerGroup outputGroup = null;
 
         [Header("Varsayılan ayarlar (kayıt yokken)")]
         [SerializeField, Range(0f, 1f)] private float defaultVolume = 1f;
-        [SerializeField] private bool defaultMuted;
+        [SerializeField] private bool defaultMuted = false;
         [SerializeField] private bool defaultHapticsEnabled = true;
 
         [Header("Titreşim")]
@@ -56,7 +56,7 @@ namespace IdleRestaurant.Audio
         [SerializeField, Min(0f)] private float minHapticInterval = 0.08f;
 
         [Tooltip("Editörde (cihaz yokken) titreşim isteklerini Console'a yazar.")]
-        [SerializeField] private bool logHapticsInEditor;
+        [SerializeField] private bool logHapticsInEditor = false;
 
         private AudioSource[] _voices;
         private int _nextVoice;

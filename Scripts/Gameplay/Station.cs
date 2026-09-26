@@ -23,11 +23,11 @@ namespace IdleRestaurant.Gameplay
     [DisallowMultipleComponent]
     public sealed class Station : MonoBehaviour
     {
-        [SerializeField] private StationData data;
+        [SerializeField] private StationData data = null;
 
         [Tooltip("Kayıt yoksa (ilk açılış) bu istasyonun seviyesi. 0 = kilitli. " +
                  "Oyuncunun ilk gelirini alabilmesi için en az bir istasyonu 1 yapın.")]
-        [SerializeField, Min(0)] private int startingLevel;
+        [SerializeField, Min(0)] private int startingLevel = 0;
 
         private CurrencyManager _currency;
         private Coroutine _productionRoutine;

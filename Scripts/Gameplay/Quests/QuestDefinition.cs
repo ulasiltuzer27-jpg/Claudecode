@@ -23,10 +23,10 @@ namespace IdleRestaurant.Gameplay.Quests
         [SerializeField] private string questId;
 
         [Tooltip("Boşsa türün varsayılan başlığı kullanılır.")]
-        [SerializeField] private string title;
+        [SerializeField] private string title = null;
 
         [Tooltip("Açıklama biçimi; {0} = hedef miktar. Boşsa türün varsayılanı kullanılır.")]
-        [SerializeField] private string descriptionFormat;
+        [SerializeField] private string descriptionFormat = null;
 
         [Header("Hedef")]
         [Tooltip("İlk turdaki hedef. Sayma görevlerinde tam sayıya yukarı yuvarlanır.")]
@@ -44,7 +44,7 @@ namespace IdleRestaurant.Gameplay.Quests
 
         [Tooltip("Görev başladığındaki saniye başı gelirin bu kadar saniyesi ödüle eklenir. " +
                  "Ödülü ekonomiyle birlikte büyütür; prestijden sonra da dengesini korur.")]
-        [SerializeField, Min(0f)] private float rewardIncomeSeconds;
+        [SerializeField, Min(0f)] private float rewardIncomeSeconds = 0f;
 
         public string QuestId => questId;
         public string Title => string.IsNullOrEmpty(title) ? DefaultTitle : title;

@@ -19,7 +19,7 @@ namespace IdleRestaurant.Gameplay.Customers
         [SerializeField] private Station station;
 
         [Tooltip("Müşterinin yürüyüp durduğu nokta. Boşsa bu nesnenin konumu.")]
-        [SerializeField] private Transform standPoint;
+        [SerializeField] private Transform standPoint = null;
 
         private CustomerController _occupant;
 

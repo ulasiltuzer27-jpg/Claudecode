@@ -16,7 +16,7 @@ namespace IdleRestaurant.Gameplay.Quests
         [Header("Filtre")]
         [Tooltip("Boşsa herhangi bir istasyonun yükseltmesi sayılır; doluysa yalnızca bu istasyonunki. " +
                  "Açıklamada {1} = istasyon adı.")]
-        [SerializeField] private StationData targetStation;
+        [SerializeField] private StationData targetStation = null;
 
         public StationData TargetStation => targetStation;
         public override QuestType Type => QuestType.UpgradeStation;

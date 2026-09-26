@@ -31,16 +31,16 @@ namespace IdleRestaurant.UI
             public string rewardToastFormat = "Görev tamamlandı! +{0}";
         }
 
-        [SerializeField] private TMP_Text titleText;
-        [SerializeField] private TMP_Text descriptionText;
-        [SerializeField] private TMP_Text progressText;
-        [SerializeField] private TMP_Text rewardText;
+        [SerializeField] private TMP_Text titleText = null;
+        [SerializeField] private TMP_Text descriptionText = null;
+        [SerializeField] private TMP_Text progressText = null;
+        [SerializeField] private TMP_Text rewardText = null;
 
         [Tooltip("Image Type = Filled olmalı.")]
-        [SerializeField] private Image progressFill;
+        [SerializeField] private Image progressFill = null;
 
         [Tooltip("QuestManager'da autoClaimRewards kapalıyken, görev tamamlanınca görünür.")]
-        [SerializeField] private Button claimButton;
+        [SerializeField] private Button claimButton = null;
 
         [Tooltip("İlerleme metninin en sık yenilenme aralığı (sn).")]
         [SerializeField, Min(0f)] private float refreshInterval = 0.1f;

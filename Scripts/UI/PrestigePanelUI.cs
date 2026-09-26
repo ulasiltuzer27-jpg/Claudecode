@@ -61,12 +61,12 @@ namespace IdleRestaurant.UI
             public string notEnoughGems = "Yeterli Gem yok";
         }
 
-        [SerializeField] private TMP_Text gemsText;
-        [SerializeField] private TMP_Text pendingGemsText;
-        [SerializeField] private TMP_Text nextGemText;
-        [SerializeField] private TMP_Text multipliersText;
-        [SerializeField] private Button prestigeButton;
-        [SerializeField] private TMP_Text prestigeButtonText;
+        [SerializeField] private TMP_Text gemsText = null;
+        [SerializeField] private TMP_Text pendingGemsText = null;
+        [SerializeField] private TMP_Text nextGemText = null;
+        [SerializeField] private TMP_Text multipliersText = null;
+        [SerializeField] private Button prestigeButton = null;
+        [SerializeField] private TMP_Text prestigeButtonText = null;
 
         [Tooltip("İkinci dokunuşun sıfırlamayı onaylayacağı süre (sn).")]
         [SerializeField, Min(0.5f)] private float confirmWindowSeconds = 3f;

@@ -81,9 +81,9 @@ namespace IdleRestaurant.UI
 
         [Header("Panel")]
         [Tooltip("Açılıp kapatılan kök. Boşsa bu nesne.")]
-        [SerializeField] private GameObject panelRoot;
+        [SerializeField] private GameObject panelRoot = null;
 
-        [SerializeField] private Button closeButton;
+        [SerializeField] private Button closeButton = null;
 
         [Header("Ses ve titreşim")]
         [SerializeField] private SettingSwitch sfxSwitch = new SettingSwitch();
@@ -93,25 +93,25 @@ namespace IdleRestaurant.UI
         [SerializeField] private bool hideHapticsWhenUnsupported = true;
 
         [Header("İlerlemeyi sıfırla")]
-        [SerializeField] private Button resetButton;
+        [SerializeField] private Button resetButton = null;
 
         [Tooltip("İki aşamalı onay penceresinin kökü. Panelin içinde olabilir.")]
-        [SerializeField] private GameObject resetConfirmPopup;
+        [SerializeField] private GameObject resetConfirmPopup = null;
 
-        [SerializeField] private TMP_Text resetConfirmMessage;
-        [SerializeField] private Button resetConfirmButton;
-        [SerializeField] private TMP_Text resetConfirmButtonText;
-        [SerializeField] private Button resetCancelButton;
+        [SerializeField] private TMP_Text resetConfirmMessage = null;
+        [SerializeField] private Button resetConfirmButton = null;
+        [SerializeField] private TMP_Text resetConfirmButtonText = null;
+        [SerializeField] private Button resetCancelButton = null;
 
         [Tooltip("Son onay butonunun kilitli kaldığı süre (sn).")]
         [SerializeField, Min(0f)] private float finalConfirmDelay = 1.5f;
 
         [Header("Gizlilik")]
-        [SerializeField] private Button privacyPolicyButton;
+        [SerializeField] private Button privacyPolicyButton = null;
 
         [Tooltip("İsteğe bağlı: Google UMP gizlilik tercihleri (rızayı değiştir). Yalnızca rıza gereken " +
                  "bölgelerde görünür; diğer kullanıcılarda otomatik gizlenir.")]
-        [SerializeField] private Button privacyOptionsButton;
+        [SerializeField] private Button privacyOptionsButton = null;
 
         [Tooltip("Gizlilik politikasının yayındaki adresi (https). Google Play ve AdMob için zorunlu; " +
                  "PRIVACY_POLICY.md'yi yayınladığınız sayfa. Play Console'a girilen adresle aynı olmalı.")]
@@ -119,7 +119,7 @@ namespace IdleRestaurant.UI
 
         [Header("Diğer")]
         [Tooltip("Application.version'ı gösterir. İsteğe bağlı.")]
-        [SerializeField] private TMP_Text versionText;
+        [SerializeField] private TMP_Text versionText = null;
 
         [SerializeField] private Texts texts = new Texts();
 

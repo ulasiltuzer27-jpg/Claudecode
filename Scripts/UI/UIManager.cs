@@ -79,8 +79,8 @@ namespace IdleRestaurant.UI
         }
 
         [Header("Para")]
-        [SerializeField] private TMP_Text currencyText;
-        [SerializeField] private TMP_Text incomePerSecondText;
+        [SerializeField] private TMP_Text currencyText = null;
+        [SerializeField] private TMP_Text incomePerSecondText = null;
 
         [Header("İstasyonlar")]
         [SerializeField] private List<StationView> stationViews = new List<StationView>();
@@ -88,31 +88,31 @@ namespace IdleRestaurant.UI
         [Header("Çevrimdışı kazanç popup'ı")]
         [Tooltip("Açılıp kapatılan kök nesne. UIManager'ın kendi nesnesi veya bir üst nesnesi OLMAMALI; " +
                  "aksi halde popup kapanınca UIManager da devre dışı kalır.")]
-        [SerializeField] private GameObject offlinePopup;
-        [SerializeField] private TMP_Text offlineAmountText;
-        [SerializeField] private TMP_Text offlineDurationText;
-        [SerializeField] private Button offlineCollectButton;
-        [SerializeField] private Button offlineDoubleButton;
-        [SerializeField] private TMP_Text offlineDoubleButtonText;
+        [SerializeField] private GameObject offlinePopup = null;
+        [SerializeField] private TMP_Text offlineAmountText = null;
+        [SerializeField] private TMP_Text offlineDurationText = null;
+        [SerializeField] private Button offlineCollectButton = null;
+        [SerializeField] private Button offlineDoubleButton = null;
+        [SerializeField] private TMP_Text offlineDoubleButtonText = null;
 
         [Header("Hızlandırıcı")]
-        [SerializeField] private Button speedBoostButton;
-        [SerializeField] private TMP_Text speedBoostText;
+        [SerializeField] private Button speedBoostButton = null;
+        [SerializeField] private TMP_Text speedBoostText = null;
 
         [Header("Bildirim")]
         [Tooltip("Kısa mesajlar için metin. Nesnesi gizlenip gösterilir; UIManager ile aynı nesnede olmamalı.")]
-        [SerializeField] private TMP_Text toastText;
+        [SerializeField] private TMP_Text toastText = null;
         [SerializeField, Min(0.5f)] private float toastDuration = 2f;
 
         [Header("Paneller (isteğe bağlı)")]
-        [SerializeField] private QuestPanelUI questPanel;
-        [SerializeField] private PrestigePanelUI prestigePanel;
+        [SerializeField] private QuestPanelUI questPanel = null;
+        [SerializeField] private PrestigePanelUI prestigePanel = null;
 
         [Header("Ayarlar")]
         [Tooltip("Ayarlar panelini açıp kapatan buton (ör. ekran köşesindeki dişli).")]
-        [SerializeField] private Button settingsButton;
+        [SerializeField] private Button settingsButton = null;
 
-        [SerializeField] private SettingsPanelUI settingsPanel;
+        [SerializeField] private SettingsPanelUI settingsPanel = null;
 
         [Header("Metinler")]
         [SerializeField] private UITexts texts = new UITexts();

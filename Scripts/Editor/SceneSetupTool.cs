@@ -1,0 +1,1491 @@
+using System;
+using System.Collections.Generic;
+using IdleRestaurant.Ads;
+using IdleRestaurant.Audio;
+using IdleRestaurant.Core;
+using IdleRestaurant.Data;
+using IdleRestaurant.Gameplay;
+using IdleRestaurant.Gameplay.Customers;
+using IdleRestaurant.Gameplay.Quests;
+using IdleRestaurant.UI;
+using TMPro;
+using UnityEditor;
+using UnityEditor.Events;
+using UnityEditor.SceneManagement;
+using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.Rendering;
+using UnityEngine.SceneManagement;
+using UnityEngine.UI;
+using Object = UnityEngine.Object;
+
+namespace IdleRestaurant.EditorTools
+{
+    /// <summary>
+    /// Tek tıkla oynanabilir 3D prototip sahnesi üretir:
+    /// Tools → Idle Restaurant → Generate Complete 3D Prototype Scene.
+    ///
+    /// Ürettikleri:
+    /// <list type="bullet">
+    /// <item>Assets/GameData altında malzemeler, 3 StationData, SoundLibrary, 4 başlangıç görevi ve CustomerPrefab</item>
+    /// <item>Assets/Scenes/MainGame.unity: izometrik ortografik kamera, sıcak ışık, restoran, 3 istasyon + masa,
+    ///       kapılar, müşteri akışı, tüm yöneticiler ve 1080x1920 dikey arayüz</item>
+    /// <item>Sahneyi Build Settings'in başına ekler ve varsayılan yönü dikey yapar</item>
+    /// </list>
+    ///
+    /// ── Referanslar ─────────────────────────────────────────────────────────
+    /// Tüm Inspector alanları SerializedObject ile, alan adlarıyla bağlanır.
+    /// Bir bileşende alan adı değişirse araç sessizce eksik sahne üretmez;
+    /// hangi alanın bulunamadığını söyleyerek durur.
+    ///
+    /// ── Tekrar çalıştırma ───────────────────────────────────────────────────
+    /// Sahne her seferinde baştan üretilir (üzerine yazılır). Assets/GameData
+    /// altındaki asset'ler ise VARSA KORUNUR: tasarımcının değiştirdiği
+    /// fiyatlar, görevler ve prefab ikinci çalıştırmada ezilmez. Sıfırdan
+    /// üretmek için Assets/GameData klasörünü silin.
+    /// </summary>
+    public static class SceneSetupTool
+    {
+        public const string MenuPath = "Tools/Idle Restaurant/Generate Complete 3D Prototype Scene";
+        public const string ScenePath = "Assets/Scenes/MainGame.unity";
+        public const string DataRoot = "Assets/GameData";
+
+        private const string StationsFolder = DataRoot + "/Stations";
+        private const string QuestsFolder = DataRoot + "/Quests";
+        private const string AudioFolder = DataRoot + "/Audio";
+        private const string MaterialsFolder = DataRoot + "/Materials";
+        private const string PrefabsFolder = DataRoot + "/Prefabs";
+        private const string CustomerPrefabPath = PrefabsFolder + "/CustomerPrefab.prefab";
+        private const string TmpImportMenu = "Window/TextMeshPro/Import TMP Essential Resources";
+
+        // Kamera (istenen değerler) ve restoranın ekrandaki yeri.
+        private static readonly Vector3 CameraPosition = new Vector3(-8f, 12f, -8f);
+        private static readonly Vector3 CameraEuler = new Vector3(35f, 45f, 0f);
+        private const float CameraSize = 8f;
+
+        /// <summary>
+        /// Restoran ekranın bu yüksekliğine (0 = alt, 1 = üst) ortalanır.
+        /// Merkezin biraz üstü: alttaki istasyon satırları sahnenin önünü kapatmasın.
+        /// </summary>
+        private const float ViewportFocusY = 0.6f;
+
+        private const float FloorSize = 6f;
+        private const float CanvasWidth = 1080f;
+        private const float CanvasHeight = 1920f;
+
+        private static readonly StationSpec[] Stations =
+        {
+            new StationSpec("burger_counter", "Burger Tezgahı", 10d, 2d, 1.5f, 1, new Color(0.86f, 0.36f, 0.24f), new Color(0.72f, 0.45f, 0.2f)),
+            new StationSpec("coffee_bar", "Kahve Barı", 50d, 8d, 2.0f, 0, new Color(0.45f, 0.3f, 0.2f), new Color(0.2f, 0.13f, 0.1f)),
+            new StationSpec("pizza_oven", "Pizza Fırını", 200d, 25d, 3.5f, 0, new Color(0.3f, 0.55f, 0.35f), new Color(0.72f, 0.33f, 0.22f))
+        };
+
+        // ── Menü ───────────────────────────────────────────────────────────────
+
+        [MenuItem(MenuPath, false, 0)]
+        public static void GenerateFromMenu()
+        {
+            if (!EnsureTextMeshProResources())
+            {
+                return;
+            }
+
+            if (AssetDatabase.LoadAssetAtPath<SceneAsset>(ScenePath) != null
+                && !EditorUtility.DisplayDialog("Idle Restaurant",
+                    $"{ScenePath} zaten var ve baştan üretilecek. Sahnede elle yaptığınız değişiklikler kaybolur.\n\n" +
+                    "Assets/GameData altındaki asset'ler korunur.", "Üret", "İptal"))
+            {
+                return;
+            }
+
+            if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
+            {
+                return;
+            }
+
+            try
+            {
+                EditorUtility.DisplayProgressBar("Idle Restaurant", "Prototip sahnesi üretiliyor...", 0.5f);
+                SceneSetupResult result = Generate();
+                EditorUtility.ClearProgressBar();
+                EditorUtility.DisplayDialog("Idle Restaurant",
+                    $"Sahne hazır: {result.ScenePath}\n\n" +
+                    $"Yeni asset: {result.CreatedAssets}, korunan asset: {result.ReusedAssets}\n\n" +
+                    "Play'e basarak oynayabilirsiniz. Yayından önce: SettingsPanelUI → Privacy Policy Url.", "Tamam");
+            }
+            catch (Exception exception)
+            {
+                EditorUtility.ClearProgressBar();
+                Debug.LogException(exception);
+                EditorUtility.DisplayDialog("Idle Restaurant", "Sahne üretilemedi:\n" + exception.Message, "Tamam");
+            }
+        }
+
+        /// <summary>
+        /// TextMeshPro'nun temel kaynakları (varsayılan font) projede yoksa
+        /// metinler görünmez. Unity bunları ilk kullanımda bir kez ister;
+        /// eksikse içe aktarma penceresini açıp üretimi durdurur.
+        /// </summary>
+        private static bool EnsureTextMeshProResources()
+        {
+            if (Resources.Load<TMP_Settings>("TMP Settings") != null)
+            {
+                return true;
+            }
+
+            if (EditorUtility.DisplayDialog("TextMeshPro kaynakları eksik",
+                    "Arayüz metinleri için TextMeshPro'nun temel kaynakları gerekiyor.\n\n" +
+                    "Açılacak pencerede 'Import TMP Essentials'a basın, sonra bu menüyü yeniden çalıştırın.",
+                    "Pencereyi Aç", "İptal"))
+            {
+                EditorApplication.ExecuteMenuItem(TmpImportMenu);
+            }
+
+            return false;
+        }
+
+        // ── Üretim ─────────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Asıl üretim; menüden bağımsızdır (diyalog göstermez), otomasyonla
+        /// da çağrılabilir. Hata durumunda istisna atar.
+        /// </summary>
+        public static SceneSetupResult Generate()
+        {
+            AssetTracker tracker = new AssetTracker();
+            EnsureFolders();
+
+            Palette palette = CreateMaterials(tracker);
+            StationData[] stationData = CreateStationData(tracker);
+            SoundLibrary soundLibrary = LoadOrCreate<SoundLibrary>(AudioFolder + "/SoundLibrary.asset", tracker, null);
+            List<QuestDefinition> quests = CreateQuests(tracker);
+            CustomerController customerPrefab = CreateCustomerPrefab(palette, tracker);
+            AssetDatabase.SaveAssets();
+
+            Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+
+            Camera camera = CreateCamera();
+            CreateLighting();
+            Vector3 origin = FindRestaurantOrigin(camera);
+            RestaurantRefs restaurant = CreateRestaurant(origin, stationData, palette);
+            CustomerSpawner spawner = CreateCustomerSpawner(restaurant, customerPrefab);
+            ManagerRefs managers = CreateManagers(soundLibrary, quests);
+            UIManager uiManager = CreateUserInterface(restaurant);
+            WireGameManager(managers, uiManager, restaurant, spawner);
+
+            EditorSceneManager.MarkSceneDirty(scene);
+            if (!EditorSceneManager.SaveScene(scene, ScenePath))
+            {
+                throw new InvalidOperationException($"Sahne kaydedilemedi: {ScenePath}");
+            }
+
+            AddSceneToBuildSettings(ScenePath);
+            PlayerSettings.defaultInterfaceOrientation = UIOrientation.Portrait;
+            AssetDatabase.SaveAssets();
+
+            Debug.Log($"[SceneSetupTool] {ScenePath} üretildi. Yeni asset: {tracker.Created}, korunan: {tracker.Reused}.");
+            return new SceneSetupResult(ScenePath, tracker.Created, tracker.Reused, managers.GameManager, uiManager);
+        }
+
+        // ── Klasörler ve asset'ler ─────────────────────────────────────────────
+
+        private static void EnsureFolders()
+        {
+            EnsureFolder("Assets", "Scenes");
+            EnsureFolder("Assets", "GameData");
+            EnsureFolder(DataRoot, "Stations");
+            EnsureFolder(DataRoot, "Quests");
+            EnsureFolder(DataRoot, "Audio");
+            EnsureFolder(DataRoot, "Materials");
+            EnsureFolder(DataRoot, "Prefabs");
+        }
+
+        private static void EnsureFolder(string parent, string child)
+        {
+            if (!AssetDatabase.IsValidFolder(parent + "/" + child))
+            {
+                AssetDatabase.CreateFolder(parent, child);
+            }
+        }
+
+        /// <summary>
+        /// Asset varsa olduğu gibi döndürür; yoksa oluşturur, <paramref name="configure"/>
+        /// ile ayarlar ve kaydeder. Var olan asset'e dokunulmaz.
+        /// </summary>
+        private static T LoadOrCreate<T>(string path, AssetTracker tracker, Action<T> configure) where T : ScriptableObject
+        {
+            T existing = AssetDatabase.LoadAssetAtPath<T>(path);
+            if (existing != null)
+            {
+                tracker.Reused++;
+                return existing;
+            }
+
+            T asset = ScriptableObject.CreateInstance<T>();
+            if (configure != null)
+            {
+                configure(asset);
+            }
+
+            AssetDatabase.CreateAsset(asset, path);
+            tracker.Created++;
+            return asset;
+        }
+
+        private static Palette CreateMaterials(AssetTracker tracker)
+        {
+            Shader shader = FindLitShader();
+            Palette palette = new Palette
+            {
+                Floor = CreateMaterial("Floor", new Color(0.93f, 0.84f, 0.69f), shader, tracker),
+                Rug = CreateMaterial("Rug", new Color(0.8f, 0.45f, 0.35f), shader, tracker),
+                Wall = CreateMaterial("Wall", new Color(0.98f, 0.93f, 0.85f), shader, tracker),
+                Wood = CreateMaterial("Wood", new Color(0.36f, 0.23f, 0.15f), shader, tracker),
+                CounterTop = CreateMaterial("CounterTop", new Color(0.95f, 0.95f, 0.92f), shader, tracker),
+                EntryMat = CreateMaterial("EntryMat", new Color(0.35f, 0.65f, 0.4f), shader, tracker),
+                ExitMat = CreateMaterial("ExitMat", new Color(0.8f, 0.3f, 0.28f), shader, tracker),
+                Plant = CreateMaterial("Plant", new Color(0.3f, 0.6f, 0.3f), shader, tracker),
+                Pot = CreateMaterial("Pot", new Color(0.75f, 0.42f, 0.28f), shader, tracker),
+                Spot = CreateMaterial("CustomerSpot", new Color(0.99f, 0.8f, 0.35f), shader, tracker),
+                Customer = CreateMaterial("Customer", new Color(0.3f, 0.5f, 0.85f), shader, tracker),
+                CustomerHat = CreateMaterial("CustomerHat", new Color(0.97f, 0.97f, 0.97f), shader, tracker),
+                StationBodies = new Material[Stations.Length],
+                StationAccents = new Material[Stations.Length]
+            };
+
+            for (int i = 0; i < Stations.Length; i++)
+            {
+                palette.StationBodies[i] = CreateMaterial("Station_" + Stations[i].Id, Stations[i].BodyColor, shader, tracker);
+                palette.StationAccents[i] = CreateMaterial("Accent_" + Stations[i].Id, Stations[i].AccentColor, shader, tracker);
+            }
+
+            return palette;
+        }
+
+        private static Material CreateMaterial(string name, Color color, Shader shader, AssetTracker tracker)
+        {
+            string path = MaterialsFolder + "/" + name + ".mat";
+            Material existing = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (existing != null)
+            {
+                tracker.Reused++;
+                return existing;
+            }
+
+            Material material = new Material(shader) { color = color };
+
+            // Standart "plastik" parlaklık low-poly görünüme yakışmıyor; mat yüzey.
+            if (material.HasProperty("_Glossiness"))
+            {
+                material.SetFloat("_Glossiness", 0.15f);
+            }
+
+            if (material.HasProperty("_Smoothness"))
+            {
+                material.SetFloat("_Smoothness", 0.15f);
+            }
+
+            AssetDatabase.CreateAsset(material, path);
+            tracker.Created++;
+            return material;
+        }
+
+        /// <summary>Etkin render pipeline'a uygun, ışık alan bir shader: URP → HDRP → Built-in Standard.</summary>
+        private static Shader FindLitShader()
+        {
+            if (GraphicsSettings.currentRenderPipeline != null)
+            {
+                Shader urp = Shader.Find("Universal Render Pipeline/Lit");
+                if (urp != null)
+                {
+                    return urp;
+                }
+
+                Shader hdrp = Shader.Find("HDRP/Lit");
+                if (hdrp != null)
+                {
+                    return hdrp;
+                }
+            }
+
+            Shader standard = Shader.Find("Standard");
+            if (standard == null)
+            {
+                throw new InvalidOperationException("Işık alan bir shader bulunamadı (URP/Lit, HDRP/Lit veya Standard).");
+            }
+
+            return standard;
+        }
+
+        private static StationData[] CreateStationData(AssetTracker tracker)
+        {
+            StationData[] result = new StationData[Stations.Length];
+
+            for (int i = 0; i < Stations.Length; i++)
+            {
+                StationSpec spec = Stations[i];
+                result[i] = LoadOrCreate<StationData>($"{StationsFolder}/{spec.Id}.asset", tracker, data =>
+                {
+                    using (Wiring wiring = new Wiring(data))
+                    {
+                        wiring.String("stationId", spec.Id)
+                            .String("stationName", spec.Name)
+                            .Double("baseCost", spec.BaseCost)
+                            .Double("baseIncome", spec.BaseIncome)
+                            .Float("cycleTime", spec.CycleTime)
+                            .Double("costMultiplier", StationData.DefaultCostMultiplier);
+                    }
+                });
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Başlangıç görev zinciri: para kazan → 5 kez yükselt → daha çok para
+        /// kazan → ilk prestij. Zincir tekrarlandıkça hedefler büyür.
+        /// </summary>
+        private static List<QuestDefinition> CreateQuests(AssetTracker tracker)
+        {
+            return new List<QuestDefinition>
+            {
+                Quest<EarnMoneyQuestDefinition>("q01_earn_100", 100d, 3d, 50d, 3d, 0f, tracker),
+                Quest<UpgradeStationQuestDefinition>("q02_upgrade_5", 5d, 1.5d, 100d, 2d, 10f, tracker),
+                Quest<EarnMoneyQuestDefinition>("q03_earn_1000", 1000d, 3d, 300d, 3d, 20f, tracker),
+                Quest<PrestigeQuestDefinition>("q04_first_prestige", 1d, 1d, 0d, 1d, 120f, tracker)
+            };
+        }
+
+        private static QuestDefinition Quest<T>(string id, double target, double targetScale, double reward,
+            double rewardScale, float incomeSeconds, AssetTracker tracker) where T : QuestDefinition
+        {
+            return LoadOrCreate<T>($"{QuestsFolder}/{id}.asset", tracker, quest =>
+            {
+                using (Wiring wiring = new Wiring(quest))
+                {
+                    wiring.String("questId", id)
+                        .Double("targetAmount", target)
+                        .Double("targetScalePerCycle", targetScale)
+                        .Double("rewardAmount", reward)
+                        .Double("rewardScalePerCycle", rewardScale)
+                        .Float("rewardIncomeSeconds", incomeSeconds);
+                }
+            });
+        }
+
+        /// <summary>
+        /// Kök boş nesne + gövde kapsülü. Kök y=0'da durur: müşteri hedefe
+        /// yürürken kapsülün yarısı zemine gömülmez.
+        /// </summary>
+        private static CustomerController CreateCustomerPrefab(Palette palette, AssetTracker tracker)
+        {
+            CustomerController existing = AssetDatabase.LoadAssetAtPath<CustomerController>(CustomerPrefabPath);
+            if (existing != null)
+            {
+                tracker.Reused++;
+                return existing;
+            }
+
+            GameObject root = new GameObject("Customer");
+            CustomerController controller = root.AddComponent<CustomerController>();
+            using (Wiring wiring = new Wiring(controller))
+            {
+                wiring.Float("moveSpeed", 2.2f).Float("arrivalDistance", 0.05f);
+            }
+
+            Block("Body", PrimitiveType.Capsule, root.transform, new Vector3(0f, 0.45f, 0f), new Vector3(0.45f, 0.45f, 0.45f), palette.Customer);
+            Block("Hat", PrimitiveType.Cylinder, root.transform, new Vector3(0f, 0.93f, 0f), new Vector3(0.32f, 0.05f, 0.32f), palette.CustomerHat);
+
+            GameObject prefab = PrefabUtility.SaveAsPrefabAsset(root, CustomerPrefabPath);
+            Object.DestroyImmediate(root);
+
+            if (prefab == null)
+            {
+                throw new InvalidOperationException($"Müşteri prefab'ı kaydedilemedi: {CustomerPrefabPath}");
+            }
+
+            tracker.Created++;
+            return prefab.GetComponent<CustomerController>();
+        }
+
+        // ── Kamera ve ışık ─────────────────────────────────────────────────────
+
+        private static Camera CreateCamera()
+        {
+            GameObject cameraObject = new GameObject("Main Camera");
+            cameraObject.tag = "MainCamera";
+            cameraObject.transform.SetPositionAndRotation(CameraPosition, Quaternion.Euler(CameraEuler));
+
+            Camera camera = cameraObject.AddComponent<Camera>();
+            camera.orthographic = true;
+            camera.orthographicSize = CameraSize;
+            camera.clearFlags = CameraClearFlags.SolidColor;
+            camera.backgroundColor = new Color(0.2f, 0.16f, 0.14f);
+            camera.nearClipPlane = 0.1f;
+            camera.farClipPlane = 100f;
+
+            cameraObject.AddComponent<AudioListener>();
+            return camera;
+        }
+
+        private static void CreateLighting()
+        {
+            GameObject lightObject = new GameObject("Directional Light");
+            lightObject.transform.rotation = Quaternion.Euler(50f, -30f, 0f);
+
+            Light light = lightObject.AddComponent<Light>();
+            light.type = LightType.Directional;
+            light.color = new Color(1f, 0.92f, 0.78f);
+            light.intensity = 1.1f;
+            light.shadows = LightShadows.Soft;
+            light.shadowStrength = 0.55f;
+
+            // Düz ve sıcak ortam ışığı: gölgedeki yüzler kararıp griye dönmesin.
+            RenderSettings.ambientMode = AmbientMode.Flat;
+            RenderSettings.ambientLight = new Color(0.55f, 0.5f, 0.45f);
+        }
+
+        /// <summary>
+        /// Kameranın, ekranın <see cref="ViewportFocusY"/> yüksekliğinden
+        /// baktığı zemin noktası. Ortografik kamerada dikey kayma en-boy
+        /// oranından bağımsızdır; restoran her telefonda aynı yüksekliğe düşer.
+        /// </summary>
+        private static Vector3 FindRestaurantOrigin(Camera camera)
+        {
+            Transform cameraTransform = camera.transform;
+            Vector3 rayOrigin = cameraTransform.position + cameraTransform.up * (camera.orthographicSize * (2f * ViewportFocusY - 1f));
+            Vector3 direction = cameraTransform.forward;
+
+            if (direction.y >= -0.01f)
+            {
+                return Vector3.zero;
+            }
+
+            Vector3 hit = rayOrigin + direction * (-rayOrigin.y / direction.y);
+            return new Vector3(Mathf.Round(hit.x * 10f) / 10f, 0f, Mathf.Round(hit.z * 10f) / 10f);
+        }
+
+        // ── Restoran ───────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Restoran, kameranın baktığı yönle hizalı: +x ve +z kenarları arka
+        /// duvarlar (kamerayı kapatmaz), -x ve -z kenarları ön taraf. Kapılar
+        /// önde: giriş sağ ön kenarda, çıkış sol ön kenarda; istasyonlar arka
+        /// duvar boyunca.
+        /// </summary>
+        private static RestaurantRefs CreateRestaurant(Vector3 origin, StationData[] stationData, Palette palette)
+        {
+            float half = FloorSize * 0.5f;
+            Transform root = new GameObject("Restaurant").transform;
+            root.position = origin;
+
+            Block("Floor", PrimitiveType.Cube, root, new Vector3(0f, -0.1f, 0f), new Vector3(FloorSize, 0.2f, FloorSize), palette.Floor);
+            Block("Rug", PrimitiveType.Cube, root, new Vector3(0f, 0.005f, -0.9f), new Vector3(3.4f, 0.02f, 1.8f), palette.Rug);
+            Block("Wall_Right", PrimitiveType.Cube, root, new Vector3(half + 0.1f, 0.7f, 0f), new Vector3(0.2f, 1.4f, FloorSize + 0.4f), palette.Wall);
+            Block("Wall_Left", PrimitiveType.Cube, root, new Vector3(0f, 0.7f, half + 0.1f), new Vector3(FloorSize + 0.4f, 1.4f, 0.2f), palette.Wall);
+            Plant(root, new Vector3(-half + 0.45f, 0f, half - 0.45f), palette);
+            Plant(root, new Vector3(half - 0.45f, 0f, half - 0.45f), palette);
+
+            RestaurantRefs refs = new RestaurantRefs
+            {
+                EntryPoint = Door("EntryDoor", root, new Vector3(1.5f, 0f, -half), 0f, new Vector3(1.5f, 0f, -half - 0.8f), palette.EntryMat, palette),
+                ExitPoint = Door("ExitDoor", root, new Vector3(-half, 0f, 1f), 90f, new Vector3(-half - 0.8f, 0f, 1f), palette.ExitMat, palette),
+                Stations = new List<Station>(),
+                Seats = new List<CustomerSeat>()
+            };
+
+            Transform stationsRoot = new GameObject("Stations").transform;
+            stationsRoot.SetParent(root, false);
+
+            for (int i = 0; i < Stations.Length; i++)
+            {
+                float x = (i - (Stations.Length - 1) * 0.5f) * 1.8f;
+                CreateStation(stationsRoot, new Vector3(x, 0f, 1.9f), Stations[i], stationData[i], palette.StationBodies[i],
+                    palette.StationAccents[i], i, palette, refs);
+            }
+
+            return refs;
+        }
+
+        private static void CreateStation(Transform parent, Vector3 localPosition, StationSpec spec, StationData data,
+            Material body, Material accent, int index, Palette palette, RestaurantRefs refs)
+        {
+            GameObject stationObject = new GameObject("Station_" + spec.Id);
+            stationObject.transform.SetParent(parent, false);
+            stationObject.transform.localPosition = localPosition;
+
+            Block("Counter", PrimitiveType.Cube, stationObject.transform, new Vector3(0f, 0.45f, 0f), new Vector3(1.3f, 0.9f, 0.8f), body);
+            Block("CounterTop", PrimitiveType.Cube, stationObject.transform, new Vector3(0f, 0.94f, 0f), new Vector3(1.42f, 0.08f, 0.92f), palette.CounterTop);
+
+            // Her istasyonun silindir tabanlı küçük bir simgesi: burger, fincan, fırın kubbesi.
+            switch (index)
+            {
+                case 0:
+                    Block("Burger", PrimitiveType.Cylinder, stationObject.transform, new Vector3(0f, 1.05f, 0f), new Vector3(0.5f, 0.07f, 0.5f), accent);
+                    break;
+                case 1:
+                    Block("Cup", PrimitiveType.Cylinder, stationObject.transform, new Vector3(0f, 1.1f, 0f), new Vector3(0.22f, 0.12f, 0.22f), accent);
+                    break;
+                default:
+                    Block("OvenDome", PrimitiveType.Cylinder, stationObject.transform, new Vector3(0f, 1.18f, 0f), new Vector3(0.9f, 0.2f, 0.7f), accent);
+                    break;
+            }
+
+            Transform spot = new GameObject("CustomerSpot").transform;
+            spot.SetParent(stationObject.transform, false);
+            spot.localPosition = new Vector3(0f, 0f, -1.25f);
+            Block("SpotMarker", PrimitiveType.Cylinder, spot, new Vector3(0f, 0.01f, 0f), new Vector3(0.6f, 0.01f, 0.6f), palette.Spot);
+
+            Station station = stationObject.AddComponent<Station>();
+            using (Wiring wiring = new Wiring(station))
+            {
+                wiring.Ref("data", data).Int("startingLevel", spec.StartingLevel);
+            }
+
+            CustomerSeat seat = stationObject.AddComponent<CustomerSeat>();
+            using (Wiring wiring = new Wiring(seat))
+            {
+                wiring.Ref("station", station).Ref("standPoint", spot);
+            }
+
+            refs.Stations.Add(station);
+            refs.Seats.Add(seat);
+        }
+
+        private static Transform Door(string name, Transform parent, Vector3 localPosition, float yaw, Vector3 pointPosition,
+            Material mat, Palette palette)
+        {
+            Transform door = new GameObject(name).transform;
+            door.SetParent(parent, false);
+            door.localPosition = localPosition;
+            door.localRotation = Quaternion.Euler(0f, yaw, 0f);
+
+            Block("Post_L", PrimitiveType.Cube, door, new Vector3(-0.6f, 0.8f, 0f), new Vector3(0.14f, 1.6f, 0.14f), palette.Wood);
+            Block("Post_R", PrimitiveType.Cube, door, new Vector3(0.6f, 0.8f, 0f), new Vector3(0.14f, 1.6f, 0.14f), palette.Wood);
+            Block("Lintel", PrimitiveType.Cube, door, new Vector3(0f, 1.62f, 0f), new Vector3(1.34f, 0.14f, 0.14f), palette.Wood);
+            Block("DoorMat", PrimitiveType.Cube, door, new Vector3(0f, 0.01f, 0f), new Vector3(1f, 0.02f, 0.6f), mat);
+
+            Transform point = new GameObject(name == "EntryDoor" ? "EntryPoint" : "ExitPoint").transform;
+            point.SetParent(parent, false);
+            point.localPosition = pointPosition;
+            return point;
+        }
+
+        private static void Plant(Transform parent, Vector3 localPosition, Palette palette)
+        {
+            Transform plant = new GameObject("Plant").transform;
+            plant.SetParent(parent, false);
+            plant.localPosition = localPosition;
+            Block("Pot", PrimitiveType.Cylinder, plant, new Vector3(0f, 0.2f, 0f), new Vector3(0.4f, 0.2f, 0.4f), palette.Pot);
+            Block("Leaves", PrimitiveType.Sphere, plant, new Vector3(0f, 0.7f, 0f), new Vector3(0.7f, 0.7f, 0.7f), palette.Plant);
+        }
+
+        private static GameObject Block(string name, PrimitiveType type, Transform parent, Vector3 localPosition, Vector3 localScale, Material material)
+        {
+            GameObject block = GameObject.CreatePrimitive(type);
+            block.name = name;
+            block.transform.SetParent(parent, false);
+            block.transform.localPosition = localPosition;
+            block.transform.localScale = localScale;
+            block.GetComponent<MeshRenderer>().sharedMaterial = material;
+            return block;
+        }
+
+        // ── Müşteri akışı ──────────────────────────────────────────────────────
+
+        private static CustomerSpawner CreateCustomerSpawner(RestaurantRefs restaurant, CustomerController prefab)
+        {
+            GameObject spawnerObject = new GameObject("CustomerSpawner");
+            Transform customers = new GameObject("Customers").transform;
+            customers.SetParent(spawnerObject.transform, false);
+
+            CustomerSpawner spawner = spawnerObject.AddComponent<CustomerSpawner>();
+            using (Wiring wiring = new Wiring(spawner))
+            {
+                wiring.Ref("customerPrefab", prefab)
+                    .Ref("customerParent", customers)
+                    .Ref("entryPoint", restaurant.EntryPoint)
+                    .Ref("exitPoint", restaurant.ExitPoint)
+                    .RefList("seats", restaurant.Seats);
+            }
+
+            return spawner;
+        }
+
+        // ── Yöneticiler ────────────────────────────────────────────────────────
+
+        private static ManagerRefs CreateManagers(SoundLibrary soundLibrary, List<QuestDefinition> quests)
+        {
+            GameObject managersObject = new GameObject("---MANAGERS---");
+
+            ManagerRefs managers = new ManagerRefs
+            {
+                GameManager = managersObject.AddComponent<GameManager>(),
+                Currency = managersObject.AddComponent<CurrencyManager>(),
+                Save = managersObject.AddComponent<SaveManager>(),
+                Ads = managersObject.AddComponent<AdManager>(),
+                Audio = managersObject.AddComponent<AudioManager>(),
+                AudioBinder = managersObject.AddComponent<AudioEventBinder>(),
+                Prestige = managersObject.AddComponent<PrestigeManager>(),
+                Quests = managersObject.AddComponent<QuestManager>()
+            };
+
+            using (Wiring wiring = new Wiring(managers.Audio))
+            {
+                wiring.Ref("soundLibrary", soundLibrary);
+            }
+
+            using (Wiring wiring = new Wiring(managers.Quests))
+            {
+                wiring.RefList("questChain", quests);
+            }
+
+            return managers;
+        }
+
+        private static void WireGameManager(ManagerRefs managers, UIManager uiManager, RestaurantRefs restaurant, CustomerSpawner spawner)
+        {
+            using (Wiring wiring = new Wiring(managers.GameManager))
+            {
+                wiring.Ref("currencyManager", managers.Currency)
+                    .Ref("saveManager", managers.Save)
+                    .Ref("adManager", managers.Ads)
+                    .Ref("uiManager", uiManager)
+                    .Ref("prestigeManager", managers.Prestige)
+                    .Ref("questManager", managers.Quests)
+                    .Ref("audioManager", managers.Audio)
+                    .Ref("audioEventBinder", managers.AudioBinder)
+                    .Ref("customerSpawner", spawner)
+                    .RefList("stations", restaurant.Stations);
+            }
+        }
+
+        // ── Arayüz ─────────────────────────────────────────────────────────────
+
+        private static UIManager CreateUserInterface(RestaurantRefs restaurant)
+        {
+            GameObject canvasObject = new GameObject("UI Canvas", typeof(RectTransform));
+            Canvas canvas = canvasObject.AddComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+
+            CanvasScaler scaler = canvasObject.AddComponent<CanvasScaler>();
+            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            scaler.referenceResolution = new Vector2(CanvasWidth, CanvasHeight);
+            scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
+            scaler.matchWidthOrHeight = 0f;
+            canvasObject.AddComponent<GraphicRaycaster>();
+
+            Transform ui = canvasObject.transform;
+            UiParts parts = new UiParts();
+
+            BuildTopBar(ui, parts);
+            QuestPanelUI questPanel = BuildQuestCard(ui);
+            BuildStationRows(ui, restaurant, parts);
+            BuildBottomBar(ui, parts);
+            parts.ToastText = CreateText("Toast", ui, "", 44f, UiStyle.DarkText, TextAlignmentOptions.Center, true);
+            AnchorBottomStretch(parts.ToastText.rectTransform, 820f, 90f, 60f, 60f);
+            parts.ToastText.gameObject.SetActive(false);
+
+            BuildOfflinePopup(ui, parts);
+            PrestigePanelUI prestigePanel = BuildPrestigePanel(ui, parts.PrestigeOpenButton);
+            SettingsPanelUI settingsPanel = BuildSettingsPanel(ui);
+
+            UIManager uiManager = canvasObject.AddComponent<UIManager>();
+            using (Wiring wiring = new Wiring(uiManager))
+            {
+                wiring.Ref("currencyText", parts.CurrencyText)
+                    .Ref("incomePerSecondText", parts.IncomeText)
+                    .Ref("offlinePopup", parts.OfflinePopup)
+                    .Ref("offlineAmountText", parts.OfflineAmountText)
+                    .Ref("offlineDurationText", parts.OfflineDurationText)
+                    .Ref("offlineCollectButton", parts.OfflineCollectButton)
+                    .Ref("offlineDoubleButton", parts.OfflineDoubleButton)
+                    .Ref("offlineDoubleButtonText", parts.OfflineDoubleButtonText)
+                    .Ref("speedBoostButton", parts.BoostButton)
+                    .Ref("speedBoostText", parts.BoostText)
+                    .Ref("toastText", parts.ToastText)
+                    .Ref("questPanel", questPanel)
+                    .Ref("prestigePanel", prestigePanel)
+                    .Ref("settingsButton", parts.SettingsButton)
+                    .Ref("settingsPanel", settingsPanel);
+
+                SerializedProperty views = wiring.Find("stationViews");
+                views.arraySize = parts.StationRows.Count;
+                for (int i = 0; i < parts.StationRows.Count; i++)
+                {
+                    StationRow row = parts.StationRows[i];
+                    SerializedProperty view = views.GetArrayElementAtIndex(i);
+                    Wiring.Relative(view, "station").objectReferenceValue = row.Station;
+                    Wiring.Relative(view, "nameText").objectReferenceValue = row.Name;
+                    Wiring.Relative(view, "levelText").objectReferenceValue = row.Level;
+                    Wiring.Relative(view, "incomeText").objectReferenceValue = row.Income;
+                    Wiring.Relative(view, "upgradeCostText").objectReferenceValue = row.Cost;
+                    Wiring.Relative(view, "upgradeButton").objectReferenceValue = row.Button;
+                    Wiring.Relative(view, "progressFill").objectReferenceValue = row.Progress;
+                }
+            }
+
+            CreateEventSystem();
+            return uiManager;
+        }
+
+        private static void BuildTopBar(Transform ui, UiParts parts)
+        {
+            Image bar = Panel("TopBar", ui, UiStyle.TopBar, false);
+            AnchorTopStretch(bar.rectTransform, 0f, 230f, 0f, 0f);
+
+            parts.CurrencyText = CreateText("CurrencyText", bar.transform, "0", 88f, UiStyle.Gold, TextAlignmentOptions.Left, true);
+            AnchorTopLeft(parts.CurrencyText.rectTransform, 40f, 24f, 720f, 116f);
+
+            parts.IncomeText = CreateText("IncomePerSecondText", bar.transform, "0 / sn", 40f, UiStyle.SoftWhite, TextAlignmentOptions.Left, false);
+            AnchorTopLeft(parts.IncomeText.rectTransform, 44f, 142f, 720f, 60f);
+
+            TMP_Text settingsLabel;
+            parts.SettingsButton = CreateButton("SettingsButton", bar.transform, "Ayarlar", UiStyle.Neutral, 38f, out settingsLabel);
+            AnchorTopRight(parts.SettingsButton.GetComponent<RectTransform>(), 30f, 50f, 230f, 120f);
+        }
+
+        private static QuestPanelUI BuildQuestCard(Transform ui)
+        {
+            Image card = Panel("QuestCard", ui, UiStyle.Card, true);
+            AnchorTopStretch(card.rectTransform, 250f, 200f, 30f, 30f);
+
+            TMP_Text title = CreateText("Title", card.transform, "Görev", 40f, UiStyle.DarkText, TextAlignmentOptions.Left, true);
+            AnchorTopLeft(title.rectTransform, 30f, 16f, 640f, 54f);
+
+            TMP_Text reward = CreateText("Reward", card.transform, "Ödül: 0", 32f, UiStyle.Green, TextAlignmentOptions.Right, true);
+            AnchorTopRight(reward.rectTransform, 30f, 18f, 340f, 50f);
+
+            TMP_Text description = CreateText("Description", card.transform, "", 34f, UiStyle.MutedText, TextAlignmentOptions.Left, false);
+            AnchorTopLeft(description.rectTransform, 30f, 72f, 960f, 50f);
+
+            Image fill;
+            ProgressBar("Progress", card.transform, out fill);
+            AnchorBottomStretch(fill.transform.parent.GetComponent<RectTransform>(), 22f, 26f, 30f, 260f);
+
+            TMP_Text progress = CreateText("ProgressText", card.transform, "0 / 0", 30f, UiStyle.DarkText, TextAlignmentOptions.Right, false);
+            AnchorBottomRight(progress.rectTransform, 30f, 12f, 220f, 46f);
+
+            TMP_Text claimLabel;
+            Button claim = CreateButton("ClaimButton", card.transform, "Topla", UiStyle.Green, 34f, out claimLabel);
+            AnchorBottomRight(claim.GetComponent<RectTransform>(), 30f, 60f, 200f, 70f);
+            claim.gameObject.SetActive(false);
+
+            QuestPanelUI panel = card.gameObject.AddComponent<QuestPanelUI>();
+            using (Wiring wiring = new Wiring(panel))
+            {
+                wiring.Ref("titleText", title)
+                    .Ref("descriptionText", description)
+                    .Ref("progressText", progress)
+                    .Ref("rewardText", reward)
+                    .Ref("progressFill", fill)
+                    .Ref("claimButton", claim);
+            }
+
+            return panel;
+        }
+
+        private static void BuildStationRows(Transform ui, RestaurantRefs restaurant, UiParts parts)
+        {
+            const float rowHeight = 170f;
+            const float rowSpacing = 16f;
+            const float firstRowBottom = 190f;
+
+            for (int i = 0; i < restaurant.Stations.Count; i++)
+            {
+                // İlk istasyon en üstte.
+                float bottom = firstRowBottom + (restaurant.Stations.Count - 1 - i) * (rowHeight + rowSpacing);
+                Image row = Panel("StationRow_" + Stations[i].Id, ui, UiStyle.Card, true);
+                AnchorBottomStretch(row.rectTransform, bottom, rowHeight, 30f, 30f);
+
+                TMP_Text name = CreateText("Name", row.transform, Stations[i].Name, 40f, UiStyle.DarkText, TextAlignmentOptions.Left, true);
+                AnchorTopLeft(name.rectTransform, 30f, 16f, 560f, 56f);
+
+                TMP_Text level = CreateText("Level", row.transform, "Sv. 0", 32f, UiStyle.MutedText, TextAlignmentOptions.Left, false);
+                AnchorBottomLeft(level.rectTransform, 30f, 34f, 220f, 48f);
+
+                TMP_Text income = CreateText("Income", row.transform, "", 32f, UiStyle.Green, TextAlignmentOptions.Left, false);
+                AnchorBottomLeft(income.rectTransform, 260f, 34f, 360f, 48f);
+
+                Image fill;
+                ProgressBar("Progress", row.transform, out fill);
+                AnchorBottomStretch(fill.transform.parent.GetComponent<RectTransform>(), 14f, 14f, 30f, 380f);
+
+                TMP_Text cost;
+                Button button = CreateButton("UpgradeButton", row.transform, "Yükselt", UiStyle.Orange, 36f, out cost);
+                AnchorRightCenter(button.GetComponent<RectTransform>(), 22f, 330f, 130f);
+
+                parts.StationRows.Add(new StationRow
+                {
+                    Station = restaurant.Stations[i],
+                    Name = name,
+                    Level = level,
+                    Income = income,
+                    Cost = cost,
+                    Button = button,
+                    Progress = fill
+                });
+            }
+        }
+
+        private static void BuildBottomBar(Transform ui, UiParts parts)
+        {
+            parts.BoostButton = CreateButton("SpeedBoostButton", ui, "2x Hız", UiStyle.Purple, 36f, out parts.BoostText);
+            RectTransform boost = parts.BoostButton.GetComponent<RectTransform>();
+            boost.anchorMin = new Vector2(0f, 0f);
+            boost.anchorMax = new Vector2(0.5f, 0f);
+            boost.pivot = new Vector2(0.5f, 0f);
+            boost.offsetMin = new Vector2(30f, 36f);
+            boost.offsetMax = new Vector2(-10f, 36f + 130f);
+
+            TMP_Text prestigeLabel;
+            parts.PrestigeOpenButton = CreateButton("PrestigeButton", ui, "Prestij", UiStyle.Gem, 36f, out prestigeLabel);
+            RectTransform prestige = parts.PrestigeOpenButton.GetComponent<RectTransform>();
+            prestige.anchorMin = new Vector2(0.5f, 0f);
+            prestige.anchorMax = new Vector2(1f, 0f);
+            prestige.pivot = new Vector2(0.5f, 0f);
+            prestige.offsetMin = new Vector2(10f, 36f);
+            prestige.offsetMax = new Vector2(-30f, 36f + 130f);
+        }
+
+        private static void BuildOfflinePopup(Transform ui, UiParts parts)
+        {
+            Image box;
+            GameObject popup = Modal("OfflinePopup", ui, 860f, 760f, out box);
+
+            TMP_Text title = CreateText("Title", box.transform, "Tekrar hoş geldin!", 52f, UiStyle.DarkText, TextAlignmentOptions.Center, true);
+            AnchorTopStretch(title.rectTransform, 50f, 80f, 40f, 40f);
+
+            parts.OfflineDurationText = CreateText("Duration", box.transform, "", 36f, UiStyle.MutedText, TextAlignmentOptions.Center, false);
+            AnchorTopStretch(parts.OfflineDurationText.rectTransform, 150f, 60f, 40f, 40f);
+
+            parts.OfflineAmountText = CreateText("Amount", box.transform, "+0", 96f, UiStyle.Gold, TextAlignmentOptions.Center, true);
+            AnchorTopStretch(parts.OfflineAmountText.rectTransform, 240f, 140f, 40f, 40f);
+
+            parts.OfflineDoubleButton = CreateButton("DoubleButton", box.transform, "2x (Reklam)", UiStyle.Purple, 40f, out parts.OfflineDoubleButtonText);
+            AnchorBottomStretch(parts.OfflineDoubleButton.GetComponent<RectTransform>(), 190f, 130f, 80f, 80f);
+
+            TMP_Text collectLabel;
+            parts.OfflineCollectButton = CreateButton("CollectButton", box.transform, "Topla", UiStyle.Green, 40f, out collectLabel);
+            AnchorBottomStretch(parts.OfflineCollectButton.GetComponent<RectTransform>(), 40f, 130f, 80f, 80f);
+
+            parts.OfflinePopup = popup;
+            popup.SetActive(false);
+        }
+
+        private static PrestigePanelUI BuildPrestigePanel(Transform ui, Button openButton)
+        {
+            Image box;
+            GameObject root = Modal("PrestigePanel", ui, 920f, 1260f, out box);
+
+            TMP_Text title = CreateText("Title", box.transform, "Prestij", 56f, UiStyle.DarkText, TextAlignmentOptions.Center, true);
+            AnchorTopStretch(title.rectTransform, 40f, 80f, 40f, 40f);
+
+            TMP_Text gems = CreateText("Gems", box.transform, "0 Gem", 52f, UiStyle.Gem, TextAlignmentOptions.Center, true);
+            AnchorTopStretch(gems.rectTransform, 130f, 70f, 40f, 40f);
+
+            TMP_Text multipliers = CreateText("Multipliers", box.transform, "", 34f, UiStyle.MutedText, TextAlignmentOptions.Center, false);
+            AnchorTopStretch(multipliers.rectTransform, 205f, 50f, 40f, 40f);
+
+            TMP_Text pending = CreateText("PendingGems", box.transform, "", 38f, UiStyle.DarkText, TextAlignmentOptions.Center, true);
+            AnchorTopStretch(pending.rectTransform, 290f, 56f, 40f, 40f);
+
+            TMP_Text nextGem = CreateText("NextGem", box.transform, "", 30f, UiStyle.MutedText, TextAlignmentOptions.Center, false);
+            AnchorTopStretch(nextGem.rectTransform, 350f, 46f, 40f, 40f);
+
+            TMP_Text prestigeLabel;
+            Button prestige = CreateButton("ResetRestaurantButton", box.transform, "Restoranı Sıfırla", UiStyle.Gem, 40f, out prestigeLabel);
+            AnchorTopStretch(prestige.GetComponent<RectTransform>(), 420f, 130f, 110f, 110f);
+
+            PrestigeRowParts speed = PrestigeUpgradeRow(box.transform, "SpeedUpgrade", 600f);
+            PrestigeRowParts income = PrestigeUpgradeRow(box.transform, "IncomeUpgrade", 800f);
+
+            TMP_Text closeLabel;
+            Button close = CreateButton("CloseButton", box.transform, "Kapat", UiStyle.Neutral, 38f, out closeLabel);
+            AnchorBottomStretch(close.GetComponent<RectTransform>(), 40f, 110f, 250f, 250f);
+
+            // Panel açma/kapama için ek betik gerekmesin: kalıcı onClick dinleyicileri.
+            UnityEventTools.AddBoolPersistentListener(openButton.onClick, root.SetActive, true);
+            UnityEventTools.AddBoolPersistentListener(close.onClick, root.SetActive, false);
+
+            PrestigePanelUI panel = root.AddComponent<PrestigePanelUI>();
+            using (Wiring wiring = new Wiring(panel))
+            {
+                wiring.Ref("gemsText", gems)
+                    .Ref("pendingGemsText", pending)
+                    .Ref("nextGemText", nextGem)
+                    .Ref("multipliersText", multipliers)
+                    .Ref("prestigeButton", prestige)
+                    .Ref("prestigeButtonText", prestigeLabel);
+
+                SerializedProperty rows = wiring.Find("upgradeRows");
+                rows.arraySize = 2;
+                BindPrestigeRow(rows.GetArrayElementAtIndex(0), "global_speed", speed);
+                BindPrestigeRow(rows.GetArrayElementAtIndex(1), "global_income", income);
+            }
+
+            root.SetActive(false);
+            return panel;
+        }
+
+        private static PrestigeRowParts PrestigeUpgradeRow(Transform parent, string name, float top)
+        {
+            Image row = Panel(name, parent, UiStyle.RowTint, true);
+            AnchorTopStretch(row.rectTransform, top, 170f, 50f, 50f);
+
+            PrestigeRowParts parts = new PrestigeRowParts
+            {
+                Name = CreateText("Name", row.transform, "", 38f, UiStyle.DarkText, TextAlignmentOptions.Left, true),
+                Level = CreateText("Level", row.transform, "Sv. 0", 30f, UiStyle.MutedText, TextAlignmentOptions.Left, false),
+                Bonus = CreateText("Bonus", row.transform, "+%0", 30f, UiStyle.Green, TextAlignmentOptions.Left, false)
+            };
+
+            AnchorTopLeft(parts.Name.rectTransform, 26f, 16f, 480f, 54f);
+            AnchorBottomLeft(parts.Level.rectTransform, 26f, 22f, 200f, 46f);
+            AnchorBottomLeft(parts.Bonus.rectTransform, 240f, 22f, 260f, 46f);
+
+            parts.Buy = CreateButton("BuyButton", row.transform, "0 Gem", UiStyle.Gem, 34f, out parts.Cost);
+            AnchorRightCenter(parts.Buy.GetComponent<RectTransform>(), 20f, 270f, 120f);
+            return parts;
+        }
+
+        private static void BindPrestigeRow(SerializedProperty row, string upgradeId, PrestigeRowParts parts)
+        {
+            Wiring.Relative(row, "upgradeId").stringValue = upgradeId;
+            Wiring.Relative(row, "nameText").objectReferenceValue = parts.Name;
+            Wiring.Relative(row, "levelText").objectReferenceValue = parts.Level;
+            Wiring.Relative(row, "bonusText").objectReferenceValue = parts.Bonus;
+            Wiring.Relative(row, "costText").objectReferenceValue = parts.Cost;
+            Wiring.Relative(row, "buyButton").objectReferenceValue = parts.Buy;
+        }
+
+        private static SettingsPanelUI BuildSettingsPanel(Transform ui)
+        {
+            Image box;
+            GameObject root = Modal("SettingsPanel", ui, 900f, 1320f, out box);
+
+            TMP_Text title = CreateText("Title", box.transform, "Ayarlar", 56f, UiStyle.DarkText, TextAlignmentOptions.Center, true);
+            AnchorTopStretch(title.rectTransform, 40f, 80f, 40f, 40f);
+
+            TMP_Text sfxLabel;
+            Toggle sfx = ToggleRow("SfxToggle", box.transform, "Ses: Açık", 150f, out sfxLabel);
+            TMP_Text hapticsLabel;
+            Toggle haptics = ToggleRow("HapticsToggle", box.transform, "Titreşim: Açık", 270f, out hapticsLabel);
+
+            TMP_Text policyLabel;
+            Button privacyPolicy = CreateButton("PrivacyPolicyButton", box.transform, "Gizlilik Politikası", UiStyle.Neutral, 38f, out policyLabel);
+            AnchorTopStretch(privacyPolicy.GetComponent<RectTransform>(), 420f, 120f, 80f, 80f);
+
+            TMP_Text optionsLabel;
+            Button privacyOptions = CreateButton("PrivacyOptionsButton", box.transform, "Gizlilik Tercihleri", UiStyle.Neutral, 38f, out optionsLabel);
+            AnchorTopStretch(privacyOptions.GetComponent<RectTransform>(), 560f, 120f, 80f, 80f);
+
+            TMP_Text resetLabel;
+            Button reset = CreateButton("ResetProgressButton", box.transform, "İlerlemeyi Sıfırla", UiStyle.Red, 38f, out resetLabel);
+            AnchorTopStretch(reset.GetComponent<RectTransform>(), 700f, 120f, 80f, 80f);
+
+            TMP_Text version = CreateText("Version", box.transform, "", 28f, UiStyle.MutedText, TextAlignmentOptions.Center, false);
+            AnchorBottomStretch(version.rectTransform, 170f, 44f, 40f, 40f);
+
+            TMP_Text closeLabel;
+            Button close = CreateButton("CloseButton", box.transform, "Kapat", UiStyle.Neutral, 38f, out closeLabel);
+            AnchorBottomStretch(close.GetComponent<RectTransform>(), 40f, 110f, 250f, 250f);
+
+            // İki aşamalı sıfırlama onayı; panelin üstünde.
+            Image confirmBox;
+            GameObject confirm = Modal("ResetConfirmPopup", root.transform, 780f, 620f, out confirmBox);
+            TMP_Text message = CreateText("Message", confirmBox.transform, "", 38f, UiStyle.DarkText, TextAlignmentOptions.Center, false);
+            AnchorTopStretch(message.rectTransform, 50f, 300f, 50f, 50f);
+
+            TMP_Text confirmLabel;
+            Button confirmButton = CreateButton("ConfirmButton", confirmBox.transform, "Devam", UiStyle.Red, 38f, out confirmLabel);
+            AnchorBottomStretch(confirmButton.GetComponent<RectTransform>(), 170f, 110f, 90f, 90f);
+
+            TMP_Text cancelLabel;
+            Button cancel = CreateButton("CancelButton", confirmBox.transform, "Vazgeç", UiStyle.Neutral, 38f, out cancelLabel);
+            AnchorBottomStretch(cancel.GetComponent<RectTransform>(), 40f, 110f, 90f, 90f);
+            confirm.SetActive(false);
+
+            SettingsPanelUI panel = root.AddComponent<SettingsPanelUI>();
+            using (Wiring wiring = new Wiring(panel))
+            {
+                wiring.Ref("closeButton", close)
+                    .Ref("resetButton", reset)
+                    .Ref("resetConfirmPopup", confirm)
+                    .Ref("resetConfirmMessage", message)
+                    .Ref("resetConfirmButton", confirmButton)
+                    .Ref("resetConfirmButtonText", confirmLabel)
+                    .Ref("resetCancelButton", cancel)
+                    .Ref("privacyPolicyButton", privacyPolicy)
+                    .Ref("privacyOptionsButton", privacyOptions)
+                    .Ref("versionText", version);
+
+                SerializedProperty sfxSwitch = wiring.Find("sfxSwitch");
+                Wiring.Relative(sfxSwitch, "toggle").objectReferenceValue = sfx;
+                Wiring.Relative(sfxSwitch, "label").objectReferenceValue = sfxLabel;
+
+                SerializedProperty hapticsSwitch = wiring.Find("hapticsSwitch");
+                Wiring.Relative(hapticsSwitch, "toggle").objectReferenceValue = haptics;
+                Wiring.Relative(hapticsSwitch, "label").objectReferenceValue = hapticsLabel;
+            }
+
+            root.SetActive(false);
+            return panel;
+        }
+
+        private static void CreateEventSystem()
+        {
+            GameObject eventSystem = new GameObject("EventSystem");
+            eventSystem.AddComponent<EventSystem>();
+
+#if ENABLE_INPUT_SYSTEM && !ENABLE_LEGACY_INPUT_MANAGER
+            // Yalnızca yeni Input System etkinse eski modül her karede hata verir.
+            eventSystem.AddComponent<UnityEngine.InputSystem.UI.InputSystemUIInputModule>();
+#else
+            eventSystem.AddComponent<StandaloneInputModule>();
+#endif
+        }
+
+        // ── Arayüz yapı taşları ────────────────────────────────────────────────
+
+        private static RectTransform CreateRect(string name, Transform parent)
+        {
+            GameObject go = new GameObject(name, typeof(RectTransform));
+            go.transform.SetParent(parent, false);
+            return (RectTransform)go.transform;
+        }
+
+        private static Image Panel(string name, Transform parent, Color color, bool rounded)
+        {
+            Image image = CreateRect(name, parent).gameObject.AddComponent<Image>();
+            image.color = color;
+            if (rounded)
+            {
+                image.sprite = UiStyle.RoundedSprite;
+                image.type = Image.Type.Sliced;
+            }
+
+            return image;
+        }
+
+        private static TextMeshProUGUI CreateText(string name, Transform parent, string value, float size, Color color,
+            TextAlignmentOptions alignment, bool bold)
+        {
+            TextMeshProUGUI text = CreateRect(name, parent).gameObject.AddComponent<TextMeshProUGUI>();
+            text.text = value;
+            text.fontSize = size;
+            text.enableAutoSizing = true;
+            text.fontSizeMin = size * 0.5f;
+            text.fontSizeMax = size;
+            text.color = color;
+            text.alignment = alignment;
+            text.raycastTarget = false;
+            if (bold)
+            {
+                text.fontStyle = FontStyles.Bold;
+            }
+
+            return text;
+        }
+
+        private static Button CreateButton(string name, Transform parent, string label, Color color, float fontSize, out TMP_Text labelText)
+        {
+            Image background = Panel(name, parent, color, true);
+            Button button = background.gameObject.AddComponent<Button>();
+            button.targetGraphic = background;
+
+            TextMeshProUGUI text = CreateText("Label", background.transform, label, fontSize, Color.white, TextAlignmentOptions.Center, true);
+            Stretch(text.rectTransform, 12f);
+            labelText = text;
+            return button;
+        }
+
+        /// <summary>Arka plan + dolgu. Dolgu Image.Type.Filled; UIManager fillAmount'u sürer.</summary>
+        private static void ProgressBar(string name, Transform parent, out Image fill)
+        {
+            Image background = Panel(name, parent, UiStyle.ProgressBack, true);
+            fill = Panel("Fill", background.transform, UiStyle.ProgressFill, true);
+            fill.type = Image.Type.Filled;
+            fill.fillMethod = Image.FillMethod.Horizontal;
+            fill.fillOrigin = 0;
+            fill.fillAmount = 0f;
+            Stretch(fill.rectTransform, 0f);
+        }
+
+        private static Toggle ToggleRow(string name, Transform parent, string label, float top, out TMP_Text labelText)
+        {
+            RectTransform row = CreateRect(name, parent);
+            AnchorTopStretch(row, top, 100f, 80f, 80f);
+
+            Toggle toggle = row.gameObject.AddComponent<Toggle>();
+
+            Image background = Panel("Background", row, UiStyle.ProgressBack, true);
+            AnchorLeftCenter(background.rectTransform, 0f, 86f, 86f);
+
+            Image checkmark = Panel("Checkmark", background.transform, UiStyle.Green, false);
+            checkmark.sprite = UiStyle.CheckmarkSprite;
+            Stretch(checkmark.rectTransform, 10f);
+
+            toggle.targetGraphic = background;
+            toggle.graphic = checkmark;
+            toggle.isOn = true;
+
+            labelText = CreateText("Label", row, label, 40f, UiStyle.DarkText, TextAlignmentOptions.Left, false);
+            RectTransform labelRect = labelText.rectTransform;
+            labelRect.anchorMin = new Vector2(0f, 0f);
+            labelRect.anchorMax = new Vector2(1f, 1f);
+            labelRect.offsetMin = new Vector2(120f, 0f);
+            labelRect.offsetMax = Vector2.zero;
+            return toggle;
+        }
+
+        /// <summary>
+        /// Tam ekran karartma (arkadaki tıklamaları da keser) + ortada kutu.
+        /// Döndürülen kök açılıp kapatılır.
+        /// </summary>
+        private static GameObject Modal(string name, Transform parent, float width, float height, out Image box)
+        {
+            Image dim = Panel(name, parent, UiStyle.Dim, false);
+            Stretch(dim.rectTransform, 0f);
+
+            box = Panel("Box", dim.transform, UiStyle.Card, true);
+            RectTransform rect = box.rectTransform;
+            rect.anchorMin = new Vector2(0.5f, 0.5f);
+            rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = Vector2.zero;
+            rect.sizeDelta = new Vector2(width, height);
+            return dim.gameObject;
+        }
+
+        // ── RectTransform yerleşim yardımcıları ────────────────────────────────
+
+        private static void Stretch(RectTransform rect, float margin)
+        {
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.offsetMin = new Vector2(margin, margin);
+            rect.offsetMax = new Vector2(-margin, -margin);
+        }
+
+        private static void AnchorTopStretch(RectTransform rect, float top, float height, float left, float right)
+        {
+            rect.anchorMin = new Vector2(0f, 1f);
+            rect.anchorMax = new Vector2(1f, 1f);
+            rect.pivot = new Vector2(0.5f, 1f);
+            rect.offsetMin = new Vector2(left, -top - height);
+            rect.offsetMax = new Vector2(-right, -top);
+        }
+
+        private static void AnchorBottomStretch(RectTransform rect, float bottom, float height, float left, float right)
+        {
+            rect.anchorMin = new Vector2(0f, 0f);
+            rect.anchorMax = new Vector2(1f, 0f);
+            rect.pivot = new Vector2(0.5f, 0f);
+            rect.offsetMin = new Vector2(left, bottom);
+            rect.offsetMax = new Vector2(-right, bottom + height);
+        }
+
+        private static void AnchorTopLeft(RectTransform rect, float left, float top, float width, float height)
+        {
+            SetCorner(rect, new Vector2(0f, 1f), new Vector2(left, -top), width, height);
+        }
+
+        private static void AnchorTopRight(RectTransform rect, float right, float top, float width, float height)
+        {
+            SetCorner(rect, new Vector2(1f, 1f), new Vector2(-right, -top), width, height);
+        }
+
+        private static void AnchorBottomLeft(RectTransform rect, float left, float bottom, float width, float height)
+        {
+            SetCorner(rect, new Vector2(0f, 0f), new Vector2(left, bottom), width, height);
+        }
+
+        private static void AnchorBottomRight(RectTransform rect, float right, float bottom, float width, float height)
+        {
+            SetCorner(rect, new Vector2(1f, 0f), new Vector2(-right, bottom), width, height);
+        }
+
+        private static void AnchorRightCenter(RectTransform rect, float right, float width, float height)
+        {
+            SetCorner(rect, new Vector2(1f, 0.5f), new Vector2(-right, 0f), width, height);
+        }
+
+        private static void AnchorLeftCenter(RectTransform rect, float left, float width, float height)
+        {
+            SetCorner(rect, new Vector2(0f, 0.5f), new Vector2(left, 0f), width, height);
+        }
+
+        /// <summary>Çapa ve pivot aynı köşede: konum, köşeden içeri doğru ölçülür.</summary>
+        private static void SetCorner(RectTransform rect, Vector2 corner, Vector2 position, float width, float height)
+        {
+            rect.anchorMin = corner;
+            rect.anchorMax = corner;
+            rect.pivot = corner;
+            rect.anchoredPosition = position;
+            rect.sizeDelta = new Vector2(width, height);
+        }
+
+        // ── Build Settings ─────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Sahneyi listenin başına koyar: "İlerlemeyi Sıfırla" sahneyi build
+        /// index'iyle yeniden yükler ve yalnızca listedeki sahneler yüklenebilir.
+        /// </summary>
+        private static void AddSceneToBuildSettings(string path)
+        {
+            List<EditorBuildSettingsScene> scenes = new List<EditorBuildSettingsScene>(EditorBuildSettings.scenes);
+            scenes.RemoveAll(scene => scene.path == path);
+            scenes.Insert(0, new EditorBuildSettingsScene(path, true));
+            EditorBuildSettings.scenes = scenes.ToArray();
+        }
+
+        // ── Serileştirilmiş alan yazımı ────────────────────────────────────────
+
+        /// <summary>
+        /// SerializedObject üzerinden alan yazar. Alan bulunamazsa (yeniden
+        /// adlandırılmış veya serileştirilmeyen bir alan) hangi bileşenin
+        /// hangi alanı olduğunu söyleyerek durur.
+        /// </summary>
+        private sealed class Wiring : IDisposable
+        {
+            private readonly SerializedObject _serialized;
+
+            public Wiring(Object target)
+            {
+                _serialized = new SerializedObject(target);
+            }
+
+            public SerializedProperty Find(string field)
+            {
+                SerializedProperty property = _serialized.FindProperty(field);
+                if (property == null)
+                {
+                    throw new InvalidOperationException(
+                        $"{_serialized.targetObject.GetType().Name}.{field} bulunamadı; alan yeniden adlandırılmış olabilir.");
+                }
+
+                return property;
+            }
+
+            public static SerializedProperty Relative(SerializedProperty parent, string field)
+            {
+                SerializedProperty property = parent.FindPropertyRelative(field);
+                if (property == null)
+                {
+                    throw new InvalidOperationException($"{parent.propertyPath}.{field} bulunamadı; alan yeniden adlandırılmış olabilir.");
+                }
+
+                return property;
+            }
+
+            public Wiring Ref(string field, Object value)
+            {
+                if (value == null)
+                {
+                    throw new InvalidOperationException($"{_serialized.targetObject.GetType().Name}.{field} için atanacak nesne yok.");
+                }
+
+                Find(field).objectReferenceValue = value;
+                return this;
+            }
+
+            public Wiring RefList<T>(string field, IList<T> values) where T : Object
+            {
+                SerializedProperty property = Find(field);
+                property.arraySize = values.Count;
+                for (int i = 0; i < values.Count; i++)
+                {
+                    property.GetArrayElementAtIndex(i).objectReferenceValue = values[i];
+                }
+
+                return this;
+            }
+
+            public Wiring String(string field, string value)
+            {
+                Find(field).stringValue = value;
+                return this;
+            }
+
+            public Wiring Int(string field, int value)
+            {
+                Find(field).intValue = value;
+                return this;
+            }
+
+            public Wiring Float(string field, float value)
+            {
+                Find(field).floatValue = value;
+                return this;
+            }
+
+            public Wiring Double(string field, double value)
+            {
+                Find(field).doubleValue = value;
+                return this;
+            }
+
+            public void Dispose()
+            {
+                _serialized.ApplyModifiedPropertiesWithoutUndo();
+                _serialized.Dispose();
+            }
+        }
+
+        // ── Veri tipleri ───────────────────────────────────────────────────────
+
+        private sealed class AssetTracker
+        {
+            public int Created;
+            public int Reused;
+        }
+
+        private readonly struct StationSpec
+        {
+            public readonly string Id;
+            public readonly string Name;
+            public readonly double BaseCost;
+            public readonly double BaseIncome;
+            public readonly float CycleTime;
+            public readonly int StartingLevel;
+            public readonly Color BodyColor;
+            public readonly Color AccentColor;
+
+            public StationSpec(string id, string name, double baseCost, double baseIncome, float cycleTime,
+                int startingLevel, Color bodyColor, Color accentColor)
+            {
+                Id = id;
+                Name = name;
+                BaseCost = baseCost;
+                BaseIncome = baseIncome;
+                CycleTime = cycleTime;
+                StartingLevel = startingLevel;
+                BodyColor = bodyColor;
+                AccentColor = accentColor;
+            }
+        }
+
+        private sealed class Palette
+        {
+            public Material Floor;
+            public Material Rug;
+            public Material Wall;
+            public Material Wood;
+            public Material CounterTop;
+            public Material EntryMat;
+            public Material ExitMat;
+            public Material Plant;
+            public Material Pot;
+            public Material Spot;
+            public Material Customer;
+            public Material CustomerHat;
+            public Material[] StationBodies;
+            public Material[] StationAccents;
+        }
+
+        private sealed class RestaurantRefs
+        {
+            public Transform EntryPoint;
+            public Transform ExitPoint;
+            public List<Station> Stations;
+            public List<CustomerSeat> Seats;
+        }
+
+        private sealed class ManagerRefs
+        {
+            public GameManager GameManager;
+            public CurrencyManager Currency;
+            public SaveManager Save;
+            public AdManager Ads;
+            public AudioManager Audio;
+            public AudioEventBinder AudioBinder;
+            public PrestigeManager Prestige;
+            public QuestManager Quests;
+        }
+
+        private sealed class StationRow
+        {
+            public Station Station;
+            public TMP_Text Name;
+            public TMP_Text Level;
+            public TMP_Text Income;
+            public TMP_Text Cost;
+            public Button Button;
+            public Image Progress;
+        }
+
+        private sealed class PrestigeRowParts
+        {
+            public TMP_Text Name;
+            public TMP_Text Level;
+            public TMP_Text Bonus;
+            public TMP_Text Cost;
+            public Button Buy;
+        }
+
+        private sealed class UiParts
+        {
+            public readonly List<StationRow> StationRows = new List<StationRow>();
+            public TMP_Text CurrencyText;
+            public TMP_Text IncomeText;
+            public Button SettingsButton;
+            public Button BoostButton;
+            public TMP_Text BoostText;
+            public Button PrestigeOpenButton;
+            public TMP_Text ToastText;
+            public GameObject OfflinePopup;
+            public TMP_Text OfflineAmountText;
+            public TMP_Text OfflineDurationText;
+            public Button OfflineCollectButton;
+            public Button OfflineDoubleButton;
+            public TMP_Text OfflineDoubleButtonText;
+        }
+
+        /// <summary>Arayüz renkleri ve Unity'nin yerleşik UI sprite'ları.</summary>
+        private static class UiStyle
+        {
+            public static readonly Color TopBar = new Color(0.12f, 0.09f, 0.08f, 0.55f);
+            public static readonly Color Card = new Color(1f, 0.98f, 0.94f, 0.95f);
+            public static readonly Color RowTint = new Color(0.96f, 0.91f, 0.84f, 1f);
+            public static readonly Color Dim = new Color(0f, 0f, 0f, 0.6f);
+            public static readonly Color DarkText = new Color(0.22f, 0.15f, 0.11f);
+            public static readonly Color MutedText = new Color(0.45f, 0.38f, 0.33f);
+            public static readonly Color SoftWhite = new Color(1f, 1f, 1f, 0.85f);
+            public static readonly Color Gold = new Color(1f, 0.84f, 0.3f);
+            public static readonly Color Green = new Color(0.27f, 0.62f, 0.34f);
+            public static readonly Color Orange = new Color(0.93f, 0.53f, 0.2f);
+            public static readonly Color Purple = new Color(0.52f, 0.36f, 0.82f);
+            public static readonly Color Gem = new Color(0.2f, 0.62f, 0.8f);
+            public static readonly Color Red = new Color(0.82f, 0.3f, 0.28f);
+            public static readonly Color Neutral = new Color(0.4f, 0.34f, 0.3f);
+            public static readonly Color ProgressBack = new Color(0.86f, 0.8f, 0.72f);
+            public static readonly Color ProgressFill = new Color(0.98f, 0.72f, 0.2f);
+
+            /// <summary>9 dilimli yuvarlak köşeli yerleşik sprite (Image.Type.Filled de sprite ister).</summary>
+            public static Sprite RoundedSprite => AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/UISprite.psd");
+
+            public static Sprite CheckmarkSprite => AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Checkmark.psd");
+        }
+    }
+
+    /// <summary>Sahne üretiminin özeti.</summary>
+    public sealed class SceneSetupResult
+    {
+        public SceneSetupResult(string scenePath, int createdAssets, int reusedAssets, GameManager gameManager, UIManager uiManager)
+        {
+            ScenePath = scenePath;
+            CreatedAssets = createdAssets;
+            ReusedAssets = reusedAssets;
+            GameManager = gameManager;
+            UIManager = uiManager;
+        }
+
+        public string ScenePath { get; }
+        public int CreatedAssets { get; }
+        public int ReusedAssets { get; }
+        public GameManager GameManager { get; }
+        public UIManager UIManager { get; }
+    }
+}

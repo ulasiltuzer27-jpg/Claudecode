@@ -32,7 +32,7 @@ namespace IdleRestaurant.Ads
     {
         [Header("Servis seçimi")]
         [Tooltip("İşaretliyse cihazda da mock reklam kullanılır (iç test build'leri için).")]
-        [SerializeField] private bool forceMockAds;
+        [SerializeField] private bool forceMockAds = false;
 
         [SerializeField] private MockAdSettings mockSettings = new MockAdSettings();
 

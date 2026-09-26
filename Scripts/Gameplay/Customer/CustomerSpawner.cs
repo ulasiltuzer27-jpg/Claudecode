@@ -29,17 +29,17 @@ namespace IdleRestaurant.Gameplay.Customers
     {
         [Header("Müşteri")]
         [Tooltip("CustomerController bileşeni olan prefab.")]
-        [SerializeField] private CustomerController customerPrefab;
+        [SerializeField] private CustomerController customerPrefab = null;
 
         [Tooltip("Müşteri nesnelerinin ebeveyni. Boşsa bu nesne.")]
-        [SerializeField] private Transform customerParent;
+        [SerializeField] private Transform customerParent = null;
 
         [Header("Noktalar")]
         [Tooltip("Müşterilerin restorana girdiği kapı.")]
-        [SerializeField] private Transform entryPoint;
+        [SerializeField] private Transform entryPoint = null;
 
         [Tooltip("Müşterilerin çıktığı nokta. Boşsa kapı kullanılır.")]
-        [SerializeField] private Transform exitPoint;
+        [SerializeField] private Transform exitPoint = null;
 
         [Tooltip("Boş bırakılırsa sahnedeki tüm CustomerSeat bileşenleri (pasifler dahil) bulunur.")]
         [SerializeField] private List<CustomerSeat> seats = new List<CustomerSeat>();
@@ -57,7 +57,7 @@ namespace IdleRestaurant.Gameplay.Customers
         [SerializeField, Min(0f)] private float minWaitSeconds = 1f;
 
         [Tooltip("Sipariş için en uzun bekleme (sn); dolarsa müşteri ödemeden çıkar. 0 = sınırsız.")]
-        [SerializeField, Min(0f)] private float patienceSeconds;
+        [SerializeField, Min(0f)] private float patienceSeconds = 0f;
 
         [Tooltip("Bırakılan para = istasyonun döngü başı geliri × bu değer. 0 = müşteriler yalnızca görsel.")]
         [SerializeField, Min(0f)] private float paymentMultiplier = 1f;
