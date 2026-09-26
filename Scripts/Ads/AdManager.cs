@@ -9,19 +9,26 @@ namespace IdleRestaurant.Ads
     /// aynı anda tek reklam, reklam sürerken ses kapalı, her çağrıya tam
     /// olarak bir geri dönüş.
     ///
-    /// Servis seçimi:
+    /// Servis seçimi (reklam ve rıza birlikte):
     /// <list type="bullet">
-    /// <item>Editör veya <c>forceMockAds</c> → <see cref="MockAdService"/></item>
-    /// <item>Cihaz + <c>ADMOB_ENABLED</c> tanımı → <c>AdMobAdService</c></item>
+    /// <item>Editör veya <c>forceMockAds</c> → <see cref="MockAdService"/> + <see cref="MockConsentService"/></item>
+    /// <item>Cihaz + <c>ADMOB_ENABLED</c> tanımı → <c>AdMobAdService</c> + <c>UmpConsentService</c></item>
     /// <item>Cihaz, tanım yok → mock (uyarıyla)</item>
     /// </list>
+    ///
+    /// ── Rıza önce gelir ─────────────────────────────────────────────────────
+    /// Açılışta önce rıza toplanır (<see cref="IConsentService.GatherConsent"/>);
+    /// reklam SDK'sı ancak <see cref="CanRequestAds"/> true olunca başlatılır.
+    /// Rıza güncellemesi başarısız olursa (ağ yok) uygulama arka plandan
+    /// döndüğünde yeniden denenir. Ayarlar'daki "Gizlilik Tercihleri"
+    /// butonu <see cref="IPrivacyOptionsProvider"/> üzerinden buraya gelir.
     ///
     /// Ödülün NE olduğu (2x çevrimdışı kazanç, 30 sn hızlandırıcı) burada
     /// değil <see cref="Core.GameManager"/>'da; AdManager yalnızca "reklam
     /// izlendi mi" sorusunu yanıtlar.
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class AdManager : MonoBehaviour
+    public sealed class AdManager : MonoBehaviour, IPrivacyOptionsProvider
     {
         [Header("Servis seçimi")]
         [Tooltip("İşaretliyse cihazda da mock reklam kullanılır (iç test build'leri için).")]
@@ -36,8 +43,17 @@ namespace IdleRestaurant.Ads
         [Tooltip("Varsayılan değer Google'ın resmi TEST birimidir. Yayından önce kendi biriminizle değiştirin.")]
         [SerializeField] private string iosRewardedAdUnitId = "ca-app-pub-3940256099942544/1712485313";
 
+        [Header("Rıza (UMP)")]
+        [SerializeField] private ConsentOptions consentOptions = new ConsentOptions();
+
+        [Tooltip("Mock reklam kullanılırken (editör) rızanın davranışı.")]
+        [SerializeField] private MockConsentSettings mockConsentSettings = new MockConsentSettings();
+
         private IAdService _service;
         private MockAdService _mockService;
+        private IConsentService _consent;
+        private bool _gatheringConsent;
+        private bool _adsInitializeRequested;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         private GUIStyle _mockOverlayStyle;
 #endif
@@ -51,17 +67,34 @@ namespace IdleRestaurant.Ads
         /// <summary>Gösterim bittiğinde, ödül verilip verilmediğiyle tetiklenir.</summary>
         public event Action<bool> onAdFinished;
 
+        /// <summary>
+        /// Rıza akışı bittiğinde veya gizlilik seçenekleri formu kapandığında
+        /// tetiklenir. Ayarlar paneli "Gizlilik Tercihleri" butonunu buna göre
+        /// gösterir/gizler.
+        /// </summary>
+        public event Action onPrivacyOptionsChanged;
+
         public bool IsShowingAd { get; private set; }
 
+        /// <summary>Rıza formu veya gizlilik seçenekleri formu ekranda (ya da rıza akışı sürüyor).</summary>
+        public bool IsShowingConsentForm { get; private set; }
+
         /// <summary>
-        /// Uygulama son kez arka plana düştüğünde bir reklam gösteriliyor muydu.
-        /// Android'de reklam Unity'yi duraklatır; o dönüşün çevrimdışı kazanç
-        /// olarak sayılmaması için <see cref="Core.GameManager"/> buna bakar.
+        /// Uygulama son kez arka plana düştüğünde bir reklam veya rıza formu
+        /// gösteriliyor muydu. Android'de reklam Unity'yi duraklatır; o dönüşün
+        /// çevrimdışı kazanç olarak sayılmaması için <see cref="Core.GameManager"/> buna bakar.
         /// </summary>
         public bool WasShowingAdWhenPaused { get; private set; }
 
-        public bool IsRewardedAdReady => _service != null && !IsShowingAd && _service.IsRewardedAdReady;
+        /// <summary>Rıza reklam istemeye izin veriyor mu (rıza alındı veya bu bölgede gerekmiyor).</summary>
+        public bool CanRequestAds => _consent != null && _consent.CanRequestAds;
+
+        /// <summary>Ayarlar'da "Gizlilik Tercihleri" butonu gösterilmeli mi.</summary>
+        public bool IsPrivacyOptionsRequired => _consent != null && _consent.IsPrivacyOptionsRequired;
+
+        public bool IsRewardedAdReady => _service != null && !IsShowingAd && CanRequestAds && _service.IsRewardedAdReady;
         public string ServiceName => _service != null ? _service.ServiceName : "None";
+        public string ConsentServiceName => _consent != null ? _consent.ServiceName : "None";
 
         /// <summary>Şu anki platform için AdMob ödüllü reklam birimi.</summary>
         public string RewardedAdUnitId
@@ -78,22 +111,23 @@ namespace IdleRestaurant.Ads
 
         private void Awake()
         {
-            _service = CreateService();
+            CreateServices();
             _service.onRewardedAdReadyChanged += HandleReadyChanged;
-            _service.Initialize(success =>
-            {
-                if (!success)
-                {
-                    Debug.LogWarning($"[AdManager] {_service.ServiceName} başlatılamadı.");
-                }
-            });
+            GatherConsent();
         }
 
         private void OnApplicationPause(bool paused)
         {
             if (paused)
             {
-                WasShowingAdWhenPaused = IsShowingAd;
+                WasShowingAdWhenPaused = IsShowingAd || IsShowingConsentForm;
+                return;
+            }
+
+            // Açılıştaki güncelleme ağ yüzünden başarısız olduysa dönüşte yeniden dene.
+            if (_consent != null && !_gatheringConsent && !_consent.LastUpdateSucceeded)
+            {
+                GatherConsent();
             }
         }
 
@@ -110,24 +144,119 @@ namespace IdleRestaurant.Ads
             }
         }
 
-        private IAdService CreateService()
+        private void CreateServices()
         {
             bool useMock = forceMockAds || Application.isEditor;
 
 #if ADMOB_ENABLED
             if (!useMock)
             {
-                return new AdMobAdService(this, RewardedAdUnitId);
+                _consent = new UmpConsentService(consentOptions);
+                _service = new AdMobAdService(this, RewardedAdUnitId, () => CanRequestAds);
+                return;
             }
 #else
             if (!useMock)
             {
-                Debug.LogWarning("[AdManager] ADMOB_ENABLED tanımlı değil; cihazda mock reklam kullanılıyor.");
+                Debug.LogWarning("[AdManager] ADMOB_ENABLED tanımlı değil; cihazda mock reklam ve rıza kullanılıyor.");
             }
 #endif
 
+            _consent = new MockConsentService(mockConsentSettings);
             _mockService = new MockAdService(this, mockSettings);
-            return _mockService;
+            _service = _mockService;
+        }
+
+        // ── Rıza ───────────────────────────────────────────────────────────────
+
+        private void GatherConsent()
+        {
+            if (_gatheringConsent)
+            {
+                return;
+            }
+
+            _gatheringConsent = true;
+            IsShowingConsentForm = true;
+
+            _consent.GatherConsent(canRequestAds =>
+            {
+                _gatheringConsent = false;
+                IsShowingConsentForm = false;
+                HandleConsentChanged();
+
+                if (!canRequestAds)
+                {
+                    Debug.Log($"[AdManager] {_consent.ServiceName}: rıza yok, reklam istenmeyecek.");
+                }
+            });
+        }
+
+        /// <summary>
+        /// Gizlilik seçenekleri formunu gösterir. Form gerekmiyorsa, bir reklam
+        /// veya başka bir form ekrandaysa <paramref name="onComplete"/> hemen false ile çağrılır.
+        /// </summary>
+        public void ShowPrivacyOptionsForm(Action<bool> onComplete)
+        {
+            if (_consent == null || !_consent.IsPrivacyOptionsRequired || IsShowingAd || IsShowingConsentForm)
+            {
+                onComplete?.Invoke(false);
+                return;
+            }
+
+            IsShowingConsentForm = true;
+            _consent.ShowPrivacyOptionsForm(shown =>
+            {
+                IsShowingConsentForm = false;
+                HandleConsentChanged();
+                onComplete?.Invoke(shown);
+            });
+        }
+
+        /// <summary>
+        /// Rıza durumu değişti: reklam izni yeni geldiyse SDK'yı başlat, butonlara
+        /// ve ayarlar paneline haber ver.
+        /// </summary>
+        private void HandleConsentChanged()
+        {
+            if (CanRequestAds)
+            {
+                InitializeAdsOnce();
+            }
+
+            onPrivacyOptionsChanged?.Invoke();
+            onRewardedAdReadyChanged?.Invoke(IsRewardedAdReady);
+        }
+
+        private void InitializeAdsOnce()
+        {
+            if (_adsInitializeRequested)
+            {
+                return;
+            }
+
+            _adsInitializeRequested = true;
+            _service.Initialize(success =>
+            {
+                if (!success)
+                {
+                    Debug.LogWarning($"[AdManager] {_service.ServiceName} başlatılamadı.");
+                }
+            });
+        }
+
+        /// <summary>Kayıtlı rızayı siler ve akışı yeniden başlatır. Yalnızca test içindir.</summary>
+        [ContextMenu("Debug/Reset Consent")]
+        public void ResetConsentForTesting()
+        {
+            if (_consent == null || _gatheringConsent)
+            {
+                return;
+            }
+
+            _consent.ResetConsent();
+            Debug.Log("[AdManager] Rıza sıfırlandı; akış yeniden başlatılıyor.");
+            GatherConsent();
         }
 
         /// <summary>
@@ -143,9 +272,9 @@ namespace IdleRestaurant.Ads
                 return;
             }
 
-            if (_service == null || !_service.IsRewardedAdReady)
+            if (_service == null || !CanRequestAds || !_service.IsRewardedAdReady)
             {
-                _service?.LoadRewardedAd();
+                PreloadRewardedAd();
                 onAdFailed?.Invoke();
                 return;
             }
@@ -181,10 +310,13 @@ namespace IdleRestaurant.Ads
                 });
         }
 
-        /// <summary>Hazır reklam yoksa yeni bir yükleme başlatır.</summary>
+        /// <summary>Hazır reklam yoksa ve rıza izin veriyorsa yeni bir yükleme başlatır.</summary>
         public void PreloadRewardedAd()
         {
-            _service?.LoadRewardedAd();
+            if (_service != null && CanRequestAds)
+            {
+                _service.LoadRewardedAd();
+            }
         }
 
         private void FinishAd(bool rewarded)
@@ -197,7 +329,7 @@ namespace IdleRestaurant.Ads
 
         private void HandleReadyChanged(bool ready)
         {
-            onRewardedAdReadyChanged?.Invoke(ready && !IsShowingAd);
+            onRewardedAdReadyChanged?.Invoke(ready && !IsShowingAd && CanRequestAds);
         }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD

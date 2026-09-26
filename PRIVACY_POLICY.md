@@ -4,8 +4,9 @@ YAYINLAMADAN ÖNCE DOLDURUN (bu yorum sayfada görünmez):
   [GELİŞTİRİCİ ADI]       → Play Console'daki geliştirici/şirket adı
   [İLETİŞİM E-POSTASI]    → Play Console'daki destek e-postası
   [YÜRÜRLÜK TARİHİ]       → ör. 1 Ekim 2026
-Bölüm 5 ("Rıza") Google UMP rıza formu uygulamaya eklendiğinde doğrudur.
-Rıza entegrasyonu yapılmadan AB/AEA/Birleşik Krallık'ta yayınlamayın.
+Bölüm 5 ("Rıza") uygulamadaki UMP akışını ve Ayarlar → Gizlilik Tercihleri
+butonunu anlatır. Form ancak AdMob konsolunda GDPR mesajı YAYINLANDIKTAN sonra
+çıkar; mesajı yayınlamadan AB/AEA/Birleşik Krallık'ta yayına çıkmayın.
 Bu dosyayı herkese açık bir adreste yayınlayın (GitHub Pages, kendi siteniz);
 aynı adresi Play Console'a ve SettingsPanelUI.privacyPolicyUrl alanına girin.
 -->

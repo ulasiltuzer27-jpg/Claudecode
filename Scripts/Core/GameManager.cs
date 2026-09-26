@@ -616,10 +616,10 @@ namespace IdleRestaurant.Core
             }
 
             // Android'de tam ekran reklam ayrı bir Activity açar ve Unity
-            // duraklatılır. Reklamdan dönüş bir "yokluk" değildir. Reklamın
-            // kapanma geri çağrısı dönüşten önce de gelebildiği için yalnızca
-            // IsShowingAd'e bakmak yetmiyor.
-            if (adManager != null && (adManager.IsShowingAd || adManager.WasShowingAdWhenPaused))
+            // duraklatılır. Reklamdan (veya rıza formundan) dönüş bir "yokluk"
+            // değildir. Kapanma geri çağrısı dönüşten önce de gelebildiği için
+            // yalnızca o anki duruma bakmak yetmiyor.
+            if (adManager != null && (adManager.IsShowingAd || adManager.IsShowingConsentForm || adManager.WasShowingAdWhenPaused))
             {
                 return;
             }

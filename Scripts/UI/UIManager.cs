@@ -219,7 +219,7 @@ namespace IdleRestaurant.UI
 
             if (settingsPanel != null)
             {
-                settingsPanel.Initialize(game.Audio, game.ResetProgress, this);
+                settingsPanel.Initialize(game.Audio, game.Ads, game.ResetProgress, this);
             }
             else if (settingsButton != null)
             {

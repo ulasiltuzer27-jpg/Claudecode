@@ -194,20 +194,20 @@ hassas konum, web geçmişi. Uygulama bunların hiçbirine erişmez.
 
 **Engelleyici (bunlar olmadan yayınlamayın):**
 
-- [ ] **AB/AEA/Birleşik Krallık rızası (UMP).** Google, bu bölgelerde reklam
-      göstermeden önce Google onaylı bir rıza platformuyla rıza alınmasını
-      zorunlu tutar. Mevcut `AdMobAdService` rıza akışı içermiyor; Google
-      Mobile Ads Unity eklentisindeki User Messaging Platform
-      (`GoogleMobileAds.Ump`) ile rıza formu ve Ayarlar'a "Gizlilik
-      seçenekleri" girişi eklenmeli, AdMob konsolunda "Gizlilik ve
-      mesajlaşma" bölümünden GDPR mesajı oluşturulmalı.
-      `PRIVACY_POLICY.md` Bölüm 5 bu entegrasyonu varsayar.
+- [ ] **AB/AEA/Birleşik Krallık rızası (UMP).** Kod hazır: `AdManager`
+      açılışta UMP ile rıza toplar, reklam SDK'sını ancak `CanRequestAds`
+      sonrasında başlatır; Ayarlar'da gerektiğinde **Gizlilik Tercihleri**
+      butonu çıkar. Kalan iş konsolda: AdMob'da GDPR mesajını **yayınlayın**
+      ve formu bir test cihazında görün (Bölüm 8). Yayınlanmış mesaj yoksa
+      form hiç çıkmaz. `PRIVACY_POLICY.md` Bölüm 5 bu akışı anlatır.
 - [ ] **Gerçek reklam kimlikleri.** `AdManager`'daki Android/iOS ödüllü reklam
       birimleri Google'ın test kimlikleri. Kendi birimlerinizle değiştirin;
       AdMob App ID'yi Assets → Google Mobile Ads → Settings'e girin. Geliştirme
       sırasında kendi reklamlarınıza tıklamayın (test cihazı tanımlayın).
 - [ ] **`ADMOB_ENABLED`** Android için Scripting Define Symbols'ta tanımlı
-      olmalı; yoksa sürüm derlemesi mock reklam gösterir.
+      olmalı; yoksa sürüm derlemesi mock reklam ve mock rıza kullanır.
+      Google Mobile Ads Unity eklentisinin **9.x** sürümü gerekir (kod 9.2.0
+      ile derlendi; UMP'nin `CanRequestAds` ve gizlilik seçenekleri API'leri).
 - [ ] **Gizlilik politikası adresi.** `PRIVACY_POLICY.md`'deki köşeli parantezli
       alanları doldurun, herkese açık bir adreste yayınlayın; aynı adresi Play
       Console'a ve `SettingsPanelUI.privacyPolicyUrl` alanına girin.
@@ -251,3 +251,27 @@ Depo herkese açıksa en kısa yol:
 
 Depo gizliyse politikayı ayrı, herkese açık bir depoda veya kendi alan
 adınızda yayınlayın.
+
+---
+
+## 8. UMP rıza formu: kurulum ve test
+
+1. **Mesajı oluşturun:** AdMob konsolu → Gizlilik ve mesajlaşma → Avrupa
+   düzenlemeleri (GDPR) → mesaj oluşturun, uygulamayı seçin, dilleri ve
+   "Rıza verme / Yönet" seçeneklerini ayarlayın ve **Yayınla**'ya basın.
+   Yayınlanmış mesaj yoksa UMP formu göstermez ve Console'a "Rıza formu
+   gösterilemedi" uyarısı düşer.
+2. **Test cihazını ekleyin:** Development Build'i cihazda bir kez çalıştırın.
+   Android'de logcat'te `addTestDeviceHashedId("…")`, iOS'ta Xcode
+   konsolunda `testDeviceIdentifiers` geçen satırdaki kimliği kopyalayıp
+   `AdManager` → Rıza (UMP) → **Test Device Hashed Ids** listesine ekleyin.
+   Emülatörler kendiliğinden test cihazıdır.
+3. **AEA'yı taklit edin:** `AdManager` → **Debug Geography = EEA** ile
+   Development Build alın. İlk açılışta form çıkmalı, Ayarlar'da **Gizlilik
+   Tercihleri** butonu görünmeli; `NotEEA` ile form çıkmamalı, buton
+   gizlenmeli. Bu ayar yalnızca Development Build'de ve editörde uygulanır;
+   yayın derlemesi her zaman gerçek konumu kullanır.
+4. **Yeniden deneyin:** `AdManager` bileşen menüsü → **Debug/Reset Consent**
+   kayıtlı rızayı silip akışı baştan başlatır (veya uygulama verilerini
+   temizleyin). Cihaz olmadan editörde denemek için **Mock Consent Settings
+   → Simulate Regulated Region** ve **Grant Consent** kullanın.

@@ -1,4 +1,5 @@
 using System;
+using IdleRestaurant.Ads;
 using IdleRestaurant.Audio;
 using TMPro;
 using UnityEngine;
@@ -9,9 +10,16 @@ using static IdleRestaurant.UI.UIUtility;
 namespace IdleRestaurant.UI
 {
     /// <summary>
-    /// Ayarlar paneli: ses ve titreşim anahtarları, ilerlemeyi sıfırlama ve
-    /// gizlilik politikası bağlantısı. <see cref="UIManager"/> başlatır ve
-    /// ayarlar butonuyla açıp kapatır.
+    /// Ayarlar paneli: ses ve titreşim anahtarları, ilerlemeyi sıfırlama,
+    /// gizlilik politikası bağlantısı ve (rıza gereken bölgelerde) Google UMP
+    /// gizlilik tercihleri. <see cref="UIManager"/> başlatır ve ayarlar
+    /// butonuyla açıp kapatır.
+    ///
+    /// ── Gizlilik Tercihleri ─────────────────────────────────────────────────
+    /// Buton yalnızca <see cref="IPrivacyOptionsProvider.IsPrivacyOptionsRequired"/>
+    /// true iken görünür (UMP, kullanıcı AEA/Birleşik Krallık gibi bir bölgedeyse
+    /// ister). Rıza akışı açılıştan sonra biteceği için görünürlük
+    /// <see cref="IPrivacyOptionsProvider.onPrivacyOptionsChanged"/> ile güncellenir.
     ///
     /// ── Anahtar türü ────────────────────────────────────────────────────────
     /// Her anahtar ya bir Toggle ya da bir Button ile kurulabilir
@@ -67,6 +75,7 @@ namespace IdleRestaurant.UI
             public string resetStep2Countdown = "Evet, Sıfırla ({0})";
 
             public string privacyUrlMissing = "Gizlilik politikası bağlantısı tanımlı değil";
+            public string privacyOptionsFailed = "Gizlilik tercihleri şu an açılamadı";
             public string versionFormat = "Sürüm {0}";
         }
 
@@ -100,6 +109,10 @@ namespace IdleRestaurant.UI
         [Header("Gizlilik")]
         [SerializeField] private Button privacyPolicyButton;
 
+        [Tooltip("İsteğe bağlı: Google UMP gizlilik tercihleri (rızayı değiştir). Yalnızca rıza gereken " +
+                 "bölgelerde görünür; diğer kullanıcılarda otomatik gizlenir.")]
+        [SerializeField] private Button privacyOptionsButton;
+
         [Tooltip("Gizlilik politikasının yayındaki adresi (https). Google Play ve AdMob için zorunlu; " +
                  "PRIVACY_POLICY.md'yi yayınladığınız sayfa. Play Console'a girilen adresle aynı olmalı.")]
         [SerializeField] private string privacyPolicyUrl = "";
@@ -111,8 +124,10 @@ namespace IdleRestaurant.UI
         [SerializeField] private Texts texts = new Texts();
 
         private AudioManager _audio;
+        private IPrivacyOptionsProvider _privacyOptions;
         private Action _hardReset;
         private IUIFeedback _ui;
+        private bool _privacyFormOpen;
         private int _resetStage;
         private float _finalConfirmUnlockTime;
         private int _lastCountdownShown = -1;
@@ -131,14 +146,21 @@ namespace IdleRestaurant.UI
         /// Paneli bağlar ve kapalı başlatır.
         /// </summary>
         /// <param name="audio">Sahnede ses sistemi yoksa null; ses ve titreşim anahtarları gizlenir.</param>
+        /// <param name="privacyOptions">Rıza sağlayıcısı (AdManager); yoksa null ve Gizlilik Tercihleri butonu gizlenir.</param>
         /// <param name="hardReset">Son onaydan sonra çağrılır (GameManager.ResetProgress).</param>
         /// <param name="ui">Tıklama sesi ve kısa mesajlar için; null olabilir.</param>
-        public void Initialize(AudioManager audio, Action hardReset, IUIFeedback ui)
+        public void Initialize(AudioManager audio, IPrivacyOptionsProvider privacyOptions, Action hardReset, IUIFeedback ui)
         {
             Unbind();
             _audio = audio;
+            _privacyOptions = privacyOptions;
             _hardReset = hardReset;
             _ui = ui;
+
+            if (_privacyOptions != null)
+            {
+                _privacyOptions.onPrivacyOptionsChanged += RefreshPrivacyOptionsButton;
+            }
 
             if (_audio != null)
             {
@@ -152,6 +174,7 @@ namespace IdleRestaurant.UI
             BindButton(resetConfirmButton, OnResetConfirmClicked);
             BindButton(resetCancelButton, OnResetCancelClicked);
             BindButton(privacyPolicyButton, OnPrivacyPolicyClicked);
+            BindButton(privacyOptionsButton, OnPrivacyOptionsClicked);
 
             SetText(versionText, Format(texts.versionFormat, Application.version));
 
@@ -164,6 +187,7 @@ namespace IdleRestaurant.UI
             _initialized = true;
             HideResetPopup();
             RefreshSwitches();
+            RefreshPrivacyOptionsButton();
             SetActive(Root, false);
         }
 
@@ -173,6 +197,7 @@ namespace IdleRestaurant.UI
         {
             HideResetPopup();
             RefreshSwitches();
+            RefreshPrivacyOptionsButton();
             SetActive(Root, true);
         }
 
@@ -234,6 +259,11 @@ namespace IdleRestaurant.UI
                 _audio.onSettingsChanged -= RefreshSwitches;
             }
 
+            if (_privacyOptions != null)
+            {
+                _privacyOptions.onPrivacyOptionsChanged -= RefreshPrivacyOptionsButton;
+            }
+
             UnbindSwitch(sfxSwitch);
             UnbindSwitch(hapticsSwitch);
             UnbindButton(closeButton, OnCloseClicked);
@@ -241,8 +271,11 @@ namespace IdleRestaurant.UI
             UnbindButton(resetConfirmButton, OnResetConfirmClicked);
             UnbindButton(resetCancelButton, OnResetCancelClicked);
             UnbindButton(privacyPolicyButton, OnPrivacyPolicyClicked);
+            UnbindButton(privacyOptionsButton, OnPrivacyOptionsClicked);
 
             _audio = null;
+            _privacyOptions = null;
+            _privacyFormOpen = false;
             _hardReset = null;
             _ui = null;
             _initialized = false;
@@ -477,6 +510,45 @@ namespace IdleRestaurant.UI
             }
 
             Application.OpenURL(privacyPolicyUrl);
+        }
+
+        private void OnPrivacyOptionsClicked()
+        {
+            NotifyClick();
+
+            if (_privacyOptions == null || _privacyFormOpen)
+            {
+                return;
+            }
+
+            // Form açıkken ikinci dokunuş ikinci bir form istemesin.
+            _privacyFormOpen = true;
+            SetInteractable(privacyOptionsButton, false);
+
+            _privacyOptions.ShowPrivacyOptionsForm(shown =>
+            {
+                // Form kapanana kadar panel yok edilmiş olabilir (ör. sahne sıfırlandı).
+                if (this == null || !_initialized)
+                {
+                    return;
+                }
+
+                _privacyFormOpen = false;
+                SetInteractable(privacyOptionsButton, true);
+
+                if (!shown && _ui != null)
+                {
+                    _ui.ShowToast(texts.privacyOptionsFailed);
+                }
+
+                RefreshPrivacyOptionsButton();
+            });
+        }
+
+        private void RefreshPrivacyOptionsButton()
+        {
+            bool visible = _privacyOptions != null && _privacyOptions.IsPrivacyOptionsRequired;
+            SetActive(privacyOptionsButton != null ? privacyOptionsButton.gameObject : null, visible);
         }
 
         /// <summary>Yalnızca mutlak http/https adresleri kabul edilir.</summary>

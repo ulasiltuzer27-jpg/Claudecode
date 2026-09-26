@@ -1,5 +1,6 @@
-// Bu dosya yalnızca Google Mobile Ads Unity eklentisi (v8 veya üstü) projeye
-// eklendiğinde derlenir. Etkinleştirmek için:
+// Bu dosya yalnızca Google Mobile Ads Unity eklentisi projeye eklendiğinde
+// derlenir. Eklentinin 9.x sürümüyle doğrulandı (UMP rıza API'leri
+// CanRequestAds ve gizlilik seçenekleri formu için 9.x gerekir). Etkinleştirmek için:
 //   1. https://github.com/googleads/googleads-mobile-unity/releases adresinden
 //      eklentiyi içe aktarın.
 //   2. Assets → Google Mobile Ads → Settings'e AdMob App ID'lerinizi girin.
@@ -9,7 +10,6 @@
 #if ADMOB_ENABLED
 using System;
 using System.Collections;
-using System.Threading;
 using GoogleMobileAds.Api;
 using UnityEngine;
 
@@ -21,8 +21,12 @@ namespace IdleRestaurant.Ads
     /// ── İş parçacığı ────────────────────────────────────────────────────────
     /// AdMob geri çağrıları Android'de Unity ana iş parçacığında GELMEZ; oradan
     /// Unity API'sine (Text, Transform, PlayerPrefs) dokunmak çöker. Her geri
-    /// çağrı, kurulumda yakalanan ana iş parçacığı SynchronizationContext'ine
-    /// gönderiliyor.
+    /// çağrı <see cref="MainThreadContext"/> ile ana iş parçacığına gönderiliyor.
+    ///
+    /// ── Rıza ────────────────────────────────────────────────────────────────
+    /// Initialize, AdManager tarafından ancak UMP rızası reklam istemeye izin
+    /// verdikten sonra çağrılır. Sonraki her yükleme (gösterimden sonra,
+    /// yeniden deneme) de <c>canRequestAds</c> koşuluna bakar.
     ///
     /// ── Ödül ve kapanma sırası ──────────────────────────────────────────────
     /// Ödül geri çağrısı genelde kapanmadan önce gelir ama bazı aracı ağlar
@@ -36,7 +40,8 @@ namespace IdleRestaurant.Ads
 
         private readonly MonoBehaviour _coroutineHost;
         private readonly string _rewardedAdUnitId;
-        private readonly SynchronizationContext _mainThread;
+        private readonly Func<bool> _canRequestAds;
+        private readonly MainThreadContext _mainThread = new MainThreadContext();
 
         private RewardedAd _rewardedAd;
         private bool _isLoading;
@@ -48,11 +53,12 @@ namespace IdleRestaurant.Ads
         private bool _adClosed;
         private bool _showResolved = true;
 
-        public AdMobAdService(MonoBehaviour coroutineHost, string rewardedAdUnitId)
+        /// <param name="canRequestAds">Rıza reklam istemeye izin veriyor mu; her yüklemeden önce sorulur.</param>
+        public AdMobAdService(MonoBehaviour coroutineHost, string rewardedAdUnitId, Func<bool> canRequestAds)
         {
             _coroutineHost = coroutineHost;
             _rewardedAdUnitId = rewardedAdUnitId;
-            _mainThread = SynchronizationContext.Current;
+            _canRequestAds = canRequestAds;
         }
 
         public event Action<bool> onRewardedAdReadyChanged;
@@ -81,6 +87,11 @@ namespace IdleRestaurant.Ads
         {
             // Gösterim sürerken ekrandaki reklam DestroyCurrentAd ile yok edilmemeli.
             if (!IsInitialized || _isLoading || !_showResolved || IsRewardedAdReady)
+            {
+                return;
+            }
+
+            if (_canRequestAds != null && !_canRequestAds())
             {
                 return;
             }
@@ -223,13 +234,7 @@ namespace IdleRestaurant.Ads
 
         private void RunOnMainThread(Action action)
         {
-            if (_mainThread == null || SynchronizationContext.Current == _mainThread)
-            {
-                action();
-                return;
-            }
-
-            _mainThread.Post(_ => action(), null);
+            _mainThread.Run(action);
         }
 
         private bool CanRunCoroutines()
