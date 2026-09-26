@@ -523,10 +523,20 @@ namespace IdleRestaurant.Core
             saveManager.SetStateProvider(null);
             saveManager.DeleteSave();
 
-            if (Application.isPlaying)
+            if (!Application.isPlaying)
             {
-                SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+                return;
             }
+
+            Scene scene = SceneManager.GetActiveScene();
+            if (scene.buildIndex < 0)
+            {
+                Debug.LogError($"[GameManager] '{scene.name}' sahnesi Build Settings'te değil; kayıt silindi ama " +
+                               "sahne yeniden yüklenemedi. Sahneyi File → Build Settings'e ekleyin.", this);
+                return;
+            }
+
+            SceneManager.LoadScene(scene.buildIndex);
         }
 
         // ── Gelir ──────────────────────────────────────────────────────────────

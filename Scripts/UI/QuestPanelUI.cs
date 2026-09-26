@@ -48,14 +48,14 @@ namespace IdleRestaurant.UI
         [SerializeField] private Texts texts = new Texts();
 
         private QuestManager _quests;
-        private UIManager _ui;
+        private IUIFeedback _ui;
         private Quest _shownQuest;
         private QuestState _shownState;
         private bool _dirty;
         private float _nextRefreshTime;
 
         /// <param name="quests">Sahnede görev sistemi yoksa null; panel "görev yok" durumunu gösterir.</param>
-        public void Initialize(QuestManager quests, UIManager ui)
+        public void Initialize(QuestManager quests, IUIFeedback ui)
         {
             Unbind();
             _quests = quests;

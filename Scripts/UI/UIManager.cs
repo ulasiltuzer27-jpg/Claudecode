@@ -27,7 +27,7 @@ namespace IdleRestaurant.UI
     /// "kirli" işaretlenip karenin sonunda BİR kez yenilenir.
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class UIManager : MonoBehaviour
+    public sealed class UIManager : MonoBehaviour, IUIFeedback
     {
         /// <summary>Tek bir istasyonun arayüz referansları. Boş bırakılan alanlar atlanır.</summary>
         [Serializable]
@@ -107,6 +107,12 @@ namespace IdleRestaurant.UI
         [Header("Paneller (isteğe bağlı)")]
         [SerializeField] private QuestPanelUI questPanel;
         [SerializeField] private PrestigePanelUI prestigePanel;
+
+        [Header("Ayarlar")]
+        [Tooltip("Ayarlar panelini açıp kapatan buton (ör. ekran köşesindeki dişli).")]
+        [SerializeField] private Button settingsButton;
+
+        [SerializeField] private SettingsPanelUI settingsPanel;
 
         [Header("Metinler")]
         [SerializeField] private UITexts texts = new UITexts();
@@ -194,6 +200,7 @@ namespace IdleRestaurant.UI
             BindButton(offlineCollectButton, OnOfflineCollectClicked);
             BindButton(offlineDoubleButton, OnOfflineDoubleClicked);
             BindButton(speedBoostButton, OnSpeedBoostClicked);
+            BindButton(settingsButton, OnSettingsClicked);
 
             BindStationViews();
             RefreshAll();
@@ -208,6 +215,16 @@ namespace IdleRestaurant.UI
             if (prestigePanel != null)
             {
                 prestigePanel.Initialize(game.Prestige, game.Currency, this);
+            }
+
+            if (settingsPanel != null)
+            {
+                settingsPanel.Initialize(game.Audio, game.ResetProgress, this);
+            }
+            else if (settingsButton != null)
+            {
+                settingsButton.interactable = false;
+                Debug.LogWarning("[UIManager] Ayarlar butonu var ama SettingsPanelUI atanmamış.", this);
             }
         }
 
@@ -263,6 +280,7 @@ namespace IdleRestaurant.UI
             UnbindButton(offlineCollectButton, OnOfflineCollectClicked);
             UnbindButton(offlineDoubleButton, OnOfflineDoubleClicked);
             UnbindButton(speedBoostButton, OnSpeedBoostClicked);
+            UnbindButton(settingsButton, OnSettingsClicked);
 
             foreach (KeyValuePair<Station, StationView> pair in _viewsByStation)
             {
@@ -356,6 +374,16 @@ namespace IdleRestaurant.UI
             if (!view.station.TryUpgrade())
             {
                 ShowToast(texts.notEnoughMoney);
+            }
+        }
+
+        private void OnSettingsClicked()
+        {
+            NotifyButtonClicked();
+
+            if (settingsPanel != null)
+            {
+                settingsPanel.Toggle();
             }
         }
 

@@ -79,14 +79,14 @@ namespace IdleRestaurant.UI
 
         private PrestigeManager _prestige;
         private CurrencyManager _currency;
-        private UIManager _ui;
+        private IUIFeedback _ui;
         private bool _earningsDirty;
         private float _nextRefreshTime;
         private float _confirmUntil;
         private bool _confirming;
 
         /// <param name="prestige">Sahnede prestij sistemi yoksa null; panel pasif kalır.</param>
-        public void Initialize(PrestigeManager prestige, CurrencyManager currency, UIManager ui)
+        public void Initialize(PrestigeManager prestige, CurrencyManager currency, IUIFeedback ui)
         {
             Unbind();
             _prestige = prestige;
