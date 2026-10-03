@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 11 ve oncesi: oyuncunun ilerlemesi (SharedPreferences) Google
+     hesabina yedeklenir; cihaz degistirince kaybolmaz. -->
+<full-backup-content>
+    <include domain="sharedpref" path="." />
+</full-backup-content>

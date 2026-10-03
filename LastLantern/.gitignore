@@ -1,0 +1,19 @@
+# Gradle / derleme ciktilari
+.gradle/
+.kotlin/
+build/
+**/build/
+local.properties
+
+# libGDX native kutuphaneleri derleme sirasinda jar'lardan kopyalanir
+android/libs/
+
+# Imza anahtarlari ASLA depoya girmez
+*.jks
+*.keystore
+keystore.properties
+
+# Masaustu gelistirme ciktilari
+captures/
+.idea/
+*.iml

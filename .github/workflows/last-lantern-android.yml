@@ -1,0 +1,133 @@
+name: Last Lantern (Android)
+
+on:
+  push:
+    paths:
+      - "LastLantern/**"
+      - ".github/workflows/last-lantern-android.yml"
+  pull_request:
+    paths:
+      - "LastLantern/**"
+      - ".github/workflows/last-lantern-android.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: last-lantern-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: LastLantern
+
+jobs:
+  test:
+    name: Core testleri
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Testler (ANDROID_HOME olmadan, yerel ortamla ayni)
+        run: env -u ANDROID_HOME -u ANDROID_SDK_ROOT ./gradlew :core:test :lwjgl3:installDist --console=plain
+      - name: Test raporu
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: core-test-report
+          path: LastLantern/core/build/reports/tests/test
+
+  android:
+    name: APK + AAB
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Upload anahtarini coz (secret varsa)
+        env:
+          KEYSTORE_B64: ${{ secrets.LL_UPLOAD_KEYSTORE_B64 }}
+        run: |
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/upload.jks"
+            echo "LL_KEYSTORE_PATH=$RUNNER_TEMP/upload.jks" >> "$GITHUB_ENV"
+            echo "Imzali release derlemesi."
+          else
+            echo "LL_UPLOAD_KEYSTORE_B64 tanimli degil: release AAB imzasiz uretilecek."
+          fi
+      - name: Derle
+        env:
+          LL_KEYSTORE_PASSWORD: ${{ secrets.LL_KEYSTORE_PASSWORD }}
+          LL_KEY_ALIAS: ${{ secrets.LL_KEY_ALIAS }}
+          LL_KEY_PASSWORD: ${{ secrets.LL_KEY_PASSWORD }}
+        run: >
+          ./gradlew --console=plain
+          -PVERSION_CODE=${{ github.run_number }}
+          :android:assembleDebug :android:bundleRelease :android:lintRelease
+      - name: 16 KB sayfa hizasi (Play zorunlulugu)
+        run: |
+          BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          echo "build-tools: $BT"
+          "$BT/zipalign" -c -P 16 -v 4 android/build/outputs/apk/debug/android-debug.apk | tail -5
+          for so in android/libs/*/*.so; do
+            align=$(readelf -lW "$so" | awk '/LOAD/ {print $NF}' | sort -u | tr '\n' ' ')
+            echo "$so -> $align"
+            case "$so" in
+              *arm64-v8a*|*x86_64*) echo "$align" | grep -qv '0x1000' || { echo "4 KB hizali: $so"; exit 1; } ;;
+            esac
+          done
+      - name: Lint raporu
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lint-report
+          path: LastLantern/android/build/reports/lint-results-release.html
+          if-no-files-found: ignore
+      - uses: actions/upload-artifact@v4
+        with:
+          name: last-lantern-debug-apk
+          path: LastLantern/android/build/outputs/apk/debug/android-debug.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: last-lantern-release-aab
+          path: LastLantern/android/build/outputs/bundle/release/*.aab
+
+  smoke:
+    name: Emulator acilis testi
+    needs: android
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: last-lantern-debug-apk
+          path: apk
+      - name: KVM
+        working-directory: .
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: API 35 emulatorunde ac
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          target: google_apis
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot
+          working-directory: .
+          script: bash LastLantern/tools/ci/smoke_test.sh apk/android-debug.apk
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: smoke-test
+          path: smoke/
