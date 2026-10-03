@@ -16,6 +16,13 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
+  <!-- StarfallIsle/ ayri bir oyun (Three.js + Electron). SDK'nin varsayilan
+       `**/*` glob'u onun node_modules'unu taramasin: binlerce dosya her
+       `dotnet build`'i yavaslatir ve bu projeyle hicbir ilgisi yok. -->
+  <PropertyGroup>
+    <DefaultItemExcludes>$(DefaultItemExcludes);StarfallIsle/**</DefaultItemExcludes>
+  </PropertyGroup>
+
   <PropertyGroup>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Icon.ico</ApplicationIcon>
