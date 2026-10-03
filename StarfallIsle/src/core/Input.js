@@ -131,6 +131,16 @@ export class Input {
     }
   }
 
+  // Ayni karedeki sonraki alt adimlar "yeni basildi" olaylarini tekrar gormesin.
+  consumeEdges() {
+    this.pressedKeys.clear();
+    this.releasedKeys.clear();
+    this.pad.prev = this.pad.buttons;
+    this.mouse.dx = 0;
+    this.mouse.dy = 0;
+    this.mouse.wheel = 0;
+  }
+
   endFrame() {
     this.pressedKeys.clear();
     this.releasedKeys.clear();

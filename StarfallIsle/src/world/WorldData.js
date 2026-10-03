@@ -53,7 +53,7 @@ export const HINT_SIGN = { x: -128, z: -96, yaw: -2.2 };
 export const NPCS = {
   owl: { kind: 'owl', x: 8, z: 150, yaw: Math.PI, voice: 0.8 },
   owlPeak: { kind: 'owl', x: LAYOUT.peak.x + 3, z: LAYOUT.peak.z + 6, yaw: 0.3, voice: 0.8 },
-  hedgehog: { kind: 'hedgehog', x: -7.6, z: 110, yaw: Math.PI / 2, voice: 1.3 },
+  hedgehog: { kind: 'hedgehog', x: -4.2, z: 112.4, yaw: Math.PI / 2 + 0.35, voice: 1.3 },
   frog: { kind: 'frog', x: 6, z: -6, yaw: -0.8, voice: 1.5 },
   bear: { kind: 'bear', x: 132, z: 50, yaw: 0.9, voice: 0.6 },
   rabbit: { kind: 'rabbit', x: -46, z: 54, yaw: 2.6, voice: 1.4 },

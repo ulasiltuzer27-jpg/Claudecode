@@ -2,16 +2,16 @@
 import * as THREE from 'three';
 
 const KEYS = [
-  { h: 0.0, top: '#0a1230', hor: '#1b2a57', sun: '#8fa8ff', si: 0.32, sky: '#3a4a8a', gnd: '#1a1d2e', hi: 0.55, fog: '#1b2650' },
-  { h: 4.5, top: '#101a42', hor: '#2c3466', sun: '#8fa8ff', si: 0.28, sky: '#3a4a8a', gnd: '#1a1d2e', hi: 0.5, fog: '#252c5c' },
-  { h: 5.6, top: '#2d3d7a', hor: '#d98c8f', sun: '#ffb58a', si: 0.6, sky: '#7a7bb5', gnd: '#3d3442', hi: 0.6, fog: '#b98a94' },
-  { h: 6.8, top: '#5f95dc', hor: '#ffcfa0', sun: '#ffd2a0', si: 1.6, sky: '#a9c8f0', gnd: '#5c5a4a', hi: 0.75, fog: '#f2d2b6' },
+  { h: 0.0, top: '#0a1230', hor: '#1b2a57', sun: '#9fb4ff', si: 0.5, sky: '#5060a8', gnd: '#262a40', hi: 0.85, fog: '#1b2650' },
+  { h: 4.5, top: '#101a42', hor: '#2c3466', sun: '#9fb4ff', si: 0.45, sky: '#5060a8', gnd: '#262a40', hi: 0.8, fog: '#252c5c' },
+  { h: 5.6, top: '#2d3d7a', hor: '#d98c8f', sun: '#ffb58a', si: 0.9, sky: '#8c8cc8', gnd: '#4a4050', hi: 0.85, fog: '#b98a94' },
+  { h: 6.8, top: '#5f95dc', hor: '#ffcfa0', sun: '#ffd2a0', si: 1.8, sky: '#b4d0f4', gnd: '#6a6650', hi: 0.9, fog: '#f2d2b6' },
   { h: 9.0, top: '#3d93f2', hor: '#c4e6ff', sun: '#fff3df', si: 2.6, sky: '#b9dcff', gnd: '#6b6f4f', hi: 0.9, fog: '#cfe7fb' },
   { h: 15.5, top: '#3b8eef', hor: '#cfe9ff', sun: '#fff0d8', si: 2.5, sky: '#b9dcff', gnd: '#6b6f4f', hi: 0.9, fog: '#d3e9fb' },
   { h: 18.0, top: '#4d72c2', hor: '#ffb07a', sun: '#ffb070', si: 1.7, sky: '#c9b3c8', gnd: '#5c4a40', hi: 0.75, fog: '#f4c09c' },
   { h: 19.3, top: '#2e3a7a', hor: '#e8807a', sun: '#ff8a6a', si: 0.75, sky: '#8a78a8', gnd: '#3d3040', hi: 0.6, fog: '#b9788a' },
-  { h: 20.6, top: '#141f4c', hor: '#4a3f7a', sun: '#8fa8ff', si: 0.3, sky: '#3f4a8a', gnd: '#1e1d30', hi: 0.55, fog: '#2e2e60' },
-  { h: 24.0, top: '#0a1230', hor: '#1b2a57', sun: '#8fa8ff', si: 0.32, sky: '#3a4a8a', gnd: '#1a1d2e', hi: 0.55, fog: '#1b2650' },
+  { h: 20.6, top: '#141f4c', hor: '#4a3f7a', sun: '#9fb4ff', si: 0.48, sky: '#5060a8', gnd: '#262a40', hi: 0.82, fog: '#2e2e60' },
+  { h: 24.0, top: '#0a1230', hor: '#1b2a57', sun: '#9fb4ff', si: 0.5, sky: '#5060a8', gnd: '#262a40', hi: 0.85, fog: '#1b2650' },
 ];
 for (const k of KEYS) for (const p of ['top', 'hor', 'sun', 'sky', 'gnd', 'fog']) k[p] = new THREE.Color(k[p]);
 

@@ -62,11 +62,11 @@ export class Grass {
           float dist = length(wxz - uCenter);
           float fade = 1.0 - smoothstep(uSize * 0.3, uSize * 0.48, dist);
           float keep = step(aOffset.z, density) * fade;
-          float h = (0.35 + aOffset.w * 0.45) * (0.55 + mask.r * 0.6) * keep;
+          float h = (0.16 + aOffset.w * 0.22) * (0.6 + mask.r * 0.5) * keep;
           float ang = aOffset.z * 43.98;
           float c = cos(ang), s = sin(ang);
           vec3 bp = vec3(position.x * c, position.y * h, position.x * s);
-          float wind = sin(uTime * 1.6 + wxz.x * 0.15 + wxz.y * 0.1) * 0.5 + 0.6 + sin(uTime * 3.3 + wxz.x * 0.6 + wxz.y * 0.4) * 0.15;
+          float wind = 0.7 * sin(uTime * 1.6 + wxz.x * 0.15 + wxz.y * 0.1) * 0.5 + 0.6 + sin(uTime * 3.3 + wxz.x * 0.6 + wxz.y * 0.4) * 0.15;
           float bend = position.y * position.y;
           bp.xz += vec2(0.92, 0.38) * wind * 0.25 * bend * h;
           vec2 toP = wxz - uPlayer.xz;
@@ -75,15 +75,19 @@ export class Grass {
           bp.xz += (toP / max(pd, 0.001)) * push * 0.5 * bend * h;
           bp.y -= push * 0.25 * bend * h;
           vec3 transformed = vec3(wxz.x, ground - 0.02, wxz.y) + bp;
-          vec3 base = mix(vec3(0.22, 0.48, 0.2), vec3(0.38, 0.52, 0.18), mask.g);
-          vec3 tip = mix(vec3(0.55, 0.82, 0.38), vec3(0.78, 0.86, 0.42), mask.g);
-          base = mix(base, base * 0.75, mask.b);
-          tip = mix(tip, vec3(0.42, 0.7, 0.36), mask.b);
+          // renkler dogrusal uzayda (sRGB #3f8f3a -> #9ad46a)
+          vec3 base = mix(vec3(0.05, 0.27, 0.04), vec3(0.12, 0.3, 0.03), mask.g);
+          vec3 tip = mix(vec3(0.3, 0.64, 0.13), vec3(0.5, 0.7, 0.13), mask.g);
+          base = mix(base, base * 0.7, mask.b);
+          tip = mix(tip, vec3(0.16, 0.45, 0.12), mask.b);
           vGrassColor = mix(base, tip, position.y) * (0.88 + aOffset.w * 0.24);
         `);
       shader.fragmentShader = shader.fragmentShader
         .replace('#include <common>', '#include <common>\nvarying vec3 vGrassColor;')
-        .replace('vec4 diffuseColor = vec4( diffuse, opacity );', 'vec4 diffuseColor = vec4( vGrassColor, opacity );');
+        .replace('vec4 diffuseColor = vec4( diffuse, opacity );', 'vec4 diffuseColor = vec4( vGrassColor, opacity );')
+        // Cift yuzlu malzemede arka yuzun normali ters cevrilir ve yapraklarin
+        // yarisi simsiyah gorunur. Cimen icin normal hep "yukari" kalsin.
+        .replace('#include <normal_fragment_begin>', 'float faceDirection = 1.0;\nvec3 normal = normalize( vNormal );\nvec3 nonPerturbedNormal = normal;');
     };
     this.mesh = new THREE.Mesh(geo, mat);
     this.mesh.frustumCulled = false;

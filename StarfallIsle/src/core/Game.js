@@ -17,7 +17,7 @@ import { Fishing } from '../gameplay/Fishing.js';
 import { Finale } from '../gameplay/Lighthouse.js';
 import { PhotoMode } from '../gameplay/PhotoMode.js';
 import { Stats } from '../achievements/Stats.js';
-import { AchievementTracker } from '../achievements/AchievementTracker.js';
+import { AchievementTracker, ACHIEVEMENTS } from '../achievements/AchievementTracker.js';
 import { AudioEngine } from '../audio/Audio.js';
 import { UI } from '../ui/UI.js';
 import { MainMenu, PauseMenu, JournalScreen } from '../ui/Screens.js';
@@ -423,29 +423,46 @@ export class Game {
   }
 
   // ---------------- dongu ----------------
+  // Yavas karelerde simulasyon 1/60 sn'lik alt adimlara bolunur: oyun zamani
+  // gercek zamanla ayni hizda akar, fizik kararli kalir. Tek seferlik tus
+  // olaylari (ziplama gibi) yalnizca ilk alt adimda islenir.
   frame(ts) {
-    const dt = Math.min(0.05, (ts - this.last) / 1000);
+    const raw = Math.max(0, (ts - this.last) / 1000);
     this.last = ts;
+    this.realDt = raw;
+    const maxSteps = this.testMode ? 30 : 6;
+    const total = Math.min(raw, maxSteps / 60);
+    const steps = Math.max(1, Math.ceil(total * 60 - 1e-6));
+    const dt = total / steps;
     try {
-      this.update(dt);
+      for (let i = 0; i < steps; i++) {
+        this.update(dt, i === 0);
+        if (i === 0) this.input.consumeEdges();
+      }
     } catch (err) {
       console.error(err);
     }
-    this.renderer.render(dt);
+    try {
+      this.renderer.render(total);
+    } catch (err) {
+      console.error(err);
+    }
     this.input.endFrame();
     requestAnimationFrame((t2) => this.frame(t2));
   }
 
-  update(dt) {
+  update(dt, firstStep = true) {
     const input = this.input;
-    input.update();
+    if (firstStep) input.update();
     this.time += dt;
     const st = this.state;
     const playing = st === 'playing';
 
-    // fps
-    this._fpsAcc = (this._fpsAcc || 0) + dt;
-    this._fpsN = (this._fpsN || 0) + 1;
+    // fps (gercek kare suresinden; alt adimlar sayilmaz)
+    if (firstStep) {
+      this._fpsAcc = (this._fpsAcc || 0) + (this.realDt || dt);
+      this._fpsN = (this._fpsN || 0) + 1;
+    }
     if (this._fpsAcc > 0.5) {
       this.fps = this._fpsN / this._fpsAcc;
       this.ui.hud.fps(this.fps, this.settings.get('showFps'));
@@ -478,6 +495,7 @@ export class Game {
       if (st !== 'playing') this.player.frozen = true;
       this.player.update(dt, input, this.cameraRig.yaw);
       if (st !== 'playing') this.player.frozen = prevFrozen;
+      if (this.testMode) this.peakY = Math.max(this.peakY ?? -1e9, this.player.pos.y);
       if (!frozen || st === 'dialogue') this.cameraRig.update(dt, st === 'playing' ? input : null, this.player);
       else this.cameraRig.update(dt, null, this.player);
       this.collectibles.update(dt, this.player);
@@ -593,6 +611,18 @@ export class Game {
       if (Math.hypot(this.player.pos.x - s.x, this.player.pos.z - s.z) < 2.2) return s;
     }
     return null;
+  }
+
+  // --- test kancalari (tools/playtest.mjs) ---
+  testCatch(id) {
+    const f = WD.FISH.find((x) => x.id === id);
+    if (!this.fishing.spot) this.fishing.spot = { pos: this.player.pos.clone(), lake: false };
+    this.fishing.fish = f;
+    this.fishing.catch();
+  }
+
+  achievementsMissing() {
+    return ACHIEVEMENTS.filter((a) => !this.achievements.isUnlocked(a.id)).map((a) => a.id);
   }
 
   campfireDialogue() {

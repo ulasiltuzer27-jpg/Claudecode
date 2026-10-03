@@ -294,9 +294,10 @@ export class Player {
         g.stats.add('swim_m', m);
       }
     }
-    if (this.gliding && this.glideStart) {
-      const dist = Math.hypot(this.pos.x - this.glideStart.x, this.pos.z - this.glideStart.z);
-      this.currentGlide = dist;
+    // suzulme mesafesi: katedilen yatay yol (akinti geri itse de sayilir)
+    if (this.gliding) {
+      this.currentGlide = (this.currentGlide || 0) + hs * dt;
+      if (this.currentGlide >= 1) g.stats.max('glide_max', Math.floor(this.currentGlide));
     }
     if (!this.grounded && !this.swimming && this.airTime > 1) g.stats.max('air_max', Math.floor(this.airTime));
 
@@ -325,12 +326,9 @@ export class Player {
   endGlide() {
     if (!this.gliding) return;
     this.gliding = false;
-    if (this.glideStart) {
-      const dist = Math.hypot(this.pos.x - this.glideStart.x, this.pos.z - this.glideStart.z);
-      this.game.stats.max('glide_max', Math.floor(dist));
-      this.glideStart = null;
-      this.currentGlide = 0;
-    }
+    if (this.currentGlide) this.game.stats.max('glide_max', Math.floor(this.currentGlide));
+    this.glideStart = null;
+    this.currentGlide = 0;
   }
 
   recordAir() {

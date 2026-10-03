@@ -33,11 +33,10 @@ export class Finale {
       uniforms: this.beamUniforms, vertexShader: beamVert, fragmentShader: beamFrag,
       transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, fog: false,
     });
-    const g = new THREE.CylinderGeometry(0.5, 9, 90, 24, 1, true);
+    // Silindirin ust yaricapi genis, alti dar: kaydirinca dar uc lambaya
+    // (y=0) oturur. Dar uctaki uv.y=0, parlaklik orada en yuksek.
+    const g = new THREE.CylinderGeometry(9, 0.5, 90, 24, 1, true);
     g.translate(0, 45, 0);
-    // uv.y: tabanda 0 -> lambada 0 olmali; silindirin uv'si alttan uste, cevir
-    const uv = g.attributes.uv;
-    for (let i = 0; i < uv.count; i++) uv.setY(i, 1 - uv.getY(i));
     g.rotateZ(-Math.PI / 2);
     const g2 = g.clone().rotateY(Math.PI);
     this.beam = new THREE.Group();

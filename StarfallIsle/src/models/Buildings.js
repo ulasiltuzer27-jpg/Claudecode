@@ -10,6 +10,26 @@ import { part, merge, box, cyl, cone, sphere, prism, mesh, vcMaterial, jitter, p
 import { rockGeo, crystalGeo } from './Nature.js';
 import { mulberry32 } from '../world/noise.js';
 
+// Ucgen sarimini ters cevir (ic yuzey) ve tek renge boya.
+function flipFaces(g, color) {
+  const pos = g.attributes.position;
+  const nrm = g.attributes.normal;
+  const col = g.attributes.color;
+  const c = new THREE.Color(color);
+  for (let i = 0; i < pos.count; i += 3) {
+    for (const attr of [pos, nrm]) {
+      const ax = attr.getX(i + 1), ay = attr.getY(i + 1), az = attr.getZ(i + 1);
+      attr.setXYZ(i + 1, attr.getX(i + 2), attr.getY(i + 2), attr.getZ(i + 2));
+      attr.setXYZ(i + 2, ax, ay, az);
+    }
+  }
+  for (let i = 0; i < nrm.count; i++) {
+    nrm.setXYZ(i, -nrm.getX(i), -nrm.getY(i), -nrm.getZ(i));
+    col.setXYZ(i, c.r, c.g, c.b);
+  }
+  return g;
+}
+
 function result() {
   return { group: new THREE.Group(), colliders: [], glow: [], anchors: {} };
 }
@@ -397,8 +417,13 @@ export function rowboat() {
     const c = new THREE.Color(y > -0.12 ? '#3f7fc4' : '#e8f1f7');
     for (let j = 0; j < 3; j++) col.setXYZ(i + j, c.r, c.g, c.b);
   }
+  // Kase yukaridan bakilinca ic yuzunden gorunur: ters sarimli bir ic kabuk ekle.
+  const inner = hull.clone();
+  inner.scale(0.94, 0.94, 0.96);
+  flipFaces(inner, P.wood);
   add(res, [
     hull,
+    inner,
     box(P.wood, 1.5, 0.06, 0.3, { pos: [0, -0.1, 0.3] }),
     box(P.wood, 1.3, 0.06, 0.3, { pos: [0, -0.1, -0.9] }),
     cyl(P.wood, 0.03, 0.03, 2.0, { pos: [0.75, 0.05, 0], rot: [0.2, 0, Math.PI / 2 - 0.3] }, 5),

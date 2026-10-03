@@ -97,9 +97,9 @@ export class World {
 
   collectExclusions() {
     const ex = this.exclusions;
-    for (const c of WD.VILLAGE.cottages) ex.push({ x: c.x, z: c.z, r: 4.2 });
+    for (const c of WD.VILLAGE.cottages) ex.push({ x: c.x, z: c.z, r: 5.5 });
     ex.push({ x: WD.VILLAGE.shop.x, z: WD.VILLAGE.shop.z, r: 2.8 });
-    ex.push({ x: WD.VILLAGE.campfire.x, z: WD.VILLAGE.campfire.z, r: 3.5 });
+    ex.push({ x: WD.VILLAGE.campfire.x, z: WD.VILLAGE.campfire.z, r: 11 });
     ex.push({ x: WD.LANDMARKS.lighthouse.x, z: WD.LANDMARKS.lighthouse.z, r: 5 });
     ex.push({ x: WD.LANDMARKS.windmill.x, z: WD.LANDMARKS.windmill.z, r: 4 });
     ex.push({ x: WD.LANDMARKS.dome.x, z: WD.LANDMARKS.dome.z, r: 7 });
@@ -196,11 +196,11 @@ export class World {
     const dock = B.dock(D.length);
     this.place(dock, D.x, D.y, D.z0, 0, 'dock');
     const boat = B.rowboat();
-    this.place(boat, D.x + 2.9, 0.35, D.z0 + D.length - 4, 0.15, 'boat');
+    this.place(boat, D.x + 2.9, 0.38, D.z0 + D.length - 4, 0.15, 'boat');
     this.boat = boat.group;
     this.anchors.set('boat', new THREE.Vector3(D.x + 2.9, 1.6, D.z0 + D.length - 4));
     this.animated.push((t) => {
-      this.boat.position.y = 0.3 + Math.sin(t * 1.3) * 0.06;
+      this.boat.position.y = 0.38 + Math.sin(t * 1.3) * 0.06;
       this.boat.rotation.z = Math.sin(t * 1.1) * 0.04;
     });
 
@@ -262,7 +262,7 @@ export class World {
     const dy = this.groundY(L.dome.x, L.dome.z);
     this.place(dome, L.dome.x, dy - 0.3, L.dome.z, L.dome.yaw, 'dome');
     this.anchors.set('domeInside', new THREE.Vector3(L.dome.x, dy + 1.0, L.dome.z));
-    const caveLight = new THREE.PointLight('#7ef0ff', 6, 12, 1.5);
+    const caveLight = new THREE.PointLight('#7ef0ff', 45, 14, 1.4);
     caveLight.position.set(L.dome.x, dy + 2, L.dome.z);
     this.scene.add(caveLight);
 
