@@ -25,7 +25,7 @@ object Capture {
     val scenarios = listOf(
         "menu", "stages", "heroes", "camp", "achievements", "settings", "supporter",
         "game_start", "game_early", "game_crowd", "game_late", "levelup", "chest", "boss", "results",
-        "drowned", "frozen", "evolve",
+        "drowned", "frozen", "evolve", "tutorial",
     )
 
     fun firstScreen(game: LastLanternGame): Screen {
@@ -53,6 +53,7 @@ object Capture {
             "settings" -> SettingsScreen(game)
             "supporter" -> SupporterScreen(game)
             "game_start" -> game(game, "woods", "keeper", 4f)
+            "tutorial" -> GameScreen.tutorial(game)
             "game_early" -> game(game, "woods", "keeper", 75f)
             "game_crowd" -> game(game, "woods", "keeper", 330f, meta = true, skill = 0.6f)
             "game_late" -> game(game, "woods", "keeper", 470f, meta = true)

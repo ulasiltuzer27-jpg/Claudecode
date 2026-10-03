@@ -28,6 +28,7 @@ for t in 5 10 15 20 25 30 35; do
   echo "[$t sn] pid: ${PID:-yok}"
   if [ "$t" = "10" ] || [ "$t" = "30" ]; then
     adb exec-out screencap -p > "$OUT/screen_${t}s.png" 2>/dev/null || true
+    echo "[$t sn] odak: $(adb shell dumpsys window 2>/dev/null | grep -m1 -E 'mCurrentFocus' | tr -d '\r' | sed 's/^ *//')"
   fi
   if [ "$t" = "15" ]; then
     # Dokunus: egitim joystick'ini ve hareketi tetikler
@@ -70,7 +71,19 @@ def stats(path):
         r = rows[y]
         for x in range(0, w, 8):
             px = r[x*bpp:x*bpp+3]; tot += sum(px); n += 3; colors.add(bytes(px))
-    return f'{w}x{h} ortalama parlaklik={tot/max(1,n):.1f} farkli renk(ornek)={len(colors)}'
+    ramp = ' .:-=+*#%@'
+    art = []
+    cols, rws = 32, 32
+    for ry in range(rws):
+        y = min(h - 1, int((ry + 0.5) * h / rws))
+        line = ''
+        for cx in range(cols):
+            x = min(w - 1, int((cx + 0.5) * w / cols))
+            px = rows[y][x*bpp:x*bpp+3]
+            v = (px[0] * 3 + px[1] * 4 + px[2]) / 8 / 255
+            line += ramp[min(len(ramp) - 1, int(v ** 0.6 * len(ramp)))]
+        art.append('    |' + line + '|')
+    return f'{w}x{h} ortalama parlaklik={tot/max(1,n):.1f} farkli renk(ornek)={len(colors)}\n' + '\n'.join(art)
 for p in sorted(glob.glob(sys.argv[1] + '/*.png')):
     print(p, stats(p))
 PY
