@@ -1,0 +1,5 @@
+# Varlik ureticileri (python3 tools/gen_all.py --audio)
+pillow>=10.0
+numpy>=1.26
+scipy>=1.11
+# Ayrica: ffmpeg (libvorbis ile) — ses dosyalarini OGG'ye kodlar
