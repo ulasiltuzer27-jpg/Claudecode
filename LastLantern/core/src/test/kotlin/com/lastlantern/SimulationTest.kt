@@ -62,6 +62,30 @@ class SimulationTest {
     }
 
     @Test
+    fun bellRingHitsEachEnemyOncePerRing() {
+        // Regresyon: ayni anda iki halka varken birbirinin kaydini ezip her
+        // karede yeniden vuruyordu (10 dusmana 40 yerine 150 isabet).
+        val w = World(RunConfig(Content.stage("woods"), Content.character("keeper"), seed = 5))
+        w.weapons.clear()
+        val bell = w.addWeapon("bell")
+        repeat(5) { bell.levelUp() }
+        for (j in 0 until 10) {
+            val a = j * 0.628f
+            val i = w.spawnEnemy("golem", kotlin.math.cos(a) * 40f, kotlin.math.sin(a) * 40f)
+            w.enemies.hp[i] = 1e9f; w.enemies.speed[i] = 0f; w.enemies.damage[i] = 0f
+        }
+        var hits = 0
+        repeat(60 * 6) {
+            w.update(dt, 0f, 0f)
+            for (k in 0 until w.events.count) if (w.events.type[k] == com.lastlantern.sim.Ev.HIT) hits++
+            w.events.clear()
+            w.state = RunState.PLAYING
+        }
+        // 6 sn, bekleme 3 sn, 2 halka -> 4 halka x 10 dusman
+        assertEquals(40, hits)
+    }
+
+    @Test
     fun tickPerformanceUnderLoad() {
         val w = World(RunConfig(Content.stage("woods"), Content.character("keeper"), seed = 3))
         // Butun silahlari ekle ve kalabalik olustur

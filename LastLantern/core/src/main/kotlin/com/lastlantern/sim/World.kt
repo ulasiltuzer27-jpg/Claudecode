@@ -217,7 +217,7 @@ class World(val config: RunConfig) {
         val dmgMul: Float
         when (d.tier) {
             Tier.NORMAL -> {
-                hpMul = stage.hpMult * (1f + 0.12f * t) * (if (elite) 8f else 1f) * endlessCurse()
+                hpMul = stage.hpMult * (1f + 0.13f * t) * (if (elite) 8f else 1f) * endlessCurse()
                 dmgMul = stage.dmgMult * (1f + 0.04f * t) * (if (elite) 1.5f else 1f) * endlessCurse()
             }
             else -> {
@@ -701,12 +701,12 @@ class World(val config: RunConfig) {
                     val ringId = a.id[i]
                     val stun = a.evolved[i]
                     grid.query(ax, ay, r + 24f) { j ->
-                        if (enemies.active[j] && enemies.lastRing[j] != ringId) {
+                        if (enemies.active[j] && !enemies.ringHit(j, ringId)) {
                             val dx = enemies.x[j] - ax
                             val dy = enemies.y[j] - ay
                             val d = sqrt(dx * dx + dy * dy)
                             if (d < r + enemies.radius[j]) {
-                                enemies.lastRing[j] = ringId
+                                enemies.markRing(j, ringId)
                                 if (stun && enemies.def[j]!!.tier == Tier.NORMAL) enemies.stun[j] = 0.9f
                                 hitEnemy(j, a.damage[i], ax, ay, a.knock[i], a.slot[i])
                             }

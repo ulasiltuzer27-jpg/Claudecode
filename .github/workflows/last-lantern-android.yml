@@ -85,6 +85,9 @@ jobs:
               *arm64-v8a*|*x86_64*) echo "$align" | grep -qv '0x1000' || { echo "4 KB hizali: $so"; exit 1; } ;;
             esac
           done
+      - name: Lint metin raporu (hata varsa)
+        if: failure()
+        run: cat android/build/intermediates/lint_intermediate_text_report/release/lintReportRelease/lint-results-release.txt || true
       - name: Lint raporu
         if: always()
         uses: actions/upload-artifact@v4

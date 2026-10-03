@@ -75,10 +75,26 @@ class EnemyPool(cap: Int, val weaponSlots: Int) : SlotPool(cap) {
     val stun = FloatArray(cap)
     val anim = FloatArray(cap)
     val facing = IntArray(cap)
-    val lastRing = IntArray(cap)   // son vuran can dalgasinin kimligi
+    /**
+     * Son vuran can dalgalarinin kimlikleri (4'luk halka tampon). Tek bir
+     * "son halka" alani yetmiyordu: ayni anda iki halka varken birbirinin
+     * kaydini ezip ayni dusmana her karede yeniden vuruyorlardi.
+     */
+    val ringHits = IntArray(cap * 4)
+    val ringNext = IntArray(cap)
     val phase = IntArray(cap)      // boss asamasi (can esikleri)
     val hitCd = FloatArray(cap * weaponSlots)
     private var nextUid = 1
+
+    fun ringHit(i: Int, ringId: Int): Boolean {
+        val b = i * 4
+        return ringHits[b] == ringId || ringHits[b + 1] == ringId || ringHits[b + 2] == ringId || ringHits[b + 3] == ringId
+    }
+
+    fun markRing(i: Int, ringId: Int) {
+        ringHits[i * 4 + ringNext[i]] = ringId
+        ringNext[i] = (ringNext[i] + 1) and 3
+    }
 
     fun spawn(d: EnemyDef, index: Int, px: Float, py: Float, hpMul: Float, dmgMul: Float): Int {
         val i = alloc()
@@ -100,7 +116,8 @@ class EnemyPool(cap: Int, val weaponSlots: Int) : SlotPool(cap) {
         flash[i] = 0f; slow[i] = 0f; stun[i] = 0f
         anim[i] = (uid[i] % 7) * 0.13f
         facing[i] = 1
-        lastRing[i] = 0
+        for (k in 0 until 4) ringHits[i * 4 + k] = 0
+        ringNext[i] = 0
         phase[i] = 0
         val base = i * weaponSlots
         for (k in 0 until weaponSlots) hitCd[base + k] = 0f

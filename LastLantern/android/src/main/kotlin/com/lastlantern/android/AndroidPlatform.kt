@@ -291,7 +291,12 @@ class AndroidPlatform(private val activity: AndroidLauncher) : PlatformServices,
             activity.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
         }
         if (v == null || !v.hasVibrator()) return
-        v.vibrate(VibrationEffect.createOneShot(millis.toLong(), VibrationEffect.DEFAULT_AMPLITUDE))
+        if (Build.VERSION.SDK_INT >= 26) {
+            v.vibrate(VibrationEffect.createOneShot(millis.toLong(), VibrationEffect.DEFAULT_AMPLITUDE))
+        } else {
+            @Suppress("DEPRECATION")
+            v.vibrate(millis.toLong())
+        }
     }
 
     override fun openUrl(url: String) {

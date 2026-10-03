@@ -549,7 +549,7 @@ class SickleWeapon(w: World, def: WeaponDef, slot: Int) : Weapon(w, def, slot) {
         s.spin[i] = 14f
         s.scale[i] = area
         s.evolved[i] = evolved
-        s.rehit[i] = if (evolved) 0.5f else 0f
+        s.rehit[i] = if (evolved) 0.8f else 0f
         s.rehitTimer[i] = 0.5f
         s.sprite[i] = if (evolved) "proj_reaper" else "proj_sickle"
     }

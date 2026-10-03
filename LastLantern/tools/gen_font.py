@@ -53,7 +53,13 @@ INK = (255, 255, 255, 255)
 
 def charset() -> list[str]:
     chars = pixelfont.charset()
-    return chars + [c for c in EXTRA_GLYPHS if c not in chars]
+    extra = list(EXTRA_GLYPHS) + list(CIRCUMFLEX)
+    return chars + [c for c in extra if c not in chars]
+
+
+# Sapkali harfler (Turkcede "hala", "kar", "rüzgar" gibi): temel harf + sapka.
+CIRCUMFLEX = {"â": "a", "Â": "A", "î": "ı", "û": "u", "Û": "U", "ê": "e"}
+CIRCUMFLEX_MARK = ["..#..", ".#.#.", "....."]
 
 
 def glyph_bitmap(ch: str) -> list[list[bool]]:
@@ -61,8 +67,9 @@ def glyph_bitmap(ch: str) -> list[list[bool]]:
     height = pixelfont.FULL_HEIGHT
     width = pixelfont.GLYPH_WIDTH
     cell = [[False] * width for _ in range(height)]
-    body = EXTRA_GLYPHS.get(ch) or pixelfont.glyph_rows(ch)
-    accent = pixelfont.ACCENTS.get(ch)
+    base = CIRCUMFLEX.get(ch, ch)
+    body = EXTRA_GLYPHS.get(ch) or pixelfont.glyph_rows(base)
+    accent = CIRCUMFLEX_MARK if ch in CIRCUMFLEX else pixelfont.ACCENTS.get(ch)
     if accent:
         marks = [row for row in accent if "#" in row] or accent[:1]
         offset = pixelfont.ACCENT - len(marks)
