@@ -128,6 +128,7 @@ jobs:
           arch: x86_64
           target: google_apis
           disable-animations: true
+          ram-size: 3072M
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot
           working-directory: .
           script: bash LastLantern/tools/ci/smoke_test.sh apk/android-debug.apk
