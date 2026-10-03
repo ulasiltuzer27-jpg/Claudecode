@@ -262,7 +262,7 @@ export class World {
     const dy = this.groundY(L.dome.x, L.dome.z);
     this.place(dome, L.dome.x, dy - 0.3, L.dome.z, L.dome.yaw, 'dome');
     this.anchors.set('domeInside', new THREE.Vector3(L.dome.x, dy + 1.0, L.dome.z));
-    const caveLight = new THREE.PointLight('#7ef0ff', 45, 14, 1.4);
+    const caveLight = new THREE.PointLight('#7ef0ff', 14, 12, 1.5);
     caveLight.position.set(L.dome.x, dy + 2, L.dome.z);
     this.scene.add(caveLight);
 

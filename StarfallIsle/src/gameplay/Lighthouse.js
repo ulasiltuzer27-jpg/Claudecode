@@ -145,7 +145,7 @@ export class Finale {
 
   firework() {
     const g = this.game;
-    const lamp = this.lamp;
+    const lamp = this.lamp || g.world.anchors.get('lighthouse.lamp');
     const a = Math.random() * Math.PI * 2;
     const r = 18 + Math.random() * 30;
     const pos = new THREE.Vector3(lamp.x + Math.cos(a) * r, lamp.y + 18 + Math.random() * 25, lamp.z + Math.sin(a) * r);

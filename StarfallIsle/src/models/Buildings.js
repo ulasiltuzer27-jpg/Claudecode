@@ -526,7 +526,8 @@ export function rockDome() {
     const a = (i / n) * Math.PI * 2;
     if (i === 0) continue; // giris (+X yonu)
     const r = rockGeo(70 + i, true);
-    const s = 2.6 + (i % 3) * 0.4;
+    // girisin iki yanindaki kayalar kucuk: tilki rahat gecsin
+    const s = i === 1 || i === n - 1 ? 1.7 : 2.4 + (i % 3) * 0.3;
     r.scale(s, s * 1.5, s);
     r.translate(Math.cos(a) * 5.2, -0.8, Math.sin(a) * 5.2);
     parts.push(r);

@@ -181,6 +181,21 @@ for (const [id, n] of Object.entries(WD.NPCS)) {
 }
 ok('adalilar kuru zeminde', npcBad.length === 0, npcBad.join(','));
 
+// gizli magaraya girilebiliyor: merkezden girise (+X) dogru engel yok
+{
+  const d = WD.LANDMARKS.dome;
+  const floor = T.height(d.x, d.z);
+  let clear = true;
+  for (const h of [0.35, 0.8]) {
+    for (const dz of [-0.35, 0, 0.35]) {
+      const hit = physics.raycast({ x: d.x, y: floor + h, z: d.z + dz }, { x: Math.cos(d.yaw), y: 0, z: -Math.sin(d.yaw) }, 9);
+      if (hit !== null) clear = false;
+    }
+  }
+  const roof = physics.groundAt(d.x, d.z, floor + 30);
+  ok('gizli magaranin girisi acik ve tavani var', clear && roof && roof.y > floor + 2, `tavan ${roof ? (roof.y - floor).toFixed(1) : '-'} m`);
+}
+
 // baslangic iskelede
 const start = physics.groundAt(WD.START.x, WD.START.z, 50);
 ok('baslangic noktasi iskele ustunde', start && Math.abs(start.y - WD.DOCK.y) < 0.3, start ? start.y.toFixed(2) : 'yok');

@@ -58,7 +58,16 @@ try {
   await shot('08_windy', P(100, -48, { yaw: 2.6, hour: 16, dist: 11, pitch: 0.3 }));
   await shot('09_peak', P(6, -100, { yaw: Math.PI, hour: 18.6, dist: 12, pitch: 0.25 }));
   await shot('10_cove', P(128, 54, { yaw: 1.2, hour: 12, dist: 11, pitch: 0.3 }));
-  await shot('11_cave', P(-180, -108, { yaw: -Math.PI / 2, hour: 23, dist: 3.5, pitch: 0.2 }));
+  // magara ici: groundAt cativa carpar, bu yuzden yer araziden alinir
+  await shot('11_cave', () => {
+    const g = window.__game;
+    const d = g.world.anchors.get('domeInside');
+    g.player.spawn(d.x - 1.2, g.world.terrain.height(d.x - 1.2, d.z) + 0.05, d.z, Math.PI / 2);
+    g.setHour(22);
+    g.cameraRig.override = { pos: d.clone().add({ x: -2.6, y: 0.9, z: 1.2 }), look: d.clone().add({ x: 2, y: 0, z: 0 }), speed: 100 };
+    g.ui.hud.hint(null);
+  }, 10);
+  await page.evaluate(() => { window.__game.cameraRig.override = null; });
   await shot('12_sunrise_sea', P(-30, 140, { yaw: 2.2, hour: 6.4, dist: 8, pitch: 0.12 }));
 
   // adalilar: her birinin onune gecip yakin cekim
@@ -86,7 +95,7 @@ try {
     g.quests.talk(n);
     g.dialogue.finishTyping();
   }, 10);
-  await page.evaluate(() => window.__game.dialogue.close(false));
+  if (!only) await page.evaluate(() => window.__game.dialogue.close(false));
 
   // ucus: suzulme pozu
   await shot('31_glide', () => {
@@ -99,18 +108,18 @@ try {
     g.cameraRig.snap(g.player.pos);
     g.input.simulated.add('jump');
   }, 4);
-  await page.evaluate(() => window.__game.input.simulated.clear());
+  if (!only) await page.evaluate(() => window.__game.input.simulated.clear());
 
   // menuler
   await shot('40_pause', () => { const g = window.__game; g.player.spawn(8, 3.1, 104, 0); g.cameraRig.snap(g.player.pos); g.pause(); }, 6);
   await shot('41_achievements', () => { const g = window.__game; g.stats.add('jumps', 120); g.stats.max('shards_max', 7); g.ui.top().items[2].select(); }, 6);
-  await page.evaluate(() => window.__game.ui.pop());
+  if (!only) await page.evaluate(() => window.__game.ui.pop());
   await shot('42_journal', () => window.__game.ui.top().items[1].select(), 6);
-  await page.evaluate(() => { const g = window.__game; g.ui.top().tab = 2; g.ui.top().refresh(); });
+  if (!only) await page.evaluate(() => { const g = window.__game; g.ui.top().tab = 2; g.ui.top().refresh(); });
   await shot('43_collection', () => {}, 4);
-  await page.evaluate(() => window.__game.ui.pop());
+  if (!only) await page.evaluate(() => window.__game.ui.pop());
   await shot('44_settings', () => window.__game.ui.top().items[3].select(), 6);
-  await page.evaluate(() => window.__game.resume());
+  if (!only) await page.evaluate(() => window.__game.resume());
 
   // final
   await shot('50_finale', () => {

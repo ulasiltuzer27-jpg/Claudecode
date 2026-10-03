@@ -7,6 +7,11 @@ MonoGame **3.8.5.1** (DesktopGL) · .NET 8 · C#
 > `.csproj` içindeki `RootNamespace` + `AssemblyName`, `.cs` dosyalarındaki `namespace`,
 > ve `app.manifest` içindeki `assemblyIdentity name`.
 
+> **Bu depoda ikinci bir oyun daha var:** [`StarfallIsle/`](StarfallIsle/README.md),
+> rahat bir 3D ada macerası (Three.js + Electron + steamworks.js, 25 Steam
+> başarımı). PixelSurvival'dan tamamen bağımsız; kendi `package.json`'u ve
+> araçları var. `PixelSurvival.csproj` o klasörü derlemeye katmaz.
+
 **Durum: Aşama 1 (madde 1–11) ve Aşama 2 (madde 12–25) tamam.**
 
 Proje derleniyor ve çalışıyor:

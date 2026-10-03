@@ -40,7 +40,7 @@ export const LANDMARKS = {
   windmill: { x: 98, z: -62, yaw: Math.PI * 0.75 },
   bridge: { a: { x: 75, z: 104 }, b: { x: 99, z: 104 } },
   shipwreck: { x: 146, z: 58, yaw: 0.9 },
-  dome: { x: LAYOUT.islet.x, z: LAYOUT.islet.z, yaw: Math.PI },
+  dome: { x: LAYOUT.islet.x, z: LAYOUT.islet.z, yaw: 0 }, // giris +X: adaya bakar
   raceFlag: { x: -60, z: 30 },
   rabbitGarden: { x: -50, z: 50 },
   stump: { x: -128, z: -22 },

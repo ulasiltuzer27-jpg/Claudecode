@@ -64,7 +64,8 @@
       ],
       "icon": "build/icon.png",
       "category": "Game"
-    }
+    },
+    "publish": null
   },
   "dependencies": {
     "@dimforge/rapier3d-compat": "^0.21.0",
