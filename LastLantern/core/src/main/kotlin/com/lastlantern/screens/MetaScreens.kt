@@ -79,7 +79,7 @@ class HeroesScreen(game: LastLanternGame, private val returnToStages: Boolean = 
             ui.iconCell(r, "portrait_${c.id}", 3).padRight(8f)
             val col = Table()
             col.add(ui.label(t["char.${c.id}"], if (unlocked) Color.WHITE else UiKit.MUTED, align = Align.left)).left().row()
-            col.add(ui.label(t["char.${c.id}.desc"], UiKit.DIM, wrap = true, align = Align.left)).width(140f).left().row()
+            col.add(ui.label(t["char.${c.id}.desc"], UiKit.DIM, wrap = true, align = Align.left)).width(130f).left().row()
             val w = Content.weapons.getValue(c.startWeapon)
             val sw = Table()
             sw.add(ui.icon(w.icon)).padRight(3f)
@@ -95,7 +95,7 @@ class HeroesScreen(game: LastLanternGame, private val returnToStages: Boolean = 
                     if (returnToStages) game.go(StageSelectScreen(game)) else build()
                 })
                 else -> {
-                    val buy = ui.button(t.f("heroes.buy", c.price), primaryStyle = true) {
+                    val buy = ui.button(c.price.toString(), primaryStyle = true) {
                         if (d.gold >= c.price) {
                             d.gold -= c.price
                             d.unlockedCharacters.add(c.id)
@@ -108,13 +108,14 @@ class HeroesScreen(game: LastLanternGame, private val returnToStages: Boolean = 
                         }
                     }
                     buy.isDisabled = d.gold < c.price
-                    action.add(buy).row()
+                    buy.add(ui.icon("pick_coin")).padLeft(3f)
+                    action.add(buy).width(72f).row()
                     c.unlockAchievement?.let {
-                        action.add(ui.label(t.f("heroes.or", t["ach.$it"]), UiKit.MUTED, wrap = true)).width(70f).padTop(2f)
+                        action.add(ui.label(t.f("heroes.or", t["ach.$it"]), UiKit.MUTED, wrap = true)).width(78f).padTop(2f)
                     }
                 }
             }
-            r.add(action).width(76f)
+            r.add(action).width(80f)
             body.add(r).width(258f).padBottom(5f).row()
         }
     }

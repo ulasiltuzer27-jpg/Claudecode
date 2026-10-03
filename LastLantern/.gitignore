@@ -18,3 +18,4 @@ captures/
 .idea/
 *.iml
 __pycache__/
+store/raw/

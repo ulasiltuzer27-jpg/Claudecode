@@ -25,7 +25,7 @@ object Capture {
     val scenarios = listOf(
         "menu", "stages", "heroes", "camp", "achievements", "settings", "supporter",
         "game_start", "game_early", "game_crowd", "game_late", "levelup", "chest", "boss", "results",
-        "drowned", "frozen",
+        "drowned", "frozen", "evolve",
     )
 
     fun firstScreen(game: LastLanternGame): Screen {
@@ -61,6 +61,19 @@ object Capture {
             "boss" -> game(game, "woods", "keeper", 552f, meta = true)
             "levelup" -> game(game, "woods", "keeper", 40f, stopAt = RunState.LEVEL_UP)
             "chest" -> game(game, "woods", "keeper", 125f, meta = true, forceChest = true)
+            "evolve" -> {
+                // Sandiktan evrim cikar: kivilcim maks. seviye + fener yagi
+                val s = game(game, "woods", "keeper", 230f, meta = true, skill = 0.6f)
+                val w = s.world
+                val spark = w.weapons.first { it.def.id == "spark" }
+                while (!spark.maxed) spark.levelUp()
+                if ("oil" !in w.passives) w.addPassive("oil")
+                s.bot = null
+                w.chestsOpened++
+                w.upgrades.rollChest()
+                w.state = RunState.CHEST
+                s
+            }
             "results" -> {
                 val s = game(game, "woods", "keeper", 600f, meta = true)
                 val w = s.world

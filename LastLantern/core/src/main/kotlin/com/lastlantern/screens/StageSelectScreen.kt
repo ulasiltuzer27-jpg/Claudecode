@@ -39,9 +39,9 @@ class StageSelectScreen(game: LastLanternGame) : BaseScreen(game) {
         ui.iconCell(heroRow, "portrait_${hero.id}", 2).padRight(8f)
         val col = Table()
         col.add(ui.label(t["char.${hero.id}"], UiKit.GOLD, align = Align.left)).left().row()
-        col.add(ui.label(t["char.${hero.id}.desc"], UiKit.DIM, wrap = true, align = Align.left)).width(150f).left().row()
+        col.add(ui.label(t["char.${hero.id}.desc"], UiKit.DIM, wrap = true, align = Align.left)).width(130f).left().row()
         heroRow.add(col).expandX().left()
-        heroRow.add(ui.button(t["menu.heroes"]) { game.go(HeroesScreen(game, returnToStages = true)) })
+        heroRow.add(ui.button(t["heroes.change"]) { game.go(HeroesScreen(game, returnToStages = true)) })
         root.add(heroRow).width(250f).padBottom(10f).row()
 
         for (st in Content.stages) {
