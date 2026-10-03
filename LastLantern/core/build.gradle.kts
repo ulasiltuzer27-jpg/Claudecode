@@ -29,7 +29,11 @@ dependencies {
 }
 
 tasks.test {
-    useJUnitPlatform()
+    useJUnitPlatform {
+        // Denge olcumu uzun surer; yalnizca -Pprobe ile calisir.
+        if (!project.hasProperty("probe")) excludeTags("probe")
+    }
+    systemProperty("probe.stages", (project.findProperty("probeStages") ?: "woods").toString())
     // Testler assets/ klasorunu (i18n, font) gercek dosyalar uzerinden dogrular.
     workingDir = rootProject.file("assets")
     maxHeapSize = "1g"
