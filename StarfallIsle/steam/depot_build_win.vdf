@@ -1,0 +1,13 @@
+// Windows x64 deposu: `npm run dist:win` ciktisi (release/win-unpacked).
+"DepotBuild"
+{
+	"DepotID"	"481"
+	"ContentRoot"	"../release/win-unpacked/"
+	"FileMapping"
+	{
+		"LocalPath"	"*"
+		"DepotPath"	"."
+		"Recursive"	"1"
+	}
+	"FileExclusion"	"*.pdb"
+}

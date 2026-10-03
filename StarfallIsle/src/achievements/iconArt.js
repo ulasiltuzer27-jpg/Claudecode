@@ -109,8 +109,11 @@ const GLYPHS = {
     for (const y of [70, 80]) { g.beginPath(); g.moveTo(14, y); g.quadraticCurveTo(30, y - 6, 46, y); g.stroke(); }
   },
   cloud(g) {
-    for (const [x, y, r] of [[34, 58, 16], [52, 46, 20], [70, 58, 15], [50, 62, 16]]) { g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill(); }
-    g.fillRect(30, 58, 42, 16);
+    // tek yol: parcalarin golgeleri birbirinin ustune binmesin
+    g.beginPath();
+    for (const [x, y, r] of [[34, 58, 16], [52, 46, 20], [70, 58, 15], [50, 62, 16]]) { g.moveTo(x + r, y); g.arc(x, y, r, 0, Math.PI * 2); }
+    g.rect(30, 58, 42, 16);
+    g.fill('nonzero');
   },
   fish(g) { fishPath(g, 46, 52, 1.25); },
   fishes(g) { fishPath(g, 40, 38, 0.9); fishPath(g, 60, 66, 0.9, -1); },
@@ -138,16 +141,28 @@ const GLYPHS = {
     g.lineWidth = 7; g.strokeStyle = '#ffffff'; g.lineCap = 'round';
     for (const y of [36, 52, 68]) {
       g.beginPath(); g.moveTo(16, y);
-      for (let x = 16; x <= 84; x += 17) g.quadraticCurveTo(x + 8.5, y - 10, x + 17, y);
+      for (let x = 16; x < 84; x += 17) g.quadraticCurveTo(x + 8.5, y - 10, x + 17, y);
       g.stroke();
     }
   },
   moon(g) {
-    g.beginPath(); g.arc(48, 52, 28, 0, Math.PI * 2); g.fill();
-    g.globalCompositeOperation = 'destination-out';
-    g.beginPath(); g.arc(62, 42, 24, 0, Math.PI * 2); g.fill();
-    g.globalCompositeOperation = 'source-over';
-    starPath(g, 74, 66, 7, 3); g.fill(); starPath(g, 80, 26, 5, 2); g.fill();
+    // hilal: dis daire eksi ic daire, kesisim noktalarindan analitik yol
+    // (destination-out arka plani da delerdi)
+    const [x1, y1, r1, x2, y2, r2] = [46, 54, 28, 60, 42, 23];
+    const d = Math.hypot(x2 - x1, y2 - y1);
+    const a = (r1 * r1 - r2 * r2 + d * d) / (2 * d);
+    const h = Math.sqrt(r1 * r1 - a * a);
+    const bx = x1 + (a * (x2 - x1)) / d;
+    const by = y1 + (a * (y2 - y1)) / d;
+    const p1 = [bx + (h * (y2 - y1)) / d, by - (h * (x2 - x1)) / d];
+    const p2 = [bx - (h * (y2 - y1)) / d, by + (h * (x2 - x1)) / d];
+    const ang = (cx, cy, p) => Math.atan2(p[1] - cy, p[0] - cx);
+    g.beginPath();
+    g.arc(x1, y1, r1, ang(x1, y1, p1), ang(x1, y1, p2), true);
+    g.arc(x2, y2, r2, ang(x2, y2, p2), ang(x2, y2, p1), false);
+    g.closePath();
+    g.fill();
+    starPath(g, 76, 68, 7, 3); g.fill(); starPath(g, 82, 24, 5, 2); g.fill();
   },
   map(g) {
     g.beginPath(); g.moveTo(16, 26); g.lineTo(38, 20); g.lineTo(62, 28); g.lineTo(84, 22); g.lineTo(84, 74); g.lineTo(62, 80); g.lineTo(38, 72); g.lineTo(16, 78); g.closePath(); g.fill();

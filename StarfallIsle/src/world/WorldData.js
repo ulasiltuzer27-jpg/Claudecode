@@ -111,13 +111,13 @@ export const CARROTS = [
 export const TOOLS = [
   { id: 'tool_hammer', kind: 'hammer', x: -78, z: -72 },
   { id: 'tool_saw', kind: 'saw', x: 90, z: -46 },
-  { id: 'tool_shovel', kind: 'shovel', x: 44, z: 140 },
+  { id: 'tool_shovel', kind: 'shovel', x: 36, z: 136 },
 ];
 
 // 20 grup x 5 kabuk = 100. [x, z, yon(derece)]
 export const SHELL_GROUPS = [
-  [30, 140, 0], [44, 134, 30], [-2, 150, 90], [16, 160, 90], [-24, 132, 120],
-  [-40, 76, 40], [-80, 52, 0], [-112, 36, 70], [-132, 40, 110], [-128, -40, 80],
+  [30, 140, 0], [38, 130, 30], [-2, 150, 90], [20, 148, 0], [-24, 132, 120],
+  [-40, 76, 40], [-80, 52, 0], [-112, 36, 70], [-124, 42, 90], [-128, -40, 80],
   [-104, -60, 20], [-62, -96, 150], [-20, -70, 60], [48, -24, 10], [70, -36, 40],
   [56, 60, 90], [86, 30, 120], [126, 44, 0], [118, 84, 60], [134, 22, 100],
 ];
@@ -173,8 +173,8 @@ export const FISH = [
 export const PLATFORM_ROCKS = [
   { id: 'meadowRock', x: -74, z: 40, s: 1.8 },
   { id: 'meadowStack', x: -36, z: 22, s: 1.6, stack: [1.6, 1.25, 0.95] },
-  { id: 'lakeRock', x: 41, z: 6, s: 1.2 },
+  { id: 'lakeRock', x: 41, z: 6, s: 2.0, stack: [2.0, 1.6, 1.2] },
   { id: 'forestLedge', x: -132, z: -32, s: 1.5, stack: [1.5, 1.1] },
   { id: 'seaStack', x: 158, z: 40, s: 2.2, stack: [2.4, 1.9] },
-  { id: 'inletStack', x: 88, z: 150, s: 1.8, stack: [2.0, 1.5] },
+  { id: 'inletStack', x: 80, z: 140, s: 2.6, stack: [2.6, 2.1, 1.6] },
 ];

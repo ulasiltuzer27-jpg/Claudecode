@@ -21,7 +21,8 @@
     "store-art": "vite build && node tools/store-art.mjs",
     "smoke": "vite build && node tools/electron-smoke.mjs",
     "dist:win": "vite build && electron-builder --win --x64",
-    "dist:linux": "vite build && electron-builder --linux --x64"
+    "dist:linux": "vite build && electron-builder --linux --x64",
+    "test": "npm run verify && npm run playtest && npm run smoke"
   },
   "build": {
     "appId": "com.starfallisle.game",
@@ -33,13 +34,9 @@
     "files": [
       "dist/**",
       "electron/**",
+      "build/icon.png",
+      "steam/steam_appid.txt",
       "package.json"
-    ],
-    "extraFiles": [
-      {
-        "from": "steam/steam_appid.txt",
-        "to": "steam_appid.txt"
-      }
     ],
     "asarUnpack": [
       "node_modules/steamworks.js/**"
@@ -53,7 +50,8 @@
           ]
         }
       ],
-      "icon": "build/icon.png"
+      "icon": "build/icon.png",
+      "signAndEditExecutable": true
     },
     "linux": {
       "target": [
