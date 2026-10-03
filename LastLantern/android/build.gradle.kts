@@ -57,6 +57,15 @@ android {
             applicationIdSuffix = ".debug"
             versionNameSuffix = "-debug"
         }
+        // Release ile ayni R8 kucultmesi, debug anahtariyla imzali: emulator
+        // testinin Play'e gidecek koda (ProGuard kurallari dahil) bakmasi icin.
+        create("qa") {
+            initWith(getByName("release"))
+            signingConfig = signingConfigs.getByName("debug")
+            applicationIdSuffix = ".qa"
+            versionNameSuffix = "-qa"
+            matchingFallbacks += "release"
+        }
     }
 
     compileOptions {

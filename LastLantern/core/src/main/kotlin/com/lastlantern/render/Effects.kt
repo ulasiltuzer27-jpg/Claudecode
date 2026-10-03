@@ -90,6 +90,19 @@ class DamageNumbers(cap: Int) : SlotPool(cap) {
     private var seq = 0
 
     fun add(px: Float, py: Float, v: Float, isCrit: Boolean, rgba: Int = 0xFFFFFFFF.toInt()) {
+        // Ayni hedefe ust uste gelen vuruslar tek sayida toplanir (boss uzerinde
+        // sayi yigini olusmasin)
+        for (k in 0 until high) {
+            if (!active[k] || life[k] < 0.5f || color[k] != rgba) continue
+            if (kotlin.math.abs(x[k] - px) < 10f && kotlin.math.abs(y[k] - py) < 10f) {
+                value[k] += v.toInt().coerceAtLeast(1)
+                crit[k] = crit[k] || isCrit
+                life[k] = 0.7f
+                text[k].setLength(0)
+                text[k].append(value[k])
+                return
+            }
+        }
         // Ekranda cok fazla sayi okunmaz; en eskisinin yerini al
         var i = alloc()
         if (i < 0) {

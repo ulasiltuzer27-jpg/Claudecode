@@ -148,7 +148,7 @@ object Content {
             behavior = Behavior.FROST_ALPHA, eyeColor = 0xFF5A4AFF.toInt(), knockbackResist = 0.9f, drawScale = 2,
             frameTime = 0.16f, tier = Tier.MINIBOSS, coinChance = 0f),
         // Safak bosslari (32 px, 2x cizilir)
-        EnemyDef("hollow_stag", "boss_hollow_stag", hp = 3400f, speed = 30f, damage = 20f, radius = 22f, xp = 0,
+        EnemyDef("hollow_stag", "boss_hollow_stag", hp = 4000f, speed = 30f, damage = 20f, radius = 22f, xp = 0,
             behavior = Behavior.STAG, eyeColor = 0xFF8A2AFF.toInt(), knockbackResist = 1f, drawScale = 2,
             frameTime = 0.3f, tier = Tier.BOSS, coinChance = 0f, shotSpeed = 90f, shotDamage = 12f),
         EnemyDef("bellkeeper", "boss_bellkeeper", hp = 4200f, speed = 20f, damage = 24f, radius = 22f, xp = 0,

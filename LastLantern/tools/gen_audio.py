@@ -660,6 +660,101 @@ TRACKS = [
 ]
 
 
+# Ikinci bolumler (B): dongu 32 olcuye cikar, 10 dakikalik gecede tekrar hissi azalir.
+MELODY_B = {
+    "menu": [
+        "a5 - - - g5 - e5 -",
+        "f5 - - - c5 - - -",
+        "e5 - - - d5 - c5 -",
+        "d5 - - - b4 - - -",
+        "c5 - e5 - a5 - g5 -",
+        "f5 - - - a4 - c5 -",
+        "d5 - f5 - a5 - f5 -",
+        "e5 - - - g#5 - - -",
+        "a5 - - - e5 - c5 -",
+        "f5 - a5 - c6 - a5 -",
+        "g5 - e5 - c5 - e5 -",
+        "d5 - - - . . . .",
+        "c5 - - - b4 - a4 -",
+        "a4 - c5 - f5 - - -",
+        "f5 - e5 - d5 - c5 -",
+        "b4 - - - . . . ."
+    ],
+    "woods": [
+        "a5 - - - g5 - f5 -",
+        "e5 - f5 - d5 - - -",
+        "f5 - - - d5 - bb4 -",
+        "c5 - e5 - g5 - - -",
+        "a5 - - - a5 - c6 -",
+        "a5 - g5 - f5 - e5 -",
+        "d5 - g5 - bb5 - g5 -",
+        "a5 - - - e5 - c#5 -",
+        "d5 - f5 - a5 - d6 -",
+        "c6 - a5 - f5 - a5 -",
+        "bb5 - - - f5 - d5 -",
+        "c5 - - - g5 - e5 -",
+        "f5 - - - e5 - d5 -",
+        "a4 - d5 - f5 - - -",
+        "g5 - f5 - g5 - bb5 -",
+        "a5 - - - - - . ."
+    ],
+    "drowned": [
+        "g5 - - - f#5 - e5 -",
+        "b4 - - - e5 - - -",
+        "f5 - - - a5 - f5 -",
+        "e5 - - - b4 - - -",
+        "c5 - e5 - a5 - - -",
+        "b5 - - - g5 - e5 -",
+        "a5 - - - f5 - c5 -",
+        "d#5 - f#5 - a5 - - -",
+        "e5 - - - . . g5 -",
+        "b5 - - - a5 - g5 -",
+        "f5 - - - e5 - f5 -",
+        "g5 - - - e5 - - -",
+        "a5 - - - c6 - a5 -",
+        "g5 - - - e5 - b4 -",
+        "c5 - - - f5 - a5 -",
+        "f#5 - - - d#5 - b4 -"
+    ],
+    "frozen": [
+        "d6 - - - b5 - f#5 -",
+        "g5 - - - d5 - g5 -",
+        "a5 - - - d6 - a5 -",
+        "c#6 - - - a5 - e5 -",
+        "f#5 - - - b5 - d6 -",
+        "b5 - - - g5 - d5 -",
+        "e5 - g5 - b5 - e6 -",
+        "c#6 - - - a#5 - f#5 -",
+        "b5 - - - f#5 - d5 -",
+        "d5 - g5 - b5 - g5 -",
+        "a5 - f#5 - d5 - a4 -",
+        "c#5 - e5 - a5 - - -",
+        "b4 - d5 - f#5 - b5 -",
+        "g5 - - - b5 - d6 -",
+        "e6 - d6 - b5 - g5 -",
+        "f#5 - - - - - . ."
+    ],
+    "boss": [
+        "g5 - - - f5 - eb5 -",
+        "d5 - eb5 - f5 - g5 -",
+        "ab5 - - - g5 - f5 -",
+        "f5 - - - d5 - bb4 -",
+        "c6 - - - g5 - eb5 -",
+        "g5 - ab5 - g5 - f5 -",
+        "ab5 - - - c6 - f6 -",
+        "d6 - - - b5 - g5 -",
+        "c6 - bb5 - ab5 - g5 -",
+        "eb5 - g5 - c6 - - -",
+        "c6 - - - ab5 - eb5 -",
+        "d5 - f5 - bb5 - - -",
+        "g5 - - - eb5 - c5 -",
+        "c5 - eb5 - g5 - c6 -",
+        "f5 - ab5 - c6 - f6 -",
+        "d6 - - - b5 - - -"
+    ]
+}
+
+
 def main() -> None:
     import sys
     only = set(sys.argv[1:])
@@ -672,6 +767,11 @@ def main() -> None:
     for spec in TRACKS:
         if only and spec["name"] not in only and "music" not in only:
             continue
+        b = MELODY_B.get(spec["name"])
+        if b:
+            spec = dict(spec)
+            spec["melody"] = list(spec["melody"]) + b
+            spec["chords"] = list(spec["chords"]) * 2
         x = render_track(spec)
         write_ogg(x, MUSIC_DIR / f"{spec['name']}.ogg", quality=2)
         print(f"muzik: {spec['name']} {len(x) / SR:.1f} sn")

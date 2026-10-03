@@ -70,7 +70,7 @@ jobs:
         run: >
           ./gradlew --console=plain
           -PVERSION_CODE=${{ github.run_number }}
-          :android:assembleDebug :android:bundleRelease :android:lintRelease
+          :android:assembleDebug :android:assembleQa :android:bundleRelease :android:lintRelease
       - name: Cozulen magaza kutuphanesi surumleri
         run: ./gradlew -q --console=plain :android:dependencies --configuration releaseRuntimeClasspath | grep -E "play-services-ads:|user-messaging-platform:|billingclient:billing:|play:review:" | sort -u | head -20
       - name: 16 KB sayfa hizasi (Play zorunlulugu)
@@ -101,6 +101,10 @@ jobs:
           path: LastLantern/android/build/outputs/apk/debug/android-debug.apk
       - uses: actions/upload-artifact@v4
         with:
+          name: last-lantern-qa-apk
+          path: LastLantern/android/build/outputs/apk/qa/android-qa.apk
+      - uses: actions/upload-artifact@v4
+        with:
           name: last-lantern-release-aab
           path: LastLantern/android/build/outputs/bundle/release/*.aab
 
@@ -113,7 +117,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
-          name: last-lantern-debug-apk
+          name: last-lantern-qa-apk
           path: apk
       - name: KVM
         working-directory: .
@@ -131,7 +135,7 @@ jobs:
           ram-size: 3072M
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot
           working-directory: .
-          script: bash LastLantern/tools/ci/smoke_test.sh apk/android-debug.apk
+          script: bash LastLantern/tools/ci/smoke_test.sh apk/android-qa.apk
       - uses: actions/upload-artifact@v4
         if: always()
         with:

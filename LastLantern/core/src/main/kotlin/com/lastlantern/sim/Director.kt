@@ -24,9 +24,17 @@ class Director(private val w: World) {
     fun currentWave(): Wave {
         val waves = w.stage.waves
         var cur = waves[0]
-        for (wv in waves) if (wv.start <= w.time) cur = wv
+        for (wv in waves) {
+            // Sonsuz modda boss asamasinin seyrek dalgasi atlanir
+            if (w.config.endless && wv.start >= Content.BOSS_TIME) continue
+            if (wv.start <= w.time) cur = wv
+        }
         return cur
     }
+
+    /** Sonsuz modda dusman tavani zamanla artar (480. sn'den sonra her 5 dk'da +%100). */
+    private fun capScale(): Float =
+        if (w.config.endless && w.time > 480f) 1f + (w.time - 480f) / 300f else 1f
 
     fun update(dt: Float) {
         if (w.endTimer >= 0f) return
@@ -37,7 +45,7 @@ class Director(private val w: World) {
             // Endless: sure ilerledikce aralik daralir
             val pace = if (w.config.endless && w.time > Content.RUN_LENGTH) 0.7f else 1f
             spawnTimer = wave.interval * pace
-            val cap = (wave.maxAlive * (if (bossAlive) 0.7f else 1f)).toInt()
+            val cap = (wave.maxAlive * capScale() * (if (bossAlive) 0.7f else 1f)).toInt().coerceAtMost(700)
             var n = wave.batch
             while (n-- > 0 && w.enemies.count < cap) {
                 val (sx, sy) = spawnPoint(ahead = w.rng.chance(0.35f))

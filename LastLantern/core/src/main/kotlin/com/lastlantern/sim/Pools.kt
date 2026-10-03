@@ -113,7 +113,7 @@ class EnemyPool(cap: Int, val weaponSlots: Int) : SlotPool(cap) {
         state[i] = EState.NORMAL
         timer[i] = 0f; timer2[i] = 0f
         ax[i] = 0f; ay[i] = 0f
-        flash[i] = 0f; slow[i] = 0f; stun[i] = 0f
+        flash[i] = -1f; slow[i] = 0f; stun[i] = 0f
         anim[i] = (uid[i] % 7) * 0.13f
         facing[i] = 1
         for (k in 0 until 4) ringHits[i * 4 + k] = 0

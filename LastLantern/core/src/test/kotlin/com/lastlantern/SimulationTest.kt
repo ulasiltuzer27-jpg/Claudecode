@@ -62,6 +62,32 @@ class SimulationTest {
     }
 
     @Test
+    fun endlessHasNoDawnAndKeepsSpawning() {
+        val meta = Content.meta.associate { it.id to it.maxRank }
+        val w = World(RunConfig(Content.stage("woods"), Content.character("keeper"), meta, seed = 3, endless = true))
+        val bot = Bot(w, 1f)
+        while (bot.step(1f / 30f) && w.time < 660f) Unit
+        assertTrue(w.state != RunState.VICTORY, "sonsuz modda safak olmamali")
+        assertTrue(w.bossSlot < 0 || !w.dawnReached)
+        if (w.time >= 640f) assertTrue(w.enemies.count > 20, "600 sn sonrasi dusman gelmeye devam etmeli")
+    }
+
+    @Test
+    fun deathRevivesAndAdReviveOnlyOnce() {
+        val w = World(RunConfig(Content.stage("woods"), Content.character("keeper"), mapOf("revival" to 1), seed = 4))
+        assertEquals(1, w.revivesLeft)
+        w.hurtPlayer(9999f)
+        assertEquals(RunState.PLAYING, w.state, "kamp dirilisi otomatik")
+        assertTrue(w.player.hp > 0f)
+        w.player.iframes = 0f
+        w.hurtPlayer(9999f)
+        assertEquals(RunState.DEAD, w.state)
+        w.reviveByAd()
+        assertEquals(RunState.PLAYING, w.state)
+        assertTrue(w.adReviveUsed)
+    }
+
+    @Test
     fun bellRingHitsEachEnemyOncePerRing() {
         // Regresyon: ayni anda iki halka varken birbirinin kaydini ezip her
         // karede yeniden vuruyordu (10 dusmana 40 yerine 150 isabet).

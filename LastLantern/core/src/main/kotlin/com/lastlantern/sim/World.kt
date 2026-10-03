@@ -217,7 +217,7 @@ class World(val config: RunConfig) {
         val dmgMul: Float
         when (d.tier) {
             Tier.NORMAL -> {
-                hpMul = stage.hpMult * (1f + 0.13f * t) * (if (elite) 8f else 1f) * endlessCurse()
+                hpMul = stage.hpMult * (1f + 0.145f * t) * (if (elite) 8f else 1f) * endlessCurse()
                 dmgMul = stage.dmgMult * (1f + 0.04f * t) * (if (elite) 1.5f else 1f) * endlessCurse()
             }
             else -> {
@@ -258,7 +258,7 @@ class World(val config: RunConfig) {
             if (!e.active[i]) continue
             val d = e.def[i]!!
             e.anim[i] += dt
-            if (e.flash[i] > 0f) e.flash[i] -= dt
+            if (e.flash[i] > -1f) e.flash[i] -= dt
             if (e.slow[i] > 0f) e.slow[i] -= dt
             var dx = px - e.x[i]
             var dy = py - e.y[i]
@@ -355,7 +355,9 @@ class World(val config: RunConfig) {
         val crit = rng.chance(critChance)
         val dmg = rawDamage * (if (crit) 2f else 1f) * (if (e.elite[i]) 1f else 1f)
         e.hp[i] -= dmg
-        e.flash[i] = 0.09f
+        // Parlama araliklarla: surekli vurulan boss bembeyaz kalmasin
+        val big = e.elite[i] || e.def[i]!!.tier != Tier.NORMAL
+        if (e.flash[i] < (if (big) -0.22f else -0.06f)) e.flash[i] = if (big) 0.05f else 0.09f
         if (slot >= 0 && slot < weapons.size) weapons[slot].totalDamage += dmg
         val d = e.def[i]!!
         if (knock > 0f) {

@@ -129,6 +129,7 @@ class Hud(private val game: LastLanternGame, private val world: World) : Actor()
         val bi = world.bossSlot
         if (bi >= 0 && world.enemies.active[bi]) {
             val e = world.enemies
+            if (bossName == null) bossName = e.def[bi]?.let { game.i18n["hud.boss_name.${it.id}"] }
             val frac = (e.hp[bi] / e.maxHp[bi]).coerceIn(0f, 1f)
             val bw = min(w - 30f, 240f)
             val bx = (w - bw) / 2f
@@ -144,6 +145,9 @@ class Hud(private val game: LastLanternGame, private val world: World) : Actor()
             batch.setColor(1f, 1f, 1f, 1f)
             bossName?.let { text(batch, it, w / 2f, by + 17f, UiKit.RED, center = true) }
         }
+
+        // ---- Ekran disi gostergeler: sandiklar (altin) ve boss (kirmizi)
+        offscreen(batch, w, h)
 
         // ---- Duyuru
         banner?.let {
@@ -167,6 +171,44 @@ class Hud(private val game: LastLanternGame, private val world: World) : Actor()
             text(batch, hintText, w / 2f, py + bob, Color(1f, 0.92f, 0.75f, hintAlpha), center = true)
         }
         batch.setColor(1f, 1f, 1f, 1f)
+    }
+
+    /** Gorus alaninin disindaki sandik/boss icin ekran kenarinda yanip sonen isaret. */
+    private fun offscreen(batch: Batch, w: Float, h: Float) {
+        val p = world.player
+        val hw = world.viewHalfW
+        val hh = world.viewHalfH
+        val pk = world.pickups
+        val chest = a.region("pick_chest")
+        val pulse = 0.6f + 0.4f * sin(time * 6f)
+        for (i in 0 until pk.high) {
+            if (!pk.active[i] || pk.kind[i] != com.lastlantern.sim.Pick.CHEST) continue
+            marker(batch, pk.x[i] - p.x, pk.y[i] - p.y, hw, hh, w, h) { x, y ->
+                batch.setColor(1f, 1f, 1f, pulse)
+                batch.draw(chest, x - chest.regionWidth / 2f, y - chest.regionHeight / 2f)
+            }
+        }
+        val bi = world.bossSlot
+        if (bi >= 0 && world.enemies.active[bi]) {
+            val e = world.enemies
+            marker(batch, e.x[bi] - p.x, e.y[bi] - p.y, hw, hh, w, h) { x, y ->
+                batch.setColor(1f, 0.3f, 0.3f, pulse)
+                batch.draw(a.region("icon_ui_skull"), x - 3.5f, y - 3.5f)
+            }
+        }
+        batch.setColor(1f, 1f, 1f, 1f)
+    }
+
+    private inline fun marker(batch: Batch, dx: Float, dy: Float, hw: Float, hh: Float, w: Float, h: Float,
+                              draw: (Float, Float) -> Unit) {
+        if (kotlin.math.abs(dx) < hw - 6f && kotlin.math.abs(dy) < hh - 6f) return
+        // Dunya -> arayuz koordinati, kenar boslugu icinde sikistir
+        val k = minOf((hw - 6f) / kotlin.math.abs(dx).coerceAtLeast(0.01f), (hh - 6f) / kotlin.math.abs(dy).coerceAtLeast(0.01f))
+        val ux = w / 2f + dx * k / hw * (w / 2f)
+        val top = h - insetTop() - 70f
+        val bottom = insetBottom() + 28f
+        val uy = (h / 2f + dy * k / hh * (h / 2f)).coerceIn(bottom, top)
+        draw(ux.coerceIn(12f, w - 12f), uy)
     }
 
     private fun slot(batch: Batch, x: Float, y: Float, icon: String, level: Int, max: Int, evolved: Boolean) {
