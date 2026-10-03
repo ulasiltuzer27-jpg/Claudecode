@@ -108,6 +108,7 @@ class Bot(private val w: World, private val skill: Float = 1f) {
 
     /** Durum makinesini otomatik ilerletir (level-up/sandik). false: run bitti. */
     fun step(dt: Float): Boolean {
+        w.events.clear()
         when (w.state) {
             RunState.PLAYING -> {
                 think(dt)

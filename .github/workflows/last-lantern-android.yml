@@ -71,6 +71,8 @@ jobs:
           ./gradlew --console=plain
           -PVERSION_CODE=${{ github.run_number }}
           :android:assembleDebug :android:bundleRelease :android:lintRelease
+      - name: Cozulen magaza kutuphanesi surumleri
+        run: ./gradlew -q --console=plain :android:dependencies --configuration releaseRuntimeClasspath | grep -E "play-services-ads:|user-messaging-platform:|billingclient:billing:|play:review:" | sort -u | head -20
       - name: 16 KB sayfa hizasi (Play zorunlulugu)
         run: |
           BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)

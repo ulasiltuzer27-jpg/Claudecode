@@ -72,6 +72,7 @@ class World(val config: RunConfig) {
     var overflowEmber = -1
     var dawnReached = false
     var evolutions = 0
+    var untouchedAt3 = false
 
     val enemyDefs: List<EnemyDef> = Content.enemies.values.toList()
     private val defIndex = HashMap<String, Int>().apply { enemyDefs.forEachIndexed { i, d -> put(d.id, i) } }
@@ -108,7 +109,7 @@ class World(val config: RunConfig) {
     }
 
     val lightRadius: Float
-        get() = 92f * stats.light * (if (lightBoost > 0f) 1.5f else 1f) + dawnFactor * 140f
+        get() = 116f * stats.light * (if (lightBoost > 0f) 1.5f else 1f) + dawnFactor * 140f
 
     /** Silahlarin hedef alabildigi menzil: isik nereye kadar uzaniyorsa. */
     val targetRange: Float get() = lightRadius * 1.15f + 12f
@@ -138,14 +139,19 @@ class World(val config: RunConfig) {
     }
 
     // ------------------------------------------------------------- Ana dongu
+    /**
+     * Bir simulasyon adimi. Olaylar [events]'e eklenir; onlari bosaltmak
+     * cagirana aittir (seviye karti secimi gibi adim disi olaylar da kaybolmasin).
+     */
     fun update(dt: Float, moveX: Float, moveY: Float) {
-        events.clear()
         if (state != RunState.PLAYING) return
         if (hitStop > 0f) {
             hitStop -= dt
             return
         }
+        val before = time
         time += dt
+        if (before < 180f && time >= 180f && damageTaken <= 0f) untouchedAt3 = true
         if (endTimer >= 0f) {
             endTimer -= dt
             if (endTimer < 0f) {

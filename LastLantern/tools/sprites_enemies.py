@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from PIL import Image
 
-from spritekit import grid, outline, save, save_frames
+from spritekit import flash_white, grid, outline, save, save_frames
 
 EYE_COLORS = {"y", "o", "c", "r", "Y", "v", "i"}
 
@@ -790,6 +790,8 @@ def _build(table: dict[str, dict], prefix: str) -> None:
         h = len(frames[0])
         imgs = [outline(grid(f, spec["pal"], size=(w, h))) for f in frames]
         save_frames(imgs, f"{prefix}{name}")
+        # Vurulunca beyaz parlama icin siluet (shader/blend degistirmeden)
+        save_frames([flash_white(i) for i in imgs], f"{prefix}{name}_white")
         save(_eyes(frames[0], spec["pal"], (w, h)), f"{prefix}{name}_eyes")
 
 

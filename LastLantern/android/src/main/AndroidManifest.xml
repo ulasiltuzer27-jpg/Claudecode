@@ -20,6 +20,11 @@
         android:theme="@style/AppTheme"
         tools:targetApi="36">
 
+        <!-- AdMob uygulama kimligi (gradle.properties > ADMOB_APP_ID) -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="${admobAppId}" />
+
         <activity
             android:name=".AndroidLauncher"
             android:exported="true"

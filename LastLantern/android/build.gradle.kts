@@ -84,6 +84,11 @@ kotlin {
 dependencies {
     implementation(project(":core"))
     implementation("com.badlogicgames.gdx:gdx-backend-android:$gdxVersion")
+    // Gelir ve magaza servisleri (surumler CI'da cozulur; gradle.properties'te sabit)
+    implementation("com.google.android.gms:play-services-ads:${prop("adsVersion")}")
+    implementation("com.google.android.ump:user-messaging-platform:${prop("umpVersion")}")
+    implementation("com.android.billingclient:billing:${prop("billingVersion")}")
+    implementation("com.google.android.play:review:${prop("reviewVersion")}")
     natives("com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-armeabi-v7a")
     natives("com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-arm64-v8a")
     natives("com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-x86")

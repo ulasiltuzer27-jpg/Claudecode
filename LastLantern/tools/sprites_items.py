@@ -214,8 +214,9 @@ def _light_texture() -> None:
             if d >= 1:
                 continue
             # Merkez genis ve parlak, kenar yumusak: fener isigi hissi
+            # Genis, duz bir merkez ve yumusak kenar: fener isigi hissi
             t = 1 - d
-            a = min(1.0, t * 1.6) ** 1.4
+            a = min(1.0, t * 2.1) ** 1.25
             px[x, y] = (255, 255, 255, int(a * 255))
     img.save(tex_dir / "light.png")
 

@@ -307,7 +307,7 @@ object Content {
                 StageEvent(500f, EventType.ELITE, "husk"),
                 StageEvent(BOSS_TIME, EventType.BOSS, "hollow_stag"),
             ),
-            ambient = 0x14102AFF, dawnAmbient = 0xB86A48FF.toInt(),
+            ambient = 0x342A60FF, dawnAmbient = 0xB86A48FF.toInt(),
         ),
         StageDef(
             "drowned", 1, "tile_drowned",
@@ -338,7 +338,7 @@ object Content {
                 StageEvent(BOSS_TIME, EventType.BOSS, "bellkeeper"),
             ),
             enemyTint = 0xB8F0E0FF.toInt(),
-            ambient = 0x0E1626FF, dawnAmbient = 0x9A7A6AFF.toInt(),
+            ambient = 0x283658FF, dawnAmbient = 0x9A7A6AFF.toInt(),
         ),
         StageDef(
             "frozen", 2, "tile_frozen",
@@ -369,7 +369,7 @@ object Content {
                 StageEvent(BOSS_TIME, EventType.BOSS, "frost_wyrm"),
             ),
             enemyTint = 0xD0E4FFFF.toInt(),
-            ambient = 0x101A30FF, dawnAmbient = 0xC08A70FF.toInt(),
+            ambient = 0x2C3A64FF, dawnAmbient = 0xC08A70FF.toInt(),
         ),
     )
 
