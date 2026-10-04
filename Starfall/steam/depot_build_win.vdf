@@ -1,0 +1,14 @@
+// Windows x64 deposu: `dotnet publish -c Release -r win-x64 -o publish/win-x64` ciktisi.
+"DepotBuild"
+{
+	"DepotID"	"481"
+	"ContentRoot"	"../publish/win-x64/"
+	"FileMapping"
+	{
+		"LocalPath"	"*"
+		"DepotPath"	"."
+		"Recursive"	"1"
+	}
+	"FileExclusion"	"*.pdb"
+	"FileExclusion"	"steam_appid.txt"	// yalnizca gelistirme icin; Steam surumunde App ID istemciden gelir
+}

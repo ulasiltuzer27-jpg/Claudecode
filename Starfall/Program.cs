@@ -33,7 +33,10 @@ public static class Program
         if (args.ContainsKey("audio-test")) return Tests.AudioTest.Run(args);
         var game = new Game(args);
         game.Build();
-        var host = new Host(game, new HostOptions { Capture = args.ContainsKey("capture") });
+        var opt = new HostOptions { Capture = args.ContainsKey("capture") };
+        if (args.TryGetValue("size", out var size) && size.Split('x') is [var sw, var sh] && int.TryParse(sw, out var w) && int.TryParse(sh, out var h))
+            (opt.Width, opt.Height) = (w, h);
+        var host = new Host(game, opt);
         host.Run();
         return 0;
     }

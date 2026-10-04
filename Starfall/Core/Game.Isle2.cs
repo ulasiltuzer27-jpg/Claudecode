@@ -21,7 +21,6 @@ public sealed partial class Game
     public Finale2 Finale2 = null!;
     public House House = null!;
     public bool InsideHouse;
-    private bool _arrivedIsle2Check;
 
     private void BuildIsle2Systems()
     {

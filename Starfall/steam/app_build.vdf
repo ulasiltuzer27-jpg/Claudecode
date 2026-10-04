@@ -1,0 +1,20 @@
+// SteamPipe uygulama derlemesi. Kullanim (Steamworks SDK'daki steamcmd ile):
+//   steamcmd +login <kullanici> +run_app_build "<tam yol>/Starfall/steam/app_build.vdf" +quit
+// Once iki yayini uretin (Starfall klasorunde):
+//   dotnet publish -c Release -r win-x64   -o publish/win-x64
+//   dotnet publish -c Release -r linux-x64 -o publish/linux-x64
+// 480/481/482 Valve'in test uygulamasinin numaralaridir; KENDI App ID ve Depot ID'lerinizi
+// yazin ve ../steam_appid.txt dosyasindaki 480'i de degistirin.
+"AppBuild"
+{
+	"AppID"		"480"
+	"Desc"		"Starfall Isle"
+	"BuildOutput"	"../publish/steam-output/"
+	"ContentRoot"	"../publish/"
+	"SetLive"	""
+	"Depots"
+	{
+		"481"	"depot_build_win.vdf"
+		"482"	"depot_build_linux.vdf"
+	}
+}

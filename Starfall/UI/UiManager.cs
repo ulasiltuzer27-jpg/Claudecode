@@ -124,6 +124,9 @@ public sealed class UiManager
     }
 
     /// <summary>Her karede (pencere varsa) cizim listesini bastan kur.</summary>
+    /// <summary>Hicbir arayuz cizme (--hideui; magaza gorselleri icin).</summary>
+    public bool HideAll;
+
     public void Draw(int fbW, int fbH)
     {
         if (_list == null) return;
@@ -136,6 +139,7 @@ public sealed class UiManager
         c.Ts = G.Settings.V.TextScale;
         c.Time = Time;
         c.G = G;
+        if (HideAll) return; // magaza gorseli cekimi: yalnizca sahne
         try
         {
             G.Hud.Draw(c);

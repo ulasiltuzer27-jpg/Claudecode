@@ -1,0 +1,15 @@
+// Linux / Steam Deck (yerel) deposu: `dotnet publish -c Release -r linux-x64 -o publish/linux-x64`.
+// Steam Deck, Windows deposunu Proton ile de calistirabilir; bu depo istege bagli.
+"DepotBuild"
+{
+	"DepotID"	"482"
+	"ContentRoot"	"../publish/linux-x64/"
+	"FileMapping"
+	{
+		"LocalPath"	"*"
+		"DepotPath"	"."
+		"Recursive"	"1"
+	}
+	"FileExclusion"	"*.pdb"
+	"FileExclusion"	"steam_appid.txt"	// yalnizca gelistirme icin; Steam surumunde App ID istemciden gelir
+}

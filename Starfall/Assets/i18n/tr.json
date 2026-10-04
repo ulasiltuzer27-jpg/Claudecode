@@ -306,9 +306,10 @@
  "credits.sections": [
   "Yapım|Yıldız Adası Ekibi",
   "Modelleme ve Animasyon|Her şey kodla, sevgiyle yapıldı",
-  "Müzik ve Ses|Web Audio ile anlık üretildi",
-  "Açık Kaynak|three.js (MIT)|Rapier (Apache-2.0)|Electron (MIT)|steamworks.js (MIT)|Nunito ve Baloo 2 yazı tipleri (OFL)",
-  "Adalılar|Bilge Baykuş · Diken Usta · Zıpzıp|Koca Bal · Pamuk · Usta Kunduz",
+  "Müzik ve Ses|Kendi ses motorunda anlık üretildi",
+  "Açık Kaynak|.NET (MIT)|Silk.NET (MIT)|OpenAL Soft (LGPL-2.0)|StbTrueTypeSharp · StbImageSharp (MIT)|Steamworks.NET (MIT)|Nunito ve Baloo 2 yazı tipleri (OFL)",
+  "Yıldız Adası|Bilge Baykuş · Diken Usta · Zıpzıp|Koca Bal · Pamuk · Usta Kunduz|Profesör Köstebek · Foto",
+  "Kar Adası|Paytak · Deniz · Kaya · Bulut",
   "Ve tabii ki|Mina"
  ],
  "credits.end": "Ada keşfetmeye devam etmeni bekliyor.",

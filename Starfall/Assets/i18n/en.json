@@ -306,9 +306,10 @@
  "credits.sections": [
   "Made by|The Starfall Isle Team",
   "Modeling & Animation|Everything made in code, with love",
-  "Music & Sound|Generated live with Web Audio",
-  "Open Source|three.js (MIT)|Rapier (Apache-2.0)|Electron (MIT)|steamworks.js (MIT)|Nunito and Baloo 2 fonts (OFL)",
-  "Islanders|Sage the Owl · Mr. Prickle · Hopper|Big Honey · Cotton · Chip the Beaver",
+  "Music & Sound|Generated live by our own sound engine",
+  "Open Source|.NET (MIT)|Silk.NET (MIT)|OpenAL Soft (LGPL-2.0)|StbTrueTypeSharp · StbImageSharp (MIT)|Steamworks.NET (MIT)|Nunito and Baloo 2 fonts (OFL)",
+  "Starfall Isle|Sage the Owl · Mr. Prickle · Hopper|Big Honey · Cotton · Chip the Beaver|Professor Mole · Foto",
+  "Snow Isle|Waddle · Marina · Cliff · Cloud",
   "And of course|Mina"
  ],
  "credits.end": "The island is waiting for you to keep exploring.",

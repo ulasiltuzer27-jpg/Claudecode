@@ -49,7 +49,7 @@ public sealed partial class Game
             if (Args.TryGetValue("give", out var give))
                 foreach (var id in give.Split(','))
                 {
-                    if (id.Contains(':')) GiveItem(id);
+                    if (id.Contains(':') || id.StartsWith("map")) GiveItem(id);
                     else Wardrobe.Give(id, false);
                 }
             if (Args.TryGetValue("wear", out var wear))
@@ -81,6 +81,7 @@ public sealed partial class Game
             House.Enter();
             if (hv == "edit") After(1.2f, () => OpenScreen(new HouseScreen(Ui)));
         }
+        if (Args.ContainsKey("hideui")) Ui.HideAll = true;
         if (Args.TryGetValue("say", out var say)) Hud.Toast(say);
         if (Args.TryGetValue("talk", out var npc) && Npcs.ById.TryGetValue(npc, out var n)) Quests.Talk(n);
     }

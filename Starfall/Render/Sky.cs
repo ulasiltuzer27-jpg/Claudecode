@@ -69,7 +69,9 @@ public sealed class SkyState
         if (snowiness > 0)
         {
             var cold = new Vector3(0.75f, 0.85f, 1.05f);
-            HemiGround = Vector3.Lerp(HemiGround, HemiGround * cold + new Vector3(0.05f, 0.06f, 0.08f), snowiness);
+            // kar zemini isigi geri yansitir: golgedeki dikey yuzler kararmasin
+            HemiGround = Vector3.Lerp(HemiGround, HemiSky * new Vector3(0.92f, 0.96f, 1.0f), snowiness * 0.9f);
+            HemiIntensity *= 1 + 0.25f * snowiness;
             Fog = Vector3.Lerp(Fog, Fog * cold + new Vector3(0.04f), snowiness * 0.6f);
         }
         Aurora = MathF.Min(1.6f, snowiness * MathX.Smoothstep(0.4f, 0.9f, Night) + AuroraBoost);

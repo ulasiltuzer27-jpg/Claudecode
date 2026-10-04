@@ -1,10 +1,11 @@
 {
   "name": "starfall-asset-tools",
   "private": true,
-  "description": "Istege bagli varlik araclari (basarim ikonlari, ACHIEVEMENTS.md). Oyunu calistirmak icin gerekmez.",
+  "description": "Istege bagli varlik araclari (basarim ikonlari, ACHIEVEMENTS.md, Steam magaza gorselleri). Oyunu calistirmak icin gerekmez.",
   "type": "module",
   "scripts": {
-    "icons": "node gen-icons.mjs"
+    "icons": "node gen-icons.mjs",
+    "store-art": "node store-art.mjs"
   },
   "devDependencies": {
     "playwright": "^1.47.0"

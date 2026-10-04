@@ -11,9 +11,11 @@
     <RollForward>Major</RollForward>
     <TieredPGO>true</TieredPGO>
     <InvariantGlobalization>true</InvariantGlobalization>
-    <Version>0.2.0</Version>
+    <Version>1.0.0</Version>
     <Product>Starfall Isle</Product>
     <ApplicationIcon>Assets/icon.ico</ApplicationIcon>
+    <!-- yayin ciktilari ve Node araclari projeye dahil edilmesin -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);publish/**;tools/**;steam/**</DefaultItemExcludes>
   </PropertyGroup>
 
   <!-- Yayin: dotnet publish -c Release -r win-x64 (tek dosya, kendi icinde) -->
@@ -22,7 +24,8 @@
     <DebugType>none</DebugType>
     <SelfContained Condition="'$(RuntimeIdentifier)' != ''">true</SelfContained>
     <PublishSingleFile Condition="'$(RuntimeIdentifier)' != ''">true</PublishSingleFile>
-    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <!-- yerel kutuphaneler (glfw, openal) exe icine gomulmez, yanina konur: Silk.NET onlari orada arar -->
+    <IncludeNativeLibrariesForSelfExtract>false</IncludeNativeLibrariesForSelfExtract>
   </PropertyGroup>
 
   <ItemGroup>
@@ -43,6 +46,9 @@
     <EmbeddedResource Include="Assets/**/*" Exclude="Assets/icon.ico" LogicalName="$([System.String]::Copy('%(RecursiveDir)%(Filename)%(Extension)').Replace('\','/'))" />
     <EmbeddedResource Include="Render/Shaders/*.*" LogicalName="shaders/%(Filename)%(Extension)" />
     <None Include="steam_appid.txt" CopyToOutputDirectory="PreserveNewest" Condition="Exists('steam_appid.txt')" />
+    <!-- Steamworks SDK'nin yerel kutuphaneleri (NuGet paketinde yok): SDK'daki
+         redistributable_bin dosyalarini steam/redist/<rid>/ altina koyun, exe'nin yanina kopyalanir. -->
+    <None Include="steam/redist/$(RuntimeIdentifier)/*" Condition="'$(RuntimeIdentifier)' != ''" Link="%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
   </ItemGroup>
 
   <ItemGroup>

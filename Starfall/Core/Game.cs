@@ -526,6 +526,11 @@ public sealed partial class Game
             Ui.Push(new JournalScreen(Ui));
             return;
         }
+        if (input.Pressed("wardrobe") && Save?.Outfits.Count > 1)
+        {
+            OpenScreen(new WardrobeScreen(Ui));
+            return;
+        }
         if (input.Pressed("photo") && Fishing.State == "idle" && !Player.Climbing) { Photo.Enter(); return; }
         if (Fishing.State != "idle" || Race.State == "countdown") return;
         var act = CurrentInteraction;
