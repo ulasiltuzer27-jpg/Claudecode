@@ -24,6 +24,7 @@ public static class Program
         }
         if (args.ContainsKey("verify")) return Tests.Verify.Run(args);
         if (args.ContainsKey("playtest")) return Tests.Playtest.Run(args);
+        if (args.ContainsKey("audio-test")) return Tests.AudioTest.Run(args);
         var game = new Game(args);
         game.Build();
         var host = new Host(game, new HostOptions { Capture = args.ContainsKey("capture") });

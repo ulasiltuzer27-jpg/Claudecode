@@ -16,3 +16,18 @@ public sealed partial class Game
     private void OnCollectIsle2(Item item) { }
     private void GrantRewardIsle2(string id, string kind, System.Numerics.Vector3 pos) { }
 }
+
+public sealed partial class Game
+{
+    /// <summary>Muzigin "auto" ruh hali: ada + gece/gunduz (+ ev ici).</summary>
+    public string Ambience2Mood()
+    {
+        bool night = Env.Sky.Night > 0.55f;
+        if (InsideHouse) return "house";
+        bool snow = World.IsSnow(Player.Pos.X, Player.Pos.Z);
+        if (snow) return night ? "aurora" : "snow";
+        return night ? "night" : "day";
+    }
+
+    public bool InsideHouse;
+}
