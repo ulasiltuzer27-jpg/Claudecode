@@ -115,6 +115,17 @@ public sealed class Rng
 
     public Rng(uint seed) { _a = seed; }
 
+    /// <summary>JS'teki <c>seed &gt;&gt;&gt; 0</c> donusumu (kesirli/negatif tohumlar icin).</summary>
+    public static Rng Js(double seed) => new(ToUint32(seed));
+
+    public static uint ToUint32(double v)
+    {
+        if (double.IsNaN(v) || double.IsInfinity(v)) return 0;
+        double t = Math.Truncate(v) % 4294967296.0;
+        if (t < 0) t += 4294967296.0;
+        return (uint)t;
+    }
+
     /// <summary>[0, 1) — JS'teki gibi double: karistirma (shuffle) birebir ayni cikar.</summary>
     public double NextD()
     {

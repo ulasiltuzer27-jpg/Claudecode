@@ -133,6 +133,24 @@ public sealed class FoxModel
 
     public void SetScarf(string hex) => ScarfMat.Tint = MathX.Hex(hex);
 
+    public readonly Dictionary<OutfitSlot, string?> Worn = new();
+
+    /// <summary>Kiyafet giy/cikar (null = bos). Atki renkleri tint ile uygulanir.</summary>
+    public void SetOutfit(OutfitSlot slot, string? id)
+    {
+        Worn[slot] = id;
+        if (slot == OutfitSlot.Scarf)
+        {
+            SetScarf(Outfits.Get(id)?.Color ?? P.Scarf);
+            return;
+        }
+        var node = slot switch { OutfitSlot.Hat => HatSlot, OutfitSlot.Face => FaceSlot, _ => BackSlot };
+        foreach (var c in node.Children.ToList()) node.Remove(c);
+        if (id == null) return;
+        var mesh = Outfits.Mesh(id);
+        if (mesh != null) node.Add(new Node(mesh, Material.Char()));
+    }
+
     public void Land(float impact) => _squashVel -= MathF.Min(6, impact * 0.35f);
     public void Jump() => _squashVel += 3.5f;
     public void DoFlip() => Flip = 1;

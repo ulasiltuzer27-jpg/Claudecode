@@ -39,6 +39,16 @@ public sealed class Geo
             float l = n.Length();
             N[i] = l > 1e-8f ? n / l : Vector3.UnitY;
         }
+        // aynalama sarim yonunu ters cevirir: ucgenleri yeniden sirala (arka yuz ayiklamasi bozulmasin)
+        if (m.GetDeterminant() < 0)
+        {
+            for (int i = 0; i + 2 < P.Count; i += 3)
+            {
+                (P[i + 1], P[i + 2]) = (P[i + 2], P[i + 1]);
+                (N[i + 1], N[i + 2]) = (N[i + 2], N[i + 1]);
+                (C[i + 1], C[i + 2]) = (C[i + 2], C[i + 1]);
+            }
+        }
         return this;
     }
 
@@ -68,6 +78,37 @@ public sealed class Geo
             N[i] = N[i + 1] = N[i + 2] = n;
         }
         return this;
+    }
+
+    /// <summary>Yumusak golgeleme: ayni konumdaki koselerin yuz normallerini ortala.</summary>
+    public Geo SmoothNormals()
+    {
+        var acc = new Dictionary<(int, int, int), Vector3>();
+        (int, int, int) Key(Vector3 p) => ((int)MathF.Round(p.X * 1e4f), (int)MathF.Round(p.Y * 1e4f), (int)MathF.Round(p.Z * 1e4f));
+        for (int i = 0; i + 2 < P.Count; i += 3)
+        {
+            var fn = Vector3.Cross(P[i + 1] - P[i], P[i + 2] - P[i]);
+            for (int j = 0; j < 3; j++)
+            {
+                var k = Key(P[i + j]);
+                acc[k] = acc.TryGetValue(k, out var v) ? v + fn : fn;
+            }
+        }
+        for (int i = 0; i < P.Count; i++)
+        {
+            var n = acc[Key(P[i])];
+            float l = n.Length();
+            N[i] = l > 1e-12f ? n / l : Vector3.UnitY;
+        }
+        return this;
+    }
+
+    /// <summary>Sinir kutusunu orijine ortala (three.js geometry.center()).</summary>
+    public Geo Center()
+    {
+        var (mn, mx) = Bounds();
+        var c = (mn + mx) * 0.5f;
+        return Translate(-c.X, -c.Y, -c.Z);
     }
 
     /// <summary>Ayni konumdaki koseleri ayni miktarda kaydirir (yuzeyde catlak olusmaz).</summary>

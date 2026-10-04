@@ -71,16 +71,29 @@ public sealed class Host
 
     private void OnRender(double dt)
     {
-        _game.Frame((float)dt);
+        // test/yakalama modunda sabit adim: sonuclar makinenin hizina bagli olmasin
+        float step = _opt.Capture ? 1 / 60f : (float)dt;
+        _game.Frame(step);
+        _game.StartupTick();
+        var fb = _window.FramebufferSize;
+        _game.Ui.Draw(fb.X, fb.Y);
         Renderer.Render(_game.Env);
         _frames++;
+        if (_game.PendingShot is { } shot)
+        {
+            try { SaveScreenshot(shot); _game.ShotSaved(shot); }
+            catch (Exception ex) { Console.Error.WriteLine(ex.Message); _game.ShotSaved(""); }
+        }
         if (_game.PendingCapture is { } cap && _frames > 2)
         {
             _game.PendingCapture = null;
             SaveScreenshot(cap);
+            Console.WriteLine("yakalandi: " + cap);
         }
         if (_game.QuitRequested) _window.Close();
     }
+
+    public Vector2 LogicalSize => new(_window.Size.X, _window.Size.Y);
 
     public void SaveScreenshot(string path)
     {

@@ -3,18 +3,137 @@ using Starfall.Core;
 
 namespace Starfall.Physics;
 
-public enum ShapeKind { Box, Cylinder, Sphere }
+public enum ShapeKind { Box, Cylinder, Sphere, Hull }
 
 /// <summary>
 /// Yerel uzayda carpisma tanimi (yapi kuruculari dondurur). Kutu: Half = yari
 /// kenarlar; silindir: Half.X = yaricap, Half.Y = yari yukseklik (yerel Y ekseni);
 /// kure: Half.X = yaricap. Rot: three.js 'YXZ' Euler (x, y, z).
 /// </summary>
-public readonly record struct ShapeDef(ShapeKind Kind, Vector3 Pos, Vector3 Half, Vector3 Rot = default)
+public readonly record struct ShapeDef(ShapeKind Kind, Vector3 Pos, Vector3 Half, Vector3 Rot = default, ConvexHull? Hull = null)
 {
     public static ShapeDef Box(float hx, float hy, float hz, Vector3 pos, Vector3 rot = default) => new(ShapeKind.Box, pos, new(hx, hy, hz), rot);
     public static ShapeDef Cyl(float r, float hh, Vector3 pos, Vector3 rot = default) => new(ShapeKind.Cylinder, pos, new(r, hh, r), rot);
     public static ShapeDef Ball(float r, Vector3 pos) => new(ShapeKind.Sphere, pos, new(r, r, r));
+
+    /// <summary>Noktalarin disbukey zarfi (kaya, cati). pos: noktalarin koordinat sisteminin yerel konumu.</summary>
+    public static ShapeDef HullOf(IReadOnlyList<Vector3> points, Vector3 pos = default, Vector3 rot = default)
+        => FromHull(ConvexHull.Build(points), pos, rot);
+
+    /// <summary>Hazir zarftan (or. olceklenmis kaya varyanti) sekil tanimi.</summary>
+    public static ShapeDef FromHull(ConvexHull h, Vector3 pos = default, Vector3 rot = default)
+    {
+        // sekil merkezi = zarfin sinir kutusu merkezi; Rot merkez etrafinda uygulanir,
+        // bu yuzden yerel ofset de ayni donusle tasinir
+        var off = Vector3.Transform(h.Center, MathX.EulerYXZ(rot.X, rot.Y, rot.Z));
+        return new(ShapeKind.Hull, pos + off, h.Half, rot, h);
+    }
+}
+
+/// <summary>
+/// Disbukey cokyuzlu: duzlemler (disa bakan normal + ofset) ve yuzey ucgenleri, merkeze gore.
+/// Kucuk nokta kumeleri icin (kaya ~74 kose) kaba kuvvet duzlem taramasi yeterince hizli.
+/// </summary>
+public sealed class ConvexHull
+{
+    public Vector3[] Normals = Array.Empty<Vector3>();
+    public float[] Offsets = Array.Empty<float>();
+    public Vector3[] Tris = Array.Empty<Vector3>();
+    public Vector3[] Points = Array.Empty<Vector3>();
+    public Vector3 Center, Half;
+
+    public static ConvexHull Build(IReadOnlyList<Vector3> input)
+    {
+        // tekil noktalar
+        var pts = new List<Vector3>();
+        foreach (var p in input)
+        {
+            bool dup = false;
+            foreach (var q in pts) if (Vector3.DistanceSquared(p, q) < 1e-8f) { dup = true; break; }
+            if (!dup) pts.Add(p);
+        }
+        var mn = new Vector3(float.MaxValue); var mx = new Vector3(float.MinValue);
+        foreach (var p in pts) { mn = Vector3.Min(mn, p); mx = Vector3.Max(mx, p); }
+        var center = (mn + mx) * 0.5f;
+        for (int i = 0; i < pts.Count; i++) pts[i] -= center;
+        float scale = MathF.Max(1e-3f, (mx - mn).Length());
+        float eps = scale * 2e-5f;
+
+        var normals = new List<Vector3>();
+        var offsets = new List<float>();
+        int n = pts.Count;
+        for (int i = 0; i < n; i++)
+        for (int j = i + 1; j < n; j++)
+        for (int k = j + 1; k < n; k++)
+        {
+            var nn = Vector3.Cross(pts[j] - pts[i], pts[k] - pts[i]);
+            float l = nn.Length();
+            if (l < scale * scale * 1e-7f) continue;
+            nn /= l;
+            float d = Vector3.Dot(nn, pts[i]);
+            int pos = 0, neg = 0;
+            for (int m = 0; m < n; m++)
+            {
+                float sd = Vector3.Dot(nn, pts[m]) - d;
+                if (sd > eps) pos++;
+                else if (sd < -eps) neg++;
+                if (pos > 0 && neg > 0) break;
+            }
+            if (pos > 0 && neg > 0) continue;
+            if (pos > 0) { nn = -nn; d = -d; }
+            bool same = false;
+            for (int q = 0; q < normals.Count; q++)
+                if (Vector3.Dot(normals[q], nn) > 0.99999f && MathF.Abs(offsets[q] - d) < eps * 4) { same = true; break; }
+            if (same) continue;
+            normals.Add(nn);
+            offsets.Add(d);
+        }
+
+        // yuz cokgenleri -> yelpaze ucgenleri
+        var tris = new List<Vector3>();
+        for (int f = 0; f < normals.Count; f++)
+        {
+            var nn = normals[f];
+            var on = new List<Vector3>();
+            foreach (var p in pts) if (MathF.Abs(Vector3.Dot(nn, p) - offsets[f]) <= eps * 4) on.Add(p);
+            if (on.Count < 3) continue;
+            var c = Vector3.Zero;
+            foreach (var p in on) c += p;
+            c /= on.Count;
+            var u = Vector3.Normalize(MathF.Abs(nn.Y) < 0.9f ? Vector3.Cross(nn, Vector3.UnitY) : Vector3.Cross(nn, Vector3.UnitX));
+            var w = Vector3.Cross(nn, u);
+            on.Sort((a, b) => MathF.Atan2(Vector3.Dot(a - c, w), Vector3.Dot(a - c, u)).CompareTo(MathF.Atan2(Vector3.Dot(b - c, w), Vector3.Dot(b - c, u))));
+            for (int t = 1; t + 1 < on.Count; t++) { tris.Add(on[0]); tris.Add(on[t]); tris.Add(on[t + 1]); }
+        }
+        return new ConvexHull
+        {
+            Normals = normals.ToArray(), Offsets = offsets.ToArray(), Tris = tris.ToArray(), Points = pts.ToArray(),
+            Center = center, Half = (mx - mn) * 0.5f,
+        };
+    }
+
+    public ConvexHull Scaled(float s) => new()
+    {
+        Normals = Normals,
+        Offsets = Offsets.Select(o => o * s).ToArray(),
+        Tris = Tris.Select(t => t * s).ToArray(),
+        Points = Points.Select(t => t * s).ToArray(),
+        Center = Center * s,
+        Half = Half * s,
+    };
+
+    /// <summary>En buyuk isaretli duzlem uzakligi (negatif = icerde).</summary>
+    public float MaxSeparation(Vector3 l, out int face)
+    {
+        float best = float.MinValue;
+        face = 0;
+        for (int i = 0; i < Normals.Length; i++)
+        {
+            float sd = Vector3.Dot(Normals[i], l) - Offsets[i];
+            if (sd > best) { best = sd; face = i; }
+        }
+        return best;
+    }
 }
 
 public sealed class Shape
@@ -24,6 +143,7 @@ public sealed class Shape
     public Vector3 Half;
     public Matrix4x4 Rot = Matrix4x4.Identity, InvRot = Matrix4x4.Identity;
     public bool Rotated;
+    public ConvexHull? Hull;
     public string? Tag;
     public bool Enabled = true;
     public Vector3 Min, Max;
@@ -77,7 +197,7 @@ public sealed class CollisionWorld
         // yaw ile dondur (three.js: x' = x cos + z sin, z' = -x sin + z cos)
         var wpos = new Vector3(at.X + p.X * cy + p.Z * sy, at.Y + p.Y, at.Z - p.X * sy + p.Z * cy);
         var rot = MathX.EulerYXZ(d.Rot.X, d.Rot.Y + yaw, d.Rot.Z);
-        var s = new Shape { Kind = d.Kind, Center = wpos, Half = d.Half, Tag = tag, Id = _nextId++ };
+        var s = new Shape { Kind = d.Kind, Center = wpos, Half = d.Half, Hull = d.Hull, Tag = tag, Id = _nextId++ };
         bool identity = MathF.Abs(d.Rot.X) < 1e-6f && MathF.Abs(d.Rot.Z) < 1e-6f && MathF.Abs(d.Rot.Y + yaw) < 1e-6f;
         if (!identity && d.Kind != ShapeKind.Sphere)
         {
@@ -111,10 +231,10 @@ public sealed class CollisionWorld
     {
         Vector3 ext;
         if (s.Kind == ShapeKind.Sphere) ext = new Vector3(s.Half.X);
-        else if (!s.Rotated) ext = s.Kind == ShapeKind.Box ? s.Half : new Vector3(s.Half.X, s.Half.Y, s.Half.X);
+        else if (!s.Rotated) ext = s.Kind != ShapeKind.Cylinder ? s.Half : new Vector3(s.Half.X, s.Half.Y, s.Half.X);
         else
         {
-            var h = s.Kind == ShapeKind.Box ? s.Half : new Vector3(s.Half.X, s.Half.Y, s.Half.X);
+            var h = s.Kind != ShapeKind.Cylinder ? s.Half : new Vector3(s.Half.X, s.Half.Y, s.Half.X);
             var r = s.Rot;
             ext = new Vector3(
                 MathF.Abs(r.M11) * h.X + MathF.Abs(r.M21) * h.Y + MathF.Abs(r.M31) * h.Z,
@@ -214,6 +334,34 @@ public sealed class CollisionWorld
                 else if (dx <= dz) { ln = new Vector3(MathF.Sign(l.X == 0 ? 1 : l.X), 0, 0); depth = dx + r; }
                 else { ln = new Vector3(0, 0, MathF.Sign(l.Z == 0 ? 1 : l.Z)); depth = dz + r; }
                 normal = s.DirToWorld(ln);
+                return true;
+            }
+            case ShapeKind.Hull:
+            {
+                var h = s.Hull!;
+                var l = s.ToLocal(c);
+                float sep = h.MaxSeparation(l, out int face);
+                if (sep > r) return false;
+                if (sep <= 0)
+                {
+                    normal = s.DirToWorld(h.Normals[face]);
+                    depth = r - sep;
+                    return true;
+                }
+                // disarida: zarf yuzeyindeki en yakin nokta (kenar/kose bolgesinde duzlem testi yaniltir)
+                float bestD2 = float.MaxValue;
+                var bq = l;
+                var tr = h.Tris;
+                for (int i = 0; i + 2 < tr.Length; i += 3)
+                {
+                    var q = ClosestOnTri(l, tr[i], tr[i + 1], tr[i + 2]);
+                    float d2 = Vector3.DistanceSquared(l, q);
+                    if (d2 < bestD2) { bestD2 = d2; bq = q; }
+                }
+                if (bestD2 >= r * r) return false;
+                float dist = MathF.Sqrt(bestD2);
+                normal = s.DirToWorld(dist > 1e-6f ? (l - bq) / dist : h.Normals[face]);
+                depth = r - dist;
                 return true;
             }
             default: // silindir (yerel Y ekseni)
@@ -433,6 +581,29 @@ public sealed class CollisionWorld
         }
         var lo = s.ToLocal(o);
         var ld = s.DirToLocal(d);
+        if (s.Kind == ShapeKind.Hull)
+        {
+            var h = s.Hull!;
+            float tmin = 0, tmax = float.MaxValue;
+            int face = -1;
+            for (int i = 0; i < h.Normals.Length; i++)
+            {
+                float denom = Vector3.Dot(h.Normals[i], ld);
+                float dist = Vector3.Dot(h.Normals[i], lo) - h.Offsets[i];
+                if (MathF.Abs(denom) < 1e-9f)
+                {
+                    if (dist > 0) return false;
+                    continue;
+                }
+                float tc = -dist / denom;
+                if (denom < 0) { if (tc > tmin) { tmin = tc; face = i; } }
+                else if (tc < tmax) tmax = tc;
+                if (tmin > tmax) return false;
+            }
+            t = tmin;
+            n = s.DirToWorld(face >= 0 ? h.Normals[face] : -ld);
+            return true;
+        }
         if (s.Kind == ShapeKind.Box)
         {
             float tmin = 0, tmax = float.MaxValue;
@@ -531,6 +702,7 @@ public sealed class CollisionWorld
             {
                 case ShapeKind.Sphere: if (l.LengthSquared() < s.Half.X * s.Half.X) return true; break;
                 case ShapeKind.Box: if (MathF.Abs(l.X) < s.Half.X && MathF.Abs(l.Y) < s.Half.Y && MathF.Abs(l.Z) < s.Half.Z) return true; break;
+                case ShapeKind.Hull: if (s.Hull!.MaxSeparation(l, out _) < 0) return true; break;
                 default: if (l.X * l.X + l.Z * l.Z < s.Half.X * s.Half.X && MathF.Abs(l.Y) < s.Half.Y) return true; break;
             }
         }

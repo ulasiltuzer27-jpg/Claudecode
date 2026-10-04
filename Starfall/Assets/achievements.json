@@ -1,53 +1,322 @@
 {
   "_kural": "Esikler veriden gelir; yeni basarim eklemek icin koda dokunmak gerekmez. id = Steamworks API adi. Ad/aciklama i18n dosyalarinda ach.<id>.name / ach.<id>.desc.",
   "stats": [
-    { "key": "games_started", "kind": "sum" },
-    { "key": "jumps", "kind": "sum" },
-    { "key": "swim_m", "kind": "sum" },
-    { "key": "fish_caught", "kind": "sum" },
-    { "key": "photos", "kind": "sum" },
-    { "key": "glide_max", "kind": "max" },
-    { "key": "air_max", "kind": "max" },
-    { "key": "shards_max", "kind": "max" },
-    { "key": "feathers_max", "kind": "max" },
-    { "key": "shells_max", "kind": "max" },
-    { "key": "species_max", "kind": "max" },
-    { "key": "regions_max", "kind": "max" },
-    { "key": "quests_max", "kind": "max" },
-    { "key": "npcs_max", "kind": "max" },
-    { "key": "finale", "kind": "max" },
-    { "key": "peak", "kind": "max" },
-    { "key": "race", "kind": "max" },
-    { "key": "cave", "kind": "max" },
-    { "key": "night", "kind": "max" },
-    { "key": "speedrun", "kind": "max" },
-    { "key": "completion", "kind": "max" }
+    {
+      "key": "games_started",
+      "kind": "sum"
+    },
+    {
+      "key": "jumps",
+      "kind": "sum"
+    },
+    {
+      "key": "swim_m",
+      "kind": "sum"
+    },
+    {
+      "key": "fish_caught",
+      "kind": "sum"
+    },
+    {
+      "key": "photos",
+      "kind": "sum"
+    },
+    {
+      "key": "glide_max",
+      "kind": "max"
+    },
+    {
+      "key": "air_max",
+      "kind": "max"
+    },
+    {
+      "key": "shards_max",
+      "kind": "max"
+    },
+    {
+      "key": "feathers_max",
+      "kind": "max"
+    },
+    {
+      "key": "shells_max",
+      "kind": "max"
+    },
+    {
+      "key": "species_max",
+      "kind": "max"
+    },
+    {
+      "key": "regions_max",
+      "kind": "max"
+    },
+    {
+      "key": "quests_max",
+      "kind": "max"
+    },
+    {
+      "key": "npcs_max",
+      "kind": "max"
+    },
+    {
+      "key": "finale",
+      "kind": "max"
+    },
+    {
+      "key": "peak",
+      "kind": "max"
+    },
+    {
+      "key": "race",
+      "kind": "max"
+    },
+    {
+      "key": "cave",
+      "kind": "max"
+    },
+    {
+      "key": "night",
+      "kind": "max"
+    },
+    {
+      "key": "speedrun",
+      "kind": "max"
+    },
+    {
+      "key": "completion",
+      "kind": "max"
+    },
+    {
+      "key": "outfits_max",
+      "kind": "max"
+    }
   ],
   "achievements": [
-    { "id": "ACH_FIRST_STEPS", "stat": "games_started", "threshold": 1, "icon": { "glyph": "paw", "color": "#7cc45a" } },
-    { "id": "ACH_FIRST_SHARD", "stat": "shards_max", "threshold": 1, "icon": { "glyph": "star", "color": "#f2b33d" } },
-    { "id": "ACH_SHARDS_15", "stat": "shards_max", "threshold": 15, "icon": { "glyph": "stars", "color": "#f29a3d" } },
-    { "id": "ACH_SHARDS_ALL", "stat": "shards_max", "threshold": 30, "icon": { "glyph": "constellation", "color": "#3d5af2" } },
-    { "id": "ACH_FIRST_FEATHER", "stat": "feathers_max", "threshold": 1, "icon": { "glyph": "feather", "color": "#e8a93a" } },
-    { "id": "ACH_FEATHERS_ALL", "stat": "feathers_max", "threshold": 8, "icon": { "glyph": "wings", "color": "#d98a1f" } },
-    { "id": "ACH_SHELLS_50", "stat": "shells_max", "threshold": 50, "icon": { "glyph": "shell", "color": "#ff9d8a" } },
-    { "id": "ACH_SHELLS_ALL", "stat": "shells_max", "threshold": 100, "icon": { "glyph": "crown", "color": "#e8687a" } },
-    { "id": "ACH_LIGHTHOUSE", "stat": "finale", "threshold": 1, "icon": { "glyph": "lighthouse", "color": "#e04848" } },
-    { "id": "ACH_PEAK", "stat": "peak", "threshold": 1, "icon": { "glyph": "mountain", "color": "#6a8fb5" } },
-    { "id": "ACH_GLIDE", "stat": "glide_max", "threshold": 60, "icon": { "glyph": "leaf", "color": "#4fae5a" } },
-    { "id": "ACH_AIRTIME", "stat": "air_max", "threshold": 10, "icon": { "glyph": "cloud", "color": "#5fb4e8" } },
-    { "id": "ACH_FIRST_FISH", "stat": "fish_caught", "threshold": 1, "icon": { "glyph": "fish", "color": "#3fa0c8" } },
-    { "id": "ACH_ALL_FISH", "stat": "species_max", "threshold": 6, "icon": { "glyph": "fishes", "color": "#2f7fb0" } },
-    { "id": "ACH_RACE", "stat": "race", "threshold": 1, "icon": { "glyph": "trophy", "color": "#f2c94c" } },
-    { "id": "ACH_HELPER", "stat": "quests_max", "threshold": 4, "icon": { "glyph": "heart", "color": "#ef6b8a" } },
-    { "id": "ACH_FRIENDS", "stat": "npcs_max", "threshold": 6, "icon": { "glyph": "chat", "color": "#9a7bd8" } },
-    { "id": "ACH_SWIMMER", "stat": "swim_m", "threshold": 200, "icon": { "glyph": "wave", "color": "#3fc8c0" } },
-    { "id": "ACH_NIGHT_OWL", "stat": "night", "threshold": 1, "icon": { "glyph": "moon", "color": "#3a4a9a" } },
-    { "id": "ACH_EXPLORER", "stat": "regions_max", "threshold": 8, "icon": { "glyph": "map", "color": "#b58a4f" } },
-    { "id": "ACH_JUMPS", "stat": "jumps", "threshold": 500, "icon": { "glyph": "bounce", "color": "#8fcf4a" } },
-    { "id": "ACH_PHOTO", "stat": "photos", "threshold": 1, "icon": { "glyph": "camera", "color": "#6b7a8a" } },
-    { "id": "ACH_SECRET_CAVE", "stat": "cave", "threshold": 1, "hidden": true, "icon": { "glyph": "gem", "color": "#5fc8e8" } },
-    { "id": "ACH_SPEEDRUN", "stat": "speedrun", "threshold": 1, "hidden": true, "icon": { "glyph": "clock", "color": "#e86a3a" } },
-    { "id": "ACH_COMPLETE", "stat": "completion", "threshold": 100, "icon": { "glyph": "medal", "color": "#d4a017" } }
+    {
+      "id": "ACH_FIRST_STEPS",
+      "stat": "games_started",
+      "threshold": 1,
+      "icon": {
+        "glyph": "paw",
+        "color": "#7cc45a"
+      }
+    },
+    {
+      "id": "ACH_FIRST_SHARD",
+      "stat": "shards_max",
+      "threshold": 1,
+      "icon": {
+        "glyph": "star",
+        "color": "#f2b33d"
+      }
+    },
+    {
+      "id": "ACH_SHARDS_15",
+      "stat": "shards_max",
+      "threshold": 15,
+      "icon": {
+        "glyph": "stars",
+        "color": "#f29a3d"
+      }
+    },
+    {
+      "id": "ACH_SHARDS_ALL",
+      "stat": "shards_max",
+      "threshold": 30,
+      "icon": {
+        "glyph": "constellation",
+        "color": "#3d5af2"
+      }
+    },
+    {
+      "id": "ACH_FIRST_FEATHER",
+      "stat": "feathers_max",
+      "threshold": 1,
+      "icon": {
+        "glyph": "feather",
+        "color": "#e8a93a"
+      }
+    },
+    {
+      "id": "ACH_FEATHERS_ALL",
+      "stat": "feathers_max",
+      "threshold": 8,
+      "icon": {
+        "glyph": "wings",
+        "color": "#d98a1f"
+      }
+    },
+    {
+      "id": "ACH_SHELLS_50",
+      "stat": "shells_max",
+      "threshold": 50,
+      "icon": {
+        "glyph": "shell",
+        "color": "#ff9d8a"
+      }
+    },
+    {
+      "id": "ACH_SHELLS_ALL",
+      "stat": "shells_max",
+      "threshold": 100,
+      "icon": {
+        "glyph": "crown",
+        "color": "#e8687a"
+      }
+    },
+    {
+      "id": "ACH_LIGHTHOUSE",
+      "stat": "finale",
+      "threshold": 1,
+      "icon": {
+        "glyph": "lighthouse",
+        "color": "#e04848"
+      }
+    },
+    {
+      "id": "ACH_PEAK",
+      "stat": "peak",
+      "threshold": 1,
+      "icon": {
+        "glyph": "mountain",
+        "color": "#6a8fb5"
+      }
+    },
+    {
+      "id": "ACH_GLIDE",
+      "stat": "glide_max",
+      "threshold": 60,
+      "icon": {
+        "glyph": "leaf",
+        "color": "#4fae5a"
+      }
+    },
+    {
+      "id": "ACH_AIRTIME",
+      "stat": "air_max",
+      "threshold": 10,
+      "icon": {
+        "glyph": "cloud",
+        "color": "#5fb4e8"
+      }
+    },
+    {
+      "id": "ACH_FIRST_FISH",
+      "stat": "fish_caught",
+      "threshold": 1,
+      "icon": {
+        "glyph": "fish",
+        "color": "#3fa0c8"
+      }
+    },
+    {
+      "id": "ACH_ALL_FISH",
+      "stat": "species_max",
+      "threshold": 6,
+      "icon": {
+        "glyph": "fishes",
+        "color": "#2f7fb0"
+      }
+    },
+    {
+      "id": "ACH_RACE",
+      "stat": "race",
+      "threshold": 1,
+      "icon": {
+        "glyph": "trophy",
+        "color": "#f2c94c"
+      }
+    },
+    {
+      "id": "ACH_HELPER",
+      "stat": "quests_max",
+      "threshold": 4,
+      "icon": {
+        "glyph": "heart",
+        "color": "#ef6b8a"
+      }
+    },
+    {
+      "id": "ACH_FRIENDS",
+      "stat": "npcs_max",
+      "threshold": 6,
+      "icon": {
+        "glyph": "chat",
+        "color": "#9a7bd8"
+      }
+    },
+    {
+      "id": "ACH_SWIMMER",
+      "stat": "swim_m",
+      "threshold": 200,
+      "icon": {
+        "glyph": "wave",
+        "color": "#3fc8c0"
+      }
+    },
+    {
+      "id": "ACH_NIGHT_OWL",
+      "stat": "night",
+      "threshold": 1,
+      "icon": {
+        "glyph": "moon",
+        "color": "#3a4a9a"
+      }
+    },
+    {
+      "id": "ACH_EXPLORER",
+      "stat": "regions_max",
+      "threshold": 8,
+      "icon": {
+        "glyph": "map",
+        "color": "#b58a4f"
+      }
+    },
+    {
+      "id": "ACH_JUMPS",
+      "stat": "jumps",
+      "threshold": 500,
+      "icon": {
+        "glyph": "bounce",
+        "color": "#8fcf4a"
+      }
+    },
+    {
+      "id": "ACH_PHOTO",
+      "stat": "photos",
+      "threshold": 1,
+      "icon": {
+        "glyph": "camera",
+        "color": "#6b7a8a"
+      }
+    },
+    {
+      "id": "ACH_SECRET_CAVE",
+      "stat": "cave",
+      "threshold": 1,
+      "hidden": true,
+      "icon": {
+        "glyph": "gem",
+        "color": "#5fc8e8"
+      }
+    },
+    {
+      "id": "ACH_SPEEDRUN",
+      "stat": "speedrun",
+      "threshold": 1,
+      "hidden": true,
+      "icon": {
+        "glyph": "clock",
+        "color": "#e86a3a"
+      }
+    },
+    {
+      "id": "ACH_COMPLETE",
+      "stat": "completion",
+      "threshold": 100,
+      "icon": {
+        "glyph": "medal",
+        "color": "#d4a017"
+      }
+    }
   ]
 }

@@ -80,6 +80,7 @@ public sealed class Billboard
     public Vector2 Size = new(1, 1);
     public Vector4 Color = Vector4.One;
     public Texture? Tex;      // null = yumusak isilti
+    public CpuImage? Image;   // Tex yoksa: CPU goruntusu (ilk cizimde yuklenir)
     public bool Additive = true;
     public bool Visible = true;
     public bool DepthTest = true;
@@ -123,6 +124,8 @@ public sealed class RenderEnv
     public MeshData? BeamMesh;
     public PostSettings Post = new();
     public UI.UiDrawList? Ui;
+    /// <summary>Kalite ayarindan gelen cicek yogunlugu (dunya kurulurken okunur).</summary>
+    public float QualityFlowers = 0.8f;
 }
 
 public sealed unsafe class Renderer : IDisposable
@@ -597,13 +600,14 @@ public sealed unsafe class Renderer : IDisposable
         {
             if (!b.Visible) continue;
             if (b.Additive) _gl.BlendFunc(BlendingFactor.One, BlendingFactor.One);
-            else _gl.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+            else _gl.BlendFunc(BlendingFactor.One, BlendingFactor.OneMinusSrcAlpha);
             if (b.DepthTest) _gl.Enable(EnableCap.DepthTest); else _gl.Disable(EnableCap.DepthTest);
             _billboard.Set("uCenter", b.Position);
             _billboard.Set("uSize", b.Size * 0.5f);
             _billboard.Set("uColor", b.Color);
-            _billboard.Set("uMode", b.Tex == null ? 1 : 0);
-            (b.Tex ?? _white).Bind(0);
+            var tex = b.Tex ?? (b.Image != null ? b.Image.Gpu ??= Texture.Rgba8(b.Image.Width, b.Image.Height, b.Image.Rgba, true, true) : null);
+            _billboard.Set("uMode", tex == null ? 1 : 0);
+            (tex ?? _white).Bind(0);
             _billboard.Set("uTex", 0);
             _gl.DrawArrays(PrimitiveType.Triangles, 0, 6);
         }

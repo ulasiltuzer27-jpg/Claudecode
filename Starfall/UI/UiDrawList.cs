@@ -87,6 +87,32 @@ public sealed class UiDrawList
         Quad(x, y, x + w, y + h, -hw, -hh, hw, hh, color, new Vector4(0, hw, hh, r));
     }
 
+    /// <summary>Yatay renk gecisli dikdortgen (koseler keskin).</summary>
+    public void RectGradH(float x, float y, float w, float h, Vector4 left, Vector4 right)
+    {
+        if (w <= 0 || h <= 0) return;
+        Batch(_curTex);
+        var prm = new Vector4(0, w * Scale, h * Scale, 0);
+        Vtx(x, y, 0, 0, left, prm); Vtx(x + w, y, 0, 0, right, prm); Vtx(x + w, y + h, 0, 0, right, prm);
+        Vtx(x, y, 0, 0, left, prm); Vtx(x + w, y + h, 0, 0, right, prm); Vtx(x, y + h, 0, 0, left, prm);
+        var cmd = Commands[^1];
+        cmd.Count += 6;
+        Commands[^1] = cmd;
+    }
+
+    /// <summary>Dikey renk gecisli dikdortgen.</summary>
+    public void RectGradV(float x, float y, float w, float h, Vector4 top, Vector4 bottom)
+    {
+        if (w <= 0 || h <= 0) return;
+        Batch(_curTex);
+        var prm = new Vector4(0, w * Scale, h * Scale, 0);
+        Vtx(x, y, 0, 0, top, prm); Vtx(x + w, y, 0, 0, top, prm); Vtx(x + w, y + h, 0, 0, bottom, prm);
+        Vtx(x, y, 0, 0, top, prm); Vtx(x + w, y + h, 0, 0, bottom, prm); Vtx(x, y + h, 0, 0, bottom, prm);
+        var cmd = Commands[^1];
+        cmd.Count += 6;
+        Commands[^1] = cmd;
+    }
+
     public void Shadow(float x, float y, float w, float h, float radius, float alpha = 0.28f)
     {
         Batch(_curTex);

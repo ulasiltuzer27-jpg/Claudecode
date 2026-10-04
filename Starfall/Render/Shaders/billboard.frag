@@ -12,12 +12,13 @@ void main() {
         float r = length(vUv - 0.5) * 2.0;
         float a = clamp(1.0 - r, 0.0, 1.0);
         a = a * a * (0.45 + 0.55 * (1.0 - smoothstep(0.0, 0.3, r)));
-        c = vec4(uColor.rgb, a * uColor.a);
-        c.rgb *= 1.0 - smoothstep(uFogNear, uFogFar, vDepth);
+        a *= uColor.a * (1.0 - smoothstep(uFogNear, uFogFar, vDepth));
+        c = vec4(uColor.rgb * a, a);
     } else {
         c = texture(uTex, vUv) * uColor;
         // doku sRGB; sahne dogrusal: kaba donusum
-        c.rgb = pow(c.rgb, vec3(2.2));
+        c.rgb = pow(c.rgb, vec3(2.2)) * c.a;
     }
+    // cikis on-carpimli (premultiplied): normal karisim One/OneMinusSrcAlpha
     FragColor = c;
 }
