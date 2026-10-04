@@ -213,7 +213,7 @@ public sealed partial class Quests
                         Say(npc, "dlg.seal.done", () =>
                         {
                             _g.GrantReward("q_au_seal", "aurora");
-                            _g.Wardrobe.Give("scarf_teal", true);
+                            _g.Wardrobe.Give("scarf_red", true);
                             _g.GiveItem("furn:fishtank");
                             FinishQuestNoReward("seal");
                         });

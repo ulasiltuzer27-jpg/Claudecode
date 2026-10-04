@@ -397,14 +397,14 @@
  "outfit.back_shell": "Shell Bag",
  "outfit.back_balloon": "Balloon",
  "outfit.back_lantern": "Back Lantern",
- "outfit.scarf_red": "Red Scarf",
+ "outfit.scarf_mina": "Mina's Scarf",
  "outfit.scarf_blue": "Blue Scarf",
  "outfit.scarf_green": "Green Scarf",
  "outfit.scarf_yellow": "Yellow Scarf",
  "outfit.scarf_purple": "Purple Scarf",
  "outfit.scarf_pink": "Pink Scarf",
  "outfit.scarf_white": "White Scarf",
- "outfit.scarf_teal": "Teal Scarf",
+ "outfit.scarf_red": "Red Scarf",
  "choice.telescope": "Repair the telescope",
  "hint.auroraReady": "You have all 15 Aurora Crystals! Bring them to the Wise Owl at the observatory.",
  "hint.boat": "W to sail, A/D to steer, S to slow down. Press E near a dock to disembark.",
@@ -555,7 +555,7 @@
  "dlg.seal.progress": "{n}/{total} ice fish species. The Aurora Eel only bites at night!",
  "dlg.seal.done": [
   "All four! You're a true ice angler!",
-  "Here, this crystal and this teal scarf are yours. And a little fish tank for your home!"
+  "Here, this crystal and this red scarf are yours. And a little fish tank for your home!"
  ],
  "dlg.seal.after": "So quiet under the ice, isn't it? The fish are dreaming down there.",
  "dlg.goat.hello": [

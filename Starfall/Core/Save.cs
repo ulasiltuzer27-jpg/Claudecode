@@ -24,8 +24,8 @@ public sealed class SaveData
     public double? FinaleTime { get; set; }
     public double? Finale2Time { get; set; }
     // genisleme: kiyafetler, ev, hazine, fotograf konulari
-    public List<string> Outfits { get; set; } = new() { "scarf_red" };
-    public Dictionary<string, string> Worn { get; set; } = new() { ["Scarf"] = "scarf_red" };
+    public List<string> Outfits { get; set; } = new() { "scarf_mina" };
+    public Dictionary<string, string> Worn { get; set; } = new() { ["Scarf"] = "scarf_mina" };
     public List<string> Furniture { get; set; } = new();
     public List<PlacedFurniture> House { get; set; } = new();
     public List<string> Photos { get; set; } = new();
@@ -41,8 +41,8 @@ public sealed class SaveData
     public void Normalize()
     {
         foreach (var q in QuestIds) Quests.TryAdd(q, "none");
-        if (Outfits.Count == 0) Outfits.Add("scarf_red");
-        if (!Outfits.Contains("scarf_red")) Outfits.Add("scarf_red");
+        if (Outfits.Count == 0) Outfits.Add("scarf_mina");
+        if (!Outfits.Contains("scarf_mina")) Outfits.Add("scarf_mina");
         Version = SaveManager.Version;
     }
 }

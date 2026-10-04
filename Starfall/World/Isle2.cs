@@ -165,9 +165,9 @@ public sealed class Isle2Paint : IIslandPaint
         if (dL < L2.LakeR + 1) c = Vector3.Lerp(c, Ice, 0.6f);
         c *= 1 + vary * 0.05f;
 
-        // cimen yalnizca sicak suyun ve limanin cevresinde (donuk tutamlar)
+        // cimen yalnizca sicak suyun cevresinde (kar erimis); geri kalan her yer temiz kar
         float dens = (1 - beach) * (1 - rock) * (pd > 2.4f ? 1 : 0) * (h > wl + 0.25f ? 1 : 0);
-        dens *= MathF.Min(1, spring * 1.6f + harbor * 0.5f);
+        dens *= MathF.Min(1, spring * 1.6f);
         mask = new Vector4(dens, spring * 0.6f, 0, MathF.Min(1, spring * 1.2f));
         return c;
     }

@@ -154,7 +154,7 @@ public sealed partial class Verify
         G.Save = null;
 
         // --- kiyafet kaynaklari: magaza disi en az 15 kiyafet (ACH_FASHION satin almadan da acilir)
-        var nonShop = new HashSet<string> { "scarf_red", "hat_straw", "hat_crown", "hat_sailor", "hat_explorer", "hat_flowers", "hat_party", "back_balloon", "back_shell", "face_star", "scarf_teal" };
+        var nonShop = new HashSet<string> { "scarf_mina", "hat_straw", "hat_crown", "hat_sailor", "hat_explorer", "hat_flowers", "hat_party", "back_balloon", "back_shell", "face_star", "scarf_red" };
         foreach (var t in WD2.Treasures) foreach (var c in t.Contents) if (c.StartsWith("outfit:")) nonShop.Add(c[7..]);
         Ok("en az 15 kiyafet magazasiz kazanilir", nonShop.Count >= 15, $"{nonShop.Count}");
         // mobilya: satin almadan en az 10

@@ -482,6 +482,7 @@ public sealed partial class Game
             TickGameplay(dt);
         }
         else if (st == GameState.Photo) Collectibles.Update(0, Player);
+        else if (st == GameState.Paused && CameraRig.Override != null) CameraRig.Update(dt, null, null); // ev duzenleme kamerasi
         else if (st == GameState.Menu) Player.Model.Update(dt, new Models.FoxPose { Grounded = true });
         Npcs.Update(dt, Player);
         Finale.Update(dt);
@@ -492,6 +493,7 @@ public sealed partial class Game
         Hud.Update(dt);
         Credits.Update(dt);
         Ui.Update(dt);
+        if (InsideHouse) House.UpdateCutaway(Env.Camera.Position);
         Env.ShadowFocus = st == GameState.Menu ? Env.Camera.Target : Player.Pos;
     }
 

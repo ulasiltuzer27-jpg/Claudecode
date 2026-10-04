@@ -511,6 +511,8 @@ public sealed unsafe class Renderer : IDisposable
         DrawCalls++;
     }
 
+    private static readonly Vector3 SandShore = MathX.Hex("#e3cf98"), IceShore = MathX.Hex("#e6f0f8");
+
     private void DrawWaters(RenderEnv env)
     {
         var maps = env.Maps;
@@ -527,7 +529,6 @@ public sealed unsafe class Renderer : IDisposable
         _water.Set("uSunDirW", s.Night > 0.5f ? s.MoonDir : s.SunDir);
         _water.Set("uSunColorW", s.SunColor);
         _water.Set("uCamPos", env.Camera.Position);
-        _water.Set("uSand", MathX.Hex("#e3cf98"));
         _water.Set("uLight", MathX.Lerp(1f, 0.32f, s.Night) * (0.75f + 0.25f * MathF.Min(1, s.SunIntensity / 2.5f)));
         _gl.Enable(EnableCap.CullFace);
         foreach (var w in env.Waters)
@@ -538,6 +539,7 @@ public sealed unsafe class Renderer : IDisposable
             _water.Set("uShallow", w.Shallow);
             _water.Set("uDeep", w.Deep);
             _water.Set("uIce", w.Ice);
+            _water.Set("uSand", w.Ice > 0.5f ? IceShore : SandShore);
             Gpu(w.Mesh).Draw();
             DrawCalls++;
         }

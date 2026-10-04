@@ -47,7 +47,11 @@ public sealed partial class Game
             }
             if (Args.ContainsKey("hour")) SetHour(F("hour", Hour));
             if (Args.TryGetValue("give", out var give))
-                foreach (var id in give.Split(',')) Wardrobe.Give(id, false);
+                foreach (var id in give.Split(','))
+                {
+                    if (id.Contains(':')) GiveItem(id);
+                    else Wardrobe.Give(id, false);
+                }
             if (Args.TryGetValue("wear", out var wear))
                 foreach (var id in wear.Split(','))
                     if (Models.Outfits.Get(id) is { } o) { Wardrobe.Give(id, false); Wardrobe.Wear(o.Slot, id); }
@@ -71,6 +75,11 @@ public sealed partial class Game
                 case "wardrobe": Ui.Push(new WardrobeScreen(Ui)); break;
                 case "credits": Credits.Show(null); break;
             }
+        }
+        if (Save != null && Args.TryGetValue("house", out var hv))
+        {
+            House.Enter();
+            if (hv == "edit") After(1.2f, () => OpenScreen(new HouseScreen(Ui)));
         }
         if (Args.TryGetValue("say", out var say)) Hud.Toast(say);
         if (Args.TryGetValue("talk", out var npc) && Npcs.ById.TryGetValue(npc, out var n)) Quests.Talk(n);

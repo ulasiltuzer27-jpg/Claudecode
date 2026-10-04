@@ -78,7 +78,8 @@ public sealed class CameraRig
         Distance += (TargetDistance + extraDist - Distance) * dk;
         var dir = new Vector3(MathF.Sin(Yaw) * MathF.Cos(Pitch), MathF.Sin(Pitch), MathF.Cos(Yaw) * MathF.Cos(Pitch));
         float dist = Distance;
-        if (player != null && _g.World.Physics.Raycast(Focus, dir, dist + 0.3f, out var hit, player.IgnoreShape))
+        // evin icinde kamera duvarlara takilmaz: kesit gorunumu duvarlari gizler
+        if (player != null && !_g.InsideHouse && _g.World.Physics.Raycast(Focus, dir, dist + 0.3f, out var hit, player.IgnoreShape))
             dist = MathF.Max(1.2f, hit.Distance - 0.35f);
         var pos = Focus + dir * dist;
         float gh = _g.World.Height(pos.X, pos.Z) + 0.5f;

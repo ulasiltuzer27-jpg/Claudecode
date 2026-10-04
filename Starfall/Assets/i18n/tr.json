@@ -397,14 +397,14 @@
  "outfit.back_shell": "Kabuk Çanta",
  "outfit.back_balloon": "Balon",
  "outfit.back_lantern": "Sırt Feneri",
- "outfit.scarf_red": "Kırmızı Atkı",
+ "outfit.scarf_mina": "Mina'nın Atkısı",
  "outfit.scarf_blue": "Mavi Atkı",
  "outfit.scarf_green": "Yeşil Atkı",
  "outfit.scarf_yellow": "Sarı Atkı",
  "outfit.scarf_purple": "Mor Atkı",
  "outfit.scarf_pink": "Pembe Atkı",
  "outfit.scarf_white": "Beyaz Atkı",
- "outfit.scarf_teal": "Turkuaz Atkı",
+ "outfit.scarf_red": "Kırmızı Atkı",
  "choice.telescope": "Teleskobu onar",
  "hint.auroraReady": "15 Aurora Kristalinin hepsi sende! Rasathanedeki Bilge Baykuş'a götür.",
  "hint.boat": "W ile yelken aç, A/D ile dümen kır, S ile yavaşla. İskeleye yanaşınca E ile in.",
@@ -555,7 +555,7 @@
  "dlg.seal.progress": "{n}/{total} buz balığı türü. Aurora Yılanbalığı sadece geceleri ısırır!",
  "dlg.seal.done": [
   "Dördü de! Sen gerçek bir buz balıkçısısın!",
-  "Al, bu kristal ve bu turkuaz atkı senin. Bir de evine küçük bir akvaryum!"
+  "Al, bu kristal ve bu kırmızı atkı senin. Bir de evine küçük bir akvaryum!"
  ],
  "dlg.seal.after": "Buzun altı ne kadar sessiz, değil mi? Balıklar orada rüya görüyor.",
  "dlg.goat.hello": [

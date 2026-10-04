@@ -25,6 +25,10 @@ public sealed class House
     private readonly Node _root = new() { Name = "house" };
     private readonly List<(PlacedFurniture P, Node N, PointLight? L)> _items = new();
     private readonly List<PointLight> _roomLights = new();
+    /// <summary>Kesit gorunumu: kameranin tarafindaki duvarlar ve (ustten bakinca) tavan gizlenir. Sira: -Z, +Z, -X, +X.</summary>
+    private readonly Node[] _walls = new Node[4];
+    private Node? _ceiling;
+    public const float RoomHeight = 3.0f;
     public bool Inside => _g.InsideHouse;
     public Node? Ghost;
 
@@ -45,30 +49,48 @@ public sealed class House
     private void BuildRoom()
     {
         var res = new BuildResult();
-        float w = CX * Cell, d = CZ * Cell, h = 3.0f;
+        float w = CX * Cell, d = CZ * Cell, h = RoomHeight;
         var parts = new List<Geo>();
         // zemin: tahta seritler
         int strips = 16;
         for (int i = 0; i < strips; i++)
             parts.Add(Box(i % 2 == 0 ? "#c9955f" : "#bb8752", w / strips, 0.1f, d, V(-w / 2 + (i + 0.5f) * w / strips, -0.05f, 0)));
-        // duvarlar (ic yuz krem, alt lambri)
-        foreach (var (x, z, ww, dd) in new[] { (0f, -d / 2 - 0.1f, w + 0.4f, 0.2f), (0f, d / 2 + 0.1f, w + 0.4f, 0.2f), (-w / 2 - 0.1f, 0f, 0.2f, d), (w / 2 + 0.1f, 0f, 0.2f, d) })
+        // kesit gorunumunde odanin cevresi: koyu, sakin bir zemin (deniz/gokyuzu gorunmesin)
+        parts.Add(Box("#2c2738", 90, 0.1f, 90, V(0, -0.6f, 0)));
+        parts.Add(Box("#8a5a3a", w + 0.4f, 0.5f, d + 0.4f, V(0, -0.35f, 0)));
+        // duvarlar (ic yuz krem, alt lambri) + tavan: kameraya gore gizlenebilsin diye ayri dugumler
+        var walls = new[] { (0f, -d / 2 - 0.1f, w + 0.4f, 0.2f), (0f, d / 2 + 0.1f, w + 0.4f, 0.2f), (-w / 2 - 0.1f, 0f, 0.2f, d), (w / 2 + 0.1f, 0f, 0.2f, d) };
+        for (int wi = 0; wi < walls.Length; wi++)
         {
-            parts.Add(Box("#fff4e0", ww, h, dd, V(x, h / 2, z)));
-            parts.Add(Box("#d9b98a", ww + 0.02f, 0.9f, dd + 0.02f, V(x, 0.45f, z)));
+            var (x, z, ww, dd) = walls[wi];
+            var wp = new List<Geo>
+            {
+                Box("#fff4e0", ww, h, dd, V(x, h / 2, z)),
+                Box("#d9b98a", ww + 0.02f, 0.9f, dd + 0.02f, V(x, 0.45f, z)),
+            };
             res.Colliders.Add(ShapeDef.Box(ww / 2, h / 2, dd / 2, V(x, h / 2, z)));
+            var node = new Node();
+            if (wi == 1)
+            {
+                // kapi (on duvar ortasi)
+                wp.Add(Box(P.Door, 1.0f, 2.0f, 0.08f, V(0, 1.0f, d / 2 - 0.02f)));
+                wp.Add(Sphere(P.Gold, 0.05f, V(0.35f, 1.0f, d / 2 - 0.08f), null, 6, 4));
+            }
+            if (wi >= 2)
+            {
+                // pencereler (yan duvarlar)
+                float sx = wi == 2 ? -1 : 1;
+                wp.Add(Box(P.Timber, 0.1f, 1.2f, 1.4f, V(sx * (w / 2 - 0.02f), 1.7f, -1.0f)));
+                node.Add(new Node(MeshData.From(Box("#bfe6ff", 0.12f, 1.0f, 1.2f, V(sx * (w / 2 - 0.03f), 1.7f, -1.0f)), true),
+                    new Material { Emissive = MathX.Hex("#bfe6ff"), EmissiveIntensity = 0.6f }));
+            }
+            node.Add(new Node(MeshData.From(Merge(wp), true), Material.Std()));
+            res.Group.Add(node);
+            _walls[wi] = node;
         }
-        // tavan + kirisler
-        parts.Add(Box("#e8d9c0", w + 0.4f, 0.12f, d + 0.4f, V(0, h + 0.06f, 0)));
-        for (int i = 0; i < 4; i++) parts.Add(Box(P.Timber, w + 0.4f, 0.18f, 0.2f, V(0, h - 0.09f, -d / 2 + (i + 0.5f) * d / 4)));
-        // kapi (on duvar ortasi), pencereler (yan duvarlar)
-        parts.Add(Box(P.Door, 1.0f, 2.0f, 0.08f, V(0, 1.0f, d / 2 - 0.02f)));
-        parts.Add(Sphere(P.Gold, 0.05f, V(0.35f, 1.0f, d / 2 - 0.08f), null, 6, 4));
-        foreach (var sx in new[] { -1f, 1f })
-        {
-            parts.Add(Box(P.Timber, 0.1f, 1.2f, 1.4f, V(sx * (w / 2 - 0.02f), 1.7f, -1.0f)));
-            res.Glow.Add(Box("#bfe6ff", 0.12f, 1.0f, 1.2f, V(sx * (w / 2 - 0.03f), 1.7f, -1.0f)));
-        }
+        var ceil = new List<Geo> { Box("#e8d9c0", w + 0.4f, 0.12f, d + 0.4f, V(0, h + 0.06f, 0)) };
+        for (int i = 0; i < 4; i++) ceil.Add(Box(P.Timber, w + 0.4f, 0.18f, 0.2f, V(0, h - 0.09f, -d / 2 + (i + 0.5f) * d / 4)));
+        _ceiling = res.Add(ceil);
         // ayna (gardirop) + duzenleme panosu
         var m = MirrorPos - O;
         parts.Add(Box(P.WoodDark, 0.12f, 1.9f, 0.9f, V(-w / 2 + 0.07f, 1.1f, m.Z)));
@@ -192,10 +214,17 @@ public sealed class House
     }
 
     // ------------------------------------------------------------------ giris/cikis
-    public void ApplySave(SaveData s)
+    public void ApplySave(SaveData s) => Rebuild();
+
+    /// <summary>Her karede: kamera odanin disindaysa o taraftaki duvari, ustundeyse tavani gizle.</summary>
+    public void UpdateCutaway(Vector3 cam)
     {
-        if (!_g.InsideHouse) { }
-        Rebuild();
+        var c = cam - O;
+        if (_ceiling != null) _ceiling.Visible = c.Y < RoomHeight - 0.05f;
+        _walls[0].Visible = c.Z > -HalfD;
+        _walls[1].Visible = c.Z < HalfD;
+        _walls[2].Visible = c.X > -HalfW;
+        _walls[3].Visible = c.X < HalfW;
     }
 
     private void GiveStarter()
@@ -222,7 +251,8 @@ public sealed class House
             _g.InsideHouse = true;
             _g.Player.Spawn(DoorInside.X, DoorInside.Y, DoorInside.Z - 0.6f, MathX.Pi);
             _g.CameraRig.Snap(_g.Player.Pos, 0);
-            _g.CameraRig.TargetDistance = 4.2f;
+            _g.CameraRig.TargetDistance = 4.6f;
+            _g.CameraRig.Pitch = 0.62f;
             _g.Audio.Sfx("door");
             if (!_g.Flag("hintHouse")) { _g.SetFlag("hintHouse"); _g.After(0.8f, () => _g.Hint(T("hint.house"), 8)); }
         });

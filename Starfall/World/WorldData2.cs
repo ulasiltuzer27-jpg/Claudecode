@@ -17,7 +17,7 @@ public static class WD2
     {
         new("penguin", "penguin", L2.SledTop.X - 3, L2.SledTop.Y - 2, 2.2f, 1.6f, "isle2"),
         new("seal", "seal", L2.Lake.X - 14, L2.Lake.Y + 6, -2.0f, 0.9f, "isle2"),
-        new("goat", "goat", L2.Training.X + 3.5f, L2.Training.Y + 4, -2.4f, 1.0f, "isle2"),
+        new("goat", "goat", L2.Training.X - 1.0f, L2.Training.Y + 4.5f, -0.8f, 1.0f, "isle2"),
         new("polarbear", "polarbear", BearShop.X + BearDir.X * 2.0f, BearShop.Y + BearDir.Y * 2.0f, MathF.Atan2(BearDir.X, BearDir.Y), 0.55f, "isle2"),
         new("mole", "mole", -34, 62, 2.4f, 1.2f),
         new("cat", "cat", 24, 116, -2.2f, 1.45f),
@@ -85,8 +85,8 @@ public static class WD2
     /// <summary>Tirmanma duvarlari. Yaw: duvar yuzunun baktigi yon (+Z yerel).</summary>
     public static readonly ClimbWallDef[] ClimbWalls =
     {
-        // Kaya'nin egitim duvari (liman yakini)
-        new("train", L2.Training.X, L2.Training.Y, MathX.Pi * 0.75f, 4, 6, true),
+        // Kaya'nin egitim duvari (liman yakini; sarmasikli yuzu limana bakar)
+        new("train", L2.Training.X, L2.Training.Y, -MathX.Pi * 0.25f, 4, 6, true),
         // rasathane ucurumu: iki parca + dinlenme cikintisi
         new("cliffA", L2.Summit.X - 17.2f, L2.Summit.Y + 14.6f, MathX.Pi * 0.78f, 4.5f, 9.5f, true),
         new("cliffB", L2.Summit.X - 15.9f, L2.Summit.Y + 13.4f, MathX.Pi * 0.78f, 4.5f, 8.5f, true, 9.4f),

@@ -40,14 +40,14 @@ public static class Outfits
         new("back_balloon", OutfitSlot.Back, "achievement"),
         new("back_lantern", OutfitSlot.Back, "wintershop", 25),
         // atki renkleri (renk degisimi; model yok)
-        new("scarf_red", OutfitSlot.Scarf, "start", 0, P.Scarf),
+        new("scarf_mina", OutfitSlot.Scarf, "start", 0, P.Scarf),
         new("scarf_blue", OutfitSlot.Scarf, "shop", 6, "#3f8fe8"),
         new("scarf_green", OutfitSlot.Scarf, "shop", 6, "#4fbf6a"),
         new("scarf_yellow", OutfitSlot.Scarf, "shop", 6, "#ffcf3a"),
         new("scarf_purple", OutfitSlot.Scarf, "wintershop", 8, "#a46bff"),
         new("scarf_pink", OutfitSlot.Scarf, "treasure", 0, "#ff8fc1"),
         new("scarf_white", OutfitSlot.Scarf, "wintershop", 8, "#f4f6fb"),
-        new("scarf_teal", OutfitSlot.Scarf, "quest", 0, "#2fd1c1"),
+        new("scarf_red", OutfitSlot.Scarf, "quest", 0, "#e5484d"),
     };
 
     public static OutfitDef? Get(string? id) => id == null ? null : All.FirstOrDefault(o => o.Id == id);
