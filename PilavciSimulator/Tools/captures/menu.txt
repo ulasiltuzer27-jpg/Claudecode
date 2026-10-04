@@ -1,0 +1,32 @@
+# Ana menu: arka plan planlari, sayfalar, ayarlar
+wait 30
+annotate
+expect menu:
+shot menu_main
+cmd menu-shot 1 6
+wait 20
+shot menu_street
+cmd menu-shot 2 6
+wait 20
+shot menu_pier
+cmd menu-page NewGame
+wait 5
+shot menu_slots
+cmd menu-page Join
+wait 5
+shot menu_join
+cmd menu-page Main
+wait 2
+mouse 300 540
+click
+wait 5
+annotate
+expect ayarlar
+shot settings_graphics
+cmd settings-tab controls
+wait 3
+shot settings_controls
+cmd settings-tab gameplay
+wait 3
+shot settings_gameplay
+quit

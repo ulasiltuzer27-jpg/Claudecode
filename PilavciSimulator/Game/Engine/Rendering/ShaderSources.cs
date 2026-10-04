@@ -120,7 +120,9 @@ public static class ShaderSources
         void main()
         {
             vec4 tex = texture(texture0, vUv);
-            vec4 base = tex * colDiffuse * vec4(vColor.rgb, 1.0);
+            // Seffaf malzemede kose alfasi opakliktir; digerlerinde pencere isareti.
+            bool vertexAlpha = (unlit & 2) != 0;
+            vec4 base = tex * colDiffuse * vec4(vColor.rgb, vertexAlpha ? vColor.a : 1.0);
             if (base.a < 0.04) discard;
 
             vec3 albedo = toLinear(base.rgb);
@@ -129,7 +131,7 @@ public static class ShaderSources
             vec3 V = normalize(viewPos - vWorldPos);
 
             vec3 color;
-            if (unlit == 1)
+            if ((unlit & 1) != 0)
             {
                 color = albedo;
             }
@@ -162,7 +164,7 @@ public static class ShaderSources
 
             // Pencere isareti: kose alfasi < 0.75 ise bu yuzey bir penceredir.
             // 0.25..0.75 arasi gece yanan pencere, < 0.25 sonuk pencere.
-            if (vColor.a < 0.75 && vColor.a > 0.25)
+            if (!vertexAlpha && vColor.a < 0.75 && vColor.a > 0.25)
             {
                 color += vec3(1.0, 0.72, 0.38) * nightGlow * 1.6;
             }

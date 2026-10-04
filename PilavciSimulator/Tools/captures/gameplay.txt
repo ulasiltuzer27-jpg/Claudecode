@@ -1,0 +1,51 @@
+# Oyun: depo, egitim, pisirme, sokak, servis, gece, gun sonu
+cmd menu-new 0
+wait 90
+annotate
+expect gun=1
+shot g01_depot_start
+look 420 0
+wait 10
+shot g02_depot_kitchen
+# Suzgeci al (egitim adim 1)
+cmd tp -105.6 0.15 -15.6 0 -24
+wait 20
+annotate
+cmd act Interact
+wait 20
+annotate
+expect el=Suzgec
+shot g03_holding_colander
+# Hizli pisirme ve arabaya yukleme
+cmd tutorial off
+cmd cook
+cmd tp -108.6 0.15 -18.2 90 -30
+wait 20
+shot g04_kazan_ready
+cmd time 12:30
+cmd cart okul kazan
+cmd tp -69 0.15 -3.6 0 -12
+cmd customers 4
+wait 240
+annotate
+shot g05_cart_customers
+cmd time 21:10
+wait 40
+shot g06_night
+cmd rain
+cmd time 15:00
+wait 120
+shot g07_rain
+cmd tp -15 0.15 3 270 -5
+wait 30
+shot g08_street_wide
+tap Tab
+wait 20
+shot g09_phone
+tap Tab
+wait 10
+cmd endday
+wait 90
+annotate
+shot g10_day_report
+quit

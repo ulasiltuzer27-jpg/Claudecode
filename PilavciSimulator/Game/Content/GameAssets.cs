@@ -85,7 +85,7 @@ public sealed class GameAssets
         M.Fabric = R("fabric", fabric, 0.02f, cfg: d => d.DoubleSided = true);
         M.Rice = R("rice", rice, 0.25f);
         M.Bulgur = R("bulgur", bulgur, 0.15f);
-        M.Glass = R("glass", WhiteTex, 1.6f, new Color(200, 225, 235, 70), d =>
+        M.Glass = R("glass", WhiteTex, 1.2f, new Color(205, 225, 235, 255), d =>
         {
             d.Transparent = true;
             d.DoubleSided = true;

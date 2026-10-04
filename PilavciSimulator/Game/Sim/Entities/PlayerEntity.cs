@@ -29,6 +29,8 @@ public sealed class PlayerEntity : Entity
     public int PeerId = -1;
     /// <summary>Son kullanma animasyonu (uzaktan gorunum icin sayac).</summary>
     public byte UseCounter;
+    /// <summary>Host oyuncuyu zorla tasidiginda artar (gun basi); istemci konumunu buna gore sifirlar.</summary>
+    public byte TeleportSeq;
     /// <summary>Kisa sohbet balonu.</summary>
     public string Chat = "";
     public float ChatUntil;
@@ -61,6 +63,7 @@ public sealed class PlayerEntity : Entity
         w.Bool(SleepReady);
         w.Bool(Connected);
         w.Byte(UseCounter);
+        w.Byte(TeleportSeq);
         w.String(Chat);
         w.Float(ChatUntil);
     }
@@ -77,6 +80,7 @@ public sealed class PlayerEntity : Entity
         SleepReady = r.Bool();
         Connected = r.Bool();
         UseCounter = r.Byte();
+        TeleportSeq = r.Byte();
         Chat = r.Str();
         ChatUntil = r.Float();
     }

@@ -1,0 +1,44 @@
+# Servis akisi: tabak al, kepceyle koy, musteriye ver, kasada para ustu
+cmd menu-new 0 notutorial
+wait 30
+cmd cook
+cmd time 12:20
+cmd cart okul kazan
+cmd tp -69 0.15 -4.2 0 -20
+wait 10
+cmd customers 1
+wait 420
+annotate
+shot s01_order
+cmd aim part cart plates
+wait 3
+annotate
+cmd act Interact
+wait 10
+annotate
+expect el=Tabak
+cmd aim item kazan
+wait 3
+annotate
+cmd act Use
+wait 8
+cmd act Use
+wait 10
+shot s02_plate
+cmd aim customer
+wait 3
+annotate
+shot s03_serve_prompt
+cmd act Use
+wait 200
+annotate
+shot s04_after_serve
+wait 200
+annotate
+shot s05_cash
+cmd cash-auto
+wait 120
+annotate
+expect servis=1
+shot s06_paid
+quit

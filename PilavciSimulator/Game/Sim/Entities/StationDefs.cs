@@ -204,7 +204,7 @@ public static class StationDefs
             case StationType.Cart:
             {
                 var hl = CartHalfLength(s.Tier);
-                return [new BodyDef(new Vector3(0, 0.75f, 0), new Vector3(hl + 0.05f, 0.75f, 0.42f), ColliderFlags.Solid | ColliderFlags.BlocksRay | ColliderFlags.Dynamic)];
+                return [new BodyDef(new Vector3(0, 0.75f, 0), new Vector3(hl + 0.05f, 0.75f, 0.42f), ColliderFlags.Solid | ColliderFlags.Dynamic)];
             }
             case StationType.Table:
                 return [new BodyDef(new Vector3(0, 0.39f, 0), new Vector3(0.45f, 0.39f, 0.45f), ColliderFlags.Surface)];

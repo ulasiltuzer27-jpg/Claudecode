@@ -36,6 +36,39 @@ public sealed class PilavciGame : IDisposable
     public CaptureHarness? Capture { get; }
     public Audio.AudioSystem Audio { get; private set; } = null!;
     public Toasts Toasts { get; } = new();
+    /// <summary>Oynanan oturum (menudeyken null).</summary>
+    public Net.GameSession? Session { get; set; }
+    public Client.SignProvider Signs { get; private set; } = null!;
+    /// <summary>Oyun verisi (Data/*.json); bir kez yuklenir, tum oturumlarda ortak.</summary>
+    public Sim.Data.GameData Data { get; private set; } = null!;
+    /// <summary>Mahalle yerlesimi (collider, yol grafigi, satis noktalari).</summary>
+    public World.DistrictLayout Layout { get; private set; } = null!;
+    public Client.ModelLibrary Models { get; private set; } = null!;
+    /// <summary>Dunya cizicisi: statik sahne GPU'ya bir kez yuklenir, menu ve oyun paylasir.</summary>
+    public Client.WorldRenderer WorldView { get; private set; } = null!;
+#if STEAM_BUILD
+    /// <summary>Steam lobisi (Steam calisiyorsa). Davet kabulu buradan gelir.</summary>
+    public Net.SteamLobby? Lobby { get; private set; }
+#endif
+
+    /// <summary>Oyuncunun gorunen adi: Steam'de Steam adi, degilse ayardaki ad.</summary>
+    public string PlayerName
+    {
+        get
+        {
+            if (Platform.IsSteam)
+            {
+                return Platform.PlayerName;
+            }
+
+            var name = Options.PlayerName ?? (Settings.PlayerName.Trim().Length > 0 ? Settings.PlayerName.Trim() : Platform.PlayerName);
+            return name.Length > 20 ? name[..20] : name;
+        }
+    }
+
+    /// <summary>Tabela malzemesi (araba tabelasi gibi calisma aninda degisen yazilar).</summary>
+    public int SignMaterial(string text, Raylib_cs.Color background) =>
+        Signs.Sign(text, background, Raylib_cs.Color.White, 512, 112);
 
     public int ScreenWidth { get; private set; }
     public int ScreenHeight { get; private set; }
@@ -57,7 +90,7 @@ public sealed class PilavciGame : IDisposable
         Settings = GameSettings.Load();
         InitWindow();
         LoadContent();
-        Screens.ReplaceAll(CreateStartScreen());
+        StartupRouter.Start(this);
 
         while (!QuitRequested && !Raylib.WindowShouldClose())
         {
@@ -75,16 +108,6 @@ public sealed class PilavciGame : IDisposable
         }
 
         return 0;
-    }
-
-    private Screen CreateStartScreen()
-    {
-        if (Options.Host || Options.JoinAddress is not null || Options.NewGame)
-        {
-            return StartupRouter.Create(this);
-        }
-
-        return new MainMenuScreen();
     }
 
     private void InitWindow()
@@ -178,6 +201,15 @@ public sealed class PilavciGame : IDisposable
         Assets.LoadBaseTextures();
         Renderer = new Renderer(Assets.SoftDot, Assets.Ripples);
         Assets.Load(Renderer.Materials);
+        Signs = new Client.SignProvider(Fonts, Renderer.Materials);
+
+        Data = Sim.Data.GameData.Load(Paths.Data);
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        Layout = World.DistrictBuilder.Build(withGeometry: true, Signs);
+        Models = new Client.ModelLibrary(Renderer.Materials);
+        WorldView = new Client.WorldRenderer(this, Models);
+        WorldView.Upload(Layout);
+        Log.Info($"mahalle kuruldu: {sw.ElapsedMilliseconds} ms");
 
         Audio = new Audio.AudioSystem(enabled: !Options.NoAudio && Capture is null);
         Platform = PlatformFactory.Create(Options, Settings);
@@ -191,6 +223,13 @@ public sealed class PilavciGame : IDisposable
         }
 
         ApplySettings();
+#if STEAM_BUILD
+        if (Platform.IsSteam)
+        {
+            Lobby = new Net.SteamLobby();
+            Lobby.JoinRequested += hostId => GameFlow.JoinSteam(this, hostId);
+        }
+#endif
         Log.Info($"icerik yuklendi: {Renderer.Materials.Count} malzeme, platform={(Platform.IsSteam ? "Steam" : "yerel")}");
     }
 
@@ -201,10 +240,11 @@ public sealed class PilavciGame : IDisposable
         ScreenWidth = Raylib.GetScreenWidth();
         ScreenHeight = Raylib.GetScreenHeight();
 
+        // Ekran degisiklikleri bir onceki kareden kalmis olabilir (ilk karede
+        // acilis ekrani da burada kurulur; senaryo komutlari onu gormeli).
+        Screens.ApplyPending();
         Capture?.BeforeFrame(this);
         Input.Update();
-
-        // Ekran degisiklikleri bir onceki kareden kalmis olabilir.
         Screens.ApplyPending();
         UpdateCursor();
 
@@ -320,6 +360,9 @@ public sealed class PilavciGame : IDisposable
             s.Exit();
         }
 
+#if STEAM_BUILD
+        Lobby?.Dispose();
+#endif
         Platform?.Dispose();
         Audio?.Dispose();
         Renderer?.Dispose();

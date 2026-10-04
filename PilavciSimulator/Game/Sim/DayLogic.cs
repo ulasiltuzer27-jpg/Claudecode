@@ -191,6 +191,7 @@ public static class DayLogic
             p.SleepReady = false;
             p.HoldAction = 0;
             p.SetMotion(spawn + new Vector3(0, 0, k * 0.8f), w.Layout.PlayerSpawnYaw);
+            p.TeleportSeq++;
             p.MarkState();
             k++;
         }

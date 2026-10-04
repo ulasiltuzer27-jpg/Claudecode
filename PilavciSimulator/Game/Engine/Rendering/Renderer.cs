@@ -212,7 +212,8 @@ public sealed class Renderer : IDisposable
             var size = quality switch { 1 => 1024, 2 => 2048, _ => 4096 };
             try
             {
-                _shadow = new ShadowMap(size, quality >= 3 ? 42f : 36f);
+                // Yari genislik: yakin golgeler keskin olsun diye dar tutuluyor (2048 doku / 56 m = 2,7 cm).
+                _shadow = new ShadowMap(size, quality switch { 1 => 24f, 2 => 28f, _ => 36f });
             }
             catch (Exception ex)
             {
@@ -578,7 +579,8 @@ public sealed class Renderer : IDisposable
             _lastSpecular = def.Specular;
         }
 
-        var unlit = def.Unlit ? 1 : 0;
+        // bit0: isiksiz, bit1: seffaf malzeme (kose alfasi opaklik olarak kullanilir)
+        var unlit = (def.Unlit ? 1 : 0) | (def.Transparent ? 2 : 0);
         if (unlit != _lastUnlit)
         {
             SetInt(lit, _uUnlit, unlit);
