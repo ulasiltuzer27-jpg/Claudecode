@@ -1,0 +1,17 @@
+[
+  { "id": "pirinc_5", "nameKey": "supply.pirinc_5", "stock": "pirinc", "unit": "kg", "pack": 5, "price": 300, "level": 1, "category": "temel" },
+  { "id": "pirinc_25", "nameKey": "supply.pirinc_25", "stock": "pirinc", "unit": "kg", "pack": 25, "price": 1350, "level": 3, "category": "temel" },
+  { "id": "tereyagi_1", "nameKey": "supply.tereyagi_1", "stock": "tereyagi", "unit": "kg", "pack": 1, "price": 420, "level": 1, "category": "temel" },
+  { "id": "tuz_1", "nameKey": "supply.tuz_1", "stock": "tuz", "unit": "kg", "pack": 1, "price": 20, "level": 1, "category": "temel" },
+  { "id": "nohut_2", "nameKey": "supply.nohut_2", "stock": "nohut", "unit": "kg", "pack": 2, "price": 150, "level": 1, "category": "temel" },
+  { "id": "konserve_nohut", "nameKey": "supply.konserve_nohut", "stock": "konserve_nohut", "unit": "kg", "pack": 2, "price": 270, "level": 1, "category": "temel" },
+  { "id": "tavuk_3", "nameKey": "supply.tavuk_3", "stock": "tavuk", "unit": "kg", "pack": 3, "price": 570, "level": 2, "category": "temel" },
+  { "id": "karabiber", "nameKey": "supply.karabiber", "stock": "karabiber", "unit": "kg", "pack": 0.25, "price": 85, "level": 1, "category": "yan" },
+  { "id": "ayran_24", "nameKey": "supply.ayran_24", "stock": "ayran", "unit": "adet", "pack": 24, "price": 340, "level": 1, "category": "yan" },
+  { "id": "tursu_30", "nameKey": "supply.tursu_30", "stock": "tursu", "unit": "adet", "pack": 30, "price": 140, "level": 1, "category": "yan" },
+  { "id": "kopuk_50", "nameKey": "supply.kopuk_50", "stock": "paket", "unit": "adet", "pack": 50, "price": 110, "level": 1, "category": "yan" },
+  { "id": "tup", "nameKey": "supply.tup", "stock": "gaz", "unit": "%", "pack": 100, "price": 900, "level": 1, "category": "yan" },
+  { "id": "bulgur_5", "nameKey": "supply.bulgur_5", "stock": "bulgur", "unit": "kg", "pack": 5, "price": 190, "level": 3, "category": "temel" },
+  { "id": "fasulye_2", "nameKey": "supply.fasulye_2", "stock": "fasulye", "unit": "kg", "pack": 2, "price": 170, "level": 4, "category": "temel" },
+  { "id": "et_2", "nameKey": "supply.et_2", "stock": "et", "unit": "kg", "pack": 2, "price": 1100, "level": 5, "category": "temel" }
+]

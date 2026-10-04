@@ -1,0 +1,18 @@
+{
+  "startMoney": 3000,
+  "dayStartMinute": 360,
+  "closingMinute": 1320,
+  "passOutMinute": 1439,
+  "sleepAllowedMinute": 1020,
+  "minutesPerSecond": 0.75,
+  "xpLevels": [0, 120, 320, 650, 1100, 1700, 2500, 3500, 4800, 6500, 8800, 12000],
+  "zabitaFine": 900,
+  "cartTowFine": 600,
+  "inflationMin": 0.04,
+  "inflationMax": 0.12,
+  "startPlates": 16,
+  "platesUpgradeAmount": 16,
+  "expressDeliveryMarkup": 0.25,
+  "expressDeliveryMinutes": 25,
+  "gasPerBurnerMinute": 0.18
+}

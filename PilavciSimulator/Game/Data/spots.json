@@ -1,0 +1,44 @@
+[
+  {
+    "id": "okul", "nameKey": "spot.okul", "baseDemand": 26, "priceSensitivity": 1.4,
+    "hours": [0,0,0,0,0,0,0,0.1,0.35,0.15,0.15,0.35,1.0,0.9,0.35,0.6,0.45,0.15,0.05,0,0,0,0,0],
+    "days": [1,1,1,1,1,0.25,0.1],
+    "mix": { "ogrenci": 0.6, "cocuk": 0.2, "teyze": 0.1, "memur": 0.1 },
+    "license": "ruhsat_okul", "zabitaRisk": 0.10
+  },
+  {
+    "id": "hastane", "nameKey": "spot.hastane", "baseDemand": 20, "priceSensitivity": 1.0,
+    "hours": [0,0,0,0,0,0,0,0.15,0.45,0.5,0.5,0.7,1.0,0.9,0.6,0.55,0.55,0.6,0.75,0.6,0.35,0.15,0.05,0],
+    "days": [1,1,1,1,1,0.85,0.8],
+    "mix": { "memur": 0.3, "teyze": 0.3, "isci": 0.2, "ogrenci": 0.1, "balikci": 0.1 },
+    "license": "ruhsat_hastane", "zabitaRisk": 0.16
+  },
+  {
+    "id": "sanayi", "nameKey": "spot.sanayi", "baseDemand": 28, "priceSensitivity": 1.1,
+    "hours": [0,0,0,0,0,0,0,0.2,0.45,0.2,0.2,0.55,1.0,0.9,0.3,0.25,0.35,0.55,0.25,0.05,0,0,0,0],
+    "days": [1,1,1,1,1,0.7,0.05],
+    "mix": { "isci": 0.8, "memur": 0.1, "balikci": 0.1 },
+    "license": "ruhsat_sanayi", "zabitaRisk": 0.07
+  },
+  {
+    "id": "stadyum", "nameKey": "spot.stadyum", "baseDemand": 48, "priceSensitivity": 0.8,
+    "hours": [0,0,0,0,0,0,0,0,0,0,0.05,0.1,0.15,0.2,0.3,0.45,0.7,0.95,1.0,0.85,0.6,0.35,0.1,0],
+    "days": [0.08,0.08,0.08,0.08,0.08,1,0.5],
+    "mix": { "isci": 0.35, "ogrenci": 0.3, "memur": 0.2, "cocuk": 0.15 },
+    "license": "ruhsat_stadyum", "zabitaRisk": 0.22, "matchDayOnly": true
+  },
+  {
+    "id": "iskele", "nameKey": "spot.iskele", "baseDemand": 32, "priceSensitivity": 0.9,
+    "hours": [0,0,0,0,0,0,0.05,0.55,0.8,0.45,0.35,0.55,0.85,0.75,0.5,0.5,0.6,0.9,1.0,0.85,0.6,0.4,0.2,0.05],
+    "days": [1,1,1,1,1,1.15,1.2],
+    "mix": { "memur": 0.25, "ogrenci": 0.2, "turist": 0.2, "balikci": 0.15, "teyze": 0.1, "isci": 0.1 },
+    "license": "ruhsat_iskele", "zabitaRisk": 0.28
+  },
+  {
+    "id": "dukkan", "nameKey": "spot.dukkan", "baseDemand": 30, "priceSensitivity": 0.85,
+    "hours": [0,0,0,0,0,0,0,0.2,0.45,0.4,0.45,0.7,1.0,0.95,0.6,0.5,0.55,0.75,0.95,0.9,0.7,0.45,0.25,0.05],
+    "days": [1,1,1,1,1,1.1,1.1],
+    "mix": { "memur": 0.2, "ogrenci": 0.15, "isci": 0.2, "teyze": 0.15, "turist": 0.1, "balikci": 0.1, "cocuk": 0.1 },
+    "license": null, "zabitaRisk": 0
+  }
+]

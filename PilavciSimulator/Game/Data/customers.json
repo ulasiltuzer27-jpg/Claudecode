@@ -1,0 +1,51 @@
+[
+  {
+    "id": "ogrenci", "nameKey": "cust.ogrenci", "patience": 5.5, "priceSensitivity": 1.5,
+    "prefs": { "sade": 0.35, "nohutlu": 0.45, "tavuklu": 0.1, "karisik": 0.05, "bulgur": 0.05 },
+    "sizes": [0.4, 0.5, 0.1], "package": 0.25, "ayran": 0.45, "tursu": 0.2, "pepper": 0.35, "tip": 0.05, "card": 0.45,
+    "speed": 1.45, "voice": "casual",
+    "looks": { "backpack": 0.7, "cap": 0.2, "glasses": 0.25, "height": [0.95, 1.04], "shirts": ["3C7FB1","E8792E","4E9F4A","8E44AD","DDDDDD","222222"], "pants": ["2C3E50","34495E","5D6D7E"] }
+  },
+  {
+    "id": "isci", "nameKey": "cust.isci", "patience": 5, "priceSensitivity": 1.1,
+    "prefs": { "nohutlu": 0.35, "tavuklu": 0.2, "karisik": 0.3, "fasulyeli": 0.1, "etli": 0.05 },
+    "sizes": [0.05, 0.45, 0.5], "package": 0.15, "ayran": 0.65, "tursu": 0.45, "pepper": 0.45, "tip": 0.15, "card": 0.2,
+    "speed": 1.3, "voice": "casual",
+    "looks": { "mustache": 0.6, "beard": 0.2, "hardHat": 0.25, "cap": 0.3, "height": [0.98, 1.08], "shirts": ["1F4E79","2E4053","7B241C","566573"], "pants": ["1B2631","283747","4D5656"] }
+  },
+  {
+    "id": "memur", "nameKey": "cust.memur", "patience": 4.5, "priceSensitivity": 0.9,
+    "prefs": { "sade": 0.15, "nohutlu": 0.3, "tavuklu": 0.3, "karisik": 0.15, "bulgur": 0.05, "etli": 0.05 },
+    "sizes": [0.2, 0.65, 0.15], "package": 0.3, "ayran": 0.5, "tursu": 0.35, "pepper": 0.3, "tip": 0.25, "card": 0.7,
+    "speed": 1.4, "voice": "formal",
+    "looks": { "mustache": 0.45, "glasses": 0.4, "tie": 0.6, "height": [0.97, 1.06], "shirts": ["FFFFFF","D6EAF8","F2F3F4","AED6F1"], "pants": ["212F3D","1C2833","34495E"] }
+  },
+  {
+    "id": "teyze", "nameKey": "cust.teyze", "patience": 7, "priceSensitivity": 1.3,
+    "prefs": { "sade": 0.3, "nohutlu": 0.35, "tavuklu": 0.15, "bulgur": 0.15, "fasulyeli": 0.05 },
+    "sizes": [0.45, 0.5, 0.05], "package": 0.45, "ayran": 0.3, "tursu": 0.4, "pepper": 0.15, "tip": 0.2, "card": 0.15,
+    "speed": 1.0, "voice": "formal",
+    "looks": { "headscarf": 0.8, "glasses": 0.35, "elderly": true, "height": [0.9, 0.98], "shirts": ["7D3C98","A04000","1E8449","B03A2E","5D6D7E"], "pants": ["4A235A","2C3E50","6E2C00"] }
+  },
+  {
+    "id": "turist", "nameKey": "cust.turist", "patience": 6.5, "priceSensitivity": 0.6,
+    "prefs": { "sade": 0.2, "nohutlu": 0.35, "tavuklu": 0.25, "karisik": 0.15, "etli": 0.05 },
+    "sizes": [0.25, 0.65, 0.1], "package": 0.1, "ayran": 0.55, "tursu": 0.15, "pepper": 0.1, "tip": 0.55, "card": 0.85,
+    "speed": 1.1, "voice": "tourist",
+    "looks": { "hat": 0.55, "glasses": 0.5, "backpack": 0.4, "height": [0.98, 1.1], "shirts": ["F7DC6F","F5B041","FFFFFF","85C1E9","F1948A"], "pants": ["D5D8DC","B9770E","5D6D7E"] }
+  },
+  {
+    "id": "cocuk", "nameKey": "cust.cocuk", "patience": 4, "priceSensitivity": 1.6,
+    "prefs": { "sade": 0.6, "nohutlu": 0.25, "tavuklu": 0.15 },
+    "sizes": [0.7, 0.3, 0.0], "package": 0.1, "ayran": 0.6, "tursu": 0.05, "pepper": 0.05, "tip": 0.0, "card": 0.0,
+    "speed": 1.6, "voice": "kid",
+    "looks": { "child": true, "backpack": 0.6, "cap": 0.3, "height": [0.62, 0.72], "shirts": ["E74C3C","3498DB","F1C40F","2ECC71","E67E22"], "pants": ["2C3E50","1F618D","784212"] }
+  },
+  {
+    "id": "balikci", "nameKey": "cust.balikci", "patience": 6, "priceSensitivity": 1.2,
+    "prefs": { "nohutlu": 0.4, "karisik": 0.25, "sade": 0.15, "fasulyeli": 0.15, "bulgur": 0.05 },
+    "sizes": [0.1, 0.5, 0.4], "package": 0.2, "ayran": 0.5, "tursu": 0.5, "pepper": 0.5, "tip": 0.2, "card": 0.05,
+    "speed": 1.15, "voice": "casual",
+    "looks": { "mustache": 0.7, "beard": 0.3, "cap": 0.75, "elderly": true, "height": [0.95, 1.03], "shirts": ["1B4F72","7E5109","145A32","4D5656"], "pants": ["17202A","1C2833","4A235A"] }
+  }
+]

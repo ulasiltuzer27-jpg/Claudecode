@@ -1,0 +1,11 @@
+[
+  { "id": "sade", "nameKey": "menu.sade", "kind": "plate", "base": "pirinc", "toppings": [], "defaultPrice": 50, "refPrice": 55, "level": 1 },
+  { "id": "nohutlu", "nameKey": "menu.nohutlu", "kind": "plate", "base": "pirinc", "toppings": ["nohut"], "defaultPrice": 70, "refPrice": 75, "level": 1 },
+  { "id": "tavuklu", "nameKey": "menu.tavuklu", "kind": "plate", "base": "pirinc", "toppings": ["tavuk"], "defaultPrice": 95, "refPrice": 100, "level": 2 },
+  { "id": "karisik", "nameKey": "menu.karisik", "kind": "plate", "base": "pirinc", "toppings": ["nohut", "tavuk"], "defaultPrice": 110, "refPrice": 120, "level": 2 },
+  { "id": "bulgur", "nameKey": "menu.bulgur", "kind": "plate", "base": "bulgur", "toppings": [], "defaultPrice": 60, "refPrice": 65, "level": 3 },
+  { "id": "fasulyeli", "nameKey": "menu.fasulyeli", "kind": "plate", "base": "pirinc", "toppings": ["fasulye"], "defaultPrice": 100, "refPrice": 110, "level": 4 },
+  { "id": "etli", "nameKey": "menu.etli", "kind": "plate", "base": "etli", "toppings": [], "defaultPrice": 165, "refPrice": 175, "level": 5 },
+  { "id": "ayran", "nameKey": "menu.ayran", "kind": "extra", "defaultPrice": 25, "refPrice": 25, "level": 1 },
+  { "id": "tursu", "nameKey": "menu.tursu", "kind": "extra", "defaultPrice": 15, "refPrice": 15, "level": 1 }
+]
