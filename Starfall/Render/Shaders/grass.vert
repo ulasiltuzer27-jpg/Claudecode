@@ -1,0 +1,51 @@
+layout(location = 0) in vec3 aPos;
+layout(location = 1) in vec4 aOffset; // ornek basina
+uniform mat4 uView;
+uniform mat4 uProj;
+uniform float uTime, uSize, uDensityScale;
+uniform vec2 uCenter;
+uniform vec3 uPlayer;
+uniform sampler2D uHeight;
+uniform sampler2D uMask;
+uniform vec4 uMap;
+out vec3 vWorld;
+out vec3 vColor;
+out float vDepth;
+void main() {
+    vec2 tilePos = aOffset.xy * uSize;
+    vec2 wxz = uCenter + mod(tilePos - uCenter + uSize * 0.5, uSize) - uSize * 0.5;
+    vec2 tuv = (wxz - uMap.xy) / uMap.z;
+    tuv = tuv * (1.0 - uMap.w) + uMap.w * 0.5;
+    float ground = texture(uHeight, tuv).r;
+    vec4 mask = texture(uMask, tuv);
+    float density = mask.r * uDensityScale;
+    float dist = length(wxz - uCenter);
+    float fade = 1.0 - smoothstep(uSize * 0.3, uSize * 0.48, dist);
+    float keep = step(aOffset.z, density) * fade;
+    float h = (0.16 + aOffset.w * 0.22) * (0.6 + mask.r * 0.5) * keep;
+    float ang = aOffset.z * 43.98;
+    float c = cos(ang), s = sin(ang);
+    vec3 bp = vec3(aPos.x * c, aPos.y * h, aPos.x * s);
+    float wind = 0.7 * sin(uTime * 1.6 + wxz.x * 0.15 + wxz.y * 0.1) * 0.5 + 0.6 + sin(uTime * 3.3 + wxz.x * 0.6 + wxz.y * 0.4) * 0.15;
+    float bend = aPos.y * aPos.y;
+    bp.xz += vec2(0.92, 0.38) * wind * 0.25 * bend * h;
+    vec2 toP = wxz - uPlayer.xz;
+    float pd = length(toP);
+    float push = (1.0 - smoothstep(0.15, 1.0, pd)) * (1.0 - step(1.6, abs(uPlayer.y - ground)));
+    bp.xz += (toP / max(pd, 0.001)) * push * 0.5 * bend * h;
+    bp.y -= push * 0.25 * bend * h;
+    vec3 wp = vec3(wxz.x, ground - 0.02, wxz.y) + bp;
+    // kar adasinda (mask.a dusuk) beyazimsi cimen
+    vec3 base = mix(vec3(0.05, 0.27, 0.04), vec3(0.12, 0.3, 0.03), mask.g);
+    vec3 tip = mix(vec3(0.3, 0.64, 0.13), vec3(0.5, 0.7, 0.13), mask.g);
+    base = mix(base, base * 0.7, mask.b);
+    tip = mix(tip, vec3(0.16, 0.45, 0.12), mask.b);
+    vec3 frost = vec3(0.75, 0.8, 0.85);
+    base = mix(frost * 0.6, base, mask.a);
+    tip = mix(frost, tip, mask.a);
+    vColor = mix(base, tip, aPos.y) * (0.88 + aOffset.w * 0.24);
+    vWorld = wp;
+    vec4 vp = uView * vec4(wp, 1.0);
+    vDepth = -vp.z;
+    gl_Position = uProj * vp;
+}
