@@ -22,6 +22,8 @@ public static class Program
                 Console.WriteLine($"{x},{z}: {t.Height(x, z):F4}");
             return 0;
         }
+        if (args.ContainsKey("verify")) return Tests.Verify.Run(args);
+        if (args.ContainsKey("playtest")) return Tests.Playtest.Run(args);
         var game = new Game(args);
         game.Build();
         var host = new Host(game, new HostOptions { Capture = args.ContainsKey("capture") });
