@@ -160,6 +160,7 @@ public sealed partial class Player
                 Model.Jump();
                 ev.Emit("jump", Pos);
             }
+            else if (JumpBuf > 0 && !Grounded && TryGrabWall()) JumpBuf = 0;
             else if (JumpBuf > 0 && !Grounded && FlapsUsed < Feathers)
             {
                 Vel.Y = MathF.Max(Vel.Y, Move.FlapVel);
@@ -169,7 +170,6 @@ public sealed partial class Player
                 EndGlide();
                 ev.Emit("flap", Pos, FlapsUsed, Feathers);
             }
-            else if (JumpBuf > 0 && !Grounded && TryGrabWall()) JumpBuf = 0;
 
             var inUpdraft = UpdraftAt();
             bool canGlide = !Grounded && jumpHeld && (Vel.Y < 0 || (inUpdraft != null && Gliding)) && Model.Flip <= 0.05f;

@@ -27,14 +27,15 @@ public static class Buildings2
     /// Sarmasikli tirmanma duvari: kaya levha + sarmasik halatlari + yapraklar. Yuz +Z'ye bakar,
     /// taban y=0. Carpisma etiketi "climb" (yalnizca on yuz tirmanilir).
     /// </summary>
-    public static BuildResult VineWall(float w, float h, uint seed, bool frosty = false)
+    /// <summary>Sarmasikli kaya duvari. depth: duvar yuzunden geriye kalinlik (derin olursa tepesi dinlenme cikintisi olur).</summary>
+    public static BuildResult VineWall(float w, float h, uint seed, bool frosty = false, float depth = 1.2f)
     {
         var res = new BuildResult();
         var rng = new Rng(seed);
         var parts = new List<Geo>();
-        var slab = BoxGeo(w, h, 1.2f, 3, (int)MathF.Max(2, h / 2.5f), 1).Color(frosty ? "#8d97a6" : P.Rock);
+        var slab = BoxGeo(w, h, depth, 3, (int)MathF.Max(2, h / 2.5f), Math.Max(1, (int)(depth / 1.2f))).Color(frosty ? "#8d97a6" : P.Rock);
         slab.Jitter(0.18f, seed);
-        slab.Translate(0, h / 2, -0.6f);
+        slab.Translate(0, h / 2, -depth / 2);
         if (frosty) SnowCap(slab, 0.6f);
         parts.Add(slab.FaceTint(0.12f, seed));
         string vine = frosty ? "#4c8c62" : "#3e9a48";
@@ -58,8 +59,8 @@ public static class Buildings2
             }
         }
         res.Add(parts);
-        res.Colliders.Add(new ShapeDef(ShapeKind.Box, V(0, h / 2, -0.6f), V(w / 2, h / 2, 0.6f)));
-        res.Anchors["top"] = V(0, h + 0.2f, -0.6f);
+        res.Colliders.Add(new ShapeDef(ShapeKind.Box, V(0, h / 2, -depth / 2), V(w / 2, h / 2, depth / 2)));
+        res.Anchors["top"] = V(0, h + 0.2f, -depth / 2);
         res.Anchors["base"] = V(0, 0, 0.8f);
         return res;
     }

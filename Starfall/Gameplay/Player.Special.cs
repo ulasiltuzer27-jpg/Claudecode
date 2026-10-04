@@ -167,10 +167,13 @@ public sealed partial class Player
         if (wallChest && !wallHead && mv.Y > 0.1f)
         {
             // ust kenar: cik (yukari + ileri)
+            float y0 = Pos.Y;
             Motor.Move(new Vector3(0, 1.15f, 0), false);
             Motor.Move(-_wallN * 0.9f, false);
             Motor.Move(new Vector3(0, -0.6f, 0), true);
             Pos = Motor.Feet;
+            if (Pos.Y > y0) _g.Stats.Add("climb_m", (int)MathF.Round(Pos.Y - y0 + _climbedAcc));
+            _climbedAcc = 0;
             StopClimb(false);
             _regrab = 0.6f;
             _g.Audio.Sfx("climbGrab");

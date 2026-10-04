@@ -148,7 +148,10 @@ public sealed partial class Game
         {
             // egitim duvarinin tepesine ciktiysa
             var w = World.ClimbWalls.FirstOrDefault(c => c.Id == "train");
-            if (w.Res != null && Vector3.Distance(e.Pos, w.Res.Group.Position) < 6) SetFlag("trainTop");
+            if (w.Res == null) return;
+            var b = w.Res.Group.Position;
+            float horiz = Vector2.Distance(new Vector2(e.Pos.X, e.Pos.Z), new Vector2(b.X, b.Z));
+            if (horiz < w.Def.W && e.Pos.Y > w.Def.BaseY + w.Def.H * 0.7f) SetFlag("trainTop");
         });
         E.On("boatIn", _ => Steam.RichPresence("status", T("presence.sailing")));
         E.On("fishCaught", e =>

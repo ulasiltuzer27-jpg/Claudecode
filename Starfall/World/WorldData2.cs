@@ -96,10 +96,10 @@ public static class WD2
 
     public static readonly TreasureDef[] Treasures =
     {
-        new("tr1", "map1", -150, 40, new[] { "map2", "outfit:face_monocle", "shells:10" }, "isle1"),
+        new("tr1", "map1", -100, 40, new[] { "map2", "outfit:face_monocle", "shells:10" }, "isle1"),
         new("tr2", "map2", 120, -14, new[] { "map3", "furn:chest", "shells:10" }, "isle1"),
         new("tr3", "map3", -60, -128, new[] { "map4", "outfit:scarf_pink", "furn:globe" }, "isle1"),
-        new("tr4", "map4", W(-125, -70).X, W(-125, -70).Y, new[] { "map5", "outfit:face_sun", "furn:penguinplush" }, "isle2"),
+        new("tr4", "map4", W(-95, -75).X, W(-95, -75).Y, new[] { "map5", "outfit:face_sun", "furn:penguinplush" }, "isle2"),
         new("tr5", "map5", W(95, -20).X, W(95, -20).Y, new[] { "outfit:back_explorer", "furn:telescope", "shells:20" }, "isle2"),
     };
 

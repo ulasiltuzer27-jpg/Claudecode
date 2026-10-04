@@ -365,6 +365,169 @@
         "glyph": "medal",
         "color": "#d4a017"
       }
+    },
+    {
+      "id": "ACH_SAILOR",
+      "stat": "isle2",
+      "threshold": 1,
+      "icon": {
+        "glyph": "sail",
+        "color": "#3f8fe8"
+      }
+    },
+    {
+      "id": "ACH_AURORA_FIRST",
+      "stat": "auroras_max",
+      "threshold": 1,
+      "icon": {
+        "glyph": "snowflake",
+        "color": "#5dd6b8"
+      }
+    },
+    {
+      "id": "ACH_AURORA_ALL",
+      "stat": "auroras_max",
+      "threshold": 15,
+      "icon": {
+        "glyph": "gem",
+        "color": "#8f6bff"
+      }
+    },
+    {
+      "id": "ACH_OBSERVATORY",
+      "stat": "finale2",
+      "threshold": 1,
+      "icon": {
+        "glyph": "telescope",
+        "color": "#4b5bb5"
+      }
+    },
+    {
+      "id": "ACH_CLIMBER",
+      "stat": "climb_m",
+      "threshold": 100,
+      "icon": {
+        "glyph": "climb",
+        "color": "#7a8f4a"
+      }
+    },
+    {
+      "id": "ACH_SLED",
+      "stat": "sled",
+      "threshold": 1,
+      "icon": {
+        "glyph": "sled",
+        "color": "#e2463f"
+      }
+    },
+    {
+      "id": "ACH_ICE_FISH",
+      "stat": "ice_species",
+      "threshold": 4,
+      "icon": {
+        "glyph": "icefish",
+        "color": "#2f9fb0"
+      }
+    },
+    {
+      "id": "ACH_ALL_FISH2",
+      "stat": "species_max",
+      "threshold": 10,
+      "icon": {
+        "glyph": "fishes",
+        "color": "#1f6fa8"
+      }
+    },
+    {
+      "id": "ACH_TREASURE_FIRST",
+      "stat": "treasures_max",
+      "threshold": 1,
+      "icon": {
+        "glyph": "chest",
+        "color": "#b07a4f"
+      }
+    },
+    {
+      "id": "ACH_TREASURE_ALL",
+      "stat": "treasures_max",
+      "threshold": 5,
+      "icon": {
+        "glyph": "map",
+        "color": "#c9443d"
+      }
+    },
+    {
+      "id": "ACH_PHOTOGRAPHER",
+      "stat": "photo_subjects",
+      "threshold": 6,
+      "icon": {
+        "glyph": "camera",
+        "color": "#ef6b8a"
+      }
+    },
+    {
+      "id": "ACH_FASHION",
+      "stat": "outfits_max",
+      "threshold": 15,
+      "icon": {
+        "glyph": "hanger",
+        "color": "#c58bff"
+      }
+    },
+    {
+      "id": "ACH_HOME",
+      "stat": "furniture_placed",
+      "threshold": 10,
+      "icon": {
+        "glyph": "house",
+        "color": "#f2994a"
+      }
+    },
+    {
+      "id": "ACH_HOT_SPRING",
+      "stat": "hotspring",
+      "threshold": 1,
+      "icon": {
+        "glyph": "steam",
+        "color": "#55b0a0"
+      }
+    },
+    {
+      "id": "ACH_ICE_CAVE",
+      "stat": "icecave",
+      "threshold": 1,
+      "icon": {
+        "glyph": "crystal",
+        "color": "#5fc8ff"
+      },
+      "hidden": true
+    },
+    {
+      "id": "ACH_HELPER2",
+      "stat": "quests_max",
+      "threshold": 11,
+      "icon": {
+        "glyph": "heart",
+        "color": "#ff7a9a"
+      }
+    },
+    {
+      "id": "ACH_FRIENDS2",
+      "stat": "npcs_max",
+      "threshold": 12,
+      "icon": {
+        "glyph": "chat",
+        "color": "#f2c94c"
+      }
+    },
+    {
+      "id": "ACH_SKATER",
+      "stat": "ice_m",
+      "threshold": 500,
+      "icon": {
+        "glyph": "skate",
+        "color": "#7fb8de"
+      }
     }
   ]
 }

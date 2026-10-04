@@ -28,9 +28,11 @@ public sealed partial class GameWorld
         ex.Add(new(L2.Cave.X, L2.Cave.Y, 7));
         foreach (var p in L2.Pools) ex.Add(new(p.X, p.Y, L2.PoolR + 1));
         foreach (var i in WD2.Igloos) ex.Add(new(i.X, i.Y, 3));
-        foreach (var w in WD2.ClimbWalls) ex.Add(new(w.X, w.Z, w.W * 0.7f + 1));
+        foreach (var w in WD2.ClimbWalls) ex.Add(new(w.X, w.Z, w.W * 0.7f + (w.Id.StartsWith("cliff") ? 4 : 1)));
         foreach (var n in WD2.Npcs) ex.Add(new(n.X, n.Z, 1.6f));
         ex.Add(new(L2.Training.X, L2.Training.Y, 5));
+        foreach (var d in WD2.DigSpots) ex.Add(new(d.X, d.Z, 1.5f));
+        foreach (var t in WD2.Treasures) ex.Add(new(t.X, t.Z, 2));
     }
 
     partial void BuildIsle2Impl()
@@ -41,7 +43,8 @@ public sealed partial class GameWorld
         AllFish.AddRange(WD2.Fish);
         NpcDefs.AddRange(WD2.Npcs);
         Boundaries.Add((L2.C, 215));
-        Corridors.Add((new Vector2(0, 0), L2.C, 70));
+        Boundaries.Add((new Vector2(WD2.HouseOrigin.X, WD2.HouseOrigin.Z), 30)); // ev ic mekani
+        Corridors.Add((new Vector2(0, 0), L2.C, 125));
         // --- limanin iskelesi + teknenin yanasma yeri
         var d0 = L2.DockStart;
         var dir = L2.DockDir;
@@ -197,34 +200,38 @@ public sealed partial class GameWorld
     {
         float x = w.X, z = w.Z, yaw = w.Yaw, h = w.H;
         float baseY = float.IsNaN(w.BaseY) ? Height(x, z) : float.NaN;
+        float depth = 1.2f;
         if (w.Id.StartsWith("cliff"))
         {
+            // A: ucurumun eteginden disari tasan derin kaya payandasi (tepesi dinlenme cikintisi);
+            // B: cikintidan zirveye, ucurum yuzune yaslanan duvar.
             var dir = Vector2.Normalize(new Vector2(L2.Harbor.X - L2.Summit.X, L2.Harbor.Y - L2.Summit.Y));
-            // A solda, B sagda (ucurum boyunca kaydir)
-            var side = new Vector2(-dir.Y, dir.X);
-            float lateral = w.Id == "cliffA" ? -2.4f : 2.4f;
             float top = Height(L2.Summit.X, L2.Summit.Y);
             float rBase = L2.SummitR + 6;
             for (float r = L2.SummitR - 4; r < L2.SummitR + 8; r += 0.1f)
             {
-                var p = L2.Summit + dir * r + side * lateral;
+                var p = L2.Summit + dir * r;
                 if (Height(p.X, p.Y) < top - L2.SummitCliff + 0.6f) { rBase = r; break; }
             }
-            var pos = L2.Summit + dir * (rBase + 0.25f) + side * lateral;
+            const float jut = 2.0f;
+            bool isA = w.Id == "cliffA";
+            var pos = L2.Summit + dir * (rBase + 0.25f + (isA ? jut : 0));
             x = pos.X; z = pos.Y;
             yaw = MathF.Atan2(dir.X, dir.Y);
-            float ground = Height(x, z);
-            float cliffTop = top;
-            if (w.Id == "cliffA")
+            var footP = L2.Summit + dir * (rBase + 0.25f);
+            float ground = Height(footP.X, footP.Y);
+            float ledgeY = ground + (top - ground) * 0.55f;
+            if (isA)
             {
-                baseY = ground;
-                h = (cliffTop - ground) * 0.55f;
+                depth = jut + 1.2f;
+                baseY = MathF.Min(ground, Height(x, z)) - 0.3f;
+                h = ledgeY - baseY;
+                Anchors["summitLedge"] = new Vector3(footP.X, ledgeY + 1.1f, footP.Y) + new Vector3(dir.X, 0, dir.Y) * 0.9f;
             }
             else
             {
-                baseY = ground + (cliffTop - ground) * 0.55f - 0.6f;
-                h = cliffTop - baseY + 0.35f;
-                Anchors["summitLedge"] = new Vector3(x, cliffTop + 1.1f, z) - new Vector3(dir.X, 0, dir.Y) * 3.5f;
+                baseY = ledgeY - 0.6f;
+                h = top - baseY + 0.35f;
             }
         }
         else if (w.Id == "peakVine")
@@ -246,7 +253,7 @@ public sealed partial class GameWorld
             h = top - baseY + 0.35f;
         }
         else if (float.IsNaN(baseY)) baseY = w.BaseY;
-        var res = Buildings2.VineWall(w.W, h, (uint)(w.Id.GetHashCode() & 0xffff), w.Frosty);
+        var res = Buildings2.VineWall(w.W, h, NoiseUtil.HashString(w.Id) & 0xffff, w.Frosty, depth);
         Place(res, x, baseY, z, yaw, "climb_" + w.Id, "climb");
         ClimbWalls.Add((w.Id, res, w with { X = x, Z = z, Yaw = yaw, H = h, BaseY = baseY }));
     }

@@ -224,7 +224,15 @@ public sealed class Digging
     }
 
     /// <summary>Hazine haritasi karti: hedefin cevresi + X isareti (gunlukte gosterilir).</summary>
+    private static readonly Dictionary<string, CpuImage> _cards = new();
+
     public static CpuImage MapCard(GameWorld w, TreasureDef t)
+    {
+        if (_cards.TryGetValue(t.Id, out var cached)) return cached;
+        return _cards[t.Id] = BuildCard(w, t);
+    }
+
+    private static CpuImage BuildCard(GameWorld w, TreasureDef t)
     {
         var terr = w.Terrains.First(x => x.Id == t.Island);
         var full = UI.MapImage.For(w, terr);
