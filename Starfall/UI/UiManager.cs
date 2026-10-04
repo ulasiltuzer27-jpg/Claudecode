@@ -39,12 +39,20 @@ public sealed class UiManager
         if (Stack.Count == 0) return null;
         var s = Stack[^1];
         Stack.RemoveAt(Stack.Count - 1);
+        s.Unmount();
+        // oyun icinden acilan tek ekran kapandiysa oyuna don
+        if (Stack.Count == 0 && G.State == GameState.Paused) G.Resume();
         return s;
     }
 
     public void Replace(UiScreen s)
     {
-        Pop();
+        if (Stack.Count > 0)
+        {
+            var old = Stack[^1];
+            Stack.RemoveAt(Stack.Count - 1);
+            old.Unmount();
+        }
         Push(s);
     }
 

@@ -34,6 +34,8 @@ public sealed class SkyState
     /// <summary>Golge veren isigin yonu (gunduz gunes, gece ay).</summary>
     public Vector3 LightDir = Vector3.UnitY;
     public float Aurora;   // 0..1, Kar Adasi'nda gece
+    /// <summary>Final 2 sirasinda ek kuzey isigi parlakligi.</summary>
+    public float AuroraBoost;
     public float Time;
 
     public void Update(float hour, float dt, float snowiness = 0)
@@ -70,6 +72,6 @@ public sealed class SkyState
             HemiGround = Vector3.Lerp(HemiGround, HemiGround * cold + new Vector3(0.05f, 0.06f, 0.08f), snowiness);
             Fog = Vector3.Lerp(Fog, Fog * cold + new Vector3(0.04f), snowiness * 0.6f);
         }
-        Aurora = snowiness * MathX.Smoothstep(0.4f, 0.9f, Night);
+        Aurora = MathF.Min(1.6f, snowiness * MathX.Smoothstep(0.4f, 0.9f, Night) + AuroraBoost);
     }
 }

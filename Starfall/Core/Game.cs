@@ -15,6 +15,7 @@ public enum GameState { Loading, Menu, Playing, Paused, Dialogue, Cutscene, Phot
 public sealed class SessionCounters
 {
     public float IceSlide;
+    public bool ReachedIsle2ByBoat;
     public float RegionTimer, SaveTimer = 60, FpsAcc;
     public int FpsN;
 }

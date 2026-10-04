@@ -65,17 +65,24 @@ public sealed class Collectibles
         // kabuklar: tek InstanceBatch (100 adet)
         _shellBatch = new InstanceBatch(CollectibleModels.Shell, new Material());
         _g.Env.Scene.AddBatch(_shellBatch);
-        for (int gi = 0; gi < WD.ShellGroups.Length; gi++)
+        AddShells(WD.ShellGroups, 0);
+        RefreshShells();
+    }
+
+    /// <summary>Kabuk gruplari: her grupta 5 kabuk, yon boyunca 1.7 m arayla.</summary>
+    public void AddShells((float X, float Z, float Deg)[] groups, int startIndex)
+    {
+        for (int gi = 0; gi < groups.Length; gi++)
         {
-            var (cx, cz, deg) = WD.ShellGroups[gi];
+            var (cx, cz, deg) = groups[gi];
             float a = deg * MathX.Pi / 180f;
             for (int k = 0; k < 5; k++)
             {
                 float off = (k - 2) * 1.7f;
                 float x = cx + MathF.Cos(a) * off;
                 float z = cz + MathF.Sin(a) * off;
-                string id = $"sh_{gi * 5 + k:00}";
-                var it = new Item { Kind = "shell", Id = id, Pos = Resolve(new Spot(id, x, z, 0.02f)), Yaw = a + k, Index = _shellBatch.Transforms.Count };
+                string id = $"sh_{startIndex + gi * 5 + k:00}";
+                var it = new Item { Kind = "shell", Id = id, Pos = Resolve(new Spot(id, x, z, 0.02f)), Yaw = a + k, Index = _shellBatch!.Transforms.Count };
                 _shellBatch.Add(Matrix4x4.Identity);
                 Items.Add(it);
                 ById[id] = it;

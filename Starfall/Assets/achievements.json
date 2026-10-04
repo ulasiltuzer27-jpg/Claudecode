@@ -88,6 +88,54 @@
     {
       "key": "outfits_max",
       "kind": "max"
+    },
+    {
+      "key": "climb_m",
+      "kind": "sum"
+    },
+    {
+      "key": "ice_m",
+      "kind": "sum"
+    },
+    {
+      "key": "auroras_max",
+      "kind": "max"
+    },
+    {
+      "key": "finale2",
+      "kind": "max"
+    },
+    {
+      "key": "sled",
+      "kind": "max"
+    },
+    {
+      "key": "ice_species",
+      "kind": "max"
+    },
+    {
+      "key": "treasures_max",
+      "kind": "max"
+    },
+    {
+      "key": "photo_subjects",
+      "kind": "max"
+    },
+    {
+      "key": "furniture_placed",
+      "kind": "max"
+    },
+    {
+      "key": "hotspring",
+      "kind": "max"
+    },
+    {
+      "key": "icecave",
+      "kind": "max"
+    },
+    {
+      "key": "isle2",
+      "kind": "max"
     }
   ],
   "achievements": [

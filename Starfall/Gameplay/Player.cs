@@ -222,6 +222,8 @@ public sealed partial class Player
             }
         }
         Pos = Motor.Feet;
+        AutoGrab(wishLen);
+        if (Climbing) return prevY;
 
         if (dt > 0)
         {

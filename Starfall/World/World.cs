@@ -17,7 +17,7 @@ public sealed partial class GameWorld
     public const int MapRes = 580;
 
     public readonly List<Terrain> Terrains = new();
-    public Terrain Isle1 = null!;
+    public Terrain Isle1 = null!, Isle2 = null!;
     public readonly Scene Scene;
     public readonly RenderEnv Env;
     public GroundMaps Maps = null!;
@@ -60,7 +60,23 @@ public sealed partial class GameWorld
         return MathX.Hypot(x - L.X, z - L.Y) < Isle1Shape.L.LakeR + 3;
     }
 
-    public float WaterLevel(float x, float z) => IsLake(x, z) ? Isle1Shape.L.LakeLevel : SeaLevel;
+    public float WaterLevel(float x, float z)
+    {
+        if (IsLake(x, z)) return Isle1Shape.L.LakeLevel;
+        if (Terrains.Count > 1)
+        {
+            if (MathX.Hypot(x - L2.Lake.X, z - L2.Lake.Y) < L2.LakeR + 3) return L2.LakeLevel;
+            foreach (var p in L2.Pools)
+                if (MathX.Hypot(x - p.X, z - p.Y) < L2.PoolR + 0.8f) return L2.SpringLevel;
+        }
+        return SeaLevel;
+    }
+
+    public bool InHotSpring(float x, float z)
+    {
+        foreach (var p in L2.Pools) if (MathX.Hypot(x - p.X, z - p.Y) < L2.PoolR) return true;
+        return false;
+    }
 
     public float PathDistance(float x, float z) => TerrainAt(x, z)?.PathDistance(x, z) ?? 999f;
 
@@ -75,6 +91,8 @@ public sealed partial class GameWorld
     {
         Isle1 = new Terrain("isle1", Isle1Shape.Instance, 1337, 0, 0, 512, 256);
         Terrains.Add(Isle1);
+        Isle2 = new Terrain("isle2", Isle2Shape.Instance, 4242, L2.C.X, L2.C.Y, L2.Size, (int)(L2.Size / 2));
+        Terrains.Add(Isle2);
     }
 
     public void BuildTerrainMeshes()
@@ -93,6 +111,7 @@ public sealed partial class GameWorld
 
     public IIslandPaint PaintFor(Terrain t) => t.Id switch
     {
+        "isle2" => Isle2Paint.Instance,
         _ => Isle1Paint.Instance,
     };
 

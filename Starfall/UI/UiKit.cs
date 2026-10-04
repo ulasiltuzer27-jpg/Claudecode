@@ -150,6 +150,8 @@ public abstract class UiScreen
 
     public virtual void Mount() => Refresh();
 
+    public virtual void Unmount() { }
+
     public void Refresh()
     {
         int keep = Index;

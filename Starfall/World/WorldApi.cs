@@ -45,7 +45,12 @@ public sealed partial class GameWorld
     private void BuildIsle2() => BuildIsle2Impl();
 
     /// <summary>0 = Ada 1 iklimi, 1 = tam kar (gokyuzu/sis tonu ve kar parcaciklari icin).</summary>
-    public float Snowiness(Vector3 p) => 0;
+    public float Snowiness(Vector3 p)
+    {
+        if (Terrains.Count < 2) return 0;
+        float d = MathX.Hypot(p.X - L2.C.X, p.Z - L2.C.Y);
+        return MathX.Smoothstep(330, 210, d);
+    }
 
     private float BoundaryDepth(Vector2 p, out Vector2 inward)
     {

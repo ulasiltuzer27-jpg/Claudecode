@@ -40,6 +40,9 @@ public sealed class Race
 
     public Course FrogCourse => new("frog", WD.RacePath, WD.RaceFrogSpeed, () => _g.World.RaceFlagPos, "frog", "q_frog", "shard", "race");
 
+    /// <summary>Penguenle kizak yarisi: oyuncu kizakla iner, penguen karninin ustunde kayar.</summary>
+    public Course SledCourse => new("penguin", WD2.SledPath, 9.5f, () => _g.World.SledFinishPos, "penguin", "q_au_penguin", "aurora", "sled", Hop: false, Limit: 40);
+
     private void Build(Course c)
     {
         _pts = c.Path.Select(p => new Vector3(p.X, _g.World.Height(p.X, p.Y), p.Y)).ToList();
@@ -68,11 +71,24 @@ public sealed class Race
         _lastCount = 4;
         _g.Hud.RaceBanner(T("race.ready"));
         _g.Audio.Sfx("uiConfirm");
+        if (Current.Id == "penguin")
+        {
+            // oyuncu kizakla baslar; geri sayimda bekler
+            var top = L2.SledTop;
+            var dir = Vector2.Normalize(L2.SledBottom - top);
+            float yaw = MathF.Atan2(dir.X, dir.Y);
+            var side = new Vector2(-dir.Y, dir.X) * 1.6f;
+            _g.Player.Spawn(top.X + side.X, _g.World.Height(top.X + side.X, top.Y + side.Y) + 0.1f, top.Y + side.Y, yaw);
+            _g.Player.StartSled(yaw);
+            _g.Player.Frozen = true;
+            _g.CameraRig.Snap(_g.Player.Pos, yaw + MathX.Pi);
+        }
     }
 
     public void Cancel()
     {
         if (_npc != null) ResetRival();
+        if (Current?.Id == "penguin") { _g.Player.Frozen = false; if (_g.Player.Sledding) _g.Player.StopSled(); }
         State = "idle";
         _g.Hud.RaceBanner(null);
         _g.Hud.RaceTimer(null);
@@ -109,6 +125,7 @@ public sealed class Race
             if (_timer <= 0)
             {
                 State = "running";
+                if (Current?.Id == "penguin") _g.Player.Frozen = false;
                 _g.After(0.7f, () => { if (State == "running") hud.RaceBanner(null); });
             }
             return;

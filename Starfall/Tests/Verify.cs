@@ -187,7 +187,7 @@ public sealed partial class Verify
         // adalilar kuru zeminde
         var npcBad = new List<string>();
         foreach (var n in G.Npcs.List)
-            if (!W.Physics.GroundAt(n.Pos.X, n.Pos.Z, n.Pos.Y + 50, out var ny, out _, n.Collider) || ny < W.WaterLevel(n.Pos.X, n.Pos.Z) + 0.2f) npcBad.Add(n.Id);
+            if (!W.Physics.GroundAt(n.Pos.X, n.Pos.Z, n.Pos.Y + 50, out var ny, out var ns, n.Collider) || (ny < W.WaterLevel(n.Pos.X, n.Pos.Z) + 0.2f && ns?.Tag != "ice")) npcBad.Add(n.Id);
         Ok("adalilar kuru zeminde", npcBad.Count == 0, string.Join(",", npcBad));
 
         // gizli magaraya girilebiliyor: merkezden girise (+X) dogru engel yok

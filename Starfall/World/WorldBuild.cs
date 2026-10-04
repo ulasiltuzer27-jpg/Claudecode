@@ -70,6 +70,7 @@ public sealed partial class GameWorld
         foreach (var m in WD.GiantMushrooms) ex.Add(new(m.X, m.Z, m.Cap * 0.5f));
         foreach (var r in WD.PlatformRocks) ex.Add(new(r.X, r.Z, r.S * 1.2f));
         foreach (var n in WD.Npcs) ex.Add(new(n.X, n.Z, 1.6f));
+        CollectExclusions2();
     }
 
     /// <summary>Bir yapiyi dunyaya yerlestir: mesh + carpisma + parilti + capalar.</summary>

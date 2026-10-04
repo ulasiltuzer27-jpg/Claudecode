@@ -142,8 +142,8 @@ public sealed class Hud
         {
             DrawCounters(c, a);
             DrawBanner(c, a);
-            if (_promptText != null && g.State == GameState.Playing) DrawPrompt(c, a);
-            if (_hint != null) DrawHint(c, a);
+            if (!string.IsNullOrEmpty(_promptText) && g.State == GameState.Playing) DrawPrompt(c, a);
+            if (_hint != null && !g.Dialogue.Active) DrawHint(c, a);
             if (_raceTimer is float rt)
             {
                 string s = rt.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + " s";

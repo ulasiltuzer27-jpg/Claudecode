@@ -256,6 +256,7 @@ public static class Buildings
         res.Sails.Add(new Node(MeshData.From(Merge(sp), true), Material.Std()));
         res.Group.Add(res.Sails);
         res.Colliders.Add(ShapeDef.Cyl(2.2f, 4.2f, V(0, 3.8f, 0)));
+        res.Anchors["sails"] = V(0, 7.6f, 2.35f);
         return res;
     }
 
