@@ -1,0 +1,88 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>PilavciSimulator</RootNamespace>
+    <AssemblyName>PilavciSimulator</AssemblyName>
+    <Product>Pilavcı Simülatörü</Product>
+    <Version>0.1.0</Version>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Raylib-cs mesh/material yapilari ham isaretci tasiyor (float*, Material*). -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <!-- Daha yeni bir .NET runtime kuruluysa onda da calissin. -->
+    <RollForward>Major</RollForward>
+    <!-- Kultur bagimsiz: "i".ToUpper() Turkce makinede "İ" olmasin, JSON'daki
+         ondalik sayilar her makinede ayni okunsun. Linux'ta ICU da gerekmiyor. -->
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets/Icon/icon.ico</ApplicationIcon>
+    <TieredPGO>true</TieredPGO>
+  </PropertyGroup>
+
+  <!-- ══ Steam AppId: TEK kaynak ══════════════════════════════════════════
+       Steamworks'ten kendi AppId'nizi aldiginizda yalnizca bu satiri
+       degistirin. 480 = Valve'in herkese acik test uygulamasi (Spacewar).
+       Deger koda AssemblyMetadata ile, steam_appid.txt'ye de asagidaki
+       hedefle yaziliyor; iki yerde elle tutulmuyor. -->
+  <PropertyGroup>
+    <SteamAppId Condition="'$(SteamAppId)' == ''">480</SteamAppId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <AssemblyMetadata Include="SteamAppId" Value="$(SteamAppId)" />
+    <InternalsVisibleTo Include="PilavciSimulator.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Raylib-cs" Version="7.0.2" />
+    <!-- Gelistirme/test ag tasimasi (dogrudan IP). Steam derlemesinde de
+         derlenir; "IP ile katil" secenegi LAN oyunu icin acik kalir. -->
+    <PackageReference Include="LiteNetLib" Version="1.3.5" />
+  </ItemGroup>
+
+  <!-- Veri ve varliklar exe'nin yanina kopyalanir. Content Pipeline YOK:
+       her sey calisma aninda okunur, dengeleme icin derleme gerekmez. -->
+  <ItemGroup>
+    <None Update="Data/**/*" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="Assets/**/*" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <!-- ══ Steam derlemesi AYRI bir yapilandirma ══════════════════════════
+           dotnet build                    -> Steam yok, her platformda calisir
+           dotnet build -c SteamRelease    -> Facepunch.Steamworks + STEAM_BUILD
+
+       Facepunch.Steamworks 2.3.3 yalnizca Windows x64 tasiyor; Steam
+       derlemesi bu yuzden Windows'a ozel. Linux'ta da DERLENIR ama
+       SteamClient.Init calisma aninda basarisiz olur ve oyun Steam'siz
+       devam eder. Kalip kokteki PixelSurvival.csproj'dan alindi. -->
+  <PropertyGroup Condition="'$(Configuration)' == 'SteamRelease'">
+    <DefineConstants>$(DefineConstants);STEAM_BUILD</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>portable</DebugType>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(Configuration)' == 'SteamRelease'">
+    <PackageReference Include="Facepunch.Steamworks" Version="2.3.3" />
+  </ItemGroup>
+
+  <!-- Facepunch paketi native steam_api64.dll'i eski `content/` duzeninde
+       tasiyor; SDK projeleri bunu kendiliginden kopyalamaz. Kopyalanmazsa
+       SteamClient.Init Windows'ta bile DllNotFoundException atar. -->
+  <ItemGroup Condition="'$(Configuration)' == 'SteamRelease'">
+    <None Include="$(NuGetPackageRoot)facepunch.steamworks/2.3.3/content/steam_api64.dll"
+          Condition="Exists('$(NuGetPackageRoot)facepunch.steamworks/2.3.3/content/steam_api64.dll')"
+          Link="steam_api64.dll"
+          CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <!-- steam_appid.txt: Steam istemcisi acikken exe'yi Steam DISINDAN
+       (Visual Studio / dotnet run) baslatabilmek icin. Steam deposuna
+       YUKLENMEZ; bkz. Tools/steam/depot_build.vdf icindeki FileExclusion. -->
+  <Target Name="WriteSteamAppId" AfterTargets="Build" Condition="'$(Configuration)' == 'SteamRelease'">
+    <WriteLinesToFile File="$(OutDir)steam_appid.txt" Lines="$(SteamAppId)" Overwrite="true" WriteOnlyWhenDifferent="true" />
+  </Target>
+
+</Project>

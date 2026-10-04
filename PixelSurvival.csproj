@@ -32,6 +32,16 @@
     <EmbeddedResource Include="Icon.bmp" />
   </ItemGroup>
 
+  <!-- Ayni depodaki ayri oyun (Pilavci Simulatoru) kendi .sln/.csproj'u ile
+       derleniyor. SDK varsayilan olarak alt klasorlerdeki her .cs'yi bu
+       projeye katacagi icin o klasor burada bilerek disarida tutuluyor. -->
+  <ItemGroup>
+    <Compile Remove="PilavciSimulator/**" />
+    <None Remove="PilavciSimulator/**" />
+    <Content Remove="PilavciSimulator/**" />
+    <EmbeddedResource Remove="PilavciSimulator/**" />
+  </ItemGroup>
+
   <!-- Content Pipeline: build sirasinda Content.mgcb otomatik derlenir -->
   <ItemGroup>
     <MonoGameContentReference Include="Content\Content.mgcb" />

@@ -1,0 +1,380 @@
+using System.Numerics;
+using Raylib_cs;
+using PilavciSimulator.Content;
+using PilavciSimulator.Core;
+using PilavciSimulator.Diagnostics;
+using PilavciSimulator.Engine.Input;
+using PilavciSimulator.Engine.Rendering;
+using PilavciSimulator.Engine.Ui;
+using PilavciSimulator.Localization;
+using PilavciSimulator.Platform;
+using PilavciSimulator.Screens;
+
+namespace PilavciSimulator;
+
+/// <summary>
+/// Uygulamanin kendisi: pencere, ana dongu, ortak hizmetler ve ekran yigini.
+///
+/// Ana dongu: girdi -> ekran guncellemeleri -> 3B cizim (en alttaki opak
+/// ekran) -> arayuz (alttan uste) -> bildirimler -> ekran goruntusu.
+/// Platform (Steam) geri cagirimlari her karenin sonunda calisir; menuler
+/// erken donse bile kacmaz.
+/// </summary>
+public sealed class PilavciGame : IDisposable
+{
+    public const string Title = "Pilavcı Simülatörü";
+
+    public LaunchOptions Options { get; }
+    public GameSettings Settings { get; private set; } = new();
+    public InputSystem Input { get; private set; } = null!;
+    public Fonts Fonts { get; private set; } = null!;
+    public UiContext Ui { get; private set; } = null!;
+    public Renderer Renderer { get; private set; } = null!;
+    public GameAssets Assets { get; } = new();
+    public ScreenStack Screens { get; }
+    public IPlatform Platform { get; private set; } = null!;
+    public CaptureHarness? Capture { get; }
+    public Audio.AudioSystem Audio { get; private set; } = null!;
+    public Toasts Toasts { get; } = new();
+
+    public int ScreenWidth { get; private set; }
+    public int ScreenHeight { get; private set; }
+    public float Time { get; private set; }
+    public bool QuitRequested { get; set; }
+
+    private bool _cursorShown = true;
+    private bool _disposed;
+
+    public PilavciGame(LaunchOptions options)
+    {
+        Options = options;
+        Screens = new ScreenStack(this);
+        Capture = CaptureHarness.FromOptions(options);
+    }
+
+    public int Run()
+    {
+        Settings = GameSettings.Load();
+        InitWindow();
+        LoadContent();
+        Screens.ReplaceAll(CreateStartScreen());
+
+        while (!QuitRequested && !Raylib.WindowShouldClose())
+        {
+            Frame();
+            if (Capture is { Finished: true })
+            {
+                break;
+            }
+        }
+
+        if (Capture is not null)
+        {
+            Console.WriteLine($"[capture] bitti: {Capture.Shots} goruntu, {Capture.Failures} hata");
+            return Capture.Failures == 0 ? 0 : 3;
+        }
+
+        return 0;
+    }
+
+    private Screen CreateStartScreen()
+    {
+        if (Options.Host || Options.JoinAddress is not null || Options.NewGame)
+        {
+            return StartupRouter.Create(this);
+        }
+
+        return new MainMenuScreen();
+    }
+
+    private void InitWindow()
+    {
+        Raylib.SetTraceLogLevel(TraceLogLevel.Warning);
+        var flags = ConfigFlags.ResizableWindow;
+        if (Settings.VSync && Capture is null)
+        {
+            flags |= ConfigFlags.VSyncHint;
+        }
+
+        Raylib.SetConfigFlags(flags);
+        var (w, h) = Options.Windowed ?? (Settings.Width, Settings.Height);
+        Raylib.InitWindow(w, h, Title);
+        Raylib.SetWindowMinSize(960, 540);
+        Raylib.SetExitKey(KeyboardKey.Null);
+
+        var iconPath = Path.Combine(Paths.Assets, "Icon", "icon.png");
+        if (File.Exists(iconPath))
+        {
+            var icon = Raylib.LoadImage(iconPath);
+            Raylib.SetWindowIcon(icon);
+            Raylib.UnloadImage(icon);
+        }
+
+        if (Options.Windowed is null)
+        {
+            ApplyWindowMode();
+        }
+
+        Raylib.SetTargetFPS(Capture is not null ? 0 : Settings.FpsLimit);
+        Log.Info($"pencere {Raylib.GetScreenWidth()}x{Raylib.GetScreenHeight()}, GL hazir");
+    }
+
+    public void ApplyWindowMode()
+    {
+        var monitor = Raylib.GetCurrentMonitor();
+        var isFull = Raylib.IsWindowFullscreen();
+        var isBorderless = Raylib.IsWindowState(ConfigFlags.BorderlessWindowMode);
+        switch (Settings.WindowMode)
+        {
+            case WindowMode.Windowed:
+                if (isFull) Raylib.ToggleFullscreen();
+                if (isBorderless) Raylib.ToggleBorderlessWindowed();
+                Raylib.SetWindowSize(Settings.Width, Settings.Height);
+                break;
+            case WindowMode.Borderless:
+                if (isFull) Raylib.ToggleFullscreen();
+                if (!isBorderless) Raylib.ToggleBorderlessWindowed();
+                break;
+            case WindowMode.Fullscreen:
+                if (isBorderless) Raylib.ToggleBorderlessWindowed();
+                if (!isFull)
+                {
+                    Raylib.SetWindowSize(Raylib.GetMonitorWidth(monitor), Raylib.GetMonitorHeight(monitor));
+                    Raylib.ToggleFullscreen();
+                }
+
+                break;
+        }
+    }
+
+    /// <summary>Ayar ekranindan sonra: grafik/ses/kontrol ayarlarini uygula.</summary>
+    public void ApplySettings()
+    {
+        Settings.Clamp();
+        Renderer.SetShadowQuality(Settings.ShadowQuality);
+        Renderer.RenderScale = Settings.RenderScale;
+        Renderer.Fxaa = Settings.Fxaa;
+        Renderer.Brightness = Settings.Brightness;
+        Input.MouseSensitivity = Settings.MouseSensitivity;
+        Input.InvertY = Settings.InvertY;
+        Audio.ApplyVolumes(Settings);
+        if (Capture is null)
+        {
+            Raylib.SetTargetFPS(Settings.VSync ? 0 : Settings.FpsLimit);
+        }
+
+        Loc.Use(Settings.Language);
+    }
+
+    private void LoadContent()
+    {
+        Loc.Load(Paths.Data, Settings.Language);
+        IInputSource source = Capture is not null ? Capture.Input : new RaylibInputSource();
+        Input = new InputSystem(source);
+        Input.Load(Settings.Bindings);
+        Fonts = new Fonts(Path.Combine(Paths.Assets, "Fonts"));
+        Ui = new UiContext(Fonts, Input);
+
+        Assets.LoadBaseTextures();
+        Renderer = new Renderer(Assets.SoftDot, Assets.Ripples);
+        Assets.Load(Renderer.Materials);
+
+        Audio = new Audio.AudioSystem(enabled: !Options.NoAudio && Capture is null);
+        Platform = PlatformFactory.Create(Options, Settings);
+        if (Platform.GameLanguage is "turkish" && !File.Exists(GameSettings.FilePath))
+        {
+            Settings.Language = "tr";
+        }
+        else if (Platform.GameLanguage is "english" && !File.Exists(GameSettings.FilePath))
+        {
+            Settings.Language = "en";
+        }
+
+        ApplySettings();
+        Log.Info($"icerik yuklendi: {Renderer.Materials.Count} malzeme, platform={(Platform.IsSteam ? "Steam" : "yerel")}");
+    }
+
+    private void Frame()
+    {
+        var dt = Capture is not null ? CaptureHarness.FixedDt : MathF.Min(Raylib.GetFrameTime(), 0.1f);
+        Time += dt;
+        ScreenWidth = Raylib.GetScreenWidth();
+        ScreenHeight = Raylib.GetScreenHeight();
+
+        Capture?.BeforeFrame(this);
+        Input.Update();
+
+        // Ekran degisiklikleri bir onceki kareden kalmis olabilir.
+        Screens.ApplyPending();
+        UpdateCursor();
+
+        var top = Screens.Top;
+        Ui.Begin(ScreenWidth, ScreenHeight, Settings.UiScale, interactive: true, dt);
+        Screens.Update(dt);
+        Toasts.Update(dt);
+        Audio.Update(dt);
+
+        if (Input.KeyPressed(KeyboardKey.F12))
+        {
+            SaveScreenshot();
+        }
+
+        Raylib.BeginDrawing();
+        Raylib.ClearBackground(Color.Black);
+        Screens.Draw();
+        Toasts.Draw(Ui);
+        Ui.End();
+        Capture?.AfterDraw();
+        Raylib.EndDrawing();
+
+        Input.EndFrame();
+        Platform.RunCallbacks();
+        Screens.ApplyPending();
+        _ = top;
+    }
+
+    private void UpdateCursor()
+    {
+        var show = Screens.Top?.ShowCursor ?? true;
+        if (show == _cursorShown)
+        {
+            return;
+        }
+
+        _cursorShown = show;
+        if (Capture is not null)
+        {
+            return;
+        }
+
+        if (show)
+        {
+            Raylib.EnableCursor();
+        }
+        else
+        {
+            Raylib.DisableCursor();
+        }
+    }
+
+    private void SaveScreenshot()
+    {
+        try
+        {
+            Rlgl.DrawRenderBatchActive();
+            var img = Raylib.LoadImageFromScreen();
+            var path = Path.Combine(Paths.Screenshots, $"pilav-{DateTime.Now:yyyyMMdd-HHmmss}.png");
+            Raylib.ExportImage(img, path);
+            Raylib.UnloadImage(img);
+            Toasts.Show(Loc.T("toast.screenshot"), Theme.Blue);
+        }
+        catch (Exception ex)
+        {
+            Log.Warn($"ekran goruntusu alinamadi: {ex.Message}");
+        }
+    }
+
+    public string Annotate() => Screens.Top?.Annotate() ?? "(bos)";
+
+    /// <summary>Gelistirici/senaryo komutu: ustten asagi ilk taniyan ekran isler.</summary>
+    public bool Command(string[] args)
+    {
+        if (args.Length == 0)
+        {
+            return false;
+        }
+
+        if (args[0] == "screen-pop")
+        {
+            Screens.Pop();
+            return true;
+        }
+
+        for (var i = Screens.All.Count - 1; i >= 0; i--)
+        {
+            if (Screens.All[i].Command(args))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public void SaveSettings()
+    {
+        Settings.Bindings = Input.Save();
+        Settings.Save();
+    }
+
+    public void Dispose()
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        _disposed = true;
+        foreach (var s in Screens.All.Reverse())
+        {
+            s.Exit();
+        }
+
+        Platform?.Dispose();
+        Audio?.Dispose();
+        Renderer?.Dispose();
+        Fonts?.Dispose();
+        if (Raylib.IsWindowReady())
+        {
+            Raylib.CloseWindow();
+        }
+    }
+}
+
+/// <summary>Ekranin ust kosesinde kisa sureli bildirimler.</summary>
+public sealed class Toasts
+{
+    private sealed record Item(string Text, Color Color, float Life)
+    {
+        public float Age;
+    }
+
+    private readonly List<Item> _items = new();
+
+    public void Show(string text, Color color, float seconds = 3.5f)
+    {
+        _items.Add(new Item(text, color, seconds));
+        if (_items.Count > 6)
+        {
+            _items.RemoveAt(0);
+        }
+    }
+
+    public IReadOnlyList<string> Recent => _items.Select(i => i.Text).ToList();
+
+    public void Update(float dt)
+    {
+        foreach (var i in _items)
+        {
+            i.Age += dt;
+        }
+
+        _items.RemoveAll(i => i.Age >= i.Life);
+    }
+
+    public void Draw(UiContext ui)
+    {
+        var y = ui.S(110);
+        foreach (var i in _items)
+        {
+            var a = MathF.Min(1f, MathF.Min(i.Age * 5f, (i.Life - i.Age) * 2f));
+            var m = ui.Measure(i.Text, 26, true);
+            var w = m.X + ui.S(48);
+            var r = new Rectangle(ui.Width - w - ui.S(24), y, w, ui.S(50));
+            ui.Panel(r, Theme.HudBgStrong.WithAlpha(0.85f * a));
+            Raylib.DrawRectangleRounded(new Rectangle(r.X, r.Y, ui.S(8), r.Height), 1f, 4, i.Color.WithAlpha(a));
+            ui.TextIn(r with { X = r.X + ui.S(14) }, i.Text, 26, Theme.Cream.WithAlpha(a), true);
+            y += ui.S(60);
+        }
+    }
+}
