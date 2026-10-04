@@ -16,11 +16,10 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
-  <!-- StarfallIsle/ ayri bir oyun (Three.js + Electron). SDK'nin varsayilan
-       `**/*` glob'u onun node_modules'unu taramasin: binlerce dosya her
-       `dotnet build`'i yavaslatir ve bu projeyle hicbir ilgisi yok. -->
+  <!-- Starfall/ ayri bir oyun (kendi Starfall.csproj'u var). SDK'nin varsayilan
+       `**/*` glob'u onun .cs dosyalarini bu projeye katmasin. -->
   <PropertyGroup>
-    <DefaultItemExcludes>$(DefaultItemExcludes);StarfallIsle/**;Starfall/**</DefaultItemExcludes>
+    <DefaultItemExcludes>$(DefaultItemExcludes);Starfall/**</DefaultItemExcludes>
   </PropertyGroup>
 
   <PropertyGroup>
