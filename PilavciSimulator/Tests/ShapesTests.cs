@@ -49,6 +49,37 @@ public class ShapesTests
     }
 
     [Fact]
+    public void Head_surface_is_outward_and_face_points_land_on_it()
+    {
+        var m = new MeshData();
+        PilavciSimulator.Client.HeadShape.Mesh(m, Matrix4x4.Identity, Color.White);
+        AssertOutward(m, PilavciSimulator.Client.HeadShape.Center);
+        foreach (var (x, y) in new[] { (0f, 0.045f), (0.038f, 0.122f), (-0.059f, 0.15f), (0.034f, 0.064f), (0f, 0.112f) })
+        {
+            var (p, n) = PilavciSimulator.Client.HeadShape.OnFace(x, y);
+            Assert.InRange(MathF.Abs(p.X - x) + MathF.Abs(p.Y - y), 0f, 1e-4f);
+            Assert.True(n.Z < -0.5f, $"({x},{y}) normali one bakmiyor: {n}");
+            Assert.True(p.Z < -0.07f, $"({x},{y}) yuzun onunde degil: {p}");
+        }
+    }
+
+    [Fact]
+    public void Inner_box_faces_point_inward()
+    {
+        var m = new MeshData();
+        Shapes.InnerBox(m, Matrix4x4.CreateTranslation(0, 0.8f, 0), new Vector3(0.6f, 0.1f, 0.4f), Color.White);
+        Assert.Equal(5 * 2 * 3, m.Indices.Count);
+        for (var t = 0; t < m.Indices.Count; t += 3)
+        {
+            var a = m.Positions[m.Indices[t]];
+            var n = Vector3.Cross(m.Positions[m.Indices[t + 1]] - a, m.Positions[m.Indices[t + 2]] - a);
+            // Sarim, verilen normalle ayni yone bakmali; normal de merkeze (ice) donuk olmali
+            Assert.True(Vector3.Dot(n, m.Normals[m.Indices[t]]) > 0, $"ucgen {t / 3} ters sarili");
+            Assert.True(Vector3.Dot(m.Normals[m.Indices[t]], new Vector3(0, 0.8f, 0) - a) > 0, $"ucgen {t / 3} disa bakiyor");
+        }
+    }
+
+    [Fact]
     public void Capsule_between_points_reaches_both_ends()
     {
         var m = new MeshData();

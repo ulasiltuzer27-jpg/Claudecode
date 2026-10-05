@@ -243,17 +243,18 @@ public sealed class CharacterRig
             // Taban: tint ile carpilinca koyulasan gri
             Shapes.RoundedBox(b[M.Rubber], Matrix4x4.CreateTranslation(0, -0.03f, -0.045f), new Vector3(0.106f, 0.018f, 0.26f), 0.008f, 1, new Color(90, 90, 90, 255));
         });
-        _eyelids = lib.Get("ch2_lids", b =>
+        _eyelids = lib.Get("ch3_lids", b =>
         {
             foreach (var s in new[] { -1f, 1f })
             {
-                Shapes.Sphere(b[M.Skin], Matrix4x4.CreateScale(1.05f, 0.85f, 0.62f) * Matrix4x4.CreateTranslation(s * 0.038f, 0.122f, -0.104f), 0.0185f, 5, 8, w);
+                Shapes.Sphere(b[M.Skin], Matrix4x4.CreateScale(1.05f, 0.85f, 0.62f) * Matrix4x4.CreateTranslation(0, 0, 0.005f) * HeadShape.Frame(s * 0.038f, 0.122f), 0.0185f, 5, 8, w);
             }
         });
-        _mouths[0] = lib.Get("ch2_mouth0", b => Shapes.Tube(b[M.Skin], [new(-0.019f, 0.046f, -0.097f), new(0, 0.045f, -0.101f), new(0.019f, 0.046f, -0.097f)], 0.0045f, 6, w));
-        _mouths[1] = lib.Get("ch2_mouth1", b => Shapes.Tube(b[M.Skin], [new(-0.025f, 0.052f, -0.093f), new(-0.013f, 0.043f, -0.099f), new(0, 0.041f, -0.101f), new(0.013f, 0.043f, -0.099f), new(0.025f, 0.052f, -0.093f)], 0.0045f, 6, w));
-        _mouths[2] = lib.Get("ch2_mouth2", b => Shapes.Tube(b[M.Skin], [new(-0.022f, 0.039f, -0.094f), new(-0.011f, 0.045f, -0.099f), new(0, 0.047f, -0.101f), new(0.011f, 0.045f, -0.099f), new(0.022f, 0.039f, -0.094f)], 0.0045f, 6, w));
-        _mouths[3] = lib.Get("ch2_mouth3", b => Shapes.Sphere(b[M.Skin], Matrix4x4.CreateScale(1.3f, 0.85f, 0.55f) * Matrix4x4.CreateTranslation(0, 0.045f, -0.097f), 0.0135f, 5, 8, w));
+        // Agizlar yuzeye oturur: notr, gulumseme, asik, konusurken acik
+        _mouths[0] = lib.Get("ch3_mouth0", b => Shapes.Tube(b[M.Skin], Face([(-0.019f, 0.046f), (0, 0.045f), (0.019f, 0.046f)], 0.0025f), 0.0045f, 6, w));
+        _mouths[1] = lib.Get("ch3_mouth1", b => Shapes.Tube(b[M.Skin], Face([(-0.025f, 0.052f), (-0.013f, 0.043f), (0, 0.041f), (0.013f, 0.043f), (0.025f, 0.052f)], 0.0025f), 0.0045f, 6, w));
+        _mouths[2] = lib.Get("ch3_mouth2", b => Shapes.Tube(b[M.Skin], Face([(-0.022f, 0.039f), (-0.011f, 0.045f), (0, 0.047f), (0.011f, 0.045f), (0.022f, 0.039f)], 0.0025f), 0.0045f, 6, w));
+        _mouths[3] = lib.Get("ch3_mouth3", b => Shapes.Sphere(b[M.Skin], Matrix4x4.CreateScale(1.3f, 0.85f, 0.55f) * Matrix4x4.CreateTranslation(0, 0, -0.002f) * HeadShape.Frame(0, 0.045f), 0.0135f, 5, 8, w));
         _plate = lib.Plate();
         _pkg = lib.Package();
         _spoon = lib.Spoon();
@@ -386,7 +387,7 @@ public sealed class CharacterRig
 
         // Bas
         var headPitch = p.Head + (a.Elderly ? -0.06f : 0f);
-        var head = Matrix4x4.CreateScale(headS / torsoS) * Matrix4x4.CreateRotationX(headPitch) * Matrix4x4.CreateRotationY(p.HeadYaw) * J(0, 0.1f, 0) * torso;
+        var head = Matrix4x4.CreateScale(headS / torsoS) * Matrix4x4.CreateRotationX(headPitch) * Matrix4x4.CreateRotationY(p.HeadYaw) * J(0, 0.085f, 0) * torso;
         _r.Submit(headModel, head, Color.White, flags);
         if (lod == 0)
         {
@@ -468,6 +469,18 @@ public sealed class CharacterRig
         return (entry.Item2, entry.Item3);
     }
 
+    /// <summary>Yuz uzerindeki (x, y) noktalarini yuzeye oturtur (egri boyunca boru icin).</summary>
+    private static Vector3[] Face((float X, float Y)[] pts, float lift)
+    {
+        var r = new Vector3[pts.Length];
+        for (var i = 0; i < pts.Length; i++)
+        {
+            r[i] = HeadShape.OnFace(pts[i].X, pts[i].Y, lift).Position;
+        }
+
+        return r;
+    }
+
     private static Color Mul(Color c, float k) => new((byte)Math.Clamp(c.R * k, 0, 255), (byte)Math.Clamp(c.G * k, 0, 255), (byte)Math.Clamp(c.B * k, 0, 255), (byte)255);
 
     /// <summary>Bas uzayi: boyun tabani y=0 (omuz cizgisinin 0,1 m ustu), yuz -Z'ye bakar.</summary>
@@ -479,22 +492,22 @@ public sealed class CharacterRig
         var brow = Mul(a.Hair, a.HairStyle == HairStyle.Bald ? 0.8f : 0.85f);
         // Boyun, kafatasi, cene
         Shapes.CapsuleBetween(m, new Vector3(0, -0.11f, 0.005f), new Vector3(0, 0.02f, 0.005f), 0.05f, 6, 12, Mul(skin, 0.95f));
-        Shapes.Sphere(m, Matrix4x4.CreateScale(0.93f, 1.08f, 1f) * Matrix4x4.CreateTranslation(0, 0.105f, 0.005f), 0.113f, 12, 18, skin);
-        Shapes.Sphere(m, Matrix4x4.CreateScale(0.95f, 0.7f, 0.95f) * Matrix4x4.CreateTranslation(0, 0.052f, -0.012f), 0.09f, 8, 16, skin);
+        HeadShape.Mesh(m, Matrix4x4.Identity, skin);
         // Kulaklar ve burun
         foreach (var s in new[] { -1f, 1f })
         {
             Shapes.Sphere(m, Matrix4x4.CreateScale(0.42f, 1f, 0.75f) * Matrix4x4.CreateTranslation(s * 0.104f, 0.098f, 0.01f), 0.028f, 5, 8, Mul(skin, 0.96f));
         }
 
-        Shapes.CapsuleBetween(m, new Vector3(0, 0.113f, -0.104f), new Vector3(0, 0.084f, -0.122f), 0.0135f, 5, 8, Mul(skin, 0.97f));
-        // Gozler: ak, iris, kas
+        Shapes.CapsuleBetween(m, HeadShape.OnFace(0, 0.112f, -0.006f).Position, HeadShape.OnFace(0, 0.089f, 0.006f).Position, 0.012f, 5, 8, Mul(skin, 0.97f));
+        // Gozler: ak, iris, bebek yuzeye gomulu (yalnizca on kubbesi gorunur); kaslar yuzeyi izler
         foreach (var s in new[] { -1f, 1f })
         {
-            Shapes.Sphere(m, Matrix4x4.CreateScale(1f, 0.82f, 0.55f) * Matrix4x4.CreateTranslation(s * 0.038f, 0.122f, -0.103f), 0.0175f, 5, 10, Gfx.Hex(0xF4F1EC));
-            Shapes.Sphere(m, Matrix4x4.CreateScale(1f, 1f, 0.5f) * Matrix4x4.CreateTranslation(s * 0.038f, 0.1215f, -0.1095f), 0.0095f, 4, 8, a.Eyes);
-            Shapes.Sphere(m, Matrix4x4.CreateScale(1f, 1f, 0.5f) * Matrix4x4.CreateTranslation(s * 0.038f, 0.1215f, -0.1122f), 0.0048f, 3, 6, Gfx.Hex(0x0E0B09));
-            Shapes.Tube(m, [new(s * 0.019f, 0.148f, -0.107f), new(s * 0.039f, 0.154f, -0.106f), new(s * 0.06f, 0.149f, -0.098f)], 0.0058f, 5, brow);
+            var eye = HeadShape.Frame(s * 0.038f, 0.122f);
+            Shapes.Sphere(m, Matrix4x4.CreateScale(1f, 0.82f, 0.45f) * Matrix4x4.CreateTranslation(0, 0, 0.0049f) * eye, 0.0175f, 6, 12, Gfx.Hex(0xF4F1EC));
+            Shapes.Sphere(m, Matrix4x4.CreateScale(1f, 1f, 0.42f) * Matrix4x4.CreateTranslation(0, 0, -0.0003f) * eye, 0.0095f, 5, 10, a.Eyes);
+            Shapes.Sphere(m, Matrix4x4.CreateScale(1f, 1f, 0.5f) * Matrix4x4.CreateTranslation(0, 0, -0.0025f) * eye, 0.0048f, 3, 8, Gfx.Hex(0x0E0B09));
+            Shapes.Tube(m, [HeadShape.OnFace(s * 0.019f, 0.149f, 0.003f).Position, HeadShape.OnFace(s * 0.039f, 0.155f, 0.0035f).Position, HeadShape.OnFace(s * 0.059f, 0.15f, 0.003f).Position], 0.0055f, 5, brow);
         }
 
         // Sac
@@ -550,15 +563,15 @@ public sealed class CharacterRig
         switch (a.Facial)
         {
             case FacialHair.Mustache:
-                Shapes.Tube(m, [new(-0.034f, 0.066f, -0.097f), new(0, 0.071f, -0.108f), new(0.034f, 0.066f, -0.097f)], 0.009f, 6, hair, radii: [0.006f, 0.011f, 0.006f]);
+                Shapes.Tube(m, Face([(-0.034f, 0.064f), (0, 0.07f), (0.034f, 0.064f)], 0.006f), 0.009f, 6, hair, radii: [0.006f, 0.011f, 0.006f]);
                 break;
             case FacialHair.Pala:
-                Shapes.Tube(m, [new(-0.045f, 0.043f, -0.088f), new(-0.031f, 0.066f, -0.1f), new(0, 0.072f, -0.109f), new(0.031f, 0.066f, -0.1f), new(0.045f, 0.043f, -0.088f)],
+                Shapes.Tube(m, Face([(-0.045f, 0.041f), (-0.031f, 0.064f), (0, 0.071f), (0.031f, 0.064f), (0.045f, 0.041f)], 0.006f),
                     0.01f, 6, hair, radii: [0.005f, 0.009f, 0.012f, 0.009f, 0.005f]);
                 break;
             case FacialHair.Beard:
                 Shapes.Sphere(m, Matrix4x4.CreateScale(0.98f, 0.66f, 0.9f) * Matrix4x4.CreateTranslation(0, 0.038f, -0.022f), 0.094f, 8, 14, hair);
-                Shapes.Tube(m, [new(-0.034f, 0.066f, -0.098f), new(0, 0.071f, -0.108f), new(0.034f, 0.066f, -0.098f)], 0.009f, 6, hair, radii: [0.006f, 0.01f, 0.006f]);
+                Shapes.Tube(m, Face([(-0.034f, 0.064f), (0, 0.07f), (0.034f, 0.064f)], 0.007f), 0.009f, 6, hair, radii: [0.006f, 0.01f, 0.006f]);
                 break;
         }
 
@@ -621,11 +634,11 @@ public sealed class CharacterRig
             var frame = Gfx.Hex(0x1C1C1C);
             foreach (var s in new[] { -1f, 1f })
             {
-                Shapes.Torus(m, Matrix4x4.CreateScale(1.15f, 1f, 0.9f) * Matrix4x4.CreateRotationX(MathF.PI / 2) * Matrix4x4.CreateTranslation(s * 0.04f, 0.122f, -0.119f), 0.02f, 0.0032f, 14, 4, frame);
-                Shapes.Tube(m, [new(s * 0.063f, 0.125f, -0.116f), new(s * 0.098f, 0.13f, -0.06f), new(s * 0.104f, 0.115f, 0.0f)], 0.003f, 4, frame);
+                Shapes.Torus(m, Matrix4x4.CreateScale(1.15f, 1f, 0.9f) * Matrix4x4.CreateRotationX(MathF.PI / 2) * Matrix4x4.CreateTranslation(0, 0, -0.012f) * HeadShape.Frame(s * 0.039f, 0.122f), 0.02f, 0.0032f, 14, 4, frame);
+                Shapes.Tube(m, [HeadShape.OnFace(s * 0.062f, 0.125f, 0.01f).Position, new(s * 0.098f, 0.13f, -0.06f), new(s * 0.104f, 0.115f, 0.0f)], 0.003f, 4, frame);
             }
 
-            Shapes.Tube(m, [new(-0.017f, 0.125f, -0.12f), new(0, 0.129f, -0.123f), new(0.017f, 0.125f, -0.12f)], 0.003f, 4, frame);
+            Shapes.Tube(m, Face([(-0.017f, 0.125f), (0, 0.128f), (0.017f, 0.125f)], 0.011f), 0.003f, 4, frame);
         }
     }
 

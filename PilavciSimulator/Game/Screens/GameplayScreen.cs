@@ -320,7 +320,11 @@ public sealed class GameplayScreen : Screen
         var env = DayNight.Compute(w, Game.Time);
         r.Begin(cam, env);
         World.Draw(w, cam, Session.LocalPlayerId, _dt);
-        Local.DrawViewModel(Session, World, cam);
+        if (Local.FreeCam is null)
+        {
+            Local.DrawViewModel(Session, World, cam);
+        }
+
         TutorialMarker(w);
         r.Particles.Update(_dt);
         r.Render(Game.ScreenWidth, Game.ScreenHeight);
@@ -387,6 +391,11 @@ public sealed class GameplayScreen : Screen
         }
 
         var top = Game.Screens.Top == this;
+        if (Local.FreeCam is not null)
+        {
+            return;
+        }
+
         Hud.Draw(Session, Local, _lastCam, showPrompts: top && !_chatOpen);
         if (_newsTimer > 0)
         {
@@ -493,6 +502,8 @@ public sealed class GameplayScreen : Screen
                         .Select(i => World.ItemPos(w, i)).OrderBy(pos => Vector3.DistanceSquared(pos, p.Position)).Select(pos => (Vector3?)pos).FirstOrDefault(),
                     "socket" when w.StationByTag(a[2]) is { } st2 => StationDefs.Sockets(st2).Where(so => so.Index == int.Parse(a[3], CultureInfo.InvariantCulture))
                         .Select(so => (Vector3?)(GameWorld.SocketWorld(st2, so) + new Vector3(0, 0.08f, 0))).FirstOrDefault(),
+                    "animal" => w.Animals.Where(an => an.Type.ToString().Equals(a[2], StringComparison.OrdinalIgnoreCase)).OrderBy(an => Vector3.DistanceSquared(an.Position, p.Position))
+                        .Select(an => (Vector3?)(an.Position + new Vector3(0, 0.15f, 0))).FirstOrDefault(),
                     "customer" => w.Customers.OrderBy(c => Vector3.DistanceSquared(c.Position, p.Position)).Select(c => (Vector3?)(c.Position + new Vector3(0, 1.1f, 0))).FirstOrDefault(),
                     _ => null,
                 };
@@ -517,6 +528,40 @@ public sealed class GameplayScreen : Screen
                 Local.Pitch = -0.3f;
                 return true;
             }
+            case "cam" when a[1] == "face":
+            {
+                // Vitrin: N. musterinin yuzune karsidan bak (cam face N [mesafe] [yan aci])
+                var list = w.Customers.OrderBy(c => c.Id).ToList();
+                if (list.Count == 0)
+                {
+                    return false;
+                }
+
+                var who = list[Math.Min(int.Parse(a[2], CultureInfo.InvariantCulture), list.Count - 1)];
+                var head = who.RenderPosition + new Vector3(0, World.HeadHeight(who), 0);
+                var dir = Entity.Forward(who.RenderYaw + (a.Length > 4 ? F(4) * MathF.PI / 180f : 0));
+                var eye = head + dir * (a.Length > 3 ? F(3) : 0.9f) + new Vector3(0, 0.05f, 0);
+                Local.FreeCam = eye;
+                var d = Vector3.Normalize(head - eye);
+                Local.Yaw = MathF.Atan2(-d.X, -d.Z);
+                Local.Pitch = MathF.Asin(Math.Clamp(d.Y, -1f, 1f));
+                return true;
+            }
+
+            case "cam":
+                // Vitrin kamerasi: cam x y z yaw pitch | cam off
+                Local.FreeCam = a[1] == "off" ? null : new Vector3(F(1), F(2), F(3));
+                if (a.Length > 5)
+                {
+                    Local.Yaw = F(4) * MathF.PI / 180f;
+                    Local.Pitch = F(5) * MathF.PI / 180f;
+                }
+
+                return true;
+            case "spawn-cat" when Session.IsHost:
+                // Vitrin: oturan kedi (x z)
+                w.Spawn(new AnimalEntity { Type = AnimalType.Cat, Position = new Vector3(F(1), p.Position.Y, F(2)), Seed = 7, State = AnimalState.Sit, Yaw = a.Length > 3 ? F(3) * MathF.PI / 180f : 0 });
+                return true;
             case "look":
                 Local.Yaw = F(1) * MathF.PI / 180f;
                 Local.Pitch = F(2) * MathF.PI / 180f;

@@ -57,8 +57,16 @@ public sealed class LocalPlayer
         _teleportSeq = p.TeleportSeq;
     }
 
+    /// <summary>Gelistirici/vitrin kamerasi: ayarliyken goz bu noktada durur (HUD ve el modeli gizlenir).</summary>
+    public Vector3? FreeCam { get; set; }
+
     public CameraView Camera(float fov)
     {
+        if (FreeCam is { } fc)
+        {
+            return new CameraView { Position = fc, Yaw = Yaw, Pitch = Pitch, FovDegrees = fov, Near = 0.02f, Far = 900f };
+        }
+
         var bobY = MathF.Sin(_bobPhase * 2) * 0.035f * _bobAmount;
         var bobX = MathF.Cos(_bobPhase) * 0.02f * _bobAmount;
         var right = Entity.Right(Yaw);

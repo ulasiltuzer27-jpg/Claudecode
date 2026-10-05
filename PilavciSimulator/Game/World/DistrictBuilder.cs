@@ -478,8 +478,15 @@ public static class DistrictBuilder
 
         // Arka tezgah (ocak, lavabo, kesme tahtasi bunun ustunde)
         var counterTop = Curb + 0.9f;
-        b.Box(M.Wood, new Vector3(x0 + 0.3f, Curb, zb + 0.3f), new Vector3(-100.8f, counterTop - 0.05f, zb + 1.0f), Gfx.Hex(0xB9A58B), 0.5f);
-        b.Box(M.Steel, new Vector3(x0 + 0.3f, counterTop - 0.05f, zb + 0.3f), new Vector3(-100.8f, counterTop, zb + 1.02f), Color.White, 0.5f, ColliderFlags.Surface);
+        // Lavabo (x -106) kendi dolabini ve teknesini cizer: gorsel tezgah orada bolunur, carpisma kutulari tek parca kalir.
+        foreach (var (cx0, cx1) in new[] { (x0 + 0.3f, -106.45f), (-105.55f, -100.8f) })
+        {
+            b.Box(M.Wood, new Vector3(cx0, Curb, zb + 0.3f), new Vector3(cx1, counterTop - 0.05f, zb + 1.0f), Gfx.Hex(0xB9A58B), 0.5f, null);
+            b.Box(M.Steel, new Vector3(cx0, counterTop - 0.05f, zb + 0.3f), new Vector3(cx1, counterTop, zb + 1.02f), Color.White, 0.5f, null);
+        }
+
+        b.Collider(new Vector3(x0 + 0.3f, Curb, zb + 0.3f), new Vector3(-100.8f, counterTop - 0.05f, zb + 1.0f));
+        b.Collider(new Vector3(x0 + 0.3f, counterTop - 0.05f, zb + 0.3f), new Vector3(-100.8f, counterTop, zb + 1.02f), ColliderFlags.Surface);
         // Ada tezgah
         b.Box(M.Wood, new Vector3(-106.4f, Curb, -17.5f), new Vector3(-102.6f, counterTop - 0.05f, -16.4f), Gfx.Hex(0xA48A6A), 0.5f);
         b.Box(M.Steel, new Vector3(-106.5f, counterTop - 0.05f, -17.6f), new Vector3(-102.5f, counterTop, -16.3f), Color.White, 0.5f, ColliderFlags.Surface);

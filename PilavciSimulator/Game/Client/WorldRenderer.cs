@@ -82,6 +82,13 @@ public sealed class WorldRenderer
         _r.SetWater(_waterMesh, Matrix4x4.CreateTranslation(0, layout.SeaLevel, 0));
     }
 
+    /// <summary>Yaklasik bas merkezi yuksekligi (vitrin kamerasi icin).</summary>
+    public float HeadHeight(Entity e)
+    {
+        var a = LooksOf(e);
+        return a.Height * (a.Child ? 1.3f : 1.62f);
+    }
+
     private Appearance LooksOf(Entity e)
     {
         if (_looks.TryGetValue(e.Id, out var a))

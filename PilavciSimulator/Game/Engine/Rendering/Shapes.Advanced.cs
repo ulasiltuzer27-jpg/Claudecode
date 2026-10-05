@@ -93,6 +93,18 @@ public static partial class Shapes
         }
     }
 
+    /// <summary>Ice bakan kutu (ustu acik): lavabo teknesi, tepsi ici.</summary>
+    public static void InnerBox(MeshData m, in Matrix4x4 xf, Vector3 size, Color c, float uv = 1f)
+    {
+        var h = size * 0.5f;
+        // Normaller ice bakar; koseler iceriden bakinca saat yonu tersine
+        Shapes.QuadLocal(m, xf, new(-h.X, -h.Y, h.Z), new(h.X, -h.Y, h.Z), new(h.X, -h.Y, -h.Z), new(-h.X, -h.Y, -h.Z), Vector3.UnitY, Vector3.UnitX, -Vector3.UnitZ, c, uv);
+        Shapes.QuadLocal(m, xf, new(-h.X, -h.Y, -h.Z), new(h.X, -h.Y, -h.Z), new(h.X, h.Y, -h.Z), new(-h.X, h.Y, -h.Z), Vector3.UnitZ, Vector3.UnitX, Vector3.UnitY, c, uv);
+        Shapes.QuadLocal(m, xf, new(h.X, -h.Y, h.Z), new(-h.X, -h.Y, h.Z), new(-h.X, h.Y, h.Z), new(h.X, h.Y, h.Z), -Vector3.UnitZ, -Vector3.UnitX, Vector3.UnitY, c, uv);
+        Shapes.QuadLocal(m, xf, new(-h.X, -h.Y, h.Z), new(-h.X, -h.Y, -h.Z), new(-h.X, h.Y, -h.Z), new(-h.X, h.Y, h.Z), Vector3.UnitX, -Vector3.UnitZ, Vector3.UnitY, c, uv);
+        Shapes.QuadLocal(m, xf, new(h.X, -h.Y, -h.Z), new(h.X, -h.Y, h.Z), new(h.X, h.Y, h.Z), new(h.X, h.Y, -h.Z), -Vector3.UnitX, Vector3.UnitZ, Vector3.UnitY, c, uv);
+    }
+
     /// <summary>Tabani y=0'da duran pahli kutu.</summary>
     public static void RoundedBoxOnGround(MeshData m, in Matrix4x4 xf, Vector3 size, float radius, int segments, Color color, float uvScale = 1f)
     {
