@@ -25,12 +25,12 @@ public static class DistrictBuilder
     public const float MinX = -128f;
     public const float MaxX = 128f;
 
-    public static DistrictLayout Build(bool withGeometry, ISignProvider? signs, int seed = 1923)
+    public static DistrictLayout Build(bool withGeometry, ISignProvider? signs, int seed = 1923, IPrefabSource? prefabs = null)
     {
         var layout = new DistrictLayout();
         var geometry = withGeometry ? new StaticScene.Builder() : null;
         layout.Geometry = geometry;
-        var b = new BuildContext(layout, geometry, signs, seed);
+        var b = new BuildContext(layout, geometry, signs, seed, prefabs);
 
         GroundAndStreet(b);
         NorthSide(b);
@@ -589,7 +589,9 @@ public static class DistrictBuilder
         // Lambalar
         for (var x = MinX + 6; x < MaxX; x += 18)
         {
-            Props.StreetLamp(b, new Vector3(x, Curb, -4.6f), Vector3.UnitZ);
+            // Depo kepenginin onu (x -107..-100.5) bos kalsin: araba buradan cikar.
+            var lx = x is > -108f and < -99f ? -109.2f : x;
+            Props.StreetLamp(b, new Vector3(lx, Curb, -4.6f), Vector3.UnitZ);
             if (x < 52)
             {
                 Props.StreetLamp(b, new Vector3(x + 9, Curb, 4.6f), -Vector3.UnitZ);
@@ -621,7 +623,8 @@ public static class DistrictBuilder
         }
 
         // Cop kutulari
-        foreach (var x in new[] { -98f, -60f, -20f, 15f, 52f, 70f, 115f })
+        // Depo kapisinin onu bos kalir: araba buradan itilerek cikar.
+        foreach (var x in new[] { -90.5f, -60f, -20f, 15f, 52f, 70f, 115f })
         {
             Props.Bin(b, new Vector3(x, Curb, x < 55 && x > -60 ? 7.8f : -7.8f));
         }

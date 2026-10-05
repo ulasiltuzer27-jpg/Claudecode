@@ -183,9 +183,9 @@ cmd act Interact
 wait 10
 cmd look 180 -10
 down W
-wait 150
-annotate
+waitfor 600 ,-5.
 up W
+annotate
 cmd look -90 -10
 wait 5
 down W

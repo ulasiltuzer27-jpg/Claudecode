@@ -1,0 +1,4 @@
+Bu klasordeki .glb modeller ve dokular CC0 1.0 Universal (Public Domain
+Dedication) lisanslidir: https://creativecommons.org/publicdomain/zero/1.0/
+Kaynak: Kenney (www.kenney.nl) Starter-Kit depolari, https://github.com/KenneyNL
+Ayrintilar icin CREDITS.md'ye bakin.

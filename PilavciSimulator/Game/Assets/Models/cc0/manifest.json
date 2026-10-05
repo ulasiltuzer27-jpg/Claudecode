@@ -1,0 +1,197 @@
+{
+  "assets": [
+    {
+      "key": "tree_round",
+      "group": "tree",
+      "fit": {
+        "axis": "y",
+        "size": 4.8
+      },
+      "yaw": 0,
+      "saturation": 0.92,
+      "file": "basic/tree.glb",
+      "tris": 330,
+      "sha256": "f8632c9758a78f60aa4ca68bf0e5ac972770167a5608e179293a12552d8fc2ef"
+    },
+    {
+      "key": "statue",
+      "group": "statue",
+      "fit": {
+        "axis": "y",
+        "size": 2.3
+      },
+      "yaw": 0,
+      "file": "basic/statue.glb",
+      "tris": 549,
+      "sha256": "5ba8ecba963f6b3ec974809e2bf0b615da7e2701cd0efc6a3c0e946efb147397"
+    },
+    {
+      "key": "banner",
+      "group": "banner",
+      "fit": {
+        "axis": "y",
+        "size": 2.4
+      },
+      "yaw": 0,
+      "file": "basic/banner.glb",
+      "tris": 228,
+      "sha256": "96e1cf7924fcc871be0e7e182c9b918de381b9783ca9e96922f8db62af384056"
+    },
+    {
+      "key": "trophy",
+      "group": "trophy",
+      "fit": {
+        "axis": "y",
+        "size": 0.38
+      },
+      "yaw": 0,
+      "file": "basic/trophy.glb",
+      "tris": 244,
+      "sha256": "253f6d5f321ab20f8f505dfe35b7404c98d2d492728e6df5f69dd29e936b8be5"
+    },
+    {
+      "key": "fountain",
+      "group": "fountain",
+      "fit": {
+        "axis": "x",
+        "size": 3.4
+      },
+      "yaw": 0,
+      "file": "city/pavement-fountain.glb",
+      "tris": 152,
+      "sha256": "ea2996089e90a79ba13d764106d374486bb8137666cf1cdbaebd1927ef365185"
+    },
+    {
+      "key": "planter_trees",
+      "group": "planter",
+      "fit": {
+        "axis": "x",
+        "size": 2.4
+      },
+      "yaw": 0,
+      "file": "city/grass-trees.glb",
+      "tris": 380,
+      "sha256": "cb06d03cc1c64ca7e7692c0aef3628d8e7cd4afee69093025f9ddd668653a4ce"
+    },
+    {
+      "key": "planter_tall",
+      "group": "planter",
+      "fit": {
+        "axis": "x",
+        "size": 2.4
+      },
+      "yaw": 0,
+      "file": "city/grass-trees-tall.glb",
+      "tris": 472,
+      "sha256": "d23e3b722453236bf6f4f8922b7bf64f81a7f3f804848a89c4b100ccbf13abef"
+    },
+    {
+      "key": "pickup_green",
+      "group": "pickup",
+      "fit": {
+        "axis": "x",
+        "size": 4.6
+      },
+      "yaw": 90,
+      "file": "racing/vehicle-truck-green.glb",
+      "tris": 1104,
+      "sha256": "df362d027a09b19395be0e96abd7cc2dc54608dfb920b592e64357b589f9fcd6"
+    },
+    {
+      "key": "pickup_red",
+      "group": "pickup",
+      "fit": {
+        "axis": "x",
+        "size": 4.6
+      },
+      "yaw": 90,
+      "file": "racing/vehicle-truck-red.glb",
+      "tris": 946,
+      "sha256": "eca99bd9ab0a2b02125f915e65d1ec8f1c5a93be7c6d4840efdac6633f47772c"
+    },
+    {
+      "key": "pickup_yellow",
+      "group": "pickup",
+      "fit": {
+        "axis": "x",
+        "size": 4.6
+      },
+      "yaw": 90,
+      "file": "racing/vehicle-truck-yellow.glb",
+      "tris": 989,
+      "sha256": "1ebd83174eab6d2fdf69eb5d8e32bd06a23a86d9edc4fe915a4160430a7c36a5"
+    },
+    {
+      "key": "pickup_purple",
+      "group": "pickup",
+      "fit": {
+        "axis": "x",
+        "size": 4.6
+      },
+      "yaw": 90,
+      "file": "racing/vehicle-truck-purple.glb",
+      "tris": 814,
+      "sha256": "03e32f5abcbbd03da3591f42fdaae2cf7d27ed379df7ce0d1f233bea02998565"
+    },
+    {
+      "key": "scooter",
+      "group": "scooter",
+      "fit": {
+        "axis": "x",
+        "size": 1.9
+      },
+      "yaw": 90,
+      "file": "racing/vehicle-motorcycle.glb",
+      "tris": 960,
+      "sha256": "c97911b8dbc2d5dd9d1961b46eb4d1f132b67a6c5a84f45593fea44e0595dd92"
+    },
+    {
+      "key": "tents",
+      "group": "tents",
+      "fit": {
+        "axis": "x",
+        "size": 9.0
+      },
+      "yaw": 0,
+      "file": "racing/decoration-tents.glb",
+      "tris": 1900,
+      "sha256": "19dbf2a778ad75f95c7d61f12866ef7174ab69cad169d3749c5400f5e14db8a3"
+    },
+    {
+      "key": "flag",
+      "group": "flag",
+      "fit": {
+        "axis": "y",
+        "size": 2.6
+      },
+      "yaw": 0,
+      "file": "platformer/flag.glb",
+      "tris": 132,
+      "sha256": "0ba84ff43f0fea0a9f0b080cfa1be54ebda36c8c35174d1ac2553ae6da9f65ae"
+    },
+    {
+      "key": "grass_tuft",
+      "group": "grass",
+      "fit": {
+        "axis": "y",
+        "size": 0.32
+      },
+      "yaw": 0,
+      "file": "platformer/grass.glb",
+      "tris": 72,
+      "sha256": "acb29df8a75b08e985e27a0ed8170b8f3d135abd24ccf5aa4d631cb2cd15cfda"
+    },
+    {
+      "key": "grass_tuft_small",
+      "group": "grass",
+      "fit": {
+        "axis": "y",
+        "size": 0.24
+      },
+      "yaw": 0,
+      "file": "platformer/grass-small.glb",
+      "tris": 72,
+      "sha256": "4b94e8dd9cbdc3eedff99cbf614fe828f0c2342d21a7d0edb125b129d0422d51"
+    }
+  ]
+}

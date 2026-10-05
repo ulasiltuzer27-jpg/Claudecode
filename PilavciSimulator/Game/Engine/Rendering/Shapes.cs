@@ -12,7 +12,7 @@ namespace PilavciSimulator.Engine.Rendering;
 /// Sarim kurali: on yuz saat yonunun tersine (OpenGL varsayilani).
 /// Bir yuzun koseleri u x v = normal olacak eksenlerle uretilir.
 /// </summary>
-public static class Shapes
+public static partial class Shapes
 {
     [Flags]
     public enum Faces
@@ -132,7 +132,7 @@ public static class Shapes
     /// Profil asagidan yukari, dis yuzey disari bakacak sekilde verilmeli.
     /// </summary>
     public static void Lathe(MeshData m, in Matrix4x4 xf, IReadOnlyList<Vector2> profile, int segments, Color color,
-        float uvScale = 1f, bool smoothProfile = false)
+        float uvScale = 1f, bool smoothProfile = false, float startAngle = 0f, float sweep = MathF.Tau)
     {
         Matrix4x4.Invert(xf, out var inv);
         var nxf = Matrix4x4.Transpose(inv);
@@ -174,14 +174,14 @@ public static class Shapes
             var baseIndex = m.VertexCount;
             for (var s = 0; s <= segments; s++)
             {
-                var a = s / (float)segments * MathF.Tau;
+                var a = startAngle + s / (float)segments * sweep;
                 var cos = MathF.Cos(a);
                 var sin = MathF.Sin(a);
                 var r0 = new Vector3(p0.X * cos, p0.Y, p0.X * sin);
                 var r1 = new Vector3(p1.X * cos, p1.Y, p1.X * sin);
                 var nn0 = new Vector3(n0.X * cos, n0.Y, n0.X * sin);
                 var nn1 = new Vector3(n1.X * cos, n1.Y, n1.X * sin);
-                var circ = MathF.Max(p0.X, p1.X) * MathF.Tau;
+                var circ = MathF.Max(p0.X, p1.X) * sweep;
                 var u = s / (float)segments * circ * uvScale;
                 m.AddVertex(Vector3.Transform(r0, xf), SafeNormalize(Vector3.TransformNormal(nn0, nxf)), new Vector2(u, -p0.Y * uvScale), color);
                 m.AddVertex(Vector3.Transform(r1, xf), SafeNormalize(Vector3.TransformNormal(nn1, nxf)), new Vector2(u, -(p0.Y + vLen) * uvScale), color);

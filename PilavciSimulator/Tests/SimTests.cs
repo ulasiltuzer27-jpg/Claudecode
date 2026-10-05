@@ -425,6 +425,52 @@ public class SimTests
         Assert.True(w.Progress.Stat("correct_change") > 0 || w.Progress.Stat("payments") > 0);
     }
 
+    /// <summary>
+    /// Kayit uyumluluk ornegi (v1) uretir: <c>PILAV_WRITE_SAVE_FIXTURE=1 dotnet test --filter Write_save_fixture</c>.
+    /// Bot bir gun calisir, gun biter, ertesi gune gecilir ve oyunun kendi kayit bicimiyle yazilir.
+    /// </summary>
+    [Fact]
+    public void Write_save_fixture_when_requested()
+    {
+        if (Environment.GetEnvironmentVariable("PILAV_WRITE_SAVE_FIXTURE") != "1")
+        {
+            return;
+        }
+
+        var (w, sim, p) = NewGame(11);
+        var bot = new Bot(w, sim, p);
+        bot.CookPilav(3);
+        bot.LoadAndGo("sanayi");
+        while (w.Clock.Minute < 14 * 60 && !w.DayOver)
+        {
+            bot.Tick(0.5f);
+            bot.HandleZabita("sanayi");
+            while (bot.ServeNext())
+            {
+            }
+        }
+
+        w.Clock.Minute = w.Data.Balance.PassOutMinute - 0.1f;
+        sim.Tick(0.5f);
+        DayLogic.StartNextDay(w);
+        var dir = Path.Combine(TestPaths.GameDir, "..", "Tests", "Data");
+        Directory.CreateDirectory(dir);
+        File.WriteAllBytes(Path.Combine(dir, $"save_v{WorldSnapshot.Version}.pilav"), WorldSnapshot.Write(w, includePlayers: false, transient: false));
+        var facts = new Dictionary<string, object>
+        {
+            ["day"] = w.Clock.Day,
+            ["money"] = w.Economy.Money,
+            ["xp"] = w.Progress.Xp,
+            ["level"] = w.Level,
+            ["stars"] = Math.Round(w.Reputation.Stars, 3),
+            ["served_total"] = w.Progress.Stat("served"),
+            ["items"] = w.Items.Count,
+            ["entities"] = w.Entities.Count,
+        };
+        File.WriteAllText(Path.Combine(dir, $"save_v{WorldSnapshot.Version}.json"), System.Text.Json.JsonSerializer.Serialize(facts, new System.Text.Json.JsonSerializerOptions { WriteIndented = true }) + "\n");
+        _out.WriteLine(string.Join(", ", facts.Select(kv => $"{kv.Key}={kv.Value}")));
+    }
+
     [Fact]
     public void Day_end_and_next_day_resets_the_street()
     {

@@ -229,8 +229,27 @@ public sealed class Renderer : IDisposable
 
     public void SetWater(Mesh mesh, Matrix4x4 world) => _water = (mesh, world);
 
+    private readonly List<RenderModel> _release = new();
+
+    /// <summary>
+    /// Modeli GPU'dan bosaltmak uzere siraya koyar. Bu karede cizim kuyrugunda
+    /// olabilecegi icin silme bir sonraki Begin'de yapilir.
+    /// </summary>
+    public void Release(RenderModel model) => _release.Add(model);
+
     public void Begin(in CameraView camera, in SceneEnvironment env)
     {
+        foreach (var m in _release)
+        {
+            foreach (var part in m.Parts)
+            {
+                Raylib.UnloadMesh(part.Mesh);
+            }
+
+            m.Parts.Clear();
+        }
+
+        _release.Clear();
         _camera = camera;
         _vmCamera = camera;
         _vmCamera.Near = 0.01f;

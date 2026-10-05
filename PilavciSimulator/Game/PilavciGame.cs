@@ -44,6 +44,8 @@ public sealed class PilavciGame : IDisposable
     /// <summary>Mahalle yerlesimi (collider, yol grafigi, satis noktalari).</summary>
     public World.DistrictLayout Layout { get; private set; } = null!;
     public Client.ModelLibrary Models { get; private set; } = null!;
+    /// <summary>Hazir CC0 modeller (Assets/Models/cc0). Bos olabilir; o zaman her sey prosedurel.</summary>
+    public Content.Cc0Catalog Cc0 { get; private set; } = new();
     /// <summary>Dunya cizicisi: statik sahne GPU'ya bir kez yuklenir, menu ve oyun paylasir.</summary>
     public Client.WorldRenderer WorldView { get; private set; } = null!;
 #if STEAM_BUILD
@@ -205,7 +207,9 @@ public sealed class PilavciGame : IDisposable
 
         Data = Sim.Data.GameData.Load(Paths.Data);
         var sw = System.Diagnostics.Stopwatch.StartNew();
-        Layout = World.DistrictBuilder.Build(withGeometry: true, Signs);
+        Cc0 = Content.Cc0Catalog.Load(Path.Combine(Paths.Assets, "Models", "cc0", "manifest.json"));
+        Cc0.RegisterMaterials(Renderer.Materials, Assets.WhiteTex);
+        Layout = World.DistrictBuilder.Build(withGeometry: true, Signs, prefabs: Cc0);
         Models = new Client.ModelLibrary(Renderer.Materials);
         WorldView = new Client.WorldRenderer(this, Models);
         WorldView.Upload(Layout);

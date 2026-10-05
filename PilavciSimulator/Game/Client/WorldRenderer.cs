@@ -188,7 +188,9 @@ public sealed class WorldRenderer
                 pos.Y += 0.0f;
             }
 
-            _rig.Draw(pos, c.RenderYaw, LooksOf(c), pose, holds, castShadow: d2 < 40f * 40f);
+            var talking = c.Anim == CustomerAnim.Talk || (c.BubbleKey.Length > 0 && c.BubbleUntil > w.Time && c.BubbleUntil - w.Time > 1.5f);
+            var lod = d2 < 22f * 22f ? 0 : d2 < 55f * 55f ? 1 : 2;
+            _rig.Draw(pos, c.RenderYaw, LooksOf(c), pose, holds, castShadow: d2 < 40f * 40f, face: Face.From(c.Mood, talking, w.Time, c.Seed), lod: lod);
         }
 
         foreach (var d in w.Layout.Decor)
@@ -205,7 +207,9 @@ public sealed class WorldRenderer
                 pose.RightShoulder = -0.4f + MathF.Sin(w.Time * 0.7f + d.Seed) * 0.15f;
             }
 
-            _rig.Draw(d.Position - new Vector3(0, 0.45f, 0) + (d.Sitting ? new Vector3(0, 0.45f, 0) - new Vector3(0, 0.47f, 0) : Vector3.Zero), d.Yaw, a, pose);
+            var dd = Vector3.DistanceSquared(d.Position, camPos);
+            _rig.Draw(d.Position - new Vector3(0, 0.45f, 0) + (d.Sitting ? new Vector3(0, 0.45f, 0) - new Vector3(0, 0.47f, 0) : Vector3.Zero), d.Yaw, a, pose,
+                face: Face.From(Mood.Neutral, false, w.Time, d.Seed), lod: dd < 22f * 22f ? 0 : dd < 55f * 55f ? 1 : 2);
         }
 
         foreach (var p in w.Players)
@@ -226,7 +230,7 @@ public sealed class WorldRenderer
             }
 
             pose.Head = -p.Pitch * 0.6f;
-            _rig.Draw(p.RenderPosition, p.RenderYaw, LooksOf(p), pose);
+            _rig.Draw(p.RenderPosition, p.RenderYaw, LooksOf(p), pose, face: Face.From(Mood.Happy, p.ChatUntil > w.Time, w.Time, (uint)p.Id));
         }
 
         foreach (var v in w.Vehicles)

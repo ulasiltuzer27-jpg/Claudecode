@@ -58,6 +58,29 @@ public sealed partial class ModelLibrary
     public static readonly Color Black = Gfx.Hex(0x222222);
 
     // ═══════════════════════════════════════════════════════════════
+    // Yardimcilar
+    // ═══════════════════════════════════════════════════════════════
+
+    /// <summary>Yanda dikey D kulp: merkez, yaricap, kalinlik; side +1 = +X'e cikik.</summary>
+    private static void SideHandle(MeshData m, Vector3 center, float radius, float thickness, float side, Color c, int segs = 10)
+    {
+        var start = side > 0 ? -MathF.PI / 2 : MathF.PI / 2;
+        Shapes.Arc(m, Matrix4x4.CreateRotationX(MathF.PI / 2) * Matrix4x4.CreateTranslation(center), radius, thickness, start, MathF.PI, segs, 5, c);
+    }
+
+    /// <summary>Ice bakan kutu (ustu acik): lavabo teknesi, tepsi ici.</summary>
+    private static void InnerBox(MeshData m, Vector3 center, Vector3 size, Color c, float uv = 1f)
+    {
+        var h = size * 0.5f;
+        // Normaller ice bakar; dortgen sarimi da ona gore ters
+        Shapes.QuadLocal(m, Matrix4x4.CreateTranslation(center), new(-h.X, -h.Y, h.Z), new(h.X, -h.Y, h.Z), new(h.X, -h.Y, -h.Z), new(-h.X, -h.Y, -h.Z), Vector3.UnitY, Vector3.UnitX, -Vector3.UnitZ, c, uv);
+        Shapes.QuadLocal(m, Matrix4x4.CreateTranslation(center), new(h.X, -h.Y, -h.Z), new(-h.X, -h.Y, -h.Z), new(-h.X, h.Y, -h.Z), new(h.X, h.Y, -h.Z), Vector3.UnitZ, -Vector3.UnitX, Vector3.UnitY, c, uv);
+        Shapes.QuadLocal(m, Matrix4x4.CreateTranslation(center), new(-h.X, -h.Y, h.Z), new(h.X, -h.Y, h.Z), new(h.X, h.Y, h.Z), new(-h.X, h.Y, h.Z), -Vector3.UnitZ, Vector3.UnitX, Vector3.UnitY, c, uv);
+        Shapes.QuadLocal(m, Matrix4x4.CreateTranslation(center), new(-h.X, -h.Y, -h.Z), new(-h.X, -h.Y, h.Z), new(-h.X, h.Y, h.Z), new(-h.X, h.Y, -h.Z), Vector3.UnitX, Vector3.UnitZ, Vector3.UnitY, c, uv);
+        Shapes.QuadLocal(m, Matrix4x4.CreateTranslation(center), new(h.X, -h.Y, h.Z), new(h.X, -h.Y, -h.Z), new(h.X, h.Y, -h.Z), new(h.X, h.Y, h.Z), -Vector3.UnitX, -Vector3.UnitZ, Vector3.UnitY, c, uv);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
     // Mutfak esyalari
     // ═══════════════════════════════════════════════════════════════
 
@@ -68,32 +91,41 @@ public sealed partial class ModelLibrary
         var h = r * 1.15f;
         var prof = new List<Vector2>
         {
-            new(0, 0.01f), new(r * 0.85f, 0), new(r, r * 0.12f), new(r, h), new(r + 0.02f, h + 0.01f), new(r + 0.02f, h + 0.025f),
-            new(r - 0.012f, h + 0.025f), new(r - 0.012f, r * 0.12f + 0.012f), new(r * 0.85f - 0.01f, 0.012f), new(0, 0.013f),
+            new(0, 0.01f), new(r * 0.85f, 0), new(r * 0.97f, r * 0.04f), new(r, r * 0.12f), new(r, h), new(r - 0.012f, h), new(r - 0.012f, r * 0.12f + 0.012f),
+            new(r * 0.85f - 0.01f, 0.012f), new(0, 0.013f),
         };
-        Shapes.Lathe(b[M.Steel], Matrix4x4.Identity, prof, 28, Color.White, 2f);
-        // Kulplar
+        Shapes.Lathe(b[M.Steel], Matrix4x4.Identity, prof, 32, Color.White, 2f, smoothProfile: true);
+        // Kivrik agiz ve govde bandi
+        Shapes.Torus(b[M.Steel], Matrix4x4.CreateTranslation(0, h + 0.004f, 0), r - 0.002f, 0.011f, 32, 6, Color.White);
+        Shapes.Torus(b[M.Steel], Matrix4x4.CreateTranslation(0, h * 0.5f, 0), r + 0.001f, 0.004f, 32, 4, Gfx.Hex(0xC9CED3));
+        // D kulplar ve percinler
         foreach (var s in new[] { -1f, 1f })
         {
-            Shapes.Torus(b[M.Steel], Matrix4x4.CreateRotationX(MathF.PI / 2) * Matrix4x4.CreateTranslation(s * (r + 0.04f), h * 0.82f, 0), 0.045f, 0.012f, 12, 6, Color.White);
+            SideHandle(b[M.Steel], new Vector3(s * (r + 0.006f), h * 0.8f, 0), 0.04f, 0.011f, s, Color.White);
+            foreach (var dz in new[] { -0.034f, 0.034f })
+            {
+                Shapes.Sphere(b[M.Steel], Matrix4x4.CreateTranslation(s * r, h * 0.8f + 0.0f, dz), 0.009f, 3, 6, Gfx.Hex(0xB3B6B7));
+            }
         }
     });
 
     public RenderModel KazanLid(int tier) => Get($"kazanlid{tier}", b =>
     {
         var r = ItemInfos.KazanRadius(tier) + 0.015f;
-        Shapes.Lathe(b[M.Steel], Matrix4x4.Identity, [new(r, 0), new(r * 0.9f, 0.03f), new(r * 0.4f, 0.06f), new(0, 0.065f)], 28, Color.White, 2f, smoothProfile: true);
-        Shapes.Cylinder(b[M.Plastic], Matrix4x4.CreateTranslation(0, 0.06f, 0), 0.035f, 0.035f, 10, Black);
+        Shapes.Lathe(b[M.Steel], Matrix4x4.Identity, [new(r, 0), new(r * 0.9f, 0.03f), new(r * 0.4f, 0.06f), new(0, 0.065f)], 32, Color.White, 2f, smoothProfile: true);
+        Shapes.Torus(b[M.Steel], Matrix4x4.CreateTranslation(0, 0.002f, 0), r - 0.004f, 0.007f, 32, 4, Gfx.Hex(0xC9CED3));
+        Shapes.Lathe(b[M.Plastic], Matrix4x4.CreateTranslation(0, 0.058f, 0), [new(0.03f, 0), new(0.022f, 0.02f), new(0.035f, 0.032f), new(0.03f, 0.045f), new(0, 0.048f)], 12, Black, smoothProfile: true);
     });
 
     public RenderModel Tencere() => Get("tencere", b =>
     {
         const float r = 0.17f, h = 0.2f;
-        var prof = new List<Vector2> { new(0, 0.005f), new(r * 0.9f, 0), new(r, 0.02f), new(r, h), new(r + 0.012f, h + 0.012f), new(r - 0.01f, h + 0.012f), new(r - 0.01f, 0.02f), new(0, 0.01f) };
-        Shapes.Lathe(b[M.Steel], Matrix4x4.Identity, prof, 24, Gfx.Hex(0xD6DADF), 2f);
+        var prof = new List<Vector2> { new(0, 0.005f), new(r * 0.9f, 0), new(r * 0.98f, 0.008f), new(r, 0.02f), new(r, h), new(r - 0.01f, h), new(r - 0.01f, 0.02f), new(0, 0.01f) };
+        Shapes.Lathe(b[M.Steel], Matrix4x4.Identity, prof, 28, Gfx.Hex(0xD6DADF), 2f, smoothProfile: true);
+        Shapes.Torus(b[M.Steel], Matrix4x4.CreateTranslation(0, h + 0.003f, 0), r - 0.004f, 0.008f, 28, 5, Gfx.Hex(0xD6DADF));
         foreach (var s in new[] { -1f, 1f })
         {
-            Shapes.Box(b[M.Plastic], Matrix4x4.CreateTranslation(s * (r + 0.04f), h * 0.85f, 0), new Vector3(0.07f, 0.025f, 0.05f), Black);
+            SideHandle(b[M.Plastic], new Vector3(s * (r + 0.004f), h * 0.82f, 0), 0.032f, 0.01f, s, Black);
         }
     });
 
@@ -101,80 +133,130 @@ public sealed partial class ModelLibrary
     {
         const float r = 0.18f;
         Shapes.Lathe(b[M.Glass], Matrix4x4.Identity, [new(r, 0), new(r * 0.85f, 0.025f), new(0, 0.05f)], 24, new Color(255, 255, 255, 120), 2f, smoothProfile: true);
-        Shapes.Cylinder(b[M.Plastic], Matrix4x4.CreateTranslation(0, 0.045f, 0), 0.025f, 0.03f, 8, Black);
+        Shapes.Torus(b[M.Steel], Matrix4x4.CreateTranslation(0, 0.002f, 0), r - 0.004f, 0.006f, 24, 4, Gfx.Hex(0xC9CED3));
+        Shapes.Lathe(b[M.Plastic], Matrix4x4.CreateTranslation(0, 0.044f, 0), [new(0.022f, 0), new(0.016f, 0.015f), new(0.026f, 0.025f), new(0.022f, 0.035f), new(0, 0.037f)], 10, Black, smoothProfile: true);
     });
 
     public RenderModel Suzgec() => Get("suzgec", b =>
     {
-        Shapes.Lathe(b[M.Steel], Matrix4x4.Identity, [new(0, 0), new(0.07f, 0), new(0.15f, 0.1f), new(0.16f, 0.11f), new(0.15f, 0.11f), new(0.07f, 0.012f), new(0, 0.012f)], 20, Gfx.Hex(0xE5E8EB), 2f);
-        Shapes.Box(b[M.Plastic], Matrix4x4.CreateTranslation(0.23f, 0.1f, 0), new Vector3(0.14f, 0.02f, 0.035f), Gfx.Hex(0xC0392B));
+        var steel = Gfx.Hex(0xE5E8EB);
+        Shapes.Lathe(b[M.Steel], Matrix4x4.Identity, [new(0, 0), new(0.07f, 0), new(0.15f, 0.1f), new(0.16f, 0.11f), new(0.15f, 0.11f), new(0.07f, 0.012f), new(0, 0.012f)], 24, steel, 2f, smoothProfile: true);
+        // Delikler: kase yuzeyinde koyu noktalar (halka halka)
+        for (var ring = 0; ring < 4; ring++)
+        {
+            var t = 0.18f + ring * 0.2f;
+            var rr = 0.07f + (0.15f - 0.07f) * t;
+            var y = 0.1f * t;
+            var n = 10 + ring * 4;
+            for (var i = 0; i < n; i++)
+            {
+                var a = i * MathF.Tau / n + ring * 0.3f;
+                Shapes.Sphere(b[M.Steel], Matrix4x4.CreateScale(1f, 1f, 1f) * Matrix4x4.CreateTranslation(MathF.Cos(a) * (rr + 0.001f), y, MathF.Sin(a) * (rr + 0.001f)), 0.0055f, 2, 4, Gfx.Hex(0x4D5656));
+            }
+        }
+
+        for (var i = 0; i < 7; i++)
+        {
+            var a = i * MathF.Tau / 7;
+            Shapes.Sphere(b[M.Steel], Matrix4x4.CreateTranslation(MathF.Cos(a) * 0.035f, 0.0005f, MathF.Sin(a) * 0.035f), 0.006f, 2, 4, Gfx.Hex(0x4D5656));
+        }
+
+        // Ayak halkasi ve kirmizi sapli tutamak
+        Shapes.Torus(b[M.Steel], Matrix4x4.CreateTranslation(0, 0.004f, 0), 0.062f, 0.006f, 18, 4, steel);
+        Shapes.Tube(b[M.Steel], [new Vector3(0.155f, 0.105f, 0), new Vector3(0.19f, 0.108f, 0), new Vector3(0.22f, 0.11f, 0)], 0.008f, 6, steel, false, false);
+        Shapes.CapsuleBetween(b[M.Plastic], new Vector3(0.2f, 0.11f, 0), new Vector3(0.3f, 0.115f, 0), 0.014f, 4, 8, Gfx.Hex(0xC0392B));
     });
 
     public RenderModel Jug() => Get("jug", b =>
     {
-        Shapes.Lathe(b[M.Glass], Matrix4x4.Identity, [new(0, 0), new(0.075f, 0), new(0.08f, 0.2f), new(0.085f, 0.205f), new(0.075f, 0.205f), new(0.07f, 0.005f), new(0, 0.005f)], 16, new Color(240, 248, 255, 110), 2f);
-        Shapes.Torus(b[M.Glass], Matrix4x4.CreateRotationX(MathF.PI / 2) * Matrix4x4.CreateTranslation(0.095f, 0.12f, 0), 0.04f, 0.009f, 10, 5, new Color(240, 248, 255, 140));
+        var glass = new Color(240, 248, 255, 110);
+        Shapes.Lathe(b[M.Glass], Matrix4x4.Identity, [new(0, 0), new(0.075f, 0), new(0.08f, 0.2f), new(0.085f, 0.205f), new(0.075f, 0.205f), new(0.07f, 0.005f), new(0, 0.005f)], 20, glass, 2f);
+        // D kulp (yan) ve gaga
+        Shapes.Arc(b[M.Glass], Matrix4x4.CreateRotationX(MathF.PI / 2) * Matrix4x4.CreateScale(1f, 1.4f, 1f) * Matrix4x4.CreateTranslation(0.082f, 0.12f, 0), 0.045f, 0.01f, -MathF.PI / 2, MathF.PI, 12, 5, new Color(240, 248, 255, 150));
+        Shapes.Extrude(b[M.Glass], Matrix4x4.CreateRotationY(MathF.PI) * Matrix4x4.CreateTranslation(-0.086f, 0.195f, 0), [new(0, 0), new(0.025f, 0.012f), new(0, 0.014f)], 0.03f, glass);
         // Olcu cizgileri
         for (var i = 1; i <= 4; i++)
         {
-            Shapes.Box(b[M.White], Matrix4x4.CreateTranslation(0, i * 0.04f, -0.079f), new Vector3(0.03f, 0.003f, 0.003f), Gfx.Hex(0x2E86C1));
+            Shapes.Box(b[M.White], Matrix4x4.CreateTranslation(0, i * 0.04f, -0.079f), new Vector3(i % 2 == 0 ? 0.035f : 0.02f, 0.003f, 0.003f), Gfx.Hex(0x2E86C1));
         }
     });
 
+    /// <summary>Kepce: tahta sapli metal kase.</summary>
     public RenderModel Spoon() => Get("kasik", b =>
     {
-        Shapes.Box(b[M.Wood], Matrix4x4.CreateTranslation(0, 0.02f, 0.06f), new Vector3(0.025f, 0.02f, 0.32f), Gfx.Hex(0xC69C6D), 2f);
-        Shapes.Sphere(b[M.Wood], Matrix4x4.CreateScale(1, 0.4f, 1.3f) * Matrix4x4.CreateTranslation(0, 0.02f, -0.15f), 0.045f, 5, 10, Gfx.Hex(0xC69C6D));
+        Shapes.Lathe(b[M.Steel], Matrix4x4.CreateRotationZ(MathF.PI) * Matrix4x4.CreateTranslation(0, 0.045f, -0.15f),
+            [new(0, 0), new(0.035f, 0.004f), new(0.05f, 0.02f), new(0.055f, 0.04f), new(0.05f, 0.042f), new(0.046f, 0.024f), new(0.032f, 0.009f), new(0, 0.005f)], 16, Gfx.Hex(0xD6DADF), 2f, smoothProfile: true);
+        var handle = Shapes.Curve(new Vector3(0, 0.045f, -0.1f), new Vector3(0, 0.07f, -0.02f), new Vector3(0, 0.05f, 0.14f), 8);
+        Shapes.Tube(b[M.Steel], handle, 0.007f, 6, Gfx.Hex(0xC9CED3));
+        Shapes.CapsuleBetween(b[M.Wood], new Vector3(0, 0.05f, 0.08f), new Vector3(0, 0.048f, 0.2f), 0.014f, 4, 8, Gfx.Hex(0xC69C6D));
     });
 
     public RenderModel SaltBox() => Get("tuz", b =>
     {
-        Shapes.Cylinder(b[M.Paper], Matrix4x4.Identity, 0.045f, 0.15f, 14, Gfx.Hex(0x2E86C1));
-        Shapes.Cylinder(b[M.Plastic], Matrix4x4.CreateTranslation(0, 0.15f, 0), 0.047f, 0.02f, 14, Gfx.Hex(0xF4F6F7));
-        Shapes.Box(b[M.White], Matrix4x4.CreateTranslation(0, 0.08f, -0.046f), new Vector3(0.05f, 0.04f, 0.002f), Gfx.Hex(0xF4F6F7));
+        Shapes.Lathe(b[M.Paper], Matrix4x4.Identity, [new(0, 0), new(0.044f, 0), new(0.046f, 0.01f), new(0.046f, 0.14f), new(0.044f, 0.15f), new(0, 0.15f)], 18, Gfx.Hex(0x2E86C1), smoothProfile: true);
+        Shapes.Lathe(b[M.Plastic], Matrix4x4.CreateTranslation(0, 0.145f, 0), [new(0.047f, 0), new(0.048f, 0.02f), new(0.03f, 0.03f), new(0, 0.032f)], 18, Gfx.Hex(0xF4F6F7), smoothProfile: true);
+        Shapes.Box(b[M.White], Matrix4x4.CreateTranslation(0, 0.08f, -0.0465f), new Vector3(0.05f, 0.045f, 0.002f), Gfx.Hex(0xF4F6F7));
+        for (var i = 0; i < 5; i++)
+        {
+            var a = i * MathF.Tau / 5;
+            Shapes.Sphere(b[M.Plastic], Matrix4x4.CreateTranslation(MathF.Cos(a) * 0.012f, 0.177f, MathF.Sin(a) * 0.012f), 0.0025f, 2, 4, Gfx.Hex(0x566573));
+        }
     });
 
     public RenderModel Butter() => Get("tereyagi", b =>
     {
-        Shapes.BoxOnGround(b[M.Paper], Matrix4x4.Identity, new Vector3(0.12f, 0.05f, 0.075f), Gfx.Hex(0xF5E6A8));
-        Shapes.BoxOnGround(b[M.Paper], Matrix4x4.CreateTranslation(0, 0.002f, 0), new Vector3(0.122f, 0.03f, 0.077f), Gfx.Hex(0x3C7FB1));
+        Shapes.RoundedBox(b[M.Paper], Matrix4x4.CreateTranslation(0, 0.025f, 0), new Vector3(0.12f, 0.05f, 0.075f), 0.008f, 2, Gfx.Hex(0xF5E6A8));
+        Shapes.RoundedBox(b[M.Paper], Matrix4x4.CreateTranslation(0, 0.016f, 0), new Vector3(0.123f, 0.032f, 0.078f), 0.008f, 2, Gfx.Hex(0x3C7FB1));
+        Shapes.Box(b[M.Paper], Matrix4x4.CreateTranslation(0, 0.0505f, 0), new Vector3(0.06f, 0.002f, 0.04f), Gfx.Hex(0xF4F6F7));
     });
 
     public RenderModel ChickenPack() => Get("tavukpaketi", b =>
     {
-        Shapes.BoxOnGround(b[M.Foam], Matrix4x4.Identity, new Vector3(0.24f, 0.03f, 0.17f), Gfx.Hex(0xF2F3F4));
-        Shapes.Sphere(b[M.White], Matrix4x4.CreateScale(1.5f, 0.45f, 1f) * Matrix4x4.CreateTranslation(0, 0.04f, 0), 0.07f, 6, 10, Gfx.Hex(0xF1C6B5));
-        Shapes.Box(b[M.Glass], Matrix4x4.CreateTranslation(0, 0.045f, 0), new Vector3(0.24f, 0.03f, 0.17f), new Color(255, 255, 255, 50));
+        Shapes.RoundedBox(b[M.Foam], Matrix4x4.CreateTranslation(0, 0.015f, 0), new Vector3(0.24f, 0.03f, 0.17f), 0.01f, 1, Gfx.Hex(0xF2F3F4));
+        Shapes.Sphere(b[M.White], Matrix4x4.CreateScale(1.4f, 0.45f, 0.9f) * Matrix4x4.CreateTranslation(-0.04f, 0.038f, 0), 0.06f, 6, 10, Gfx.Hex(0xF1C6B5));
+        Shapes.Sphere(b[M.White], Matrix4x4.CreateScale(1.3f, 0.42f, 0.85f) * Matrix4x4.CreateTranslation(0.05f, 0.036f, 0.015f), 0.055f, 6, 10, Gfx.Hex(0xEDB9A6));
+        Shapes.RoundedBox(b[M.Glass], Matrix4x4.CreateTranslation(0, 0.046f, 0), new Vector3(0.242f, 0.03f, 0.172f), 0.012f, 1, new Color(255, 255, 255, 50));
+        Shapes.Box(b[M.Paper], Matrix4x4.CreateTranslation(0.06f, 0.062f, -0.04f), new Vector3(0.07f, 0.002f, 0.045f), Gfx.Hex(0xF4D03F));
     });
 
     public RenderModel MeatPack() => Get("etpaketi", b =>
     {
-        Shapes.BoxOnGround(b[M.Foam], Matrix4x4.Identity, new Vector3(0.22f, 0.03f, 0.16f), Gfx.Hex(0xF2F3F4));
+        Shapes.RoundedBox(b[M.Foam], Matrix4x4.CreateTranslation(0, 0.015f, 0), new Vector3(0.22f, 0.03f, 0.16f), 0.01f, 1, Gfx.Hex(0xF2F3F4));
         for (var i = 0; i < 6; i++)
         {
-            Shapes.Box(b[M.White], Matrix4x4.CreateTranslation(-0.06f + (i % 3) * 0.06f, 0.045f, -0.03f + i / 3 * 0.06f), new Vector3(0.045f, 0.035f, 0.045f), Gfx.Hex(0xA93226));
+            Shapes.RoundedBox(b[M.White], Matrix4x4.CreateRotationY(i * 0.4f) * Matrix4x4.CreateTranslation(-0.06f + (i % 3) * 0.06f, 0.045f, -0.03f + i / 3 * 0.06f), new Vector3(0.045f, 0.035f, 0.045f), 0.01f, 1, i % 2 == 0 ? Gfx.Hex(0xA93226) : Gfx.Hex(0x922B21));
         }
+
+        Shapes.RoundedBox(b[M.Glass], Matrix4x4.CreateTranslation(0, 0.05f, 0), new Vector3(0.222f, 0.04f, 0.162f), 0.012f, 1, new Color(255, 255, 255, 45));
     });
 
     public RenderModel Tray() => Get("tepsi", b =>
     {
-        Shapes.BoxOnGround(b[M.Steel], Matrix4x4.Identity, new Vector3(0.4f, 0.01f, 0.28f), Color.White);
-        foreach (var (x, z, w, d) in new[] { (0f, -0.14f, 0.4f, 0.01f), (0f, 0.14f, 0.4f, 0.01f), (-0.2f, 0f, 0.01f, 0.28f), (0.2f, 0f, 0.01f, 0.28f) })
-        {
-            Shapes.BoxOnGround(b[M.Steel], Matrix4x4.CreateTranslation(x, 0, z), new Vector3(w, 0.05f, d), Color.White);
-        }
+        Shapes.RoundedBox(b[M.Steel], Matrix4x4.CreateTranslation(0, 0.005f, 0), new Vector3(0.4f, 0.01f, 0.28f), 0.004f, 1, Color.White);
+        Shapes.Loft(b[M.Steel], Matrix4x4.CreateRotationX(-MathF.PI / 2),
+        [
+            new Shapes.LoftSection(0.0f, 0, 0.2f, 0.14f, 0.03f),
+            new Shapes.LoftSection(0.05f, 0, 0.205f, 0.145f, 0.032f),
+        ], 3, Color.White, false, false);
+        Shapes.Torus(b[M.Steel], Matrix4x4.CreateScale(1.42f, 1f, 1f) * Matrix4x4.CreateTranslation(0, 0.05f, 0), 0.145f, 0.005f, 24, 4, Color.White);
     });
 
     public RenderModel Plate() => Get("tabak", b =>
     {
-        Shapes.Lathe(b[M.Ceramic], Matrix4x4.Identity, [new(0, 0.005f), new(0.07f, 0), new(0.1f, 0.015f), new(0.125f, 0.03f), new(0.13f, 0.034f), new(0.12f, 0.034f), new(0.095f, 0.022f), new(0.065f, 0.012f), new(0, 0.013f)], 24, Gfx.Hex(0xFBFCFC), 2f, smoothProfile: true);
-        Shapes.Torus(b[M.White], Matrix4x4.CreateTranslation(0, 0.032f, 0), 0.118f, 0.0035f, 24, 4, Gfx.Hex(0x2E86C1));
+        Shapes.Lathe(b[M.Ceramic], Matrix4x4.Identity, [new(0, 0.005f), new(0.07f, 0), new(0.1f, 0.015f), new(0.125f, 0.03f), new(0.13f, 0.034f), new(0.12f, 0.034f), new(0.095f, 0.022f), new(0.065f, 0.012f), new(0, 0.013f)], 28, Gfx.Hex(0xFBFCFC), 2f, smoothProfile: true);
+        Shapes.Torus(b[M.White], Matrix4x4.CreateTranslation(0, 0.032f, 0), 0.118f, 0.0035f, 28, 4, Gfx.Hex(0x2E86C1));
+        Shapes.Torus(b[M.White], Matrix4x4.CreateTranslation(0, 0.0255f, 0), 0.105f, 0.0018f, 28, 3, Gfx.Hex(0x2E86C1));
     });
 
     public RenderModel Package() => Get("paket", b =>
     {
-        Shapes.Frustum(b[M.Foam], Matrix4x4.CreateScale(1.25f, 1, 1), 0.075f, 0.09f, 0.06f, 4, Gfx.Hex(0xFDFEFE), false, true);
-        Shapes.Box(b[M.Foam], Matrix4x4.CreateTranslation(0, 0.065f, 0), new Vector3(0.23f, 0.012f, 0.18f), Gfx.Hex(0xF4F6F7));
+        Shapes.Loft(b[M.Foam], Matrix4x4.CreateRotationX(-MathF.PI / 2),
+        [
+            new Shapes.LoftSection(0.0f, 0, 0.095f, 0.075f, 0.02f),
+            new Shapes.LoftSection(0.06f, 0, 0.112f, 0.088f, 0.024f),
+        ], 3, Gfx.Hex(0xFDFEFE), true, false);
+        Shapes.RoundedBox(b[M.Foam], Matrix4x4.CreateTranslation(0, 0.066f, 0), new Vector3(0.232f, 0.012f, 0.182f), 0.005f, 1, Gfx.Hex(0xF4F6F7));
+        Shapes.Box(b[M.Foam], Matrix4x4.CreateTranslation(0, 0.0725f, 0), new Vector3(0.2f, 0.002f, 0.004f), Gfx.Hex(0xD5D8DC));
     });
 
     public RenderModel Box(string supplyId) => Get("koli_" + supplyId, b =>
@@ -188,22 +270,28 @@ public sealed partial class ModelLibrary
         };
         if (supplyId == "tup")
         {
-            Shapes.Cylinder(b[M.Metal], Matrix4x4.Identity, 0.16f, 0.5f, 14, Gfx.Hex(0x2E86C1));
-            Shapes.Cylinder(b[M.Metal], Matrix4x4.CreateTranslation(0, 0.5f, 0), 0.04f, 0.1f, 8, DarkSteel);
+            Shapes.Lathe(b[M.Metal], Matrix4x4.Identity, [new(0, 0), new(0.15f, 0), new(0.16f, 0.02f), new(0.16f, 0.4f), new(0.12f, 0.49f), new(0.05f, 0.51f), new(0, 0.51f)], 18, Gfx.Hex(0x2E86C1), smoothProfile: true);
+            Shapes.Cylinder(b[M.Metal], Matrix4x4.CreateTranslation(0, 0.5f, 0), 0.03f, 0.07f, 10, DarkSteel);
+            Shapes.Arc(b[M.Metal], Matrix4x4.CreateRotationX(MathF.PI / 2) * Matrix4x4.CreateTranslation(0, 0.55f, 0), 0.07f, 0.008f, 0, MathF.PI, 10, 4, DarkSteel);
             return;
         }
 
         if (supplyId.StartsWith("pirinc", StringComparison.Ordinal) || supplyId.StartsWith("bulgur", StringComparison.Ordinal) ||
             supplyId.StartsWith("nohut", StringComparison.Ordinal) || supplyId.StartsWith("fasulye", StringComparison.Ordinal))
         {
-            // Cuval
-            Shapes.Sphere(b[M.Fabric], Matrix4x4.CreateScale(1.1f, 1.3f, 0.8f) * Matrix4x4.CreateTranslation(0, 0.2f, 0), 0.2f, 6, 10, Gfx.Hex(0xE8DCC0));
-            Shapes.Box(b[M.Fabric], Matrix4x4.CreateTranslation(0, 0.2f, -0.155f), new Vector3(0.18f, 0.12f, 0.01f), supplyId.StartsWith("pirinc", StringComparison.Ordinal) ? Gfx.Hex(0x1E8449) : Gfx.Hex(0xB9770E));
+            // Cuval: bagli agiz, etiket
+            var label = supplyId.StartsWith("pirinc", StringComparison.Ordinal) ? Gfx.Hex(0x1E8449) : Gfx.Hex(0xB9770E);
+            Shapes.Lathe(b[M.Fabric], Matrix4x4.CreateScale(1.1f, 1f, 0.8f), [new(0, 0), new(0.16f, 0.01f), new(0.2f, 0.12f), new(0.19f, 0.3f), new(0.12f, 0.38f), new(0.05f, 0.41f), new(0.07f, 0.45f), new(0.0f, 0.44f)], 14, Gfx.Hex(0xE8DCC0), 2f, smoothProfile: true);
+            Shapes.Torus(b[M.Fabric], Matrix4x4.CreateTranslation(0, 0.41f, 0), 0.05f, 0.008f, 10, 4, Gfx.Hex(0x7E5109));
+            Shapes.Box(b[M.Fabric], Matrix4x4.CreateRotationX(0.1f) * Matrix4x4.CreateTranslation(0, 0.2f, -0.158f), new Vector3(0.18f, 0.12f, 0.006f), label);
             return;
         }
 
-        Shapes.BoxOnGround(b[M.Paper], Matrix4x4.Identity, new Vector3(0.5f, 0.36f, 0.4f), col);
-        Shapes.BoxOnGround(b[M.Paper], Matrix4x4.CreateTranslation(0, 0.355f, 0), new Vector3(0.08f, 0.006f, 0.402f), Gfx.Hex(0xD4AC0D));
+        Shapes.RoundedBoxOnGround(b[M.Paper], Matrix4x4.Identity, new Vector3(0.5f, 0.36f, 0.4f), 0.012f, 1, col);
+        Shapes.Box(b[M.Paper], Matrix4x4.CreateTranslation(0, 0.361f, 0), new Vector3(0.002f, 0.002f, 0.402f), Gfx.Hex(0x8C6D46));
+        Shapes.Box(b[M.Paper], Matrix4x4.CreateTranslation(0, 0.3605f, 0), new Vector3(0.08f, 0.002f, 0.41f), Gfx.Hex(0xD4AC0D));
+        Shapes.Box(b[M.Paper], Matrix4x4.CreateTranslation(0, 0.31f, 0.2055f), new Vector3(0.08f, 0.1f, 0.002f), Gfx.Hex(0xD4AC0D));
+        Shapes.Box(b[M.Paper], Matrix4x4.CreateTranslation(0.13f, 0.2f, -0.2015f), new Vector3(0.14f, 0.1f, 0.002f), Gfx.Hex(0xF4F6F7));
     });
 
     // ═══════════════════════════════════════════════════════════════

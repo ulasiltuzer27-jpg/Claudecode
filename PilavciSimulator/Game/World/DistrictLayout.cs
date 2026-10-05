@@ -65,6 +65,8 @@ public sealed class DistrictLayout
     public List<ItemPlacement> Items { get; } = new();
     public List<LampInfo> Lamps { get; } = new();
     public List<DecorNpc> Decor { get; } = new();
+    /// <summary>Hazir model yerlesimleri (CC0 ya da prosedurel yedek); festival susleri gibi sonradan cizilenler icin de referans.</summary>
+    public List<PrefabPlacement> Prefabs { get; } = new();
 
     public Vector3 PlayerSpawn;
     public float PlayerSpawnYaw;

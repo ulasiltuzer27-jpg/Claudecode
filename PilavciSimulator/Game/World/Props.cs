@@ -36,6 +36,13 @@ public static class Props
     // ── Agac ─────────────────────────────────────────────────────────
     public static void Tree(BuildContext b, Vector3 basePos, float scale = 1f)
     {
+        // Hazir agac modeli varsa o; carpisma ve RNG her durumda prosedurelden.
+        var yaw = Core.Rng.Hash((uint)MathF.Round(basePos.X * 10f), (uint)MathF.Round(basePos.Z * 10f) + 7u) % 360 * MathF.PI / 180f;
+        b.Prefab("tree", basePos, yaw, scale, bb => ProceduralTree(bb, basePos, scale));
+    }
+
+    private static void ProceduralTree(BuildContext b, Vector3 basePos, float scale)
+    {
         var rng = b.Rng;
         b.ColliderYaw(basePos, new Vector3(0.35f, 2.5f, 0.35f), 0);
         var trunk = Gfx.Hex(0x6B4F3A);
