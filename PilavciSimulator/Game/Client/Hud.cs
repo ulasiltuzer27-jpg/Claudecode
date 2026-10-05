@@ -82,8 +82,10 @@ public sealed class Hud
         var sh = ui.Height;
 
         DrawWorldLabels(session, cam);
-        StatusBar(w);
-        Tutorial(w);
+        var y = StatusBar(w);
+        y = LateWarning(w, y);
+        Tutorial(w, y);
+        Compass(session, cam);
         OrderTickets(session);
         ZabitaBanner(w);
 
@@ -97,19 +99,27 @@ public sealed class Hud
 
         ChatLog();
 
-        // Seviye atlama parlamasi
+        // Seviye atlama: kupa ikonlu, buyuyerek gelen tabela
         if (_levelFlash > 0)
         {
             var a = MathF.Min(1, _levelFlash);
-            ui.Text(Loc.T("hud.levelup", w.Level), new Vector2(sw / 2f, sh * 0.28f), 64, Theme.Yellow.WithAlpha(a), true, Align.Center, true);
+            var pop = 1f + 0.25f * MathF.Max(0, _levelFlash - 2.1f) / 0.4f;
+            var text = Loc.T("hud.levelup", w.Level);
+            var tw = ui.Measure(text, 56 * pop, true).X;
+            var r = new Rectangle(sw / 2f - tw / 2 - ui.S(90), sh * 0.24f, tw + ui.S(180), ui.S(96 * pop));
+            ui.SoftShadow(r, 18, 16, (byte)(120 * a));
+            ui.Panel(r, Theme.PrimaryDark.WithAlpha(0.92f * a), 18);
+            Icons.Draw(Icon.Trophy, new Vector2(r.X + ui.S(52), r.Y + r.Height / 2), ui.S(56 * pop), Theme.Yellow.WithAlpha(a), Theme.Cream.WithAlpha(a));
+            ui.TextOutlined(text, new Vector2(r.X + ui.S(100), r.Y + (r.Height - ui.Measure(text, 56 * pop, true).Y) / 2), 56 * pop, Theme.Yellow.WithAlpha(a), new Color(60, 25, 5, (int)(200 * a)), true);
         }
 
-        // Para popuplari (dunyadan ekrana)
+        // Para popuplari (dunyadan ekrana, konturlu, yukari suzulur)
         foreach (var p in _popups)
         {
             if (cam.WorldToScreen(p.Pos + new Vector3(0, p.Age * 0.8f, 0), sw, sh, out var s))
             {
-                ui.Text(p.Text, s, 34, p.Color.WithAlpha(1 - p.Age / 1.6f), true, Align.Center, true);
+                var a = 1 - p.Age / 1.6f;
+                ui.TextOutlined(p.Text, s, 34 + 8 * MathF.Max(0, 0.25f - p.Age) * 4, p.Color.WithAlpha(a), new Color(40, 20, 5, (int)(220 * a)), true, Align.Center, 2.5f);
             }
         }
 
@@ -119,36 +129,82 @@ public sealed class Hud
         }
     }
 
-    // ── Ust durum cubugu ────────────────────────────────────────────
-    private void StatusBar(GameWorld w)
+    // ── Ust durum karti ─────────────────────────────────────────────
+    /// <summary>Gun halkasi, saat ve hava, para (sayac), yildizlar, seviye halkasi. Kartin alt y'sini dondurur.</summary>
+    private float StatusBar(GameWorld w)
     {
         var ui = _game.Ui;
-        var r = new Rectangle(ui.S(20), ui.S(18), ui.S(560), ui.S(92));
-        ui.Panel(r, Theme.HudBg);
-        var day = Loc.T(DayLogic.DayKeys[w.Clock.DayOfWeek]);
-        ui.Text(Loc.T("hud.day", w.Clock.Day, day), new Vector2(r.X + ui.S(18), r.Y + ui.S(10)), 24, Theme.Cream, true, shadow: true);
-        ui.Text(w.Clock.Clock, new Vector2(r.X + ui.S(18), r.Y + ui.S(40)), 40, Theme.White, true, shadow: true);
-        WeatherIcon(new Vector2(r.X + ui.S(150), r.Y + ui.S(60)), w);
-        // Para
-        ui.Text(Fmt.Money(w.Economy.Money), new Vector2(r.X + ui.S(205), r.Y + ui.S(12)), 36, w.Economy.Money < 0 ? Theme.Red : Theme.Yellow, true, shadow: true);
-        // Yildizlar
-        Stars(new Vector2(r.X + ui.S(210), r.Y + ui.S(62)), w.Reputation.Stars, 13);
-        // Seviye ve XP
+        var r = new Rectangle(ui.S(20), ui.S(18), ui.S(600), ui.S(108));
+        ui.SoftShadow(r, 18, 10, 90);
+        ui.Panel(r, Theme.HudBgStrong, 18);
+        ui.PanelOutline(new Rectangle(r.X + ui.S(3), r.Y + ui.S(3), r.Width - ui.S(6), r.Height - ui.S(6)), new Color(255, 220, 170, 26), 1.5f, 16);
+        var bal = w.Data.Balance;
+        // Gun halkasi: acilistan kapanisa ilerleme
+        var dayT = (w.Clock.Minute - bal.DayStartMinute) / (float)Math.Max(1, bal.ClosingMinute - bal.DayStartMinute);
+        var rc = new Vector2(r.X + ui.S(62), r.Y + r.Height / 2);
+        var late = w.Clock.Minute >= bal.ClosingMinute;
+        ui.Ring(rc, 44, 8, Math.Clamp(dayT, 0f, 1f), late ? Theme.Red : Theme.Primary, new Color(255, 255, 255, 28));
+        ui.Text(Loc.T("hud.day_short"), new Vector2(rc.X, rc.Y - ui.S(26)), 16, Theme.CreamDark, true, Align.Center);
+        ui.TextOutlined(w.Clock.Day.ToString(System.Globalization.CultureInfo.InvariantCulture), new Vector2(rc.X, rc.Y - ui.S(10)), 34, Theme.White, new Color(0, 0, 0, 150), true, Align.Center);
+        // Gun adi, saat, hava
+        var x = r.X + ui.S(122);
+        ui.Text(Loc.T(DayLogic.DayKeys[w.Clock.DayOfWeek]), new Vector2(x, r.Y + ui.S(14)), 22, Theme.CreamDark, true);
+        ui.TextOutlined(w.Clock.Clock, new Vector2(x, r.Y + ui.S(42)), 44, Theme.White, new Color(0, 0, 0, 160), true);
+        var clockW = ui.Measure(w.Clock.Clock, 44, true).X;
+        var (wIcon, wCol) = WeatherIconOf(w);
+        Icons.Draw(wIcon, new Vector2(x + clockW + ui.S(30), r.Y + ui.S(66)), ui.S(32), wCol, Theme.Blue);
+        // Para (yumusak sayac) ve yildizlar
+        var mx = r.X + ui.S(300);
+        var money = (float)w.Economy.Money;
+        var shown = ui.Ease("hud:money", money, 6f);
+        Icons.Draw(Icon.Money, new Vector2(mx + ui.S(16), r.Y + ui.S(32)), ui.S(32), Theme.Yellow, Theme.PrimaryDark);
+        ui.TextOutlined(Fmt.Money((int)MathF.Round(shown)), new Vector2(mx + ui.S(40), r.Y + ui.S(12)), 38, w.Economy.Money < 0 ? Theme.Red : Theme.Yellow, new Color(0, 0, 0, 160), true);
+        Stars(new Vector2(mx, r.Y + ui.S(64)), w.Reputation.Stars, 13);
+        // Seviye halkasi
         var lv = w.Level;
-        var levels = w.Data.Balance.XpLevels;
+        var levels = bal.XpLevels;
         var cur = levels[Math.Min(lv - 1, levels.Length - 1)];
         var next = lv < levels.Length ? levels[lv] : cur + 1;
         var frac = lv < levels.Length ? (w.Progress.Xp - cur) / (float)(next - cur) : 1f;
-        ui.Text(Loc.T("hud.level", lv), new Vector2(r.X + ui.S(400), r.Y + ui.S(14)), 22, Theme.Cream, true, shadow: true);
-        ui.Text(Loc.T("level." + Math.Min(lv, 12)), new Vector2(r.X + ui.S(400), r.Y + ui.S(40)), 18, Theme.CreamDark, false, shadow: true);
-        ui.Bar(new Rectangle(r.X + ui.S(400), r.Y + ui.S(68), ui.S(140), ui.S(10)), frac, Theme.Green);
+        var lc = new Vector2(r.X + r.Width - ui.S(52), r.Y + ui.S(46));
+        ui.Ring(lc, 34, 7, ui.Ease("hud:xp", frac, 4f), Theme.Green, new Color(255, 255, 255, 28));
+        ui.TextOutlined(lv.ToString(System.Globalization.CultureInfo.InvariantCulture), new Vector2(lc.X, lc.Y - ui.S(18)), 30, Theme.White, new Color(0, 0, 0, 150), true, Align.Center);
+        ui.Text(Loc.T("level." + Math.Min(lv, 12)), new Vector2(lc.X, r.Y + ui.S(84)), 16, Theme.CreamDark, true, Align.Center);
+        return r.Y + r.Height;
+    }
 
-        // Gun sonu yaklasirken uyari
-        if (w.Clock.Minute >= w.Data.Balance.ClosingMinute)
+    /// <summary>Kapanis saatinden sonra yanip sonen uyari rozeti; altindaki ilk bos y'yi dondurur.</summary>
+    private float LateWarning(GameWorld w, float y)
+    {
+        if (w.Clock.Minute < w.Data.Balance.ClosingMinute)
         {
-            var pulse = 0.6f + 0.4f * MathF.Sin(_game.Time * 4);
-            ui.Text(Loc.T("hud.late"), new Vector2(r.X + ui.S(18), r.Y + r.Height + ui.S(6)), 22, Theme.Red.WithAlpha(pulse), true, shadow: true);
+            return y + _game.Ui.S(10);
         }
+
+        var ui = _game.Ui;
+        var pulse = 0.6f + 0.4f * MathF.Sin(_game.Time * 4);
+        var text = Loc.T("hud.late");
+        var r = new Rectangle(ui.S(20), y + ui.S(8), ui.Measure(text, 22, true).X + ui.S(66), ui.S(40));
+        ui.Panel(r, Theme.Red.WithAlpha(0.55f + 0.35f * pulse), 12);
+        Icons.Draw(Icon.Moon, new Vector2(r.X + ui.S(24), r.Y + r.Height / 2), ui.S(24), Theme.Cream);
+        ui.TextIn(r with { X = r.X + ui.S(34) }, text, 22, Theme.White, true);
+        return r.Y + r.Height + ui.S(10);
+    }
+
+    private (Icon Icon, Color Color) WeatherIconOf(GameWorld w)
+    {
+        var night = DayNight.LampLevel(w.Clock.Minute / 60f) > 0.5f;
+        if (w.Weather.Rain > 0.2f)
+        {
+            return (Icon.Rain, Theme.CreamDark);
+        }
+
+        if (night)
+        {
+            return (Icon.Moon, Theme.Cream);
+        }
+
+        return w.Weather.Cloud > 0.55f ? (Icon.Cloud, Theme.Cream) : (Icon.Sun, Theme.Yellow);
     }
 
     private void Stars(Vector2 pos, float stars, float r)
@@ -168,58 +224,100 @@ public sealed class Hud
         }
     }
 
-    public static void DrawStar(Vector2 c, float r, Color color)
-    {
-        Span<Vector2> pts = stackalloc Vector2[10];
-        for (var i = 0; i < 10; i++)
-        {
-            var a = -MathF.PI / 2 + i * MathF.PI / 5;
-            var rr = i % 2 == 0 ? r : r * 0.45f;
-            pts[i] = c + new Vector2(MathF.Cos(a), MathF.Sin(a)) * rr;
-        }
+    public static void DrawStar(Vector2 c, float r, Color color) => Icons.Draw(Icon.Star, c - new Vector2(0, r * 0.05f), r * 2.1f, color);
 
-        for (var i = 0; i < 10; i++)
-        {
-            Raylib.DrawTriangle(c, pts[(i + 1) % 10], pts[i], color);
-        }
-    }
-
-    private void WeatherIcon(Vector2 c, GameWorld w)
+    // ── Pusula seridi ───────────────────────────────────────────────
+    /// <summary>Ust ortada yon seridi: K/D/G/B, satis noktalari, araba ve depo isaretleri (mesafeyle).</summary>
+    private void Compass(GameSession session, in CameraView cam)
     {
         var ui = _game.Ui;
-        var r = ui.S(13);
-        var hour = w.Clock.Minute / 60f;
-        var night = DayNight.LampLevel(hour) > 0.5f;
-        if (w.Weather.Rain > 0.2f)
+        var w = session.World;
+        var p = session.LocalPlayer;
+        if (p is null)
         {
-            Raylib.DrawCircleV(c + new Vector2(-r * 0.4f, 0), r * 0.75f, Theme.CreamDark);
-            Raylib.DrawCircleV(c + new Vector2(r * 0.4f, -r * 0.2f), r * 0.85f, Theme.CreamDark);
-            for (var i = 0; i < 3; i++)
+            return;
+        }
+
+        var width = ui.S(560);
+        var r = new Rectangle(ui.Width / 2f - width / 2, ui.S(14), width, ui.S(44));
+        ui.Panel(r, Theme.HudBg, 14);
+        var camYaw = cam.Yaw;
+        var span = 75f * MathF.PI / 180f;
+        var pxPerRad = width / 2 / span;
+        Raylib.BeginScissorMode((int)r.X, (int)r.Y, (int)r.Width, (int)r.Height + (int)ui.S(30));
+        float? Screen(float yaw)
+        {
+            var rel = yaw - camYaw;
+            rel = MathF.IEEERemainder(rel, MathF.Tau);
+            if (MathF.Abs(rel) > span)
             {
-                var x = c.X - r * 0.6f + i * r * 0.6f;
-                Raylib.DrawLineEx(new Vector2(x, c.Y + r * 0.7f), new Vector2(x - r * 0.25f, c.Y + r * 1.3f), ui.S(2.5f), Theme.Blue);
+                return null;
+            }
+
+            return r.X + width / 2 - rel * pxPerRad;
+        }
+
+        // Cizgiler ve ana yonler
+        for (var deg = 0; deg < 360; deg += 15)
+        {
+            if (Screen(deg * MathF.PI / 180f) is not { } sx)
+            {
+                continue;
+            }
+
+            var major = deg % 90 == 0;
+            if (!major)
+            {
+                Raylib.DrawRectangleRec(new Rectangle(sx - ui.S(1), r.Y + ui.S(4), ui.S(2), ui.S(deg % 45 == 0 ? 10 : 6)), new Color(255, 244, 226, 110));
             }
         }
-        else if (night)
+
+        void Marker(Vector3 target, Icon icon, Color color, bool showDist)
         {
-            Raylib.DrawCircleV(c, r, Theme.Cream);
-            Raylib.DrawCircleV(c + new Vector2(r * 0.45f, -r * 0.3f), r * 0.85f, Theme.HudBg with { A = 255 });
-        }
-        else if (w.Weather.Cloud > 0.55f)
-        {
-            Raylib.DrawCircleV(c + new Vector2(-r * 0.4f, 0), r * 0.75f, Theme.Cream);
-            Raylib.DrawCircleV(c + new Vector2(r * 0.4f, -r * 0.2f), r * 0.85f, Theme.Cream);
-        }
-        else
-        {
-            Raylib.DrawCircleV(c, r * 0.65f, Theme.Yellow);
-            for (var i = 0; i < 8; i++)
+            var d = target - p.Position;
+            var dist = new Vector2(d.X, d.Z).Length();
+            if (dist < 3f)
             {
-                var a = i * MathF.PI / 4;
-                var d = new Vector2(MathF.Cos(a), MathF.Sin(a));
-                Raylib.DrawLineEx(c + d * r * 0.85f, c + d * r * 1.2f, ui.S(2.5f), Theme.Yellow);
+                return;
+            }
+
+            if (Screen(MathF.Atan2(-d.X, -d.Z)) is not { } sx)
+            {
+                return;
+            }
+
+            Raylib.DrawCircleV(new Vector2(sx, r.Y + r.Height - ui.S(14)), ui.S(12), new Color(20, 14, 10, 220));
+            Icons.Draw(icon, new Vector2(sx, r.Y + r.Height - ui.S(14)), ui.S(16), color);
+            if (showDist)
+            {
+                ui.TextOutlined($"{dist:0}m", new Vector2(sx, r.Y + r.Height + ui.S(2)), 16, Theme.Cream, new Color(0, 0, 0, 170), true, Align.Center);
             }
         }
+
+        foreach (var spot in w.Layout.Spots)
+        {
+            var locked = w.Data.SpotById.TryGetValue(spot.Id, out var sd) && sd.License is { } lic && !w.Progress.Has(lic);
+            Marker(spot.CartPos, Icon.Pin, locked ? new Color(160, 150, 140, 255) : Theme.Yellow, false);
+        }
+
+        Marker(w.Layout.PlayerSpawn, Icon.Home, Theme.Cream, true);
+        if (w.Carts.FirstOrDefault() is { } cart)
+        {
+            Marker(cart.Position, Icon.Cart, Theme.Primary, true);
+        }
+
+        // Ana yon harfleri en ustte (isaretlerin ustune)
+        for (var deg = 0; deg < 360; deg += 90)
+        {
+            if (Screen(deg * MathF.PI / 180f) is { } lx)
+            {
+                ui.TextOutlined(Loc.T("compass." + deg), new Vector2(lx, r.Y + ui.S(2)), 22, deg == 0 ? Theme.Primary : Theme.Cream, new Color(0, 0, 0, 160), true, Align.Center);
+            }
+        }
+
+        Raylib.EndScissorMode();
+        // Ortadaki isaret
+        Raylib.DrawTriangle(new Vector2(r.X + width / 2 - ui.S(7), r.Y), new Vector2(r.X + width / 2, r.Y + ui.S(9)), new Vector2(r.X + width / 2 + ui.S(7), r.Y), Theme.Primary);
     }
 
     // ── Nisangah ve ipuclari ─────────────────────────────────────────
@@ -247,21 +345,28 @@ public sealed class Hud
 
             var key = KeyName(o.Slot);
             var a = o.Enabled ? 1f : 0.55f;
+            var showKey = o.Enabled || o.Action != ActionId.None;
+            var keyW = showKey ? MathF.Max(ui.Measure(key, 20, true).X + ui.S(16), ui.S(30)) + ui.S(10) : 0;
+            var plate = new Rectangle(cx - ui.S(6), y - ui.S(4), keyW + ui.Measure(label, 24, true).X + ui.S(22), ui.S(38));
+            ui.Panel(plate, Theme.HudBg.WithAlpha(0.55f * a + 0.1f), 12);
             float kw = 0;
-            if (o.Enabled || o.Action != ActionId.None)
+            if (showKey)
             {
                 kw = ui.KeyCap(new Vector2(cx, y), key, 20) + ui.S(10);
             }
 
             ui.Text(label, new Vector2(cx + kw, y + ui.S(3)), 24, (o.Enabled ? Theme.White : Theme.CreamDark).WithAlpha(a), true, shadow: true);
-            y += ui.S(36);
+            y += ui.S(44);
         }
 
         // Elde esya varsa birakma ipucu
         var held = _game.Session?.LocalPlayer is { } p ? _game.Session.World.HeldBy(p) : null;
         if (held is not null && _game.Settings.ShowHints)
         {
-            var kw = ui.KeyCap(new Vector2(cx, y), Binding(GameAction.Drop), 18) + ui.S(10);
+            var dropKey = Binding(GameAction.Drop);
+            var plate = new Rectangle(cx - ui.S(6), y - ui.S(4), MathF.Max(ui.Measure(dropKey, 18, true).X + ui.S(16), ui.S(27)) + ui.S(20) + ui.Measure(Loc.T("act.drop"), 20).X, ui.S(34));
+            ui.Panel(plate, Theme.HudBg.WithAlpha(0.35f), 10);
+            var kw = ui.KeyCap(new Vector2(cx, y), dropKey, 18) + ui.S(10);
             ui.Text(Loc.T("act.drop"), new Vector2(cx + kw, y + ui.S(2)), 20, Theme.CreamDark, false, shadow: true);
         }
     }
@@ -370,23 +475,98 @@ public sealed class Hud
         }
 
         var ui = _game.Ui;
+        var gauges = Gauges(w, t);
         var x = ui.Width / 2f + ui.S(40);
-        var y = ui.Height / 2f - ui.S(40) - ui.S(30) * (lines.Count + 1);
-        var width = ui.S(420);
+        var gaugeH = gauges.Count > 0 ? ui.S(44) : 0;
+        var bodyH = ui.S(30) * lines.Count + gaugeH;
+        // Ekranin ustune tasmasin (uzun kazan bilgisi): pusulanin altindan baslar
+        var y = MathF.Max(ui.S(72), ui.Height / 2f - ui.S(60) - bodyH - ui.S(46));
+        var width = MathF.Max(ui.S(420), ui.Measure(title, 24, true).X + ui.S(80));
         foreach (var (text, _) in lines)
         {
             width = MathF.Max(width, ui.Measure(text, 21).X + ui.S(40));
         }
 
-        var r = new Rectangle(x, y, width, ui.S(30) * (lines.Count + 1) + ui.S(20));
-        ui.Panel(r, Theme.HudBg);
-        ui.Text(title, new Vector2(x + ui.S(16), y + ui.S(8)), 24, Theme.Yellow, true);
-        var ly = y + ui.S(42);
+        var r = new Rectangle(x, y, width, bodyH + ui.S(62));
+        ui.SoftShadow(r, 14, 10, 80);
+        ui.Panel(r, Theme.HudBgStrong, 14);
+        var head = new Rectangle(r.X, r.Y, r.Width, ui.S(44));
+        ui.Panel(head, Theme.PrimaryDark.WithAlpha(0.85f), 14);
+        Raylib.DrawRectangleRec(new Rectangle(r.X, r.Y + ui.S(30), r.Width, ui.S(14)), Theme.PrimaryDark.WithAlpha(0.85f));
+        Icons.Draw(TargetIcon(w, t), new Vector2(x + ui.S(26), y + ui.S(22)), ui.S(26), Theme.Cream, Theme.PrimaryDark);
+        ui.Text(title, new Vector2(x + ui.S(48), y + ui.S(9)), 24, Theme.White, true);
+        var ly = y + ui.S(54);
         foreach (var (text, color) in lines)
         {
             ui.Text(text, new Vector2(x + ui.S(16), ly), 21, color);
             ly += ui.S(30);
         }
+
+        // Gostergeler: sicaklik, su, kalite cubuklari
+        if (gauges.Count > 0)
+        {
+            var gw = (r.Width - ui.S(32) - ui.S(12) * (gauges.Count - 1)) / gauges.Count;
+            for (var i = 0; i < gauges.Count; i++)
+            {
+                var (icon, value, color) = gauges[i];
+                var gx = x + ui.S(16) + i * (gw + ui.S(12));
+                Icons.Draw(icon, new Vector2(gx + ui.S(11), ly + ui.S(14)), ui.S(22), color);
+                ui.Bar(new Rectangle(gx + ui.S(28), ly + ui.S(8), gw - ui.S(28), ui.S(12)), value, color);
+            }
+        }
+    }
+
+    private static Icon TargetIcon(GameWorld w, Target t) => t.Kind switch
+    {
+        TargetKind.Customer => Icon.Person,
+        TargetKind.Item when w.Get<ItemEntity>(t.EntityId) is { } it => it.Type switch
+        {
+            ItemType.Kazan or ItemType.Tencere => Icon.Kazan,
+            ItemType.Tabak => Icon.Plate,
+            ItemType.PaketKap => Icon.Package,
+            ItemType.Koli => Icon.Box,
+            ItemType.OlcuKabi => Icon.Drop,
+            _ => Icon.Ladle,
+        },
+        TargetKind.Part when w.Get<StationEntity>(t.EntityId) is { } st => st.Type switch
+        {
+            StationType.Cart => Icon.Cart,
+            StationType.Laptop => Icon.Laptop,
+            StationType.Fridge or StationType.Pantry => Icon.Box,
+            StationType.KazanOcagi or StationType.Stovetop => Icon.Flame,
+            StationType.Sink => Icon.Drop,
+            StationType.Bed => Icon.Moon,
+            _ => Icon.Gear,
+        },
+        _ => Icon.Info,
+    };
+
+    /// <summary>Tencere/kazan icin gosterge cubuklari: sicaklik, su (ideal orana yakinlik), kalite.</summary>
+    private static List<(Icon Icon, float Value, Color Color)> Gauges(GameWorld w, Target t)
+    {
+        var list = new List<(Icon, float, Color)>();
+        if (t.Kind != TargetKind.Item || w.Get<ItemEntity>(t.EntityId) is not { Pot: { } p })
+        {
+            return list;
+        }
+
+        list.Add((Icon.Thermo, Math.Clamp(p.Temp / 100f, 0f, 1f), p.Temp > 60 ? Theme.Red : Theme.Blue));
+        var grain = CookingModel.Grain(p);
+        if (grain > 0)
+        {
+            var ideal = (p.BulgurKg > p.RiceKg ? CookingModel.BulgurWaterRatio : CookingModel.RiceWaterRatio) * grain;
+            var water = p.WaterL + p.WaterAbsorbed;
+            var ratio = ideal > 0 ? water / ideal : 0f;
+            list.Add((Icon.Drop, Math.Clamp(ratio / 1.25f, 0f, 1f), MathF.Abs(ratio - 1f) < 0.08f ? Theme.Green : Theme.Blue));
+        }
+
+        if (p.Food is not (Food.None or Food.Ruined) && (grain > 0 || p.ChickpeaKg > 0 || p.BeansKg > 0 || p.ChickenKg > 0))
+        {
+            var q = p.Quality / 100f;
+            list.Add((Icon.Star, q, q >= 0.85f ? Theme.Green : q >= 0.6f ? Theme.Yellow : Theme.Red));
+        }
+
+        return list;
     }
 
     private static void ItemLines(GameWorld w, ItemEntity it, List<(string, Color)> lines)
@@ -546,24 +726,37 @@ public sealed class Hud
             var lines = c.State == CustomerState.Paying
                 ? new List<string> { Loc.T("ticket.change", Fmt.Money(c.PaidAmount - c.DueAmount)) }
                 : Fmt.OrderLines(c.Order!).ToList();
-            var h = ui.S(46) + lines.Count * ui.S(26);
+            var h = ui.S(58) + lines.Count * ui.S(26);
+            // Fis: hafif egik kagit, ust seritte musteri ve fiyat, satirlarda ikonlar
             var r = new Rectangle(x, y, ui.S(290), h);
-            ui.Panel(r, new Color(255, 248, 230, 235), 6);
-            Raylib.DrawRectangleRec(new Rectangle(r.X, r.Y, r.Width, ui.S(6)), Theme.Primary);
-            ui.Text(Loc.T("cust." + c.TypeId), new Vector2(x + ui.S(12), y + ui.S(10)), 20, Theme.InkSoft, true);
+            ui.Paper(r);
+            Raylib.DrawRectangleRec(new Rectangle(r.X, r.Y, r.Width, ui.S(5)), c.State == CustomerState.Paying ? Theme.Green : Theme.Primary);
+            Icons.Draw(Icon.Person, new Vector2(x + ui.S(22), y + ui.S(22)), ui.S(20), Theme.InkSoft);
+            ui.Text(Loc.T("cust." + c.TypeId), new Vector2(x + ui.S(38), y + ui.S(11)), 20, Theme.InkSoft, true);
             if (c.Order is { } o)
             {
-                ui.Text(Fmt.Money(o.Price), new Vector2(x + r.Width - ui.S(12), y + ui.S(10)), 20, Theme.PrimaryDark, true, Align.Right);
+                ui.Text(Fmt.Money(o.Price), new Vector2(x + r.Width - ui.S(12), y + ui.S(11)), 20, Theme.PrimaryDark, true, Align.Right);
             }
 
-            var ly = y + ui.S(36);
+            for (var dx = x + ui.S(10); dx < x + r.Width - ui.S(10); dx += ui.S(8))
+            {
+                Raylib.DrawRectangleRec(new Rectangle(dx, y + ui.S(38), ui.S(4), ui.S(1.5f)), new Color(150, 130, 110, 120));
+            }
+
+            var ly = y + ui.S(44);
             foreach (var l in lines)
             {
-                ui.Text(l, new Vector2(x + ui.S(12), ly), 20, Theme.Ink);
+                var icon = c.State == CustomerState.Paying ? Icon.Money
+                    : l.Contains(Loc.T("menu.ayran"), StringComparison.Ordinal) ? Icon.Cup
+                    : l == Loc.T("order.package") ? Icon.Package
+                    : l == Loc.T("order.plate") ? Icon.Plate
+                    : l.StartsWith('+') ? Icon.Plus : Icon.Ladle;
+                Icons.Draw(icon, new Vector2(x + ui.S(22), ly + ui.S(12)), ui.S(18), Theme.InkSoft);
+                ui.Text(l.TrimStart('+', ' '), new Vector2(x + ui.S(38), ly), 20, Theme.Ink);
                 ly += ui.S(26);
             }
 
-            ui.Bar(new Rectangle(x + ui.S(10), y + h - ui.S(12), r.Width - ui.S(20), ui.S(6)), c.Patience, c.Patience > 0.5f ? Theme.Green : c.Patience > 0.25f ? Theme.Yellow : Theme.Red);
+            ui.Bar(new Rectangle(x + ui.S(10), y + h - ui.S(20), r.Width - ui.S(20), ui.S(6)), c.Patience, c.Patience > 0.5f ? Theme.Green : c.Patience > 0.25f ? Theme.Yellow : Theme.Red);
             y += h + ui.S(10);
         }
     }
@@ -579,14 +772,17 @@ public sealed class Hud
         var ui = _game.Ui;
         var left = MathF.Max(0, w.Events.ZabitaDeadline - w.Clock.Absolute);
         var pulse = 0.75f + 0.25f * MathF.Sin(_game.Time * 8);
-        var r = new Rectangle(ui.Width / 2f - ui.S(330), ui.S(20), ui.S(660), ui.S(84));
-        ui.Panel(r, Theme.Red.WithAlpha(0.85f * pulse));
-        ui.Text(Loc.T("hud.zabita"), new Vector2(ui.Width / 2f, r.Y + ui.S(8)), 34, Theme.White, true, Align.Center, true);
+        var r = new Rectangle(ui.Width / 2f - ui.S(330), ui.S(84), ui.S(660), ui.S(84));
+        ui.SoftShadow(r, 14, 12, 110);
+        ui.Panel(r, Theme.Red.WithAlpha(0.85f * pulse), 14);
+        Icons.Draw(Icon.Warning, new Vector2(r.X + ui.S(48), r.Y + r.Height / 2), ui.S(48), Theme.Yellow, Theme.Ink);
+        Icons.Draw(Icon.Warning, new Vector2(r.X + r.Width - ui.S(48), r.Y + r.Height / 2), ui.S(48), Theme.Yellow, Theme.Ink);
+        ui.TextOutlined(Loc.T("hud.zabita"), new Vector2(ui.Width / 2f, r.Y + ui.S(8)), 34, Theme.White, new Color(80, 0, 0, 200), true, Align.Center);
         ui.Text(Loc.T("hud.zabita_sub", (int)left), new Vector2(ui.Width / 2f, r.Y + ui.S(48)), 22, Theme.Cream, false, Align.Center, true);
     }
 
     // ── Egitim ───────────────────────────────────────────────────────
-    private void Tutorial(GameWorld w)
+    private void Tutorial(GameWorld w, float top)
     {
         if (!w.Progress.TutorialEnabled || w.Progress.TutorialStep >= Progression.TutorialSteps)
         {
@@ -602,15 +798,19 @@ public sealed class Hud
         }
 
         var text = WithKeys(Loc.T($"tut.{step}"));
-        var maxW = ui.S(520);
+        var maxW = ui.S(600);
         var lines = ui.Wrap(text, 22, maxW - ui.S(32));
-        var r = new Rectangle(ui.S(20), ui.S(124), maxW, ui.S(54) + lines.Count * ui.S(28));
-        ui.Panel(r, Gfx.Lerp(Theme.HudBg, Theme.Primary.WithAlpha(0.8f), _stepFlash));
-        ui.Text(Loc.T("tut.title", step + 1, Progression.TutorialSteps), new Vector2(r.X + ui.S(16), r.Y + ui.S(10)), 18, Theme.Yellow, true);
-        var y = r.Y + ui.S(38);
+        var r = new Rectangle(ui.S(20), top, maxW, ui.S(62) + lines.Count * ui.S(28));
+        ui.SoftShadow(r, 14, 10, 80);
+        ui.Panel(r, Gfx.Lerp(Theme.HudBgStrong, Theme.Primary.WithAlpha(0.85f), _stepFlash), 14);
+        Raylib.DrawRectangleRounded(new Rectangle(r.X, r.Y, ui.S(8), r.Height), 1f, 6, Theme.Yellow);
+        Icons.Draw(Icon.Task, new Vector2(r.X + ui.S(32), r.Y + ui.S(22)), ui.S(22), Theme.Yellow, Theme.PrimaryDark);
+        ui.Text(Loc.T("tut.title", step + 1, Progression.TutorialSteps), new Vector2(r.X + ui.S(52), r.Y + ui.S(11)), 18, Theme.Yellow, true);
+        ui.Bar(new Rectangle(r.X + r.Width - ui.S(170), r.Y + ui.S(17), ui.S(150), ui.S(8)), (step + 1f) / Progression.TutorialSteps, Theme.Yellow);
+        var y = r.Y + ui.S(44);
         foreach (var l in lines)
         {
-            ui.Text(l, new Vector2(r.X + ui.S(16), y), 22, Theme.Cream);
+            ui.Text(l, new Vector2(r.X + ui.S(24), y), 22, Theme.Cream);
             y += ui.S(28);
         }
     }
@@ -718,10 +918,15 @@ public sealed class Hud
 
         var ui = _game.Ui;
         var y = ui.Height - ui.S(220);
+        var alpha = _chat.Max(c => Math.Clamp(14f - c.Age, 0f, 1f));
+        var width = _chat.Max(c => ui.Measure($"{c.Name}: {c.Text}", 22).X) + ui.S(28);
+        ui.Panel(new Rectangle(ui.S(14), y - ui.S(8), width, _chat.Count * ui.S(28) + ui.S(16)), Theme.HudBg.WithAlpha(0.5f * alpha), 12);
         foreach (var (name, text, age) in _chat)
         {
             var a = Math.Clamp(14f - age, 0f, 1f);
-            ui.Text($"{name}: {text}", new Vector2(ui.S(24), y), 22, Theme.Cream.WithAlpha(a), false, shadow: true);
+            var nw = ui.Measure(name + ": ", 22, true).X;
+            ui.Text(name + ":", new Vector2(ui.S(26), y), 22, Theme.Yellow.WithAlpha(a), true, shadow: true);
+            ui.Text(text, new Vector2(ui.S(26) + nw, y), 22, Theme.Cream.WithAlpha(a), false, shadow: true);
             y += ui.S(28);
         }
     }

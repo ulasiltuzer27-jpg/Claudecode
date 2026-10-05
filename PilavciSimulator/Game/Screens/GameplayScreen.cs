@@ -115,7 +115,7 @@ public sealed class GameplayScreen : Screen
                 break;
             case WorldEventType.Achievement:
                 Game.Platform.UnlockAchievement(e.Key);
-                Game.Toasts.Show(Loc.T("toast.achievement", Loc.T("ach." + e.Key)), Theme.Yellow, 5f);
+                Game.Toasts.Show(Loc.T("toast.achievement", Loc.T("ach." + e.Key)), Theme.Yellow, 5f, Icon.Trophy);
                 Game.Audio.Play("achievement");
                 break;
             case WorldEventType.Burst:
@@ -147,7 +147,7 @@ public sealed class GameplayScreen : Screen
                     try
                     {
                         SaveSystem.Save(SaveSlot, w, Game.Platform.PlayerName);
-                        Game.Toasts.Show(Loc.T("toast.saved"), Theme.Green);
+                        Game.Toasts.Show(Loc.T("toast.saved"), Theme.Green, icon: Icon.Save);
                     }
                     catch (Exception ex)
                     {
@@ -433,14 +433,23 @@ public sealed class GameplayScreen : Screen
             lines.Add("• " + Loc.T(parts[0], parts.Length > 1 ? parts[1] : ""));
         }
 
-        var width = ui.S(640);
-        var r = new Rectangle(ui.Width / 2f - width / 2, ui.Height * 0.16f, width, ui.S(30) + lines.Count * ui.S(34));
-        ui.Panel(r, Theme.HudBgStrong.WithAlpha(0.85f * a));
+        // Sabah gazetesi: kagit fis gorunumu, ust cizgide gazete ikonu
+        var width = ui.S(660);
+        var slide = (1 - a) * ui.S(-30);
+        var r = new Rectangle(ui.Width / 2f - width / 2, ui.Height * 0.15f + slide, width, ui.S(46) + lines.Count * ui.S(34));
+        if (a < 0.05f)
+        {
+            return;
+        }
+
+        ui.Paper(r);
+        Raylib.DrawRectangleRec(new Rectangle(r.X, r.Y, r.Width, ui.S(5)), Theme.Primary);
+        Icons.Draw(Icon.News, new Vector2(r.X + ui.S(32), r.Y + ui.S(30)), ui.S(30), Theme.Ink, Theme.Cream);
         var y = r.Y + ui.S(14);
         for (var i = 0; i < lines.Count; i++)
         {
-            ui.Text(lines[i], new Vector2(r.X + ui.S(22), y), i == 0 ? 28 : 22, (i == 0 ? Theme.Yellow : Theme.Cream).WithAlpha(a), i == 0);
-            y += ui.S(34);
+            ui.Text(lines[i], new Vector2(r.X + ui.S(i == 0 ? 60 : 26), y), i == 0 ? 28 : 22, (i == 0 ? Theme.PrimaryDark : Theme.Ink).WithAlpha(a), i == 0);
+            y += ui.S(i == 0 ? 42 : 34);
         }
     }
 
@@ -557,6 +566,26 @@ public sealed class GameplayScreen : Screen
                     Local.Pitch = F(5) * MathF.PI / 180f;
                 }
 
+                return true;
+            case "ui-gallery":
+                Game.Screens.Push(new Dev.UiGalleryScreen());
+                return true;
+            case "show":
+                // Vitrin (yalnizca istemci cizimi): show car <govde> <renk> x z yaw | show van zabita|delivery x z yaw | show ferry x z yaw | show clear
+                if (a[1] == "clear")
+                {
+                    World.Showroom.Clear();
+                    return true;
+                }
+
+                var at = a[1] == "car" ? 4 : a[1] == "van" ? 3 : 2;
+                var place = Matrix4x4.CreateRotationY(F(at + 2) * MathF.PI / 180f) * Matrix4x4.CreateTranslation(F(at), 0, F(at + 1));
+                World.Showroom.Add((a[1] switch
+                {
+                    "car" => Game.Models.Car(Enum.Parse<PilavciSimulator.World.CarBody>(a[2], true), Gfx.Hex(WorldRenderer.CarPaint(int.Parse(a[3], CultureInfo.InvariantCulture)))),
+                    "van" => Game.Models.Van(a[2] == "zabita"),
+                    _ => Game.Models.Ferry(),
+                }, a[1] == "ferry" ? Matrix4x4.CreateTranslation(0, -1.6f, 0) * place : place));
                 return true;
             case "spawn-cat" when Session.IsHost:
                 // Vitrin: oturan kedi (x z)

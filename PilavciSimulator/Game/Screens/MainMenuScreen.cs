@@ -251,8 +251,7 @@ public sealed class MainMenuScreen : Screen
         Raylib.DrawRectangleGradientH(0, 0, (int)ui.S(900), ui.Height, new Color(16, 10, 6, 215), new Color(16, 10, 6, 0));
 
         var x = ui.S(90);
-        ui.Text(Loc.T("game.title"), new Vector2(x, ui.S(70)), 84, Theme.Cream, true, shadow: true);
-        ui.Text(Loc.T("menu.subtitle"), new Vector2(x + ui.S(4), ui.S(168)), 28, Theme.Yellow, false, shadow: true);
+        Logo(new Vector2(x, ui.S(52)));
 
         if (_message is not null && _page == Page.Main)
         {
@@ -285,6 +284,43 @@ public sealed class MainMenuScreen : Screen
         ui.Text(version, new Vector2(ui.Width - ui.S(20), ui.Height - ui.S(36)), 18, Theme.Cream.WithAlpha(0.6f), false, Align.Right);
     }
 
+    /// <summary>Esnaf tabelasi gibi logo: ahsap pano, kazan ikonu ve tutup cikan buhar, alt kurdele.</summary>
+    private void Logo(Vector2 at)
+    {
+        var ui = Game.Ui;
+        var title = Loc.T("game.title");
+        var tw = ui.Measure(title, 72, true).X;
+        var r = new Rectangle(at.X, at.Y, tw + ui.S(170), ui.S(130));
+        // Asili zincirler
+        foreach (var cx in new[] { r.X + ui.S(60), r.X + r.Width - ui.S(60) })
+        {
+            for (var k = 0; k < 4; k++)
+            {
+                Raylib.DrawRing(new Vector2(cx, at.Y - ui.S(10) - k * ui.S(12)), ui.S(4), ui.S(6.5f), 0, 360, 12, new Color(70, 60, 50, 220));
+            }
+        }
+
+        ui.SignBoard(r, "", Icon.None);
+        Icons.Draw(Icon.Kazan, new Vector2(r.X + ui.S(72), r.Y + ui.S(70)), ui.S(84), Theme.Cream, Theme.Primary);
+        for (var i = 0; i < 3; i++)
+        {
+            var ph = (_t * 0.6f + i * 0.33f) % 1f;
+            var sx = r.X + ui.S(52 + i * 20) + MathF.Sin(_t * 2 + i) * ui.S(4);
+            Raylib.DrawCircleV(new Vector2(sx, r.Y + ui.S(30) - ph * ui.S(40)), ui.S(5 + ph * 6), new Color(255, 255, 255, (int)(120 * (1 - ph))));
+        }
+
+        ui.TextOutlined(title, new Vector2(r.X + ui.S(138), r.Y + ui.S(22)), 72, Theme.Cream, new Color(60, 30, 10, 230), true, thickness: 3);
+        // Kurdele
+        var sub = Loc.T("menu.subtitle");
+        var sw = ui.Measure(sub, 26, true).X + ui.S(60);
+        var rib = new Rectangle(r.X + ui.S(120), r.Y + r.Height - ui.S(14), sw, ui.S(42));
+        Raylib.DrawTriangle(new Vector2(rib.X - ui.S(18), rib.Y + ui.S(4)), new Vector2(rib.X, rib.Y + rib.Height + ui.S(4)), new Vector2(rib.X, rib.Y + ui.S(4)), Theme.PrimaryDark);
+        Raylib.DrawTriangle(new Vector2(rib.X + rib.Width, rib.Y + ui.S(4)), new Vector2(rib.X + rib.Width, rib.Y + rib.Height + ui.S(4)), new Vector2(rib.X + rib.Width + ui.S(18), rib.Y + ui.S(4)), Theme.PrimaryDark);
+        ui.SoftShadow(rib, 6, 6, 90);
+        Raylib.DrawRectangleRec(rib, Theme.Primary);
+        ui.TextIn(rib, sub, 26, Theme.White, true, Align.Center, 0);
+    }
+
     private void Go(Page p)
     {
         _page = p;
@@ -313,9 +349,9 @@ public sealed class MainMenuScreen : Screen
     private void MainPage(float x)
     {
         var ui = Game.Ui;
-        var y = ui.S(270);
+        var y = ui.S(280);
         var w = ui.S(440);
-        var h = ui.S(66);
+        var h = ui.S(64);
         Rectangle Row()
         {
             var r = new Rectangle(x, y, w, h);
@@ -327,40 +363,46 @@ public sealed class MainMenuScreen : Screen
         if (latest >= 0)
         {
             var m = _metas[latest]!;
-            if (ui.Button(Row(), Loc.T("menu.continue"), ButtonStyle.Primary))
+            if (ui.Button(Row(), Loc.T("menu.continue"), ButtonStyle.Primary, true, 28, Icon.Play))
             {
                 LoadSlot(latest);
             }
 
-            ui.Text(Loc.T("menu.slot_summary", m.Day, Fmt.Money(m.Money), m.Level), new Vector2(x + w + ui.S(20), y - h - ui.S(14) + ui.S(20)), 22, Theme.Cream, false, shadow: true);
+            // Son kaydin ozet karti
+            var card = new Rectangle(x + w + ui.S(20), y - h - ui.S(14), ui.S(330), h);
+            ui.Card(card, Theme.Primary, dark: true);
+            ui.IconText(Icon.Calendar, Loc.T("hud.day", m.Day, ""), new Vector2(card.X + ui.S(22), card.Y + ui.S(8)), 20, Theme.Cream, Theme.Yellow, true);
+            ui.IconText(Icon.Money, Fmt.Money(m.Money), new Vector2(card.X + ui.S(22), card.Y + ui.S(34)), 20, Theme.Yellow, null, true);
+            Client.Hud.DrawStar(new Vector2(card.X + card.Width - ui.S(80), card.Y + ui.S(32)), ui.S(12), Theme.Yellow);
+            ui.Text(m.Stars.ToString("0.0", CultureInfo.InvariantCulture), new Vector2(card.X + card.Width - ui.S(62), card.Y + ui.S(20)), 22, Theme.Cream, true);
         }
 
-        if (ui.Button(Row(), Loc.T("menu.new_game"), latest >= 0 ? ButtonStyle.Normal : ButtonStyle.Primary))
+        if (ui.Button(Row(), Loc.T("menu.new_game"), latest >= 0 ? ButtonStyle.Normal : ButtonStyle.Primary, true, 28, Icon.Plus))
         {
             Go(Page.NewGame);
         }
 
-        if (ui.Button(Row(), Loc.T("menu.load_game"), ButtonStyle.Normal, _metas.Any(m => m is not null)))
+        if (ui.Button(Row(), Loc.T("menu.load_game"), ButtonStyle.Normal, _metas.Any(m => m is not null), 28, Icon.Save, _metas.Any(m => m is not null) ? null : Loc.T("menu.no_saves")))
         {
             Go(Page.Load);
         }
 
-        if (ui.Button(Row(), Loc.T("menu.join")))
+        if (ui.Button(Row(), Loc.T("menu.join"), ButtonStyle.Normal, true, 28, Icon.Group))
         {
             Go(Page.Join);
         }
 
-        if (ui.Button(Row(), Loc.T("menu.settings")))
+        if (ui.Button(Row(), Loc.T("menu.settings"), ButtonStyle.Normal, true, 28, Icon.Gear))
         {
             Game.Screens.Push(new SettingsScreen());
         }
 
-        if (ui.Button(Row(), Loc.T("menu.credits")))
+        if (ui.Button(Row(), Loc.T("menu.credits"), ButtonStyle.Normal, true, 28, Icon.Info))
         {
             Go(Page.Credits);
         }
 
-        if (ui.Button(Row(), Loc.T("menu.quit"), ButtonStyle.Danger))
+        if (ui.Button(Row(), Loc.T("menu.quit"), ButtonStyle.Danger, true, 28, Icon.Exit))
         {
             Game.QuitRequested = true;
         }
@@ -378,16 +420,30 @@ public sealed class MainMenuScreen : Screen
         {
             var m = _metas[i];
             var r = new Rectangle(x, y, w, ui.S(112));
-            ui.Panel(r, Theme.HudBgStrong);
-            ui.Text(Loc.T("menu.slot", i + 1), new Vector2(r.X + ui.S(22), r.Y + ui.S(14)), 28, Theme.Yellow, true);
+            ui.Card(r, m is not null ? Theme.Primary : new Color(120, 110, 100, 255), dark: true);
+            // Yuva numarasi rozeti
+            var badge = new Vector2(r.X + ui.S(52), r.Y + r.Height / 2);
+            Raylib.DrawCircleV(badge, ui.S(30), m is not null ? Theme.Primary : new Color(255, 255, 255, 30));
+            ui.TextOutlined((i + 1).ToString(CultureInfo.InvariantCulture), new Vector2(badge.X, badge.Y - ui.S(20)), 34, Theme.White, new Color(0, 0, 0, 120), true, Align.Center);
+            var tx = r.X + ui.S(100);
             if (m is not null)
             {
-                ui.Text(Loc.T("menu.slot_summary", m.Day, Fmt.Money(m.Money), m.Level) + "  ·  " + Stars(m.Stars), new Vector2(r.X + ui.S(22), r.Y + ui.S(52)), 22, Theme.Cream);
-                ui.Text(m.SavedAt, new Vector2(r.X + ui.S(22), r.Y + ui.S(80)), 18, Theme.CreamDark);
+                ui.Text(m.Name.Length > 0 ? m.Name : Loc.T("menu.slot", i + 1), new Vector2(tx, r.Y + ui.S(12)), 24, Theme.Yellow, true);
+                var cx = tx;
+                cx += ui.IconText(Icon.Calendar, Loc.T("hud.day", m.Day, "").TrimEnd(' ', '·'), new Vector2(cx, r.Y + ui.S(46)), 20, Theme.Cream, Theme.CreamDark) + ui.S(18);
+                cx += ui.IconText(Icon.Money, Fmt.Money(m.Money), new Vector2(cx, r.Y + ui.S(46)), 20, Theme.Cream, Theme.Yellow) + ui.S(18);
+                cx += ui.IconText(Icon.Xp, Loc.T("hud.level", m.Level), new Vector2(cx, r.Y + ui.S(46)), 20, Theme.Cream, Theme.Green) + ui.S(18);
+                for (var k = 0; k < 5; k++)
+                {
+                    Client.Hud.DrawStar(new Vector2(tx + ui.S(10 + k * 24), r.Y + ui.S(88)), ui.S(9), k < (int)MathF.Round(m.Stars) ? Theme.Yellow : new Color(255, 255, 255, 50));
+                }
+
+                ui.Text(m.SavedAt, new Vector2(tx + ui.S(140), r.Y + ui.S(78)), 18, Theme.CreamDark);
             }
             else
             {
-                ui.Text(Loc.T("menu.slot_empty"), new Vector2(r.X + ui.S(22), r.Y + ui.S(56)), 22, Theme.CreamDark);
+                ui.Text(Loc.T("menu.slot", i + 1), new Vector2(tx, r.Y + ui.S(20)), 24, Theme.CreamDark, true);
+                ui.Text(Loc.T("menu.slot_empty"), new Vector2(tx, r.Y + ui.S(58)), 22, Theme.CreamDark);
             }
 
             var bx = r.X + r.Width - ui.S(200);
@@ -421,7 +477,7 @@ public sealed class MainMenuScreen : Screen
                     }
                 }
 
-                if (m is not null && ui.Button(new Rectangle(bx - ui.S(70), r.Y + ui.S(28), ui.S(56), ui.S(56)), "×", ButtonStyle.Ghost, true, 30))
+                if (m is not null && ui.Button(new Rectangle(bx - ui.S(70), r.Y + ui.S(28), ui.S(56), ui.S(56)), "", ButtonStyle.Ghost, true, 26, Icon.Cross, Loc.T("menu.delete_tip")))
                 {
                     _confirmDelete = i;
                 }
@@ -452,7 +508,7 @@ public sealed class MainMenuScreen : Screen
         ui.Text(Loc.T("menu.new_game"), new Vector2(x, y), 32, Theme.Cream, true, shadow: true);
         y += ui.S(64);
         var panel = new Rectangle(x, y, w, ui.S(330));
-        ui.Panel(panel, Theme.HudBgStrong);
+        ui.Card(panel, Theme.Primary, dark: true);
         var py = y + ui.S(24);
         py += ui.Paragraph(Loc.T("menu.new_game_intro"), new Vector2(x + ui.S(24), py), 22, w - ui.S(48), Theme.Cream) + ui.S(16);
         ui.Toggle(new Rectangle(x + ui.S(16), py, w - ui.S(32), ui.S(56)), Loc.T("menu.tutorial"), ref _tutorial);
@@ -491,7 +547,7 @@ public sealed class MainMenuScreen : Screen
         ui.Text(Loc.T("menu.join"), new Vector2(x, y), 32, Theme.Cream, true, shadow: true);
         y += ui.S(64);
         var panel = new Rectangle(x, y, w, ui.S(Game.Platform.IsSteam ? 400 : 300));
-        ui.Panel(panel, Theme.HudBgStrong);
+        ui.Card(panel, Theme.Primary, dark: true);
         var py = y + ui.S(22);
         if (Game.Platform.IsSteam)
         {
@@ -542,7 +598,7 @@ public sealed class MainMenuScreen : Screen
         ui.Text(Loc.T("menu.credits"), new Vector2(x, y), 32, Theme.Cream, true, shadow: true);
         y += ui.S(64);
         var panel = new Rectangle(x, y, w, ui.S(340));
-        ui.Panel(panel, Theme.HudBgStrong);
+        ui.Card(panel, Theme.Primary, dark: true);
         ui.Paragraph(Loc.T("credits.body"), new Vector2(x + ui.S(26), y + ui.S(24)), 22, w - ui.S(52), Theme.Cream);
         if (ui.Button(new Rectangle(x, y + panel.Height + ui.S(20), ui.S(220), ui.S(60)), Loc.T("common.back")))
         {

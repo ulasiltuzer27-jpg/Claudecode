@@ -19,6 +19,7 @@ sys.path.insert(0, here)
 import loc_part1  # noqa: E402
 import loc_part2  # noqa: E402,F401
 import loc_part3  # noqa: E402,F401
+import loc_part4  # noqa: E402,F401
 
 out = os.path.join(here, "..", "Game", "Data", "Localization")
 for index, code in enumerate(["tr", "en"]):

@@ -1,0 +1,61 @@
+# Dunya vitrini: arabalar, binalar, park (CC0), sanayi, vapur, gece
+cmd menu-new 0
+wait 90
+cmd tutorial off
+cmd time 12:00
+# Prosedurel arabalar yan yana (yolda, istemci cizimi)
+cmd show car Sedan 0 62 -0.6 25
+cmd show car Hatchback 4 67 -0.6 25
+cmd show car Taxi 0 72 -0.6 25
+cmd show car Minibus 2 77.5 -0.6 25
+cmd show van zabita 84 -0.6 25
+cmd show van delivery 90.5 -0.6 25
+cmd cam 70 2.2 7.5 0 -8
+wait 30
+shot w01_cars_row
+cmd cam 65.2 1.3 2.2 -35 -10
+cmd fov 55
+wait 10
+shot w02_sedan_close
+cmd cam 75.5 1.4 2.4 -30 -10
+wait 10
+shot w03_taxi_minibus
+cmd cam 81.5 1.9 3.8 -45 -8
+wait 10
+shot w04_vans
+cmd fov 75
+# Kuzey cephe: kapilar, klimalar, korniş
+cmd cam -32 1.8 2.5 20 8
+wait 20
+shot w05_north_facades
+cmd cam -50 4.5 1.5 -20 14
+wait 10
+shot w06_facade_detail
+# Park: hazir cesme, heykel, saksi, cimen
+cmd cam -82 2.4 5.2 180 -10
+wait 20
+shot w07_park
+cmd cam -78.0 2.2 18.6 -140 -2
+wait 10
+shot w08_statue
+cmd cam -83.4 1.25 9.3 135 -18
+wait 10
+shot w08b_bench
+cmd cam -36.5 3.6 -4.2 -60 18
+wait 10
+shot w08c_lamp
+# Sanayi onundeki kamyonetler
+cmd cam 4 2.0 1.2 30 -8
+wait 20
+shot w09_sanayi
+# Vapur
+cmd show ferry 100 46 90
+cmd cam 80 6 30 -129 -6
+wait 30
+shot w10_ferry
+# Gece sokak
+cmd time 21:30
+cmd cam -40 2.0 0.5 -90 -4
+wait 60
+shot w11_night_street
+quit

@@ -124,6 +124,11 @@ public sealed class WorldRenderer
     /// <summary>Bir kare: isiklar ve tum varliklar renderer kuyruğuna.</summary>
     public void Draw(GameWorld w, in CameraView cam, int localPlayerId, float dt)
     {
+        foreach (var (model, xf) in Showroom)
+        {
+            _r.Submit(model, xf, Color.White);
+        }
+
         var hour = w.Clock.Minute / 60f;
         var lamp = DayNight.LampLevel(hour);
         foreach (var l in w.Layout.Lamps)
@@ -752,6 +757,11 @@ public sealed class WorldRenderer
     // ═══════════════════════════════════════════════════════════════
     // Araclar ve hayvanlar
     // ═══════════════════════════════════════════════════════════════
+    /// <summary>Vitrin cizimleri (capture senaryolari): her karede dunyaya eklenir.</summary>
+    public readonly List<(RenderModel Model, Matrix4x4 Transform)> Showroom = new();
+
+    public static uint CarPaint(int i) => CarColors[Math.Abs(i) % CarColors.Length];
+
     private static readonly uint[] CarColors = [0xC0392B, 0xECF0F1, 0x2C3E50, 0x7F8C8D, 0x2471A3, 0xF1C40F, 0x1E8449, 0xD35400];
 
     private void DrawVehicle(VehicleEntity v, float hour)
@@ -760,7 +770,9 @@ public sealed class WorldRenderer
         switch (v.Type)
         {
             case VehicleType.Car:
-                _r.Submit(_lib.Car(Gfx.Hex(CarColors[v.Seed % (uint)CarColors.Length])), xf, Color.White);
+                // Kullanici Kenney Car Kit'i ice aktardiysa trafigin yarisi o modellerden
+                var cc0Car = (v.Seed >> 3) % 2 == 0 ? _game.Cc0.Model("car", v.Seed) : null;
+                _r.Submit(cc0Car ?? _lib.Car(World.VehicleMeshes.BodyFor(v.Seed, parked: false), Gfx.Hex(CarColors[v.Seed % (uint)CarColors.Length])), xf, Color.White);
                 if (v.Lights)
                 {
                     _r.AddLight(new PointLight(Vector3.Transform(new Vector3(3.5f, 0.7f, 0), xf), 7f, new Vector3(1.4f, 1.3f, 1.0f)));
@@ -776,7 +788,7 @@ public sealed class WorldRenderer
                 {
                     var blink = (int)(_game.Time * 4) % 2 == 0;
                     _r.Submit(_lib.Beacon(), xf, Color.White, DrawFlags.NoShadow, blink ? new Vector3(0.2f, 0.5f, 1.4f) : new Vector3(1.4f, 0.2f, 0.2f));
-                    _r.AddLight(new PointLight(Vector3.Transform(new Vector3(1.6f, 2.2f, 0), xf), 10f, blink ? new Vector3(0.4f, 0.8f, 3f) : new Vector3(3f, 0.4f, 0.4f)));
+                    _r.AddLight(new PointLight(Vector3.Transform(new Vector3(1.2f, 2.7f, 0), xf), 10f, blink ? new Vector3(0.4f, 0.8f, 3f) : new Vector3(3f, 0.4f, 0.4f)));
                 }
 
                 break;

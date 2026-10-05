@@ -13,6 +13,8 @@ public sealed class PauseScreen : OverlayScreen
     /// <summary>Tek oyunculuda oyun durur; co-op'ta dunya akmaya devam eder.</summary>
     public override bool PausesBelow => Game.Session is { IsMultiplayer: false };
 
+    protected override Icon TitleIcon => Icon.Play;
+
     public override void DrawUi()
     {
         var ui = Game.Ui;
@@ -45,31 +47,31 @@ public sealed class PauseScreen : OverlayScreen
             return;
         }
 
-        if (ui.Button(Row(), Loc.T("pause.resume"), ButtonStyle.Primary))
+        if (ui.Button(Row(), Loc.T("pause.resume"), ButtonStyle.Primary, true, 28, Icon.Play))
         {
             Close();
         }
 
         var gs = Game.Screens.Find<GameplayScreen>();
         var canSave = gs is { Session.IsHost: true, SaveSlot: >= 0 };
-        if (ui.Button(Row(), Loc.T("pause.save"), ButtonStyle.Normal, canSave))
+        if (ui.Button(Row(), Loc.T("pause.save"), ButtonStyle.Normal, canSave, 28, Icon.Save, canSave ? null : Loc.T("pause.save_disabled")))
         {
             SaveSystem.Save(gs!.SaveSlot, gs.Session.World, Game.Platform.PlayerName);
-            Game.Toasts.Show(Loc.T("toast.saved"), Theme.Green);
+            Game.Toasts.Show(Loc.T("toast.saved"), Theme.Green, icon: Icon.Save);
         }
 
-        if (ui.Button(Row(), Loc.T("menu.settings")))
+        if (ui.Button(Row(), Loc.T("menu.settings"), ButtonStyle.Normal, true, 28, Icon.Gear))
         {
             Game.Screens.Push(new SettingsScreen());
         }
 
         var host = gs?.Session as Net.HostSession;
-        if (ui.Button(Row(), Loc.T(host?.Transport is null ? "pause.open_coop" : "pause.invite"), ButtonStyle.Normal, host is not null))
+        if (ui.Button(Row(), Loc.T(host?.Transport is null ? "pause.open_coop" : "pause.invite"), ButtonStyle.Normal, host is not null, 28, Icon.Group, host is null ? Loc.T("pause.coop_disabled") : null))
         {
             Game.Screens.Push(new CoopHostScreen(host!));
         }
 
-        if (ui.Button(Row(), Loc.T("pause.mainmenu"), ButtonStyle.Danger))
+        if (ui.Button(Row(), Loc.T("pause.mainmenu"), ButtonStyle.Danger, true, 28, Icon.Exit))
         {
             _confirmQuit = true;
             ui.ResetFocus();

@@ -123,6 +123,15 @@ public sealed class BuildContext
         }
     }
 
+    /// <summary>Birden cok malzemeli serbest geometri (malzeme kimligi -> hucre agi).</summary>
+    public void DrawMulti(Vector3 at, Action<Func<int, MeshData>> draw)
+    {
+        if (G is { } g)
+        {
+            draw(mat => g.At(mat, at));
+        }
+    }
+
     /// <summary>Dikey tabela: dunya koordinatinda merkez, genislik, yukseklik; normal yonune bakar.</summary>
     public void SignBoard(string text, Vector3 center, float width, float height, Vector3 normal, Color bg, Color fg,
         int texW = 512, int texH = 128, bool lit = false)

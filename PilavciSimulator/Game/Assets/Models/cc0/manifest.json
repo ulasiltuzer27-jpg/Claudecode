@@ -14,18 +14,6 @@
       "sha256": "f8632c9758a78f60aa4ca68bf0e5ac972770167a5608e179293a12552d8fc2ef"
     },
     {
-      "key": "statue",
-      "group": "statue",
-      "fit": {
-        "axis": "y",
-        "size": 2.3
-      },
-      "yaw": 0,
-      "file": "basic/statue.glb",
-      "tris": 549,
-      "sha256": "5ba8ecba963f6b3ec974809e2bf0b615da7e2701cd0efc6a3c0e946efb147397"
-    },
-    {
       "key": "banner",
       "group": "banner",
       "fit": {
@@ -179,7 +167,8 @@
       "yaw": 0,
       "file": "platformer/grass.glb",
       "tris": 72,
-      "sha256": "acb29df8a75b08e985e27a0ed8170b8f3d135abd24ccf5aa4d631cb2cd15cfda"
+      "sha256": "acb29df8a75b08e985e27a0ed8170b8f3d135abd24ccf5aa4d631cb2cd15cfda",
+      "tint": "C8E870"
     },
     {
       "key": "grass_tuft_small",
@@ -191,7 +180,8 @@
       "yaw": 0,
       "file": "platformer/grass-small.glb",
       "tris": 72,
-      "sha256": "4b94e8dd9cbdc3eedff99cbf614fe828f0c2342d21a7d0edb125b129d0422d51"
+      "sha256": "4b94e8dd9cbdc3eedff99cbf614fe828f0c2342d21a7d0edb125b129d0422d51",
+      "tint": "C8E870"
     }
   ]
 }

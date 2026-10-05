@@ -115,7 +115,8 @@ public sealed class PilavciGame : IDisposable
     private void InitWindow()
     {
         Raylib.SetTraceLogLevel(TraceLogLevel.Warning);
-        var flags = ConfigFlags.ResizableWindow;
+        // MSAA: arayuzun yuvarlak kenarlari ve ikonlar yumusak
+        var flags = ConfigFlags.ResizableWindow | ConfigFlags.Msaa4xHint;
         if (Settings.VSync && Capture is null)
         {
             flags |= ConfigFlags.VSyncHint;
@@ -216,6 +217,7 @@ public sealed class PilavciGame : IDisposable
         Log.Info($"mahalle kuruldu: {sw.ElapsedMilliseconds} ms");
 
         Audio = new Audio.AudioSystem(enabled: !Options.NoAudio && Capture is null);
+        Ui.Sound = (id, volume) => Audio.Play(id, volume);
         Platform = PlatformFactory.Create(Options, Settings);
         if (Platform.GameLanguage is "turkish" && !File.Exists(GameSettings.FilePath))
         {
@@ -310,7 +312,7 @@ public sealed class PilavciGame : IDisposable
             var path = Path.Combine(Paths.Screenshots, $"pilav-{DateTime.Now:yyyyMMdd-HHmmss}.png");
             Raylib.ExportImage(img, path);
             Raylib.UnloadImage(img);
-            Toasts.Show(Loc.T("toast.screenshot"), Theme.Blue);
+            Toasts.Show(Loc.T("toast.screenshot"), Theme.Blue, icon: Icon.Paint);
         }
         catch (Exception ex)
         {
@@ -381,16 +383,25 @@ public sealed class PilavciGame : IDisposable
 /// <summary>Ekranin ust kosesinde kisa sureli bildirimler.</summary>
 public sealed class Toasts
 {
-    private sealed record Item(string Text, Color Color, float Life)
+    private sealed record Item(string Text, Color Color, float Life, Icon Icon)
     {
         public float Age;
     }
 
     private readonly List<Item> _items = new();
 
-    public void Show(string text, Color color, float seconds = 3.5f)
+    /// <summary>Bildirim; ikon verilmezse renkten secilir (kirmizi uyari, yesil onay...).</summary>
+    public void Show(string text, Color color, float seconds = 3.5f, Icon icon = Icon.None)
     {
-        _items.Add(new Item(text, color, seconds));
+        if (icon == Icon.None)
+        {
+            icon = color.Equals(Theme.Red) ? Icon.Warning
+                : color.Equals(Theme.Green) ? Icon.Check
+                : color.Equals(Theme.Yellow) ? Icon.Star
+                : Icon.Info;
+        }
+
+        _items.Add(new Item(text, color, seconds, icon));
         if (_items.Count > 6)
         {
             _items.RemoveAt(0);
@@ -411,19 +422,24 @@ public sealed class Toasts
 
     public void Draw(UiContext ui)
     {
-        // Sag alt koseden yukari dogru: sag ustteki siparis fislerini ortmesin.
-        var y = ui.Height - ui.S(140);
+        // Sag alt koseden yukari dogru, sagdan kayarak girer: sag ustteki siparis fislerini ortmez.
+        var y = ui.Height - ui.S(150);
         for (var n = _items.Count - 1; n >= 0; n--)
         {
             var i = _items[n];
             var a = MathF.Min(1f, MathF.Min(i.Age * 5f, (i.Life - i.Age) * 2f));
-            var m = ui.Measure(i.Text, 26, true);
-            var w = m.X + ui.S(48);
-            var r = new Rectangle(ui.Width - w - ui.S(24), y, w, ui.S(50));
-            ui.Panel(r, Theme.HudBgStrong.WithAlpha(0.85f * a));
-            Raylib.DrawRectangleRounded(new Rectangle(r.X, r.Y, ui.S(8), r.Height), 1f, 4, i.Color.WithAlpha(a));
-            ui.TextIn(r with { X = r.X + ui.S(14) }, i.Text, 26, Theme.Cream.WithAlpha(a), true);
-            y -= ui.S(60);
+            var slide = 1f - MathF.Pow(1f - MathF.Min(1f, i.Age * 4f), 3f);
+            var m = ui.Measure(i.Text, 24, true);
+            var w = m.X + ui.S(90);
+            var r = new Rectangle(ui.Width - (w + ui.S(24)) * slide, y, w, ui.S(56));
+            ui.SoftShadow(r, 14, 8, (byte)(80 * a));
+            ui.Panel(r, Theme.HudBgStrong.WithAlpha(0.9f * a), 14);
+            Raylib.DrawCircleV(new Vector2(r.X + ui.S(30), r.Y + r.Height / 2), ui.S(19), i.Color.WithAlpha(a));
+            Icons.Draw(i.Icon, new Vector2(r.X + ui.S(30), r.Y + r.Height / 2), ui.S(22), Theme.White.WithAlpha(a), i.Color.WithAlpha(a));
+            ui.TextIn(r with { X = r.X + ui.S(52) }, i.Text, 24, Theme.Cream.WithAlpha(a), true);
+            // Kalan sure ince cizgi
+            Raylib.DrawRectangleRec(new Rectangle(r.X + ui.S(14), r.Y + r.Height - ui.S(5), (r.Width - ui.S(28)) * (1 - i.Age / i.Life), ui.S(2)), i.Color.WithAlpha(0.6f * a));
+            y -= ui.S(66);
         }
     }
 }

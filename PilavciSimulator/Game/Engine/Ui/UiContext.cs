@@ -53,7 +53,7 @@ public static class Theme
 /// Olcek: tasarim 1080p icin yapildi; <see cref="Scale"/> ekran
 /// yuksekligine ve oyuncunun arayuz olcegi ayarina gore carpar.
 /// </summary>
-public sealed class UiContext
+public sealed partial class UiContext
 {
     public Fonts Fonts { get; }
     public InputSystem Input { get; }
@@ -86,6 +86,9 @@ public sealed class UiContext
 
     public void Begin(int width, int height, float uiScale, bool interactive, float dt)
     {
+        Dt = dt;
+        Time += dt;
+        BeginFrameState();
         Width = width;
         Height = height;
         Scale = height / 1080f * uiScale;
@@ -101,6 +104,10 @@ public sealed class UiContext
         var mouse = Input.MousePosition;
         _mouseMoved = Vector2.DistanceSquared(mouse, _lastMouse) > 4f;
         _lastMouse = mouse;
+        if (_mouseMoved)
+        {
+            KeyboardNav = false;
+        }
 
         var pad = Input.Source.GamepadAvailable;
         bool Key(KeyboardKey k) => Input.KeyPressed(k);
@@ -139,7 +146,13 @@ public sealed class UiContext
             _padAcceptPrev = Input.Source.IsPadDown(GamepadButton.RightFaceDown);
         }
 
-        if (_textFocus < 0 && _count > 0)
+        if (_navUp || _navDown || _navLeft || _navRight || _navAccept)
+        {
+            KeyboardNav = true;
+        }
+
+        var before = _focus;
+        if (_textFocus < 0 && _count > 0 && !GridNav())
         {
             if (_navDown)
             {
@@ -150,6 +163,11 @@ public sealed class UiContext
             {
                 _focus = (_focus - 1 + _count) % _count;
             }
+        }
+
+        if (_focus != before)
+        {
+            Sound?.Invoke("ui_hover", 0.2f);
         }
 
         if (!Input.MouseDown())
@@ -168,6 +186,8 @@ public sealed class UiContext
         {
             _textFocus = -1;
         }
+
+        EndFrameState();
     }
 
     /// <summary>Menu acildiginda odagi ilk bilesene al.</summary>
@@ -175,6 +195,7 @@ public sealed class UiContext
     {
         _focus = index;
         _textFocus = -1;
+        _anim.Clear();
     }
 
     /// <summary>
@@ -194,17 +215,26 @@ public sealed class UiContext
         }
 
         var id = _index++;
-        hovered = Interactive && Raylib.CheckCollisionPointRec(Input.MousePosition, r);
+        hovered = Interactive && Raylib.CheckCollisionPointRec(Input.MousePosition, r) && (_scrollKey is null || Raylib.CheckCollisionPointRec(Input.MousePosition, _scrollView));
         if (hovered)
         {
             MouseOverUi = true;
-            if (_mouseMoved)
+            if (_mouseMoved && _focus != id)
             {
                 _focus = id;
+                Sound?.Invoke("ui_hover", 0.12f);
             }
+
+            _hoverId = id;
         }
 
         focused = Interactive && _focus == id;
+        _lastId = id;
+        if (focused && KeyboardNav)
+        {
+            FollowFocus(r);
+        }
+
         return id;
     }
 
@@ -316,9 +346,14 @@ public sealed class UiContext
 
     // ── Bilesenler ───────────────────────────────────────────────────
 
-    public bool Button(Rectangle r, string label, ButtonStyle style = ButtonStyle.Normal, bool enabled = true, float textSize = 28f)
+    public bool Button(Rectangle r, string label, ButtonStyle style = ButtonStyle.Normal, bool enabled = true, float textSize = 28f,
+        Icon icon = Icon.None, string? tooltip = null)
     {
         var id = NextId(r, out var hovered, out var focused);
+        if (tooltip is not null)
+        {
+            Tooltip(tooltip);
+        }
         var clicked = false;
         if (enabled && Interactive)
         {
@@ -370,19 +405,50 @@ public sealed class UiContext
             fg = fg.WithAlpha(0.5f);
         }
 
-        var drawRect = r;
-        if (hot && style != ButtonStyle.Ghost && style != ButtonStyle.Tab)
+        // Uzerine gelince hafif kalkar, basinca iner (yumusak gecis)
+        var lift = Anim(id, hot);
+        var pressed = enabled && _active == id && Input.MouseDown() && hovered;
+        var dy = pressed ? S(2) : -S(2) * lift;
+        var drawRect = r with { Y = r.Y + dy };
+        if (style != ButtonStyle.Ghost && style != ButtonStyle.Tab)
         {
-            Panel(new Rectangle(r.X + S(3), r.Y + S(4), r.Width, r.Height), new Color(0, 0, 0, 60), 12);
+            SoftShadow(r with { Y = r.Y + S(2 + 2 * lift) }, 12, 4 + 6 * lift, (byte)(50 + 40 * lift));
         }
 
         Panel(drawRect, bg, 12);
-        if (focused && Input.Source.GamepadAvailable)
+        if (style is ButtonStyle.Normal or ButtonStyle.Primary or ButtonStyle.Danger)
         {
-            PanelOutline(drawRect, Theme.Yellow, 3, 12);
+            // Ust kenarda ince parlaklik
+            Raylib.DrawRectangleRounded(drawRect with { Height = drawRect.Height * 0.45f }, Roundness(drawRect with { Height = drawRect.Height * 0.45f }, S(12)), 6, new Color(255, 255, 255, (int)(18 + 14 * lift)));
         }
 
-        TextIn(drawRect, label, textSize, fg, bold: true, align: Align.Center);
+        if (focused && (KeyboardNav || Input.Source.GamepadAvailable))
+        {
+            PanelOutline(new Rectangle(drawRect.X - S(3), drawRect.Y - S(3), drawRect.Width + S(6), drawRect.Height + S(6)), Theme.Yellow, 3, 14);
+        }
+
+        if (icon != Icon.None)
+        {
+            var isz = S(textSize * 1.05f);
+            var tw = Measure(label, textSize, true).X;
+            var total = label.Length > 0 ? isz + S(10) + tw : isz;
+            var x0 = drawRect.X + (drawRect.Width - total) / 2;
+            Icons.Draw(icon, new Vector2(x0 + isz / 2, drawRect.Y + drawRect.Height / 2), isz, fg);
+            if (label.Length > 0)
+            {
+                Text(label, new Vector2(x0 + isz + S(10), drawRect.Y + (drawRect.Height - Measure(label, textSize, true).Y) / 2), textSize, fg, true);
+            }
+        }
+        else
+        {
+            TextIn(drawRect, label, textSize, fg, bold: true, align: Align.Center);
+        }
+
+        if (clicked)
+        {
+            Sound?.Invoke("ui_click", 0.35f);
+        }
+
         return clicked;
     }
 
@@ -423,6 +489,10 @@ public sealed class UiContext
         if (focused || hovered)
         {
             Panel(r, new Color(255, 255, 255, 30), 10);
+            if (focused && KeyboardNav)
+            {
+                PanelOutline(r, Theme.Yellow.WithAlpha(0.8f), 2, 10);
+            }
         }
 
         TextIn(new Rectangle(r.X, r.Y, labelW, r.Height), label, 26, Theme.Cream);
@@ -449,6 +519,10 @@ public sealed class UiContext
         if (focused || hovered)
         {
             Panel(r, new Color(255, 255, 255, 30), 10);
+            if (focused && KeyboardNav)
+            {
+                PanelOutline(r, Theme.Yellow.WithAlpha(0.8f), 2, 10);
+            }
         }
 
         TextIn(r, label, 26, Theme.Cream);
@@ -493,6 +567,10 @@ public sealed class UiContext
         if (focused || hovered)
         {
             Panel(r, new Color(255, 255, 255, 30), 10);
+            if (focused && KeyboardNav)
+            {
+                PanelOutline(r, Theme.Yellow.WithAlpha(0.8f), 2, 10);
+            }
         }
 
         TextIn(r, label, 26, Theme.Cream);

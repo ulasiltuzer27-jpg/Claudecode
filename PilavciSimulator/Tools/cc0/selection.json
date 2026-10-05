@@ -6,10 +6,37 @@
       "dir": "starter-kit-basic-scene",
       "repo": "https://github.com/KenneyNL/Starter-Kit-Basic-Scene",
       "files": [
-        { "src": "sample/Mini Arena/Models/GLB format/tree.glb", "key": "tree_round", "group": "tree", "fit": { "axis": "y", "size": 4.8 }, "yaw": 0, "saturation": 0.92 },
-        { "src": "sample/Mini Arena/Models/GLB format/statue.glb", "key": "statue", "group": "statue", "fit": { "axis": "y", "size": 2.3 }, "yaw": 0 },
-        { "src": "sample/Mini Arena/Models/GLB format/banner.glb", "key": "banner", "group": "banner", "fit": { "axis": "y", "size": 2.4 }, "yaw": 0 },
-        { "src": "sample/Mini Arena/Models/GLB format/trophy.glb", "key": "trophy", "group": "trophy", "fit": { "axis": "y", "size": 0.38 }, "yaw": 0 }
+        {
+          "src": "sample/Mini Arena/Models/GLB format/tree.glb",
+          "key": "tree_round",
+          "group": "tree",
+          "fit": {
+            "axis": "y",
+            "size": 4.8
+          },
+          "yaw": 0,
+          "saturation": 0.92
+        },
+        {
+          "src": "sample/Mini Arena/Models/GLB format/banner.glb",
+          "key": "banner",
+          "group": "banner",
+          "fit": {
+            "axis": "y",
+            "size": 2.4
+          },
+          "yaw": 0
+        },
+        {
+          "src": "sample/Mini Arena/Models/GLB format/trophy.glb",
+          "key": "trophy",
+          "group": "trophy",
+          "fit": {
+            "axis": "y",
+            "size": 0.38
+          },
+          "yaw": 0
+        }
       ]
     },
     {
@@ -18,9 +45,36 @@
       "dir": "starter-kit-city-builder",
       "repo": "https://github.com/KenneyNL/Starter-Kit-City-Builder",
       "files": [
-        { "src": "models/pavement-fountain.glb", "key": "fountain", "group": "fountain", "fit": { "axis": "x", "size": 3.4 }, "yaw": 0 },
-        { "src": "models/grass-trees.glb", "key": "planter_trees", "group": "planter", "fit": { "axis": "x", "size": 2.4 }, "yaw": 0 },
-        { "src": "models/grass-trees-tall.glb", "key": "planter_tall", "group": "planter", "fit": { "axis": "x", "size": 2.4 }, "yaw": 0 }
+        {
+          "src": "models/pavement-fountain.glb",
+          "key": "fountain",
+          "group": "fountain",
+          "fit": {
+            "axis": "x",
+            "size": 3.4
+          },
+          "yaw": 0
+        },
+        {
+          "src": "models/grass-trees.glb",
+          "key": "planter_trees",
+          "group": "planter",
+          "fit": {
+            "axis": "x",
+            "size": 2.4
+          },
+          "yaw": 0
+        },
+        {
+          "src": "models/grass-trees-tall.glb",
+          "key": "planter_tall",
+          "group": "planter",
+          "fit": {
+            "axis": "x",
+            "size": 2.4
+          },
+          "yaw": 0
+        }
       ]
     },
     {
@@ -29,12 +83,66 @@
       "dir": "starter-kit-racing",
       "repo": "https://github.com/KenneyNL/Starter-Kit-Racing",
       "files": [
-        { "src": "models/vehicle-truck-green.glb", "key": "pickup_green", "group": "pickup", "fit": { "axis": "x", "size": 4.6 }, "yaw": 90 },
-        { "src": "models/vehicle-truck-red.glb", "key": "pickup_red", "group": "pickup", "fit": { "axis": "x", "size": 4.6 }, "yaw": 90 },
-        { "src": "models/vehicle-truck-yellow.glb", "key": "pickup_yellow", "group": "pickup", "fit": { "axis": "x", "size": 4.6 }, "yaw": 90 },
-        { "src": "models/vehicle-truck-purple.glb", "key": "pickup_purple", "group": "pickup", "fit": { "axis": "x", "size": 4.6 }, "yaw": 90 },
-        { "src": "models/vehicle-motorcycle.glb", "key": "scooter", "group": "scooter", "fit": { "axis": "x", "size": 1.9 }, "yaw": 90 },
-        { "src": "models/decoration-tents.glb", "key": "tents", "group": "tents", "fit": { "axis": "x", "size": 9.0 }, "yaw": 0 }
+        {
+          "src": "models/vehicle-truck-green.glb",
+          "key": "pickup_green",
+          "group": "pickup",
+          "fit": {
+            "axis": "x",
+            "size": 4.6
+          },
+          "yaw": 90
+        },
+        {
+          "src": "models/vehicle-truck-red.glb",
+          "key": "pickup_red",
+          "group": "pickup",
+          "fit": {
+            "axis": "x",
+            "size": 4.6
+          },
+          "yaw": 90
+        },
+        {
+          "src": "models/vehicle-truck-yellow.glb",
+          "key": "pickup_yellow",
+          "group": "pickup",
+          "fit": {
+            "axis": "x",
+            "size": 4.6
+          },
+          "yaw": 90
+        },
+        {
+          "src": "models/vehicle-truck-purple.glb",
+          "key": "pickup_purple",
+          "group": "pickup",
+          "fit": {
+            "axis": "x",
+            "size": 4.6
+          },
+          "yaw": 90
+        },
+        {
+          "src": "models/vehicle-motorcycle.glb",
+          "key": "scooter",
+          "group": "scooter",
+          "fit": {
+            "axis": "x",
+            "size": 1.9
+          },
+          "yaw": 90
+        },
+        {
+          "src": "models/decoration-tents.glb",
+          "key": "tents",
+          "group": "tents",
+          "fit": {
+            "axis": "x",
+            "size": 9.0
+          },
+          "yaw": 0
+        }
       ]
     },
     {
@@ -43,9 +151,38 @@
       "dir": "starter-kit-3d-platformer",
       "repo": "https://github.com/KenneyNL/Starter-Kit-3D-Platformer",
       "files": [
-        { "src": "models/flag.glb", "key": "flag", "group": "flag", "fit": { "axis": "y", "size": 2.6 }, "yaw": 0 },
-        { "src": "models/grass.glb", "key": "grass_tuft", "group": "grass", "fit": { "axis": "y", "size": 0.32 }, "yaw": 0 },
-        { "src": "models/grass-small.glb", "key": "grass_tuft_small", "group": "grass", "fit": { "axis": "y", "size": 0.24 }, "yaw": 0 }
+        {
+          "src": "models/flag.glb",
+          "key": "flag",
+          "group": "flag",
+          "fit": {
+            "axis": "y",
+            "size": 2.6
+          },
+          "yaw": 0
+        },
+        {
+          "src": "models/grass.glb",
+          "key": "grass_tuft",
+          "group": "grass",
+          "fit": {
+            "axis": "y",
+            "size": 0.32
+          },
+          "yaw": 0,
+          "tint": "C8E870"
+        },
+        {
+          "src": "models/grass-small.glb",
+          "key": "grass_tuft_small",
+          "group": "grass",
+          "fit": {
+            "axis": "y",
+            "size": 0.24
+          },
+          "yaw": 0,
+          "tint": "C8E870"
+        }
       ]
     }
   ]

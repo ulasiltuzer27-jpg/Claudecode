@@ -291,12 +291,43 @@ public static class DistrictBuilder
         // Cesme
         var f = new Vector3((x0 + x1) / 2, Curb + 0.05f, face + 7);
         b.ColliderYaw(f, new Vector3(2.2f, 0.7f, 2.2f), 0);
-        b.Draw(M.Concrete, f, m =>
+        b.Prefab("fountain", f, 0, 1f, bb =>
         {
-            Shapes.Lathe(m, Matrix4x4.CreateTranslation(f), [new(0, 0), new(1.1f, 0), new(1.1f, 0.5f), new(0.95f, 0.5f), new(0.95f, 0.3f), new(0, 0.3f)], 16, Gfx.Hex(0xC9C1B1));
-            Shapes.Cylinder(m, Matrix4x4.CreateTranslation(f + new Vector3(0, 0.3f, 0)), 0.15f, 1.2f, 8, Gfx.Hex(0xBFB6A5));
+            bb.Draw(M.Concrete, f, m =>
+            {
+                Shapes.Lathe(m, Matrix4x4.CreateTranslation(f), [new(0, 0), new(1.1f, 0), new(1.1f, 0.5f), new(0.95f, 0.5f), new(0.95f, 0.3f), new(0, 0.3f)], 16, Gfx.Hex(0xC9C1B1));
+                Shapes.Cylinder(m, Matrix4x4.CreateTranslation(f + new Vector3(0, 0.3f, 0)), 0.15f, 1.2f, 8, Gfx.Hex(0xBFB6A5));
+            });
+            bb.Draw(M.Water, f, m => Shapes.Disc(m, Matrix4x4.CreateTranslation(f + new Vector3(0, 0.45f, 0)), 0.95f, 16, Color.White));
         });
-        b.Draw(M.Water, f, m => Shapes.Disc(m, Matrix4x4.CreateTranslation(f + new Vector3(0, 0.45f, 0)), 0.95f, 16, Color.White));
+
+        // Heykel (kaide carpisir), kose saksilari, cimen tutamlari
+        var st = new Vector3(x1 - 4.5f, Curb + 0.05f, face + 12.5f);
+        b.ColliderYaw(st, new Vector3(1.3f, 2.2f, 1.3f), 0);
+        b.Prefab("statue", st, 0, 1f, bb => bb.DrawMulti(st, mesh => Props.GullStatue(mesh, st)));
+        foreach (var px in new[] { x0 + 1.6f, x1 - 1.6f })
+        {
+            var pl = new Vector3(px, Curb + 0.05f, face + 1.5f);
+            b.ColliderYaw(pl, new Vector3(1.1f, 0.8f, 1.1f), 0);
+            b.Prefab("planter", pl, 0, 0.5f, bb => bb.DrawMulti(pl, mesh =>
+            {
+                Shapes.RoundedBoxOnGround(mesh(M.Concrete), Matrix4x4.CreateTranslation(pl), new Vector3(1.1f, 0.55f, 1.1f), 0.05f, 1, Gfx.Hex(0xA9A39A));
+                Shapes.Sphere(mesh(M.Leaves), Matrix4x4.CreateScale(1f, 0.6f, 1f) * Matrix4x4.CreateTranslation(pl + new Vector3(0, 0.6f, 0)), 0.48f, 5, 8, Gfx.Hex(0x58A14E));
+            }));
+        }
+
+        for (var i = 0; i < 46; i++)
+        {
+            var hx = Core.Rng.Hash((uint)i, 991u);
+            var gx = x0 + 0.8f + (hx & 0xFFFF) / 65535f * (x1 - x0 - 1.6f);
+            var gz = face + 0.8f + (hx >> 16) / 65535f * 14.4f;
+            if (Vector2.Distance(new Vector2(gx, gz), new Vector2(f.X, f.Z)) < 1.8f || Vector2.Distance(new Vector2(gx, gz), new Vector2(st.X, st.Z)) < 1.1f)
+            {
+                continue;
+            }
+
+            b.Prefab("grass", new Vector3(gx, Curb + 0.05f, gz), (hx % 360) * MathF.PI / 180f, 0.8f + (hx % 7) * 0.1f, _ => { });
+        }
         b.Layout.CatSpawns.Add(new Vector3(x0 + 2, Curb, face + 3));
         b.Layout.Nav.Add(new Vector3((x0 + x1) / 2, Curb, face + 3), NavTag.Door, "park");
     }
@@ -598,6 +629,15 @@ public static class DistrictBuilder
         {
             // Depo kepenginin onu (x -107..-100.5) bos kalsin: araba buradan cikar.
             var lx = x is > -108f and < -99f ? -109.2f : x;
+            // Satis noktalarinda (okul, sanayi) lamba saticinin onune dusmesin
+            foreach (var sx in new[] { -69f, 5f })
+            {
+                if (MathF.Abs(lx - sx) < 4f)
+                {
+                    lx = sx + 5.5f;
+                }
+            }
+
             Props.StreetLamp(b, new Vector3(lx, Curb, -4.6f), Vector3.UnitZ);
             if (x < 52)
             {
@@ -654,7 +694,8 @@ public static class DistrictBuilder
 
             var north = rng.Chance(0.5f);
             var col = Gfx.Hex((uint)colors[rng.Range(0, colors.Length)]);
-            Props.ParkedCar(b, new Vector3(x, 0, north ? -3.05f : 3.05f), north ? MathF.PI : 0, col);
+            // Sanayi onunde kamyonetler (hazir model varsa), digerleri sehir arabasi
+            Props.ParkedCar(b, new Vector3(x, 0, north ? -3.05f : 3.05f), north ? MathF.PI : 0, col, north && x > -10 && x < 22 ? "pickup" : "car");
         }
 
         b.Rng = rng;

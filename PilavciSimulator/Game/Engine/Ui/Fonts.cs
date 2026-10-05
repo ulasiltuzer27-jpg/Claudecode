@@ -16,7 +16,7 @@ namespace PilavciSimulator.Engine.Ui;
 /// </summary>
 public sealed class Fonts : IDisposable
 {
-    private static readonly int[] Sizes = [18, 24, 32, 44, 60, 84];
+    private static readonly int[] Sizes = [18, 24, 32, 44, 60, 84, 120];
 
     private readonly Font[] _regular = new Font[Sizes.Length];
     private readonly Font[] _bold = new Font[Sizes.Length];
@@ -96,6 +96,21 @@ public sealed class Fonts : IDisposable
     {
         var a = (byte)(color.A * 0.6f);
         Draw(text, pos + new Vector2(offset), size, new Color((byte)0, (byte)0, (byte)0, a), bold);
+        Draw(text, pos, size, color, bold);
+    }
+
+    /// <summary>8 yonlu konturlu yazi: HUD sayilari ve tabela basliklari her zeminde okunur.</summary>
+    public void DrawOutlined(string text, Vector2 pos, float size, Color color, Color outline, bool bold = false, float thickness = 2f)
+    {
+        var o = MathF.Max(1f, thickness);
+        var d = o * 0.7071f;
+        Span<Vector2> offs = [new(o, 0), new(-o, 0), new(0, o), new(0, -o), new(d, d), new(-d, d), new(d, -d), new(-d, -d)];
+        var oc = new Color(outline.R, outline.G, outline.B, (byte)(outline.A * color.A / 255));
+        foreach (var off in offs)
+        {
+            Draw(text, pos + off, size, oc, bold);
+        }
+
         Draw(text, pos, size, color, bold);
     }
 

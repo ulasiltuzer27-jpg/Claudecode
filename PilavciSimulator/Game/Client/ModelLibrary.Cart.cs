@@ -186,49 +186,82 @@ public sealed partial class ModelLibrary
     // ═══════════════════════════════════════════════════════════════
     // Araclar
     // ═══════════════════════════════════════════════════════════════
-    public RenderModel Car(Color body) => Get($"car_{body.R}_{body.G}_{body.B}", b =>
+    public RenderModel Car(World.CarBody body, Color paint) => Get($"car{(int)body}_{paint.R}_{paint.G}_{paint.B}", b =>
+        World.VehicleMeshes.Car(mat => b[mat], Matrix4x4.Identity, body, paint));
+
+    public RenderModel Van(bool zabita) => Get(zabita ? "van2_zabita" : "van2_delivery", b =>
+        World.VehicleMeshes.Van(mat => b[mat], Matrix4x4.Identity,
+            zabita ? Gfx.Hex(0xF4F6F7) : Gfx.Hex(0xEDE6D2), zabita ? Gfx.Hex(0x1F3A93) : Gfx.Hex(0xE8792E), windows: false, beaconBar: zabita));
+
+    /// <summary>Zabita isiklari (tavan barinin ustunde); renk carpani ile yanip soner.</summary>
+    public RenderModel Beacon() => Get("beacon2", b =>
     {
-        Engine.Rendering.MeshData Mk(int m) => b[m];
-        World.Props.CarMesh(Mk(M.Plastic), Matrix4x4.Identity, body);
-        World.Props.CarGlass(Mk(M.WindowGlass), Matrix4x4.Identity);
-        World.Props.CarWheels(Mk(M.Rubber), Matrix4x4.Identity);
+        Shapes.RoundedBox(b[M.Emissive], Matrix4x4.CreateTranslation(1.2f, 2.34f, -0.36f), new Vector3(0.24f, 0.09f, 0.5f), 0.03f, 1, Gfx.Hex(0x2E86C1));
+        Shapes.RoundedBox(b[M.Emissive], Matrix4x4.CreateTranslation(1.2f, 2.34f, 0.36f), new Vector3(0.24f, 0.09f, 0.5f), 0.03f, 1, Gfx.Hex(0xE74C3C));
     });
 
-    public RenderModel Van(bool zabita) => Get(zabita ? "van_zabita" : "van_delivery", b =>
+    /// <summary>Vapur: lacivert loft govde, beyaz ust yapi, iki kat pencere, kaptan kosku, baca. -Z ileri.</summary>
+    public RenderModel Ferry() => Get("ferry2", b =>
     {
-        var body = zabita ? Gfx.Hex(0xF4F6F7) : Gfx.Hex(0xE8E2D0);
-        Shapes.Box(b[M.Plastic], Matrix4x4.CreateTranslation(-0.4f, 1.25f, 0), new Vector3(3.6f, 1.9f, 2f), body);
-        Shapes.Box(b[M.Plastic], Matrix4x4.CreateTranslation(1.85f, 0.95f, 0), new Vector3(1.2f, 1.3f, 1.95f), body);
-        Shapes.Box(b[M.WindowGlass], Matrix4x4.CreateTranslation(2.1f, 1.25f, 0), new Vector3(0.75f, 0.55f, 1.97f), new Color(60, 75, 90, 40));
-        Shapes.Box(b[M.Plastic], Matrix4x4.CreateTranslation(-0.4f, 1.1f, 0), new Vector3(3.62f, 0.35f, 2.02f), zabita ? Gfx.Hex(0x1F3A93) : Gfx.Hex(0xE8792E));
-        World.Props.CarWheels(b[M.Rubber], Matrix4x4.CreateScale(1.15f, 1.1f, 1.15f));
-        if (zabita)
+        var white = Gfx.Hex(0xF4F6F7);
+        var navy = Gfx.Hex(0x1C2833);
+        var hull = b[M.Plastic];
+        var start = hull.VertexCount;
+        // Govde: kic genis ve kut, pruva daralip yukselir
+        Shapes.Loft(hull, Matrix4x4.Identity,
+        [
+            new(-18.6f, 2.1f, 0.35f, 0.9f, 0.3f),
+            new(-17.2f, 1.75f, 2.4f, 1.2f, 0.7f),
+            new(-14f, 1.5f, 4.1f, 1.45f, 0.8f),
+            new(-9f, 1.45f, 4.5f, 1.5f, 0.8f),
+            new(14f, 1.45f, 4.5f, 1.5f, 0.8f),
+            new(17.6f, 1.6f, 4.3f, 1.4f, 0.7f),
+            new(18f, 1.7f, 4.1f, 1.25f, 0.6f),
+        ], 4, navy);
+        Shapes.ShadeByHeight(hull, start, 0f, 3f, 0.25f);
+        // Beyaz bordo bandi ve turuncu su hatti
+        Shapes.Loft(hull, Matrix4x4.Identity,
+        [
+            new(-14f, 2.85f, 4.15f, 0.12f, 0.06f),
+            new(-9f, 2.85f, 4.53f, 0.12f, 0.06f),
+            new(14f, 2.85f, 4.53f, 0.12f, 0.06f),
+            new(17.6f, 2.85f, 4.33f, 0.12f, 0.06f),
+        ], 2, white, false, false);
+        Shapes.Loft(hull, Matrix4x4.Identity,
+        [
+            new(-9f, 1.6f, 4.51f, 0.14f, 0.08f),
+            new(14f, 1.6f, 4.51f, 0.14f, 0.08f),
+        ], 2, Gfx.Hex(0xC0392B), false, false);
+        // Ana guverte ve iki kat ust yapi
+        Shapes.RoundedBox(hull, Matrix4x4.CreateTranslation(0, 4.05f, 1.5f), new Vector3(8.4f, 2.2f, 27f), 0.35f, 2, white);
+        Shapes.RoundedBox(hull, Matrix4x4.CreateTranslation(0, 6.1f, 1.5f), new Vector3(7.4f, 1.9f, 18f), 0.3f, 2, white);
+        Shapes.RoundedBox(hull, Matrix4x4.CreateTranslation(0, 7.45f, -6f), new Vector3(5.2f, 1.1f, 3.2f), 0.2f, 2, white);
+        Shapes.Box(hull, Matrix4x4.CreateTranslation(0, 5.08f, 1.5f), new Vector3(8.5f, 0.12f, 27.1f), Gfx.Hex(0xE8792E));
+        var glass = new Color(60, 80, 100, 128);
+        foreach (var x in new[] { -1f, 1f })
         {
-            Shapes.Box(b[M.Plastic], Matrix4x4.CreateTranslation(1.6f, 1.7f, 0), new Vector3(0.3f, 0.15f, 1.2f), Gfx.Hex(0x1F3A93));
-        }
-    });
+            for (var z = -11.2f; z <= 13.5f; z += 1.9f)
+            {
+                Shapes.Box(b[M.WindowGlass], Matrix4x4.CreateTranslation(x * 4.205f, 4.2f, z), new Vector3(0.02f, 0.85f, 1.3f), glass);
+            }
 
-    public RenderModel Beacon() => Get("beacon", b =>
-    {
-        Shapes.Box(b[M.Emissive], Matrix4x4.CreateTranslation(1.6f, 1.82f, -0.35f), new Vector3(0.25f, 0.1f, 0.4f), Gfx.Hex(0x2E86C1));
-        Shapes.Box(b[M.Emissive], Matrix4x4.CreateTranslation(1.6f, 1.82f, 0.35f), new Vector3(0.25f, 0.1f, 0.4f), Gfx.Hex(0xE74C3C));
-    });
+            for (var z = -6.4f; z <= 9.5f; z += 1.9f)
+            {
+                Shapes.Box(b[M.WindowGlass], Matrix4x4.CreateTranslation(x * 3.705f, 6.2f, z), new Vector3(0.02f, 0.75f, 1.3f), glass);
+            }
 
-    /// <summary>Vapur: beyaz govde, iki kat, baca. -Z ileri.</summary>
-    public RenderModel Ferry() => Get("ferry", b =>
-    {
-        var hull = Gfx.Hex(0xF4F6F7);
-        Shapes.Box(b[M.Plastic], Matrix4x4.CreateTranslation(0, 1.2f, 0), new Vector3(9, 2.4f, 36), Gfx.Hex(0x1C2833));
-        Shapes.Box(b[M.Plastic], Matrix4x4.CreateTranslation(0, 3.4f, 1), new Vector3(8.6f, 2.2f, 26), hull);
-        Shapes.Box(b[M.Plastic], Matrix4x4.CreateTranslation(0, 5.5f, 1), new Vector3(7.6f, 2.0f, 18), hull);
-        Shapes.Box(b[M.Plastic], Matrix4x4.CreateTranslation(0, 2.6f, 1), new Vector3(8.7f, 0.25f, 26.2f), Gfx.Hex(0xE8792E));
-        for (var z = -11f; z <= 12; z += 2.2f)
-        {
-            Shapes.Box(b[M.WindowGlass], Matrix4x4.CreateTranslation(0, 3.6f, z), new Vector3(8.65f, 0.8f, 1.3f), new Color(60, 80, 100, 128));
+            // Can simidi ve korkuluk
+            Shapes.Torus(b[M.Plastic], Matrix4x4.CreateRotationZ(MathF.PI / 2) * Matrix4x4.CreateTranslation(x * 4.24f, 4.25f, -12.8f), 0.32f, 0.08f, 14, 6, Gfx.Hex(0xE67E22));
+            Shapes.Tube(b[M.Metal], [new Vector3(x * 3.65f, 8f, -7.6f), new Vector3(x * 3.65f, 8f, 10.4f)], 0.04f, 5, white);
         }
 
-        Shapes.Cylinder(b[M.Metal], Matrix4x4.CreateTranslation(0, 6.5f, 3), 0.8f, 2.6f, 12, Gfx.Hex(0xF4F6F7));
-        Shapes.Cylinder(b[M.Metal], Matrix4x4.CreateTranslation(0, 8.6f, 3), 0.82f, 0.5f, 12, Gfx.Hex(0x1C2833));
+        Shapes.Box(b[M.WindowGlass], Matrix4x4.CreateTranslation(0, 7.55f, -7.61f), new Vector3(4.6f, 0.6f, 0.02f), glass);
+        // Baca (lathe) ve siyah bas, direk ve bayrak
+        Shapes.Lathe(b[M.Metal], Matrix4x4.CreateScale(1f, 1f, 1.3f) * Matrix4x4.CreateTranslation(0, 7.05f, 3.5f), [new(0, 0), new(0.95f, 0), new(0.9f, 2.4f), new(0.92f, 2.45f), new(0, 2.45f)], 18, white);
+        Shapes.Lathe(b[M.Metal], Matrix4x4.CreateScale(1f, 1f, 1.3f) * Matrix4x4.CreateTranslation(0, 9.5f, 3.5f), [new(0, 0), new(0.93f, 0), new(0.92f, 0.6f), new(0.7f, 0.65f), new(0, 0.6f)], 18, navy);
+        Shapes.Tube(b[M.Metal], [new Vector3(0, 8f, -6.5f), new Vector3(0, 11.2f, -6.5f)], 0.08f, 6, white);
+        Shapes.Tube(b[M.Metal], [new Vector3(0, 4.5f, 17.3f), new Vector3(0, 7.6f, 17.3f)], 0.05f, 6, white);
+        Shapes.Box(b[M.Fabric], Matrix4x4.CreateTranslation(0, 7.2f, 17.95f), new Vector3(0.02f, 0.8f, 1.2f), Gfx.Hex(0xE30A17));
     });
 
     // ═══════════════════════════════════════════════════════════════

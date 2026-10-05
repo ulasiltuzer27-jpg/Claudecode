@@ -1,0 +1,16 @@
+# Arayuz vitrini: ikonlar, bilesenler, ipucu, duraklatma penceresi
+cmd menu-new 0
+wait 90
+cmd tutorial off
+cmd ui-gallery
+wait 40
+shot u01_gallery
+mouse 1638 257
+wait 50
+shot u02_tooltip
+tap Escape
+wait 20
+tap Escape
+wait 30
+shot u03_pause
+quit
