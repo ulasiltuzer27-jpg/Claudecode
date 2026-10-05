@@ -280,7 +280,7 @@ for i, (tr, en) in enumerate([
     ("Kazana bakıp {use} tuşunu basılı tutarak pirinci kavur. Taneler parlayınca tamam.", "Hold {use} while looking at the cauldron to toast the rice. Done when the grains turn glossy."),
     ("Ölçü kabını musluktan doldur ve kazana su ekle. Altın oran: 1 kg pirince 1,5 litre su.", "Fill the measuring jug at the tap and add water. Golden ratio: 1.5 litres per kg of rice."),
     ("Tuz kutusunu al ve tuz ekle: kilo başına yaklaşık 14 gram.", "Take the salt box and add salt: about 14 grams per kilo."),
-    ("Kazanın kapağını kapat ({secondary}).", "Put the lid on the cauldron ({secondary})."),
+    ("Kazanın kapağını kapat ({secondary}). Su kaynayınca ateşi 1'e kısarsan pilav daha yavaş ama güvenle pişer.", "Put the lid on the cauldron ({secondary}). Once it boils, turning the heat down to 1 cooks slower but safer."),
     ("Pilav suyunu çekiyor. Kazana bakarak durumunu izle; bu sırada mutfağı tanı.", "The pilaf is absorbing the water. Watch its status by looking at the cauldron; explore the kitchen meanwhile."),
     ("Su çekildi! Hemen ateşi kapat ({secondary}) yoksa dibi tutar.", "The water is absorbed! Turn off the heat ({secondary}) right away or it will burn."),
     ("Pilav demleniyor. Birkaç dakika bekle; demlenen pilav daha lezzetli olur.", "The pilaf is resting. Wait a few minutes; rested pilaf tastes better."),

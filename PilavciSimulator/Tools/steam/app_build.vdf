@@ -1,0 +1,15 @@
+"AppBuild"
+{
+	// AppID ve DepotID'yi Steamworks panelindeki degerlerle degistirin.
+	// 480 = Valve'in test uygulamasi (Spacewar); ona yukleme yapilamaz.
+	"AppID" "480"
+	"Desc" "Pilavci Simulatoru"
+	"BuildOutput" "../out/steam/output/"
+	"ContentRoot" "../out/steam/content/"
+	"SetLive" ""
+	"Preview" "0"
+	"Depots"
+	{
+		"481" "depot_build.vdf"
+	}
+}

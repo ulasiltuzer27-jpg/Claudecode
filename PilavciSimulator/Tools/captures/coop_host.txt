@@ -1,0 +1,19 @@
+# Co-op dogrulamasi (host): pilavi hazirla, arabayi okula koy, istemciyi bekle,
+# istemci musteriye servis edince kasanin host'ta da arttigini dogrula.
+waitfor 600 oyuncu=1
+cmd cook
+cmd time 12:20
+cmd cart okul kazan
+annotate
+waitfor 4000 oyuncu=2
+annotate
+shot h01_client_joined
+cmd customers 1
+waitfor 8000 odeme=1
+wait 30
+annotate
+expect servis=1
+expect odeme=1
+shot h02_after_client_serve
+wait 180
+quit

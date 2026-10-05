@@ -609,7 +609,7 @@
   "tut.0": "Günaydın usta! Depo mutfağındasın. {moveforward}{moveleft}{moveback}{moveright} ile yürü, fareyle etrafa bak. Bugün ilk pilavını pişirip satacaksın.",
   "tut.1": "Tezgahtaki süzgece bak ve {interact} ile al.",
   "tut.10": "Tuz kutusunu al ve tuz ekle: kilo başına yaklaşık 14 gram.",
-  "tut.11": "Kazanın kapağını kapat ({secondary}).",
+  "tut.11": "Kazanın kapağını kapat ({secondary}). Su kaynayınca ateşi 1'e kısarsan pilav daha yavaş ama güvenle pişer.",
   "tut.12": "Pilav suyunu çekiyor. Kazana bakarak durumunu izle; bu sırada mutfağı tanı.",
   "tut.13": "Su çekildi! Hemen ateşi kapat ({secondary}) yoksa dibi tutar.",
   "tut.14": "Pilav demleniyor. Birkaç dakika bekle; demlenen pilav daha lezzetli olur.",

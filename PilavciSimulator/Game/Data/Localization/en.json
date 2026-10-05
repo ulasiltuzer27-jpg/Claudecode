@@ -609,7 +609,7 @@
   "tut.0": "Good morning, chef! You're in the depot kitchen. Walk with {moveforward}{moveleft}{moveback}{moveright} and look around with the mouse. Today you'll cook and sell your first pilaf.",
   "tut.1": "Look at the colander on the counter and pick it up with {interact}.",
   "tut.10": "Take the salt box and add salt: about 14 grams per kilo.",
-  "tut.11": "Put the lid on the cauldron ({secondary}).",
+  "tut.11": "Put the lid on the cauldron ({secondary}). Once it boils, turning the heat down to 1 cooks slower but safer.",
   "tut.12": "The pilaf is absorbing the water. Watch its status by looking at the cauldron; explore the kitchen meanwhile.",
   "tut.13": "The water is absorbed! Turn off the heat ({secondary}) right away or it will burn.",
   "tut.14": "The pilaf is resting. Wait a few minutes; rested pilaf tastes better.",

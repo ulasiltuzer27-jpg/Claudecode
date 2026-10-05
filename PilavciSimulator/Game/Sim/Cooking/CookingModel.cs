@@ -175,7 +175,7 @@ public static class CookingModel
         // ── Buharlasma ──────────────────────────────────────────────
         if (boiling)
         {
-            var evap = (p.Lid ? 0.012f : 0.07f) * h * dt;
+            var evap = (p.Lid ? 0.008f : 0.035f) * h * dt;
             p.WaterL = MathF.Max(0, p.WaterL - evap);
         }
 

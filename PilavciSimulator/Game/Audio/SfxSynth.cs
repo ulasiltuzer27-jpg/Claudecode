@@ -368,6 +368,13 @@ public static class SfxSynth
 
         foreach (var (id, s0) in loops)
         {
+            var custom = Path.Combine(Core.Paths.Assets, "Audio", "Sfx", id + ".wav");
+            if (File.Exists(custom))
+            {
+                yield return (id, File.ReadAllBytes(custom));
+                continue;
+            }
+
             var s = s0;
             Normalize(s, 0.7f);
             var n = Math.Min((int)(0.3f * Rate), s.Length / 4);

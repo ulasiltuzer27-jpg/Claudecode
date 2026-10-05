@@ -27,6 +27,7 @@ namespace PilavciSimulator.Diagnostics;
 ///   annotate       ust ekranin durum notunu yaz
 ///   cmd ...        gelistirici komutu (bkz. GameplayScreen.Command)
 ///   expect METIN   son notta METIN gecmiyorsa hata say
+///   waitfor N METIN  en fazla N kare, notta METIN gorunene kadar bekle
 ///   quit           cik
 /// </summary>
 public sealed class CaptureHarness
@@ -79,6 +80,28 @@ public sealed class CaptureHarness
             return;
         }
 
+        if (_waitFor is { } wf)
+        {
+            // waitfor: not METIN icerene kadar her kare yeniden bak.
+            var note = game.Annotate();
+            if (note.Contains(wf.Text, StringComparison.Ordinal))
+            {
+                Console.WriteLine($"[capture] geldi ({wf.Waited} kare): {wf.Text}");
+                _waitFor = null;
+            }
+            else if (wf.Waited >= wf.Max)
+            {
+                Failures++;
+                Console.WriteLine($"[capture] ZAMAN ASIMI ({wf.Max} kare): '{wf.Text}' yok -> {note}");
+                _waitFor = null;
+            }
+            else
+            {
+                _waitFor = wf with { Waited = wf.Waited + 1 };
+                return;
+            }
+        }
+
         while (_cursor < _lines.Count && _wait == 0 && _pendingShot is null)
         {
             var line = _lines[_cursor++];
@@ -87,6 +110,14 @@ public sealed class CaptureHarness
             var arg = parts.Length > 1 ? line[(line.IndexOf(' ') + 1)..].Trim() : "";
             switch (cmd)
             {
+                case "waitfor":
+                {
+                    // waitfor N METIN: en fazla N kare, notta METIN gecene kadar bekle
+                    var space = arg.IndexOf(' ');
+                    _waitFor = new WaitFor(arg[(space + 1)..], int.Parse(arg[..space], CultureInfo.InvariantCulture), 0);
+                    _wait = 1;
+                    break;
+                }
                 case "wait":
                     _wait = arg.EndsWith('s')
                         ? (int)(float.Parse(arg[..^1], CultureInfo.InvariantCulture) * 60f)
@@ -168,11 +199,15 @@ public sealed class CaptureHarness
             }
         }
 
-        if (_cursor >= _lines.Count && _wait == 0 && _pendingShot is null)
+        if (_cursor >= _lines.Count && _wait == 0 && _pendingShot is null && _waitFor is null)
         {
             Finished = true;
         }
     }
+
+    private sealed record WaitFor(string Text, int Max, int Waited);
+
+    private WaitFor? _waitFor;
 
     private readonly List<KeyboardKey> _releaseNext = new();
     private readonly List<MouseButton> _releaseMouseNext = new();

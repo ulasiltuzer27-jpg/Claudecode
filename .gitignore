@@ -22,3 +22,4 @@ saves/
 # Oyuncunun kontrol ayarlari (tus atamalari, fare hassasiyeti).
 # Kisiye ozel; depoya girmemeli. Dosya yoksa varsayilanlar kullaniliyor.
 config/
+PilavciSimulator/Tools/out/

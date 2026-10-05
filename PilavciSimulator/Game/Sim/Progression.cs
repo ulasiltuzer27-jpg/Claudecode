@@ -97,7 +97,7 @@ public static class Progression
             6 => (pot?.ButterG ?? 0) >= 100 || pilavReady,
             7 => riceIn,
             8 => (pot?.Toast ?? 0) >= 0.6f || (pot?.WaterL ?? 0) > 0 || pilavReady,
-            9 => pot is not null && riceIn && pot.WaterL + pot.WaterAbsorbed >= CookingModel.Grain(pot) * 1.35f || pilavReady,
+            9 => pot is not null && riceIn && pot.WaterAdded >= CookingModel.Grain(pot) * 1.35f || pilavReady,
             10 => pot is not null && riceIn && pot.SaltG >= CookingModel.Grain(pot) * 8 || pilavReady,
             11 => pot is { Lid: true } || absorbed || pilavReady,
             12 => absorbed || pilavReady,

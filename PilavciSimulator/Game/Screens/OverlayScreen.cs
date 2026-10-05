@@ -35,6 +35,9 @@ public abstract class OverlayScreen : Screen
 
     protected virtual void Close() => Game.Screens.Remove(this);
 
+    /// <summary>Baslikta kapatma (X) dugmesi var mi.</summary>
+    protected virtual bool Closable => true;
+
     protected Rectangle Window(float w, float h, string title, float dim = 0.55f)
     {
         var ui = Game.Ui;
@@ -47,7 +50,7 @@ public abstract class OverlayScreen : Screen
         ui.Panel(new Rectangle(r.X, r.Y, r.Width, ui.S(70)), Theme.Primary, 18);
         Raylib.DrawRectangleRec(new Rectangle(r.X, r.Y + ui.S(50), r.Width, ui.S(20)), Theme.Primary);
         ui.Text(title, new Vector2(r.X + ui.S(28), r.Y + ui.S(14)), 36, Theme.White, true);
-        if (ui.Button(new Rectangle(r.X + r.Width - ui.S(62), r.Y + ui.S(13), ui.S(46), ui.S(44)), "X", ButtonStyle.Ghost, true, 26))
+        if (Closable && ui.Button(new Rectangle(r.X + r.Width - ui.S(62), r.Y + ui.S(13), ui.S(46), ui.S(44)), "X", ButtonStyle.Ghost, true, 26))
         {
             Close();
         }

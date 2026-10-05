@@ -177,8 +177,22 @@ public sealed class UiContext
         _textFocus = -1;
     }
 
+    /// <summary>
+    /// Ekran yigininda ustte olmayan ekranlar cizilirken kapatilir: alttaki
+    /// menunun dugmeleri ustteki pencerenin arkasindan tiklanmasin ve klavye
+    /// odagi onlara gitmesin.
+    /// </summary>
+    public void SetInteractive(bool interactive) => Interactive = interactive;
+
     private int NextId(Rectangle r, out bool hovered, out bool focused)
     {
+        if (!Interactive)
+        {
+            hovered = false;
+            focused = false;
+            return int.MinValue;
+        }
+
         var id = _index++;
         hovered = Interactive && Raylib.CheckCollisionPointRec(Input.MousePosition, r);
         if (hovered)

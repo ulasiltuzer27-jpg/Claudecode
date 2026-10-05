@@ -19,6 +19,7 @@ public sealed class CashScreen : OverlayScreen
 {
     private readonly int _customerId;
     private readonly List<int> _given = new();
+    private float _age;
 
     public CashScreen(int customerId) => _customerId = customerId;
 
@@ -27,9 +28,16 @@ public sealed class CashScreen : OverlayScreen
     public override void Update(float dt, bool focused)
     {
         base.Update(dt, focused);
+        _age += dt;
         if (Customer is not { State: CustomerState.Paying })
         {
-            Close();
+            // Co-op istemcide "kasayi ac" olayi musterinin durum guncellemesinden
+            // once gelebilir: kisa bir sure bekle, sonra kapat.
+            if (_age > 1.5f)
+            {
+                Close();
+            }
+
             return;
         }
 
@@ -154,12 +162,12 @@ public sealed class CashScreen : OverlayScreen
     }
 
     public override string Annotate() =>
-        Customer is { } c ? $"kasa: tutar={c.DueAmount} verilen={c.PaidAmount} ustu={c.PaidAmount - c.DueAmount} secilen={_given.Sum()}" : "kasa: musteri yok";
+        Customer is { State: CustomerState.Paying } c ? $"kasa: hazir tutar={c.DueAmount} verilen={c.PaidAmount} ustu={c.PaidAmount - c.DueAmount} secilen={_given.Sum()}" : "kasa: bekliyor";
 
     /// <summary>Senaryo: "cash-auto" dogru para ustunu buyukten kucuge toplayip verir.</summary>
     public override bool Command(string[] args)
     {
-        if (args[0] != "cash-auto" || Customer is not { } c)
+        if (args[0] != "cash-auto" || Customer is not { State: CustomerState.Paying } c)
         {
             return false;
         }

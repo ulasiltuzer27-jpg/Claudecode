@@ -1,0 +1,32 @@
+# Co-op dogrulamasi (istemci): baglan, arabaya git, tabak al, kepceyle koy,
+# musteriye ver, para ustunu ode. Hepsi host'ta calisir, buraya yansir.
+waitfor 4000 oyuncu=2
+annotate
+expect kazan=Pilav
+shot c01_joined
+cmd tp -69 0.15 -4.2 0 -20
+waitfor 8000 siparis=1
+annotate
+cmd aim part cart plates
+wait 3
+cmd act Interact
+waitfor 600 el=Tabak
+cmd aim item kazan
+wait 3
+cmd act Use
+wait 12
+cmd act Use
+wait 12
+cmd aim customer
+wait 3
+annotate
+shot c02_serve_prompt
+cmd act Use
+waitfor 1500 kasa: hazir
+annotate
+shot c03_cash
+cmd cash-auto
+waitfor 1500 odeme=1
+annotate
+shot c04_served
+quit

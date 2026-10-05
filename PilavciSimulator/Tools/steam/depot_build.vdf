@@ -1,0 +1,15 @@
+"DepotBuild"
+{
+	// Windows deposu: DepotID'yi Steamworks panelindeki degerle degistirin.
+	"DepotID" "481"
+	"ContentRoot" "../out/steam/content/"
+	"FileMapping"
+	{
+		"LocalPath" "*"
+		"DepotPath" "."
+		"recursive" "1"
+	}
+	// Gelistirme dosyalari depoya girmez.
+	"FileExclusion" "steam_appid.txt"
+	"FileExclusion" "*.pdb"
+}

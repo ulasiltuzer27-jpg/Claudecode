@@ -204,6 +204,17 @@ public sealed class GameplayScreen : Screen
             Local.Spawn(p);
             _spawned = true;
             _newsTimer = 9f;
+            if (Session.IsHost)
+            {
+                // Steam kapaliyken acilmis basarimlar kayitta durur; simdi esitle
+                // (Steam tarafinda zaten acik olanlar icin islem yapilmaz).
+                foreach (var id in Session.World.Progress.Achievements)
+                {
+                    Game.Platform.UnlockAchievement(id);
+                }
+
+                PushStats(Session.World);
+            }
         }
 
         var input = Game.Input;
@@ -438,7 +449,7 @@ public sealed class GameplayScreen : Screen
         var kazan = Progression.MainKazan(w);
         var opts = string.Join(",", Local.Options.Select(o => o.Action + (o.Enabled ? "" : "(x)")));
         return string.Create(CultureInfo.InvariantCulture,
-            $"gun={w.Clock.Day} saat={w.Clock.Clock} para={w.Economy.Money} pos=({p.Position.X:F1},{p.Position.Y:F2},{p.Position.Z:F1}) el={held?.Type.ToString() ?? "-"} hedef={Local.Target.Kind}:{Local.Target.EntityId}:{Local.Target.Part} secenek=[{opts}] kazan={kazan?.Pot?.Food}/{kazan?.Pot?.Quality:F0} musteri={w.Customers.Count} servis={w.Economy.Today.Served} egitim={w.Progress.TutorialStep} oyuncu={w.Players.Count}");
+            $"gun={w.Clock.Day} saat={w.Clock.Clock} para={w.Economy.Money} pos=({p.Position.X:F1},{p.Position.Y:F2},{p.Position.Z:F1}) el={held?.Type.ToString() ?? "-"} hedef={Local.Target.Kind}:{Local.Target.EntityId}:{Local.Target.Part} secenek=[{opts}] kazan={kazan?.Pot?.Food}/{kazan?.Pot?.Quality:F0} musteri={w.Customers.Count} siparis={w.Customers.Count(c => c.State == CustomerState.Ordered)} servis={w.Economy.Today.Served} odeme={w.Progress.Stat("payments")} egitim={w.Progress.TutorialStep} oyuncu={w.Players.Count}");
     }
 
     /// <summary>Gelistirici ve senaryo komutlari.</summary>
@@ -473,12 +484,15 @@ public sealed class GameplayScreen : Screen
                 // Senaryo yardimcisi: kamerayi bir hedefe cevir.
                 //   aim part <istasyon etiketi> <parca adi>   (orn. aim part cart plates)
                 //   aim item <ItemType>                       (en yakin esya)
+                //   aim socket <istasyon etiketi> <yuva>       (orn. aim socket cart 0)
                 //   aim customer                              (en yakin musteri)
                 Vector3? target = a[1] switch
                 {
                     "part" when w.StationByTag(a[2]) is { } st => StationDefs.Parts(st).Where(pd => pd.NameKey == "part." + a[3]).Select(pd => (Vector3?)GameWorld.PartWorld(st, pd)).FirstOrDefault(),
                     "item" => w.Items.Where(i => i.Type.ToString().Equals(a[2], StringComparison.OrdinalIgnoreCase) && i.Attach != Attach.Held)
                         .Select(i => World.ItemPos(w, i)).OrderBy(pos => Vector3.DistanceSquared(pos, p.Position)).Select(pos => (Vector3?)pos).FirstOrDefault(),
+                    "socket" when w.StationByTag(a[2]) is { } st2 => StationDefs.Sockets(st2).Where(so => so.Index == int.Parse(a[3], CultureInfo.InvariantCulture))
+                        .Select(so => (Vector3?)(GameWorld.SocketWorld(st2, so) + new Vector3(0, 0.08f, 0))).FirstOrDefault(),
                     "customer" => w.Customers.OrderBy(c => Vector3.DistanceSquared(c.Position, p.Position)).Select(c => (Vector3?)(c.Position + new Vector3(0, 1.1f, 0))).FirstOrDefault(),
                     _ => null,
                 };
@@ -491,6 +505,16 @@ public sealed class GameplayScreen : Screen
                 var d = Vector3.Normalize(tgt - eye);
                 Local.Yaw = MathF.Atan2(-d.X, -d.Z);
                 Local.Pitch = MathF.Asin(Math.Clamp(d.Y, -1f, 1f));
+                return true;
+            }
+            case "stand-cart":
+            {
+                // Senaryo yardimcisi: arabanin satici tarafina gec, tezgaha bak.
+                var cart = w.Carts.First();
+                Local.Motor.Position = Entity.LocalToWorld(cart.Position, cart.Yaw, new Vector3(0, 0, 1.35f)) with { Y = cart.Position.Y };
+                p.SetMotion(Local.Motor.Position, p.Yaw);
+                Local.Yaw = cart.Yaw;
+                Local.Pitch = -0.3f;
                 return true;
             }
             case "look":

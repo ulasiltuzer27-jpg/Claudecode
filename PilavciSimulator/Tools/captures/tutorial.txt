@@ -1,0 +1,241 @@
+# Rehberli ilk gun, gercek etkilesimlerle bastan sona:
+# suzgec -> pirinc -> yikama -> ocak -> tereyagi -> kavurma -> su -> tuz ->
+# kapak -> demleme -> araba -> itme -> satis -> servis -> para ustu.
+cmd menu-new 0
+waitfor 900 egitim=1
+shot t00_start
+# 1: suzgec
+cmd tp -105.6 0.15 -15.6 0 -24
+cmd aim item suzgec
+wait 3
+cmd act Interact
+waitfor 120 egitim=2
+# 2: pirinc (2 x 1 kg)
+cmd tp -98.6 0.15 -16.6 90 -20
+cmd aim part pantry rice
+wait 3
+annotate
+cmd act Use
+wait 6
+cmd act Use
+waitfor 120 egitim=3
+# 3: yika (E basili)
+cmd tp -106 0.15 -19.7 0 -20
+cmd aim part sink faucet
+wait 3
+annotate
+down E
+waitfor 1200 egitim=5
+up E
+shot t03_washed
+# 4-5: kazan zaten ocakta; atesi ac
+cmd tp -109.3 0.15 -18.2 90 -30
+cmd aim part ocakA knob
+wait 3
+annotate
+cmd act Interact
+wait 6
+cmd act Interact
+waitfor 120 egitim=6
+# 6: tereyagi (suzgeci yere birak)
+tap G
+wait 10
+cmd tp -98.4 0.15 -20.6 90 -10
+cmd aim part fridge butter
+wait 3
+annotate
+cmd act Interact
+wait 10
+cmd tp -109.3 0.15 -18.2 90 -30
+cmd aim item kazan
+wait 3
+annotate
+cmd act Use
+wait 6
+cmd act Use
+wait 6
+cmd act Use
+wait 6
+cmd act Use
+waitfor 120 egitim=7
+tap G
+wait 10
+# 7: pirinci dok
+cmd aim item suzgec
+wait 3
+cmd act Interact
+wait 10
+cmd tp -109.3 0.15 -18.2 90 -30
+cmd aim item kazan
+wait 3
+annotate
+cmd act Use
+waitfor 120 egitim=8
+shot t07_rice_in
+# 8: kavur (sol tik basili)
+tap G
+wait 10
+cmd aim item kazan
+wait 3
+press left
+waitfor 2400 egitim=9
+release left
+shot t08_toasted
+# 9: su (olcu kabi 2 L, iki tur)
+cmd tp -104.6 0.15 -15.7 0 -24
+cmd aim item olcukabi
+wait 3
+cmd act Interact
+wait 10
+cmd tp -106 0.15 -19.7 0 -20
+cmd aim part sink faucet
+wait 3
+down E
+wait 240
+up E
+cmd tp -109.3 0.15 -18.2 90 -30
+cmd aim item kazan
+wait 3
+cmd act Use
+wait 6
+cmd act Use
+wait 6
+cmd act Use
+wait 6
+cmd act Use
+wait 6
+cmd tp -106 0.15 -19.7 0 -20
+cmd aim part sink faucet
+wait 3
+down E
+wait 240
+up E
+cmd tp -109.3 0.15 -18.2 90 -30
+cmd aim item kazan
+wait 3
+cmd act Use
+wait 6
+cmd act Use
+wait 6
+cmd act Use
+waitfor 300 egitim=10
+annotate
+# 10: tuz (6 x 5 g)
+tap G
+wait 10
+cmd tp -108 0.15 -19.7 0 -25
+cmd aim item tuzkutusu
+wait 3
+cmd act Interact
+wait 10
+cmd tp -109.3 0.15 -18.2 90 -30
+cmd aim item kazan
+wait 3
+cmd act Use
+wait 6
+cmd act Use
+wait 6
+cmd act Use
+wait 6
+cmd act Use
+wait 6
+cmd act Use
+wait 6
+cmd act Use
+waitfor 120 egitim=11
+# 11: kapak, sonra atesi 1'e kis
+cmd act Secondary
+waitfor 120 egitim=12
+cmd aim part ocakA knob
+wait 3
+cmd act Secondary
+annotate
+shot t11_lid
+# 12: su cekilene kadar bekle, 13: atesi kapat
+waitfor 9000 egitim=13
+annotate
+cmd act Secondary
+waitfor 120 egitim=14
+# 14: demlenme
+waitfor 9000 egitim=15
+annotate
+shot t14_ready
+# 15: kazani arabaya
+tap G
+wait 10
+cmd aim item kazan
+wait 3
+cmd act Interact
+wait 10
+annotate
+cmd tp -103.6 0.15 -14.3 180 -30
+cmd aim socket cart 0
+wait 3
+annotate
+cmd act Interact
+waitfor 120 egitim=16
+shot t15_kazan_on_cart
+# 16-17: arabayi it: depodan cik, okula git
+cmd aim part cart handle
+wait 3
+annotate
+cmd act Interact
+wait 10
+cmd look 180 -10
+down W
+wait 150
+annotate
+up W
+cmd look -90 -10
+wait 5
+down W
+waitfor 2400 pos=(-6
+up W
+annotate
+shot t16_pushing
+# 17-18: arabayi birak, satisa ac
+cmd act Interact
+wait 10
+cmd stand-cart
+wait 5
+cmd aim part cart sign
+wait 3
+annotate
+cmd act Interact
+waitfor 120 egitim=19
+shot t18_open
+# 19-20: ilk musteri
+waitfor 4000 siparis=1
+cmd stand-cart
+cmd aim part cart plates
+wait 3
+cmd act Interact
+waitfor 120 el=Tabak
+cmd aim item kazan
+wait 3
+cmd act Use
+wait 8
+cmd act Use
+wait 8
+cmd aim customer
+wait 3
+annotate
+shot t19_serve
+cmd act Use
+waitfor 1500 kasa: hazir
+annotate
+shot t20_cash
+cmd cash-auto
+waitfor 600 egitim=21
+annotate
+# 21: bilgi adimi (25 oyun dakikasi), 22: gunu bitir
+waitfor 3000 egitim=22
+cmd endday
+waitfor 300 DayReportScreen
+shot t22_report
+cmd report-next
+waitfor 600 egitim=23
+annotate
+expect gun=2
+shot t23_day2
+quit

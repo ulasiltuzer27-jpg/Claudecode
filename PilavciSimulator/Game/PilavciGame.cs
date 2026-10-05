@@ -407,9 +407,11 @@ public sealed class Toasts
 
     public void Draw(UiContext ui)
     {
-        var y = ui.S(110);
-        foreach (var i in _items)
+        // Sag alt koseden yukari dogru: sag ustteki siparis fislerini ortmesin.
+        var y = ui.Height - ui.S(140);
+        for (var n = _items.Count - 1; n >= 0; n--)
         {
+            var i = _items[n];
             var a = MathF.Min(1f, MathF.Min(i.Age * 5f, (i.Life - i.Age) * 2f));
             var m = ui.Measure(i.Text, 26, true);
             var w = m.X + ui.S(48);
@@ -417,7 +419,7 @@ public sealed class Toasts
             ui.Panel(r, Theme.HudBgStrong.WithAlpha(0.85f * a));
             Raylib.DrawRectangleRounded(new Rectangle(r.X, r.Y, ui.S(8), r.Height), 1f, 4, i.Color.WithAlpha(a));
             ui.TextIn(r with { X = r.X + ui.S(14) }, i.Text, 26, Theme.Cream.WithAlpha(a), true);
-            y += ui.S(60);
+            y -= ui.S(60);
         }
     }
 }

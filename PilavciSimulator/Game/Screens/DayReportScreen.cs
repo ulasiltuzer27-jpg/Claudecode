@@ -22,6 +22,19 @@ public sealed class DayReportScreen : OverlayScreen
         // Rapor kapatilamaz; host devam deyince kendiliginden kapanir.
     }
 
+    protected override bool Closable => false;
+
+    public override bool Command(string[] args)
+    {
+        if (args[0] != "report-next" || Game.Session is not { IsHost: true } s)
+        {
+            return false;
+        }
+
+        s.ContinueAfterReport();
+        return true;
+    }
+
     public override void DrawUi()
     {
         if (Game.Session is not { } s)

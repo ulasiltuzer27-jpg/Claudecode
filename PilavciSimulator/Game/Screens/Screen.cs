@@ -149,7 +149,10 @@ public sealed class ScreenStack
         _stack[start].Draw3D();
         for (var i = start; i < _stack.Count; i++)
         {
+            _game.Ui.SetInteractive(i == _stack.Count - 1);
             _stack[i].DrawUi();
         }
+
+        _game.Ui.SetInteractive(true);
     }
 }

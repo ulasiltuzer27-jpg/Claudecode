@@ -408,7 +408,10 @@ public sealed class Hud
                 {
                     var ideal = (p.BulgurKg > p.RiceKg ? CookingModel.BulgurWaterRatio : CookingModel.RiceWaterRatio) * grain;
                     lines.Add((Loc.T(p.BulgurKg > p.RiceKg ? "info.bulgur" : "info.rice", Fmt.Kg(grain), Fmt.Pct(p.RiceWash)), Theme.White));
-                    lines.Add((Loc.T("info.water", Fmt.Liters(p.WaterAdded), Fmt.Liters(ideal)), Math.Abs(p.WaterAdded - ideal) / ideal < 0.1f ? Theme.Green : Theme.White));
+                    // Etkin su: kazanda kalan + taneye gecen. Buharlasan su sayilmaz;
+                    // kapak acik kaynatan oyuncu degerin dustugunu gorup su ekleyebilsin.
+                    var water = p.WaterL + p.WaterAbsorbed;
+                    lines.Add((Loc.T("info.water", Fmt.Liters(water), Fmt.Liters(ideal)), Math.Abs(water - ideal) / ideal < 0.08f ? Theme.Green : Theme.White));
                     lines.Add((Loc.T("info.butter_salt", (int)p.ButterG, (int)(grain * 100), (int)p.SaltG, (int)(grain * 14)), Theme.White));
                     if (p.MeatKg > 0)
                     {
