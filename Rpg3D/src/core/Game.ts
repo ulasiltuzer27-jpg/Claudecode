@@ -91,6 +91,7 @@ export class Game implements GameCtx {
     this.renderer.shadowMap.type = this.settings.quality === 'low' ? THREE.PCFShadowMap : THREE.PCFSoftShadowMap;
     if (params.get('scale')) this.renderer.setPixelRatio(Number(params.get('scale')));
     this.input = new Input(canvas);
+    this.input.onLockFailed = () => this.hud?.toast('Fare kilidi kullanılamıyor: kamerayı fareyi gezdirerek döndür', 'info');
     this.tpc = new ThirdPersonCamera(this.camera);
     window.addEventListener('resize', () => this.resize());
     this.resize();
@@ -336,6 +337,14 @@ export class Game implements GameCtx {
     s.className = 'screen';
     s.innerHTML = `<h1 class="title">${T.title}</h1><div class="subtitle">${T.subtitle}</div><button class="btn">${T.clickToStart}</button>`;
     this.panels.root.appendChild(s);
+    // Dokunmatik cihaz: oyun klavye + fare istiyor, baştan söyle.
+    if (matchMedia('(pointer: coarse)').matches && !matchMedia('(any-pointer: fine)').matches) {
+      const note = document.createElement('p');
+      note.className = 'credits';
+      note.style.marginTop = '22px';
+      note.textContent = 'Gölge Vadisi klavye ve fareyle oynanır. En iyi deneyim için bilgisayardan aç.';
+      s.appendChild(note);
+    }
     const go = async () => {
       s.remove();
       await this.audio.unlock();

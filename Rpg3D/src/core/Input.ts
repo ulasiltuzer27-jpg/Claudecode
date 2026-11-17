@@ -35,6 +35,13 @@ export class Input {
   private mouseDY = 0;
   private wheel = 0;
   locked = false;
+  /**
+   * Pointer lock reddedildiyse (bazı gömülü çerçeveler, uygulama görünümleri)
+   * fare hareketi kilitsiz de kamerayı döndürür. Kenara gelince imleç durur
+   * ama oyun en azından oynanır.
+   */
+  freeLook = false;
+  onLockFailed: (() => void) | null = null;
   /** false iken (menü/diyalog açık) oyun eylemleri yutulur, ama `pause` hep çalışır. */
   gameplayEnabled = true;
 
@@ -63,7 +70,7 @@ export class Input {
     });
     canvas.addEventListener('contextmenu', (e) => e.preventDefault());
     window.addEventListener('mousemove', (e) => {
-      if (!this.locked) return;
+      if (!this.locked && !this.freeLook) return;
       this.mouseDX += e.movementX;
       this.mouseDY += e.movementY;
     });
@@ -74,17 +81,25 @@ export class Input {
     document.addEventListener('pointerlockchange', () => {
       this.locked = document.pointerLockElement === canvas;
     });
+    document.addEventListener('pointerlockerror', () => this.lockFailed());
   }
 
   requestLock(): void {
     if (this.locked) return;
     // Headless tarayıcıda ve bazı iframe'lerde pointer lock yok: sessizce geç.
+    if (this.freeLook) return;
     try {
       const p = this.canvas.requestPointerLock() as unknown;
-      if (p && typeof (p as Promise<void>).catch === 'function') (p as Promise<void>).catch(() => {});
+      if (p && typeof (p as Promise<void>).catch === 'function') (p as Promise<void>).catch(() => this.lockFailed());
     } catch {
-      /* desteklenmiyor */
+      this.lockFailed();
     }
+  }
+
+  private lockFailed(): void {
+    if (this.freeLook) return;
+    this.freeLook = true;
+    this.onLockFailed?.();
   }
 
   releaseLock(): void {
