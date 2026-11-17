@@ -106,6 +106,12 @@ enum Cmd {
         /// Yapılandırmadaki max_steps'i geçersiz kıl.
         #[arg(long)]
         max_steps: Option<usize>,
+        /// Damıtma: bu öğretmen modelden de öğren (ör. runs/sosy-pro-1.0). Aynı tokenizer şart.
+        #[arg(long)]
+        teacher: Option<PathBuf>,
+        /// Çıktı klasörünü geçersiz kıl.
+        #[arg(long)]
+        out: Option<PathBuf>,
     },
     /// Kod tamamlama.
     Generate {
@@ -431,8 +437,20 @@ fn main() -> Result<()> {
             resume,
             backend,
             max_steps,
+            teacher,
+            out,
         } => {
             let mut cfg = RunConfig::load(&config)?;
+            if let Some(t) = teacher {
+                cfg.distill = Some(sosis_train::DistillConfig {
+                    teacher: t,
+                    alpha: cfg.distill.as_ref().map(|d| d.alpha).unwrap_or(0.5),
+                    temperature: cfg.distill.as_ref().map(|d| d.temperature).unwrap_or(2.0),
+                });
+            }
+            if let Some(o) = out {
+                cfg.train.out_dir = o;
+            }
             if let Some(b) = backend {
                 cfg.train.backend = b;
             }
