@@ -1,0 +1,41 @@
+# Sosy 1.0 Chat — talimat ince ayarı (SFT). Adımlar için configs/sosy-pro-1.0-chat.toml'a bakın.
+
+[model]
+name = "Sosy 1.0 Chat"
+vocab_size = 32768
+d_model = 768
+n_layers = 12
+n_heads = 12
+ffn_hidden = 2048
+max_seq_len = 1024
+rope_theta = 10000.0
+
+[inference]
+context = 2048
+
+[train]
+data_dir = "data-sft"
+tokenizer = "tokenizer.json"
+out_dir = "runs/sosy-1.0-chat"
+init_from = "runs/sosy-1.0"
+backend = "auto"
+precision = "f32"
+gradient_checkpointing = true
+max_ram_gb = 28
+
+seq_len = 1024
+micro_batch = 2
+grad_accum = 16
+max_steps = 2000
+warmup_steps = 100
+lr = 3e-5
+min_lr = 3e-6
+weight_decay = 0.0
+grad_clip = 1.0
+
+log_every = 10
+eval_every = 200
+eval_batches = 20
+save_every = 200
+keep_checkpoints = 2
+seed = 7

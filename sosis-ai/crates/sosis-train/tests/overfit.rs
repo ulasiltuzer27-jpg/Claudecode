@@ -189,3 +189,25 @@ fn offload_bf16_memorizes_and_resumes() {
 
     std::fs::remove_dir_all(&root).ok();
 }
+
+#[test]
+fn sft_learns_answers_only() {
+    use sosis_data::sft::{prepare_sft, SftExample};
+    let root = setup("sft");
+    let tok = sosis_tokenizer::Tokenizer::load(root.join("tok.json")).unwrap();
+    let examples: Vec<SftExample> = (0..30)
+        .map(|i| SftExample::qa(format!("soru {i}: fibonacci yaz"), SNIPPET))
+        .collect();
+    prepare_sft(&tok, &examples, &root.join("data"), 0.0, None).unwrap();
+    let mut cfg = config(&root, "sft", 64, Some(2));
+    cfg.train.max_steps = 100;
+    let (first, out) = run(&cfg, false);
+    eprintln!("sft: kayıp {first:.3} → {:.3}", out.last_loss);
+    assert!(out.last_loss.is_finite());
+    assert!(
+        out.last_loss < 0.5,
+        "cevap ezberlenemedi: {}",
+        out.last_loss
+    );
+    std::fs::remove_dir_all(&root).ok();
+}

@@ -1,0 +1,49 @@
+# Sosy-Pro 1.0 Chat — talimat ince ayarı (SFT).
+# Önce: sosis sft-data -i <kod klasörleri> -o sft.jsonl
+#       sosis prepare-sft -i sft.jsonl [başka.jsonl ...] -t tokenizer.json -o data-sft
+# Sonra: sosis train -c configs/sosy-pro-1.0-chat.toml
+# Kayıp yalnızca asistan cevaplarında hesaplanır.
+
+[model]
+name = "Sosy-Pro 1.0 Chat"
+vocab_size = 32768
+d_model = 1024
+n_layers = 22
+n_heads = 16
+n_kv_heads = 4
+ffn_hidden = 2816
+max_seq_len = 2048
+rope_theta = 10000.0
+
+[inference]
+context = 4096
+
+[train]
+data_dir = "data-sft"
+tokenizer = "tokenizer.json"
+out_dir = "runs/sosy-pro-1.0-chat"
+init_from = "runs/sosy-pro-1.0-ctx2048"
+backend = "auto"
+precision = "bf16"
+gradient_checkpointing = true
+optimizer_offload = true
+max_ram_gb = 28
+
+seq_len = 2048
+micro_batch = 1
+grad_accum = 16
+max_steps = 2000     # SFT veri miktarına göre ayarlayın (~2-3 tur yeterli)
+warmup_steps = 100
+lr = 2e-5
+min_lr = 2e-6
+weight_decay = 0.0
+beta1 = 0.9
+beta2 = 0.95
+grad_clip = 1.0
+
+log_every = 10
+eval_every = 200
+eval_batches = 20
+save_every = 200
+keep_checkpoints = 2
+seed = 7

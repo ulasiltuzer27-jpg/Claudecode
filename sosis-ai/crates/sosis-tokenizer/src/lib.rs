@@ -7,6 +7,7 @@
 //! - `16..272` ham baytlar (her UTF-8 metin kayıpsız kodlanabilir)
 //! - `272..`   öğrenilmiş birleştirmeler
 
+pub mod chat;
 pub mod pretokenize;
 mod train;
 

@@ -39,9 +39,44 @@ impl ShardWriter {
     }
 }
 
+/// Talimat ince ayarı için token başına "öğrenilecek mi?" baytı (`train.bin` → `train.mask`).
+pub fn mask_path(shard: &Path) -> std::path::PathBuf {
+    shard.with_extension("mask")
+}
+
+pub struct MaskWriter {
+    w: BufWriter<File>,
+}
+
+impl MaskWriter {
+    pub fn create(path: &Path) -> Result<Self> {
+        let f =
+            File::create(path).with_context(|| format!("oluşturulamadı: {}", path.display()))?;
+        Ok(Self {
+            w: BufWriter::with_capacity(1 << 20, f),
+        })
+    }
+
+    pub fn write(&mut self, mask: &[bool]) -> Result<()> {
+        let bytes: Vec<u8> = mask.iter().map(|&m| m as u8).collect();
+        self.w.write_all(&bytes)?;
+        Ok(())
+    }
+
+    pub fn finish(mut self) -> Result<()> {
+        self.w.flush()?;
+        Ok(())
+    }
+}
+
+/// Hedefi öğrenilmeyecek konumlar için kullanılan id (`<|pad|>`; kayıpta yok sayılır).
+pub const IGNORE_TARGET: i64 = sosis_tokenizer::PAD as i64;
+
 /// Eğitim için bellek-eşlemli token dizisi. Dosya RAM'e tamamen yüklenmez.
+/// Yanında `.mask` dosyası varsa maskesiz konumların hedefleri [`IGNORE_TARGET`] olur.
 pub struct TokenDataset {
     mmap: Mmap,
+    mask: Option<Mmap>,
 }
 
 impl TokenDataset {
@@ -52,7 +87,27 @@ impl TokenDataset {
         if mmap.len() % 2 != 0 {
             bail!("bozuk shard (tek bayt sayısı): {}", path.display());
         }
-        Ok(Self { mmap })
+        let mp = mask_path(path);
+        let mask = if mp.exists() {
+            // SAFETY: yukarıdakiyle aynı.
+            let m = unsafe { Mmap::map(&File::open(&mp)?)? };
+            if m.len() != mmap.len() / 2 {
+                bail!("maske boyutu token sayısıyla uyuşmuyor: {}", mp.display());
+            }
+            Some(m)
+        } else {
+            None
+        };
+        Ok(Self { mmap, mask })
+    }
+
+    pub fn is_masked(&self) -> bool {
+        self.mask.is_some()
+    }
+
+    #[inline]
+    fn learn(&self, i: usize) -> bool {
+        self.mask.as_ref().is_none_or(|m| m[i] != 0)
     }
 
     pub fn len(&self) -> usize {
@@ -84,10 +139,24 @@ impl TokenDataset {
         let mut x = Vec::with_capacity(batch * seq_len);
         let mut y = Vec::with_capacity(batch * seq_len);
         for _ in 0..batch {
-            let start = rng.gen_range(0..self.len() - seq_len - 1);
+            let mut start = rng.gen_range(0..self.len() - seq_len - 1);
+            // Maskeli veride tamamen yok sayılan bir pencere NaN kayıp verir; öğrenilecek
+            // en az bir hedef içeren pencere seçilene kadar yeniden dene.
+            if self.mask.is_some() {
+                for _ in 0..64 {
+                    if (start + 1..=start + seq_len).any(|i| self.learn(i)) {
+                        break;
+                    }
+                    start = rng.gen_range(0..self.len() - seq_len - 1);
+                }
+            }
             for i in start..start + seq_len {
                 x.push(self.get(i) as i64);
-                y.push(self.get(i + 1) as i64);
+                y.push(if self.learn(i + 1) {
+                    self.get(i + 1) as i64
+                } else {
+                    IGNORE_TARGET
+                });
             }
         }
         (x, y)
@@ -98,6 +167,34 @@ impl TokenDataset {
 mod tests {
     use super::*;
     use rand::SeedableRng;
+
+    #[test]
+    fn masked_targets_are_ignored() {
+        let dir = std::env::temp_dir().join(format!("sosis_mask_{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let p = dir.join("t.bin");
+        let mut w = ShardWriter::create(&p).unwrap();
+        let ids: Vec<u16> = (100..300).collect();
+        w.write(&ids).unwrap();
+        w.finish().unwrap();
+        let mut m = MaskWriter::create(&mask_path(&p)).unwrap();
+        m.write(&(0..200).map(|i| i % 4 == 0).collect::<Vec<_>>())
+            .unwrap();
+        m.finish().unwrap();
+        let ds = TokenDataset::open(&p).unwrap();
+        assert!(ds.is_masked());
+        let mut rng = rand::rngs::StdRng::seed_from_u64(1);
+        let (x, y) = ds.sample_batch(&mut rng, 4, 16);
+        for (xi, yi) in x.iter().zip(&y) {
+            let next = xi + 1;
+            if (next - 100) % 4 == 0 {
+                assert_eq!(*yi, next);
+            } else {
+                assert_eq!(*yi, IGNORE_TARGET);
+            }
+        }
+        std::fs::remove_dir_all(&dir).ok();
+    }
 
     #[test]
     fn write_read_sample() {

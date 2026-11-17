@@ -67,6 +67,28 @@ enum Cmd {
         #[arg(long)]
         ext: Vec<String>,
     },
+    /// Koddaki belgelenmiş fonksiyonlardan (///, <summary>, docstring) soru→kod örnekleri çıkarır.
+    SftData {
+        #[arg(long, short, required = true, num_args = 1..)]
+        input: Vec<PathBuf>,
+        #[arg(long, short, default_value = "sft.jsonl")]
+        out: PathBuf,
+    },
+    /// SFT .jsonl dosyalarını maskeli eğitim verisine çevirir (yalnızca cevaplar öğrenilir).
+    PrepareSft {
+        /// .jsonl dosyaları (`messages` veya `instruction`/`response` biçimi).
+        #[arg(long, short, required = true, num_args = 1..)]
+        input: Vec<PathBuf>,
+        #[arg(long, short, default_value = "tokenizer.json")]
+        tokenizer: PathBuf,
+        #[arg(long, short, default_value = "data-sft")]
+        out: PathBuf,
+        #[arg(long, default_value_t = 2.0)]
+        val_percent: f64,
+        /// Sistem mesajı (varsayılan: Sosy tanıtımı).
+        #[arg(long)]
+        system: Option<String>,
+    },
     /// Bir modeli eğitir.
     Train {
         #[arg(long, short)]
@@ -309,6 +331,41 @@ fn main() -> Result<()> {
                 meta.duplicates,
                 meta.rejected,
                 t.elapsed().as_secs_f32()
+            );
+        }
+        Cmd::SftData { input, out } => {
+            let ex = sosis_data::sft::extract_from_code(&input, &CollectOptions::default())?;
+            sosis_data::sft::write_jsonl(&out, &ex)?;
+            eprintln!("✓ {} örnek → {}", ex.len(), out.display());
+            if let Some(e) = ex.first() {
+                eprintln!(
+                    "örnek soru: {}",
+                    e.messages[0].content.lines().next().unwrap_or("")
+                );
+            }
+        }
+        Cmd::PrepareSft {
+            input,
+            tokenizer,
+            out,
+            val_percent,
+            system,
+        } => {
+            let tok = Tokenizer::load(&tokenizer)?;
+            let mut ex = Vec::new();
+            for p in &input {
+                let n = ex.len();
+                ex.extend(sosis_data::sft::read_jsonl(p)?);
+                eprintln!("  {}: {} örnek", p.display(), ex.len() - n);
+            }
+            let meta =
+                sosis_data::sft::prepare_sft(&tok, &ex, &out, val_percent, system.as_deref())?;
+            eprintln!(
+                "✓ {} — {} örnek, eğitim {:.2}M / doğrulama {:.2}M token",
+                out.display(),
+                meta.docs,
+                meta.train_tokens as f64 / 1e6,
+                meta.val_tokens as f64 / 1e6
             );
         }
         Cmd::Train {

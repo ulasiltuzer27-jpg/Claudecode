@@ -10,6 +10,7 @@
 pub mod collect;
 pub mod filter;
 pub mod ram;
+pub mod sft;
 pub mod shard;
 
 use std::collections::HashSet;
@@ -152,6 +153,10 @@ pub fn prepare(
 
     let mut train = ShardWriter::create(&opts.out_dir.join(TRAIN_FILE))?;
     let mut val = ShardWriter::create(&opts.out_dir.join(VAL_FILE))?;
+    // Önceki bir `prepare-sft` çıktısından kalan maskeler yeni veriye uymaz.
+    for f in [TRAIN_FILE, VAL_FILE] {
+        let _ = std::fs::remove_file(shard::mask_path(&opts.out_dir.join(f)));
+    }
 
     std::thread::scope(|s| -> Result<()> {
         for _ in 0..opts.threads.max(1) {
