@@ -1,5 +1,10 @@
 # PixelSurvival
 
+> **Bu depoda ikinci bir oyun daha var:** [`Rpg3D/`](Rpg3D/README.md) —
+> *Gölge Vadisi*, tarayıcıda çalışan 3. şahıs aksiyon RPG (Three.js).
+> Ayrı bir proje; PixelSurvival'ın derlemesini etkilemez
+> (`PixelSurvival.csproj` o klasörü `DefaultItemExcludes` ile dışarıda tutar).
+
 Top-down, pixel-art, gerçek zamanlı çok oyunculu survival oyunu.
 MonoGame **3.8.5.1** (DesktopGL) · .NET 8 · C#
 

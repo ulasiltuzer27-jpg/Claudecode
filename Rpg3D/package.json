@@ -1,0 +1,28 @@
+{
+  "name": "golge-vadisi",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Gölge Vadisi — Three.js ile 3. şahıs aksiyon RPG",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "assets": "node tools/fetch-assets.mjs",
+    "verify:assets": "node tools/verify-assets.mjs",
+    "smoke": "node tools/smoke.mjs"
+  },
+  "dependencies": {
+    "three": "0.170.0"
+  },
+  "devDependencies": {
+    "@gltf-transform/core": "4.2.1",
+    "@gltf-transform/functions": "4.2.1",
+    "@types/three": "0.170.0",
+    "typescript": "5.9.3",
+    "vite": "6.4.5",
+    "vitest": "4.1.12"
+  }
+}

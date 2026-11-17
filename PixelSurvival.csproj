@@ -14,6 +14,9 @@
     <!-- Sablonda yok, bilerek eklendi: null-safety ve daha az using gurultusu -->
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Rpg3D/ ayri bir Three.js projesi. SDK'nin varsayilan **/* taramasi
+         oraya (ozellikle node_modules'e) girmesin. -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);Rpg3D/**</DefaultItemExcludes>
   </PropertyGroup>
 
   <PropertyGroup>

@@ -1,0 +1,865 @@
+{
+  "generated": "tools/fetch-assets.mjs",
+  "models": {
+    "anims": {
+      "file": "models/anims.glb",
+      "kind": "anims",
+      "bytes": 705708,
+      "animations": [
+        "1H_Melee_Attack_Chop",
+        "1H_Melee_Attack_Jump_Chop",
+        "1H_Melee_Attack_Slice_Diagonal",
+        "1H_Melee_Attack_Slice_Horizontal",
+        "1H_Melee_Attack_Stab",
+        "2H_Melee_Attack_Chop",
+        "2H_Melee_Attack_Slice",
+        "2H_Melee_Attack_Spin",
+        "2H_Melee_Idle",
+        "Block",
+        "Block_Hit",
+        "Blocking",
+        "Cheer",
+        "Death_A",
+        "Death_A_Pose",
+        "Death_C_Skeletons",
+        "Dodge_Backward",
+        "Dodge_Forward",
+        "Hit_A",
+        "Hit_B",
+        "Idle",
+        "Idle_Combat",
+        "Interact",
+        "Jump_Idle",
+        "Jump_Land",
+        "Jump_Start",
+        "PickUp",
+        "Running_A",
+        "Running_B",
+        "Running_C",
+        "Sit_Chair_Idle",
+        "Sit_Floor_Idle",
+        "Skeletons_Awaken_Floor",
+        "Skeletons_Inactive_Floor_Pose",
+        "Spawn_Ground_Skeletons",
+        "Spellcast_Raise",
+        "Spellcast_Shoot",
+        "Spellcast_Summon",
+        "Spellcasting",
+        "Taunt",
+        "Unarmed_Idle",
+        "Use_Item",
+        "Walking_A",
+        "Walking_B",
+        "Walking_Backwards",
+        "Walking_D_Skeletons"
+      ]
+    },
+    "knight": {
+      "file": "models/knight.glb",
+      "kind": "character",
+      "bytes": 364400
+    },
+    "mage": {
+      "file": "models/mage.glb",
+      "kind": "character",
+      "bytes": 307520
+    },
+    "barbarian": {
+      "file": "models/barbarian.glb",
+      "kind": "character",
+      "bytes": 319456
+    },
+    "rogue": {
+      "file": "models/rogue.glb",
+      "kind": "character",
+      "bytes": 308452
+    },
+    "skeleton_minion": {
+      "file": "models/skeleton_minion.glb",
+      "kind": "character",
+      "bytes": 319776
+    },
+    "skeleton_warrior": {
+      "file": "models/skeleton_warrior.glb",
+      "kind": "character",
+      "bytes": 368608
+    },
+    "skeleton_mage": {
+      "file": "models/skeleton_mage.glb",
+      "kind": "character",
+      "bytes": 266924
+    },
+    "skeleton_rogue": {
+      "file": "models/skeleton_rogue.glb",
+      "kind": "character",
+      "bytes": 332316
+    },
+    "w_sword_1handed": {
+      "file": "models/w_sword_1handed.glb",
+      "kind": "prop",
+      "bytes": 28816
+    },
+    "w_sword_2handed": {
+      "file": "models/w_sword_2handed.glb",
+      "kind": "prop",
+      "bytes": 35472
+    },
+    "w_axe_1handed": {
+      "file": "models/w_axe_1handed.glb",
+      "kind": "prop",
+      "bytes": 29004
+    },
+    "w_axe_2handed": {
+      "file": "models/w_axe_2handed.glb",
+      "kind": "prop",
+      "bytes": 38440
+    },
+    "w_dagger": {
+      "file": "models/w_dagger.glb",
+      "kind": "prop",
+      "bytes": 25704
+    },
+    "w_staff": {
+      "file": "models/w_staff.glb",
+      "kind": "prop",
+      "bytes": 36260
+    },
+    "w_wand": {
+      "file": "models/w_wand.glb",
+      "kind": "prop",
+      "bytes": 23644
+    },
+    "w_shield_round": {
+      "file": "models/w_shield_round.glb",
+      "kind": "prop",
+      "bytes": 27572
+    },
+    "w_shield_badge": {
+      "file": "models/w_shield_badge.glb",
+      "kind": "prop",
+      "bytes": 26184
+    },
+    "w_shield_spikes": {
+      "file": "models/w_shield_spikes.glb",
+      "kind": "prop",
+      "bytes": 37024
+    },
+    "w_spellbook_open": {
+      "file": "models/w_spellbook_open.glb",
+      "kind": "prop",
+      "bytes": 32820
+    },
+    "w_skeleton_blade": {
+      "file": "models/w_skeleton_blade.glb",
+      "kind": "prop",
+      "bytes": 38456
+    },
+    "w_skeleton_axe": {
+      "file": "models/w_skeleton_axe.glb",
+      "kind": "prop",
+      "bytes": 43752
+    },
+    "w_skeleton_staff": {
+      "file": "models/w_skeleton_staff.glb",
+      "kind": "prop",
+      "bytes": 87656
+    },
+    "w_skeleton_shield_small_a": {
+      "file": "models/w_skeleton_shield_small_a.glb",
+      "kind": "prop",
+      "bytes": 40100
+    },
+    "w_skeleton_shield_large_a": {
+      "file": "models/w_skeleton_shield_large_a.glb",
+      "kind": "prop",
+      "bytes": 51708
+    },
+    "b_home_A": {
+      "file": "models/b_home_A.glb",
+      "kind": "prop",
+      "bytes": 72528
+    },
+    "b_home_B": {
+      "file": "models/b_home_B.glb",
+      "kind": "prop",
+      "bytes": 99296
+    },
+    "b_tavern": {
+      "file": "models/b_tavern.glb",
+      "kind": "prop",
+      "bytes": 188032
+    },
+    "b_blacksmith": {
+      "file": "models/b_blacksmith.glb",
+      "kind": "prop",
+      "bytes": 140228
+    },
+    "b_market": {
+      "file": "models/b_market.glb",
+      "kind": "prop",
+      "bytes": 169340
+    },
+    "b_well": {
+      "file": "models/b_well.glb",
+      "kind": "prop",
+      "bytes": 59520
+    },
+    "b_windmill": {
+      "file": "models/b_windmill.glb",
+      "kind": "prop",
+      "bytes": 160444
+    },
+    "b_church": {
+      "file": "models/b_church.glb",
+      "kind": "prop",
+      "bytes": 106916
+    },
+    "b_tower_A": {
+      "file": "models/b_tower_A.glb",
+      "kind": "prop",
+      "bytes": 130752
+    },
+    "b_destroyed": {
+      "file": "models/b_destroyed.glb",
+      "kind": "prop",
+      "bytes": 73856
+    },
+    "p_barrel": {
+      "file": "models/p_barrel.glb",
+      "kind": "prop",
+      "bytes": 32700
+    },
+    "p_crate_a_big": {
+      "file": "models/p_crate_a_big.glb",
+      "kind": "prop",
+      "bytes": 24156
+    },
+    "p_crate_b_small": {
+      "file": "models/p_crate_b_small.glb",
+      "kind": "prop",
+      "bytes": 24156
+    },
+    "p_sack": {
+      "file": "models/p_sack.glb",
+      "kind": "prop",
+      "bytes": 20380
+    },
+    "p_tent": {
+      "file": "models/p_tent.glb",
+      "kind": "prop",
+      "bytes": 23268
+    },
+    "p_weaponrack": {
+      "file": "models/p_weaponrack.glb",
+      "kind": "prop",
+      "bytes": 20072
+    },
+    "p_wheelbarrow": {
+      "file": "models/p_wheelbarrow.glb",
+      "kind": "prop",
+      "bytes": 36172
+    },
+    "p_resource_lumber": {
+      "file": "models/p_resource_lumber.glb",
+      "kind": "prop",
+      "bytes": 29040
+    },
+    "p_flag_red": {
+      "file": "models/p_flag_red.glb",
+      "kind": "prop",
+      "bytes": 19592
+    },
+    "p_target": {
+      "file": "models/p_target.glb",
+      "kind": "prop",
+      "bytes": 24232
+    },
+    "p_bucket_water": {
+      "file": "models/p_bucket_water.glb",
+      "kind": "prop",
+      "bytes": 24136
+    },
+    "p_fence_wood_straight": {
+      "file": "models/p_fence_wood_straight.glb",
+      "kind": "prop",
+      "bytes": 32184
+    },
+    "p_fence_stone_straight": {
+      "file": "models/p_fence_stone_straight.glb",
+      "kind": "prop",
+      "bytes": 30972
+    },
+    "d_wall": {
+      "file": "models/d_wall.glb",
+      "kind": "prop",
+      "bytes": 53176
+    },
+    "d_wall_broken": {
+      "file": "models/d_wall_broken.glb",
+      "kind": "prop",
+      "bytes": 69328
+    },
+    "d_wall_arched": {
+      "file": "models/d_wall_arched.glb",
+      "kind": "prop",
+      "bytes": 69176
+    },
+    "d_wall_cracked": {
+      "file": "models/d_wall_cracked.glb",
+      "kind": "prop",
+      "bytes": 138444
+    },
+    "d_wall_half": {
+      "file": "models/d_wall_half.glb",
+      "kind": "prop",
+      "bytes": 36892
+    },
+    "d_pillar": {
+      "file": "models/d_pillar.glb",
+      "kind": "prop",
+      "bytes": 25604
+    },
+    "d_pillar_decorated": {
+      "file": "models/d_pillar_decorated.glb",
+      "kind": "prop",
+      "bytes": 62508
+    },
+    "d_column": {
+      "file": "models/d_column.glb",
+      "kind": "prop",
+      "bytes": 20312
+    },
+    "d_floor_tile_large": {
+      "file": "models/d_floor_tile_large.glb",
+      "kind": "prop",
+      "bytes": 28152
+    },
+    "d_floor_tile_large_rocks": {
+      "file": "models/d_floor_tile_large_rocks.glb",
+      "kind": "prop",
+      "bytes": 38432
+    },
+    "d_floor_dirt_large": {
+      "file": "models/d_floor_dirt_large.glb",
+      "kind": "prop",
+      "bytes": 24672
+    },
+    "d_rubble_large": {
+      "file": "models/d_rubble_large.glb",
+      "kind": "prop",
+      "bytes": 60248
+    },
+    "d_rubble_half": {
+      "file": "models/d_rubble_half.glb",
+      "kind": "prop",
+      "bytes": 38888
+    },
+    "d_torch_lit": {
+      "file": "models/d_torch_lit.glb",
+      "kind": "prop",
+      "bytes": 31296
+    },
+    "d_torch_mounted": {
+      "file": "models/d_torch_mounted.glb",
+      "kind": "prop",
+      "bytes": 33268
+    },
+    "d_barrel_large": {
+      "file": "models/d_barrel_large.glb",
+      "kind": "prop",
+      "bytes": 44348
+    },
+    "d_banner_red": {
+      "file": "models/d_banner_red.glb",
+      "kind": "prop",
+      "bytes": 24268
+    },
+    "d_sword_shield_broken": {
+      "file": "models/d_sword_shield_broken.glb",
+      "kind": "prop",
+      "bytes": 40032
+    },
+    "d_coin_stack_small": {
+      "file": "models/d_coin_stack_small.glb",
+      "kind": "prop",
+      "bytes": 38456
+    },
+    "d_coin": {
+      "file": "models/d_coin.glb",
+      "kind": "prop",
+      "bytes": 21832
+    },
+    "d_bottle_a_green": {
+      "file": "models/d_bottle_a_green.glb",
+      "kind": "prop",
+      "bytes": 26516
+    },
+    "d_bottle_a_labeled_brown": {
+      "file": "models/d_bottle_a_labeled_brown.glb",
+      "kind": "prop",
+      "bytes": 26332
+    },
+    "d_bottle_c_brown": {
+      "file": "models/d_bottle_c_brown.glb",
+      "kind": "prop",
+      "bytes": 26196
+    },
+    "d_candle_triple": {
+      "file": "models/d_candle_triple.glb",
+      "kind": "prop",
+      "bytes": 28288
+    },
+    "d_stairs": {
+      "file": "models/d_stairs.glb",
+      "kind": "prop",
+      "bytes": 43416
+    },
+    "d_box_large": {
+      "file": "models/d_box_large.glb",
+      "kind": "prop",
+      "bytes": 28792
+    },
+    "d_keg": {
+      "file": "models/d_keg.glb",
+      "kind": "prop",
+      "bytes": 59960
+    },
+    "d_table_medium_broken": {
+      "file": "models/d_table_medium_broken.glb",
+      "kind": "prop",
+      "bytes": 35232
+    },
+    "d_chest": {
+      "file": "models/d_chest.glb",
+      "kind": "prop",
+      "bytes": 61904
+    },
+    "d_chest_gold": {
+      "file": "models/d_chest_gold.glb",
+      "kind": "prop",
+      "bytes": 102732
+    },
+    "n_tree_1_a": {
+      "file": "models/n_tree_1_a.glb",
+      "kind": "prop",
+      "bytes": 42960
+    },
+    "n_tree_1_b": {
+      "file": "models/n_tree_1_b.glb",
+      "kind": "prop",
+      "bytes": 44492
+    },
+    "n_tree_2_a": {
+      "file": "models/n_tree_2_a.glb",
+      "kind": "prop",
+      "bytes": 33668
+    },
+    "n_tree_2_c": {
+      "file": "models/n_tree_2_c.glb",
+      "kind": "prop",
+      "bytes": 40920
+    },
+    "n_tree_3_a": {
+      "file": "models/n_tree_3_a.glb",
+      "kind": "prop",
+      "bytes": 55216
+    },
+    "n_tree_4_a": {
+      "file": "models/n_tree_4_a.glb",
+      "kind": "prop",
+      "bytes": 38048
+    },
+    "n_tree_5_a": {
+      "file": "models/n_tree_5_a.glb",
+      "kind": "prop",
+      "bytes": 44168
+    },
+    "n_tree_6_a": {
+      "file": "models/n_tree_6_a.glb",
+      "kind": "prop",
+      "bytes": 45224
+    },
+    "n_tree_bare_1_a": {
+      "file": "models/n_tree_bare_1_a.glb",
+      "kind": "prop",
+      "bytes": 37224
+    },
+    "n_tree_bare_2_a": {
+      "file": "models/n_tree_bare_2_a.glb",
+      "kind": "prop",
+      "bytes": 40492
+    },
+    "n_bush_1_a": {
+      "file": "models/n_bush_1_a.glb",
+      "kind": "prop",
+      "bytes": 27828
+    },
+    "n_bush_2_a": {
+      "file": "models/n_bush_2_a.glb",
+      "kind": "prop",
+      "bytes": 26504
+    },
+    "n_bush_4_a": {
+      "file": "models/n_bush_4_a.glb",
+      "kind": "prop",
+      "bytes": 26504
+    },
+    "n_rock_1_a": {
+      "file": "models/n_rock_1_a.glb",
+      "kind": "prop",
+      "bytes": 28304
+    },
+    "n_rock_1_j": {
+      "file": "models/n_rock_1_j.glb",
+      "kind": "prop",
+      "bytes": 56268
+    },
+    "n_rock_2_a": {
+      "file": "models/n_rock_2_a.glb",
+      "kind": "prop",
+      "bytes": 26316
+    },
+    "n_rock_3_a": {
+      "file": "models/n_rock_3_a.glb",
+      "kind": "prop",
+      "bytes": 29916
+    },
+    "n_rock_3_e": {
+      "file": "models/n_rock_3_e.glb",
+      "kind": "prop",
+      "bytes": 29852
+    },
+    "n_grass_1_a": {
+      "file": "models/n_grass_1_a.glb",
+      "kind": "prop",
+      "bytes": 27536
+    },
+    "n_grass_2_a": {
+      "file": "models/n_grass_2_a.glb",
+      "kind": "prop",
+      "bytes": 27532
+    }
+  },
+  "sounds": {
+    "step_grass": {
+      "files": [
+        "audio/step_grass_0.ogg",
+        "audio/step_grass_1.ogg",
+        "audio/step_grass_2.ogg",
+        "audio/step_grass_3.ogg",
+        "audio/step_grass_4.ogg"
+      ],
+      "volume": 0.55
+    },
+    "step_dirt": {
+      "files": [
+        "audio/step_dirt_0.ogg",
+        "audio/step_dirt_1.ogg",
+        "audio/step_dirt_2.ogg",
+        "audio/step_dirt_3.ogg",
+        "audio/step_dirt_4.ogg"
+      ],
+      "volume": 0.5
+    },
+    "step_stone": {
+      "files": [
+        "audio/step_stone_0.ogg",
+        "audio/step_stone_1.ogg",
+        "audio/step_stone_2.ogg",
+        "audio/step_stone_3.ogg",
+        "audio/step_stone_4.ogg"
+      ],
+      "volume": 0.5
+    },
+    "step_wood": {
+      "files": [
+        "audio/step_wood_0.ogg",
+        "audio/step_wood_1.ogg",
+        "audio/step_wood_2.ogg",
+        "audio/step_wood_3.ogg",
+        "audio/step_wood_4.ogg"
+      ],
+      "volume": 0.5
+    },
+    "swing": {
+      "files": [
+        "audio/swing_0.ogg",
+        "audio/swing_1.ogg",
+        "audio/swing_2.ogg",
+        "audio/swing_3.ogg"
+      ],
+      "volume": 0.7
+    },
+    "swing_heavy": {
+      "files": [
+        "audio/swing_heavy_0.ogg",
+        "audio/swing_heavy_1.ogg",
+        "audio/swing_heavy_2.ogg"
+      ],
+      "volume": 0.8
+    },
+    "hit": {
+      "files": [
+        "audio/hit_0.ogg",
+        "audio/hit_1.ogg",
+        "audio/hit_2.ogg",
+        "audio/hit_3.ogg"
+      ],
+      "volume": 0.8
+    },
+    "hit_heavy": {
+      "files": [
+        "audio/hit_heavy_0.ogg",
+        "audio/hit_heavy_1.ogg",
+        "audio/hit_heavy_2.ogg"
+      ],
+      "volume": 0.9
+    },
+    "block": {
+      "files": [
+        "audio/block_0.ogg",
+        "audio/block_1.ogg",
+        "audio/block_2.ogg",
+        "audio/block_3.ogg"
+      ],
+      "volume": 0.8
+    },
+    "bone_hit": {
+      "files": [
+        "audio/bone_hit_0.ogg",
+        "audio/bone_hit_1.ogg",
+        "audio/bone_hit_2.ogg"
+      ],
+      "volume": 0.7
+    },
+    "bone_break": {
+      "files": [
+        "audio/bone_break_0.ogg",
+        "audio/bone_break_1.ogg",
+        "audio/bone_break_2.ogg"
+      ],
+      "volume": 0.9
+    },
+    "player_hurt": {
+      "files": [
+        "audio/player_hurt_0.ogg",
+        "audio/player_hurt_1.ogg",
+        "audio/player_hurt_2.ogg"
+      ],
+      "volume": 0.7
+    },
+    "dodge": {
+      "files": [
+        "audio/dodge_0.ogg",
+        "audio/dodge_1.ogg"
+      ],
+      "volume": 0.6
+    },
+    "jump": {
+      "files": [
+        "audio/jump_0.ogg",
+        "audio/jump_1.ogg"
+      ],
+      "volume": 0.5
+    },
+    "land": {
+      "files": [
+        "audio/land_0.ogg",
+        "audio/land_1.ogg"
+      ],
+      "volume": 0.6
+    },
+    "fireball_cast": {
+      "files": [
+        "audio/fireball_cast_0.ogg",
+        "audio/fireball_cast_1.ogg"
+      ],
+      "volume": 0.7
+    },
+    "fireball_hit": {
+      "files": [
+        "audio/fireball_hit_0.ogg",
+        "audio/fireball_hit_1.ogg"
+      ],
+      "volume": 0.8
+    },
+    "enemy_cast": {
+      "files": [
+        "audio/enemy_cast_0.ogg",
+        "audio/enemy_cast_1.ogg"
+      ],
+      "volume": 0.6
+    },
+    "heal": {
+      "files": [
+        "audio/heal_0.ogg"
+      ],
+      "volume": 0.7
+    },
+    "coins": {
+      "files": [
+        "audio/coins_0.ogg",
+        "audio/coins_1.ogg"
+      ],
+      "volume": 0.7
+    },
+    "loot": {
+      "files": [
+        "audio/loot_0.ogg",
+        "audio/loot_1.ogg",
+        "audio/loot_2.ogg"
+      ],
+      "volume": 0.6
+    },
+    "equip": {
+      "files": [
+        "audio/equip_0.ogg",
+        "audio/equip_1.ogg",
+        "audio/equip_2.ogg"
+      ],
+      "volume": 0.7
+    },
+    "chest_open": {
+      "files": [
+        "audio/chest_open_0.ogg",
+        "audio/chest_open_1.ogg"
+      ],
+      "volume": 0.8
+    },
+    "book_open": {
+      "files": [
+        "audio/book_open_0.ogg"
+      ],
+      "volume": 0.7
+    },
+    "book_close": {
+      "files": [
+        "audio/book_close_0.ogg"
+      ],
+      "volume": 0.7
+    },
+    "page": {
+      "files": [
+        "audio/page_0.ogg",
+        "audio/page_1.ogg",
+        "audio/page_2.ogg"
+      ],
+      "volume": 0.6
+    },
+    "enemy_alert": {
+      "files": [
+        "audio/enemy_alert_0.ogg",
+        "audio/enemy_alert_1.ogg"
+      ],
+      "volume": 0.7
+    },
+    "ui_click": {
+      "files": [
+        "audio/ui_click_0.ogg",
+        "audio/ui_click_1.ogg"
+      ],
+      "volume": 0.5
+    },
+    "ui_open": {
+      "files": [
+        "audio/ui_open_0.ogg"
+      ],
+      "volume": 0.5
+    },
+    "ui_close": {
+      "files": [
+        "audio/ui_close_0.ogg"
+      ],
+      "volume": 0.5
+    },
+    "ui_error": {
+      "files": [
+        "audio/ui_error_0.ogg"
+      ],
+      "volume": 0.5
+    },
+    "ui_confirm": {
+      "files": [
+        "audio/ui_confirm_0.ogg"
+      ],
+      "volume": 0.5
+    },
+    "level_up": {
+      "files": [
+        "audio/level_up_0.ogg"
+      ],
+      "volume": 0.8
+    },
+    "quest_accept": {
+      "files": [
+        "audio/quest_accept_0.ogg"
+      ],
+      "volume": 0.7
+    },
+    "quest_done": {
+      "files": [
+        "audio/quest_done_0.ogg"
+      ],
+      "volume": 0.8
+    },
+    "game_over": {
+      "files": [
+        "audio/game_over_0.ogg"
+      ],
+      "volume": 0.8
+    },
+    "amb_wind": {
+      "files": [
+        "audio/amb_wind_0.ogg"
+      ],
+      "volume": 0.35,
+      "loop": true
+    },
+    "amb_river": {
+      "files": [
+        "audio/amb_river_0.ogg"
+      ],
+      "volume": 0.5,
+      "loop": true
+    },
+    "amb_fire": {
+      "files": [
+        "audio/amb_fire_0.ogg"
+      ],
+      "volume": 0.6,
+      "loop": true
+    },
+    "bird": {
+      "files": [
+        "audio/bird_0.ogg"
+      ],
+      "volume": 0.4
+    }
+  },
+  "music": {
+    "menu": {
+      "file": "music/menu.ogg",
+      "duration": 78.6
+    },
+    "village": {
+      "file": "music/village.ogg",
+      "duration": 72
+    },
+    "explore": {
+      "file": "music/explore.ogg",
+      "duration": 96
+    },
+    "ruins": {
+      "file": "music/ruins.ogg",
+      "duration": 48
+    },
+    "combat": {
+      "file": "music/combat.ogg",
+      "duration": 32
+    },
+    "boss": {
+      "file": "music/boss.ogg",
+      "duration": 63.5
+    }
+  }
+}

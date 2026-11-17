@@ -1,0 +1,5 @@
+{
+  "common":   { "gold": [3, 9],   "rolls": 1, "table": [["bone_fragment", 50], ["health_potion", 18], ["mana_potion", 10], ["old_coin", 8], ["nothing", 40]] },
+  "uncommon": { "gold": [8, 20],  "rolls": 2, "table": [["bone_fragment", 30], ["health_potion", 25], ["mana_potion", 18], ["old_coin", 15], ["iron_axe", 4], ["round_shield", 5], ["bone_ring", 3], ["dagger", 4], ["nothing", 25]] },
+  "boss":     { "gold": [150, 220], "rolls": 3, "table": [["big_health_potion", 30], ["battle_axe", 20], ["ring_vigor", 20], ["old_coin", 30]], "guaranteed": ["battle_axe"] }
+}

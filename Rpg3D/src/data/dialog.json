@@ -1,0 +1,42 @@
+{
+  "elder": {
+    "name": "Bilge Ozan",
+    "greet": "Hoş geldin yolcu. Gölge Vadisi eskisi gibi değil...",
+    "offer": {
+      "q1_bones": "Geceleri mezarlar boşalıyor. Doğu tarlasında kemikleri takırdayan ölüler dolaşıyor. Beşini toprağa geri gönder, karşılığını vereyim.",
+      "q2_amulet": "Kemiklerin geri döndüğü gece tılsımımı kaybettim. Kuzey ormanındaki kampa götürdüler, eminim. Onu bulursan, sana köyün en sağlam kalkanını veririm.",
+      "q3_lord": "Tılsım titriyor... Harabelerde Kemik Lordu uyanmış. Ölüleri o kaldırıyor. Onu durdurmazsak vadi düşer."
+    },
+    "active": {
+      "q1_bones": "Doğu yolunu izle, tarlada onları göreceksin. Dikkat et, bazıları yerde yatıyormuş gibi yapıyor.",
+      "q2_amulet": "Kuzey yolundan ormana gir. Kamp yolun sonunda.",
+      "q3_lord": "Harabeler kuzeydoğuda, doğu yolunun ucunda. Can iksirlerini unutma."
+    },
+    "complete": {
+      "q1_bones": "Kemik tozu üstüne başına bulaşmış ama sağsın! Al, bunlar senin.",
+      "q2_amulet": "Tılsımım! Sıcaklığını hissediyorum... Sana borçluyum.",
+      "q3_lord": "Vadi yeniden nefes alıyor. Adın şarkılarda anılacak, kahraman."
+    },
+    "done": "Vadi sana minnettar. Dinlen biraz, ateşin başına otur.",
+    "accept": "Kabul ediyorum",
+    "decline": "Şimdilik hayır",
+    "turnIn": "Görevi teslim et",
+    "bye": "Hoşça kal"
+  },
+  "merchant": {
+    "name": "Tüccar Leyla",
+    "greet": "Bak, dokun, satın al! Kemik parçası da alırım, sormadan.",
+    "trade": "Alışveriş yap",
+    "bye": "Hoşça kal"
+  },
+  "smith": {
+    "name": "Demirci Kaan",
+    "greet": "Kılıcın körelmiş. Harabelere gidiyorsan iyi bir kalkan bul, iskelet büyücüleri uzaktan vurur.",
+    "bye": "Hoşça kal"
+  },
+  "villager": {
+    "name": "Çiftçi Ayla",
+    "greet": "Sağ tıkla blok yapabilirsin, Q ile ateş topu atarsın. Kocam öyle diyordu... iskeletler onu kovalayana kadar.",
+    "bye": "Hoşça kal"
+  }
+}

@@ -22,3 +22,9 @@ saves/
 # Oyuncunun kontrol ayarlari (tus atamalari, fare hassasiyeti).
 # Kisiye ozel; depoya girmemeli. Dosya yoksa varsayilanlar kullaniliyor.
 config/
+
+# Rpg3D (Three.js oyunu): bagimliliklar, derleme ciktisi, asset indirme onbellegi
+Rpg3D/node_modules/
+Rpg3D/dist/
+Rpg3D/.cache/
+Rpg3D/test-results/

@@ -1,0 +1,28 @@
+[
+  {
+    "id": "q1_bones",
+    "name": "Huzursuz Kemikler",
+    "giver": "elder",
+    "summary": "Köyün doğusundaki tarlada iskeletler dolaşıyor. Beş tanesini yok et.",
+    "objectives": [{ "type": "kill", "target": "skeleton", "count": 5, "text": "İskelet yok et" }],
+    "reward": { "xp": 160, "gold": 60, "items": [["health_potion", 3]] },
+    "next": "q2_amulet"
+  },
+  {
+    "id": "q2_amulet",
+    "name": "Kayıp Tılsım",
+    "giver": "elder",
+    "summary": "Bilge Ozan'ın tılsımı kuzey ormanındaki iskelet kampında bir sandıkta. Onu geri getir.",
+    "objectives": [{ "type": "collect", "item": "amulet_elder", "count": 1, "text": "Tılsımı bul" }],
+    "reward": { "xp": 280, "gold": 90, "items": [["badge_shield", 1], ["mana_potion", 2]] },
+    "next": "q3_lord"
+  },
+  {
+    "id": "q3_lord",
+    "name": "Kemik Lordu",
+    "giver": "elder",
+    "summary": "Bütün bu iskeletleri kuzeydoğudaki harabelerde uyanan Kemik Lordu kaldırıyor. Onu yen ve vadiye huzuru geri getir.",
+    "objectives": [{ "type": "kill", "target": "bone_lord", "count": 1, "text": "Kemik Lordu'nu yen" }],
+    "reward": { "xp": 700, "gold": 300, "items": [["great_sword", 1]] }
+  }
+]

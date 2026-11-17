@@ -1,0 +1,18 @@
+{
+  "rusty_sword":      { "name": "Paslı Kılıç", "type": "weapon", "rarity": "common", "model": "w_sword_1handed", "damage": 10, "speed": 1.0, "value": 10, "desc": "Köyün eski muhafızından kalma. Hâlâ keser." },
+  "dagger":           { "name": "Hançer", "type": "weapon", "rarity": "common", "model": "w_dagger", "damage": 8, "speed": 1.35, "value": 18, "desc": "Hafif ve hızlı." },
+  "iron_axe":         { "name": "Demir Balta", "type": "weapon", "rarity": "uncommon", "model": "w_axe_1handed", "damage": 14, "speed": 0.9, "value": 45, "desc": "Kemik kırmak için ideal." },
+  "great_sword":      { "name": "Kahraman Kılıcı", "type": "weapon", "rarity": "rare", "model": "w_sword_2handed", "twoHanded": true, "damage": 28, "speed": 0.8, "value": 220, "desc": "İki elle kavranan, efsanevi bir kılıç." },
+  "battle_axe":       { "name": "Savaş Baltası", "type": "weapon", "rarity": "rare", "model": "w_axe_2handed", "twoHanded": true, "damage": 32, "speed": 0.72, "value": 260, "desc": "Ağır. Çok ağır." },
+  "round_shield":     { "name": "Yuvarlak Kalkan", "type": "shield", "rarity": "common", "model": "w_shield_round", "armor": 4, "block": 0.6, "value": 12, "desc": "Tahta ve demir." },
+  "badge_shield":     { "name": "Armalı Kalkan", "type": "shield", "rarity": "uncommon", "model": "w_shield_badge", "armor": 8, "block": 0.75, "value": 70, "desc": "Köy muhafızlarının arması işli." },
+  "spike_shield":     { "name": "Dikenli Kalkan", "type": "shield", "rarity": "rare", "model": "w_shield_spikes", "armor": 12, "block": 0.85, "value": 160, "desc": "Bloklarken saldıranı da yaralar." },
+  "bone_ring":        { "name": "Kemik Yüzük", "type": "ring", "rarity": "uncommon", "damageBonus": 3, "value": 40, "desc": "+3 hasar." },
+  "ring_vigor":       { "name": "Dirilik Yüzüğü", "type": "ring", "rarity": "rare", "hpBonus": 40, "value": 120, "desc": "+40 can." },
+  "amulet_elder":     { "name": "Bilge'nin Tılsımı", "type": "quest", "rarity": "rare", "value": 0, "desc": "Yaşlı Bilge Ozan'ın kayıp tılsımı. Hafifçe parlıyor." },
+  "health_potion":    { "name": "Can İksiri", "type": "consumable", "rarity": "common", "heal": 45, "value": 15, "stack": 20, "model": "d_bottle_a_labeled_brown", "desc": "45 can yeniler." },
+  "big_health_potion":{ "name": "Büyük Can İksiri", "type": "consumable", "rarity": "uncommon", "heal": 120, "value": 45, "stack": 20, "model": "d_bottle_c_brown", "desc": "120 can yeniler." },
+  "mana_potion":      { "name": "Mana İksiri", "type": "consumable", "rarity": "common", "mana": 50, "value": 15, "stack": 20, "model": "d_bottle_a_green", "desc": "50 mana yeniler." },
+  "bone_fragment":    { "name": "Kemik Parçası", "type": "junk", "rarity": "common", "value": 3, "stack": 50, "desc": "Tüccar bunları bir şekilde satıyor." },
+  "old_coin":         { "name": "Eski Sikke", "type": "junk", "rarity": "uncommon", "value": 12, "stack": 50, "model": "d_coin", "desc": "Unutulmuş bir krallığın parası." }
+}
