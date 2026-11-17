@@ -117,6 +117,35 @@ enum Cmd {
         #[arg(long, short, required = true, num_args = 1..)]
         input: Vec<PathBuf>,
     },
+    /// Derle-çalıştır değerlendirmesi: model fonksiyon yazar, rustc/python ile test edilir (pass@k).
+    Bench {
+        /// Eğitim klasörü (`--check-solutions` ile gerekmez).
+        #[arg(long, short)]
+        run: Option<PathBuf>,
+        #[arg(long)]
+        weights: Option<PathBuf>,
+        #[arg(long, default_value = "auto")]
+        backend: String,
+        /// Görev klasörü (*.toml).
+        #[arg(long, default_value = "benchmarks")]
+        suite: PathBuf,
+        /// Görev başına örnek sayısı (pass@k için; >1 ise --temperature 0.8 önerilir).
+        #[arg(long, default_value_t = 1)]
+        samples: usize,
+        #[arg(long, default_value_t = 0.2)]
+        temperature: f32,
+        #[arg(long, default_value_t = 256)]
+        max_tokens: usize,
+        /// Yalnızca bu dil (rust | python).
+        #[arg(long)]
+        lang: Option<String>,
+        /// Model yerine referans çözümleri test et (düzeneğin kendi kontrolü).
+        #[arg(long)]
+        check_solutions: bool,
+        /// Program başına zaman aşımı (saniye).
+        #[arg(long, default_value_t = 10)]
+        timeout: u64,
+    },
     /// Yapılandırmanın parametre sayısı ve VRAM tahmini.
     Info {
         #[arg(long, short, required = true, num_args = 1..)]
@@ -398,6 +427,112 @@ fn main() -> Result<()> {
             if !all.is_empty() {
                 let mean = (all.iter().sum::<f32>() / all.len() as f32).exp();
                 println!("ortalama perplexity: {mean:.2} ({} dosya)", all.len());
+            }
+        }
+        Cmd::Bench {
+            run,
+            weights,
+            backend,
+            suite,
+            samples,
+            temperature,
+            max_tokens,
+            lang,
+            check_solutions,
+            timeout,
+        } => {
+            use sosis_bench::{evaluate, function_end, load_suites, Lang};
+            let mut suites = load_suites(&suite)?;
+            if let Some(l) = lang {
+                let want = match l.as_str() {
+                    "rust" | "rs" => Lang::Rust,
+                    "python" | "py" => Lang::Python,
+                    other => anyhow::bail!("bilinmeyen dil: {other}"),
+                };
+                suites.retain(|s| s.lang == want);
+            }
+            let n_tasks: usize = suites.iter().map(|s| s.tasks.len()).sum();
+            let generator = if check_solutions {
+                eprintln!("referans çözümler test ediliyor ({n_tasks} görev)");
+                None
+            } else {
+                let run = run.context("--run verin (veya --check-solutions)")?;
+                let g = Generator::load(
+                    &run,
+                    &LoadOptions {
+                        weights,
+                        backend,
+                        context: None,
+                    },
+                )?;
+                eprintln!("✓ {} — {n_tasks} görev x {samples} örnek", g.config.name);
+                Some((g, run))
+            };
+            let t0 = Instant::now();
+            let report = evaluate(
+                &suites,
+                samples,
+                std::time::Duration::from_secs(timeout),
+                |suite, task, sample| match &generator {
+                    None => task.solution.clone(),
+                    Some((g, _)) => {
+                        let params = SamplingParams {
+                            temperature,
+                            max_new_tokens: max_tokens,
+                            seed: 1000 + sample as u64,
+                            ..Default::default()
+                        };
+                        g.complete_until(&task.prompt, Some(&suite.file), &params, &mut |out| {
+                            function_end(suite.lang, &task.prompt, out)
+                        })
+                    }
+                },
+                |r| {
+                    let mark = if r.passed == r.samples {
+                        "✓"
+                    } else if r.passed > 0 {
+                        "~"
+                    } else {
+                        "✗"
+                    };
+                    let err = r.first_error.as_deref().unwrap_or("");
+                    println!(
+                        "{mark} {:?}/{:<18} {}/{}  {err}",
+                        r.suite, r.id, r.passed, r.samples
+                    );
+                },
+            )?;
+            let mut summary = String::new();
+            for (name, l) in [
+                ("toplam", None),
+                ("rust", Some(Lang::Rust)),
+                ("python", Some(Lang::Python)),
+            ] {
+                if !report
+                    .results
+                    .iter()
+                    .any(|r| l.is_none_or(|l| r.suite == l))
+                {
+                    continue;
+                }
+                let mut line = format!("{name:>7}: pass@1 {:5.1}%", 100.0 * report.pass_at(1, l));
+                if samples >= 5 {
+                    line += &format!("  pass@5 {:5.1}%", 100.0 * report.pass_at(5, l));
+                }
+                if samples > 1 && samples != 5 {
+                    line += &format!(
+                        "  pass@{samples} {:5.1}%",
+                        100.0 * report.pass_at(samples, l)
+                    );
+                }
+                summary.push_str(&line);
+                summary.push('\n');
+            }
+            println!("\n{summary}— {:.0}s", t0.elapsed().as_secs_f32());
+            if let Some((_, run)) = &generator {
+                let path = run.join("bench.txt");
+                std::fs::write(&path, &summary)?;
+                eprintln!("sonuç kaydedildi: {}", path.display());
             }
         }
         Cmd::Info { config } => {

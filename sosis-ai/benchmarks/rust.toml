@@ -1,0 +1,400 @@
+# Sosis AI derle-çalıştır görevleri (Rust).
+# prompt: modele verilen başlangıç (açıklama + imza). solution: referans devam (düzeneğin kendini testi için).
+# tests: programın sonuna eklenen `main`; panik / sıfır olmayan çıkış = başarısız.
+lang = "rust"
+file = "main.rs"
+
+[[task]]
+id = "fibonacci"
+prompt = """/// n'inci Fibonacci sayısını döndürür: fib(0) = 0, fib(1) = 1.
+fn fibonacci(n: u64) -> u64 {
+"""
+solution = """    let (mut a, mut b) = (0u64, 1u64);
+    for _ in 0..n {
+        let t = a + b;
+        a = b;
+        b = t;
+    }
+    a
+}
+"""
+tests = """fn main() {
+    assert_eq!(fibonacci(0), 0);
+    assert_eq!(fibonacci(1), 1);
+    assert_eq!(fibonacci(10), 55);
+    assert_eq!(fibonacci(30), 832040);
+}
+"""
+
+[[task]]
+id = "is_prime"
+prompt = """/// Sayının asal olup olmadığını döndürür.
+fn is_prime(n: u64) -> bool {
+"""
+solution = """    if n < 2 {
+        return false;
+    }
+    let mut i = 2;
+    while i * i <= n {
+        if n % i == 0 {
+            return false;
+        }
+        i += 1;
+    }
+    true
+}
+"""
+tests = """fn main() {
+    assert!(!is_prime(0));
+    assert!(!is_prime(1));
+    assert!(is_prime(2));
+    assert!(is_prime(97));
+    assert!(!is_prime(91));
+    assert!(is_prime(7919));
+}
+"""
+
+[[task]]
+id = "gcd"
+prompt = """/// İki sayının en büyük ortak bölenini döndürür.
+fn gcd(a: u64, b: u64) -> u64 {
+"""
+solution = """    if b == 0 { a } else { gcd(b, a % b) }
+}
+"""
+tests = """fn main() {
+    assert_eq!(gcd(12, 18), 6);
+    assert_eq!(gcd(17, 5), 1);
+    assert_eq!(gcd(0, 9), 9);
+    assert_eq!(gcd(100, 75), 25);
+}
+"""
+
+[[task]]
+id = "reverse_string"
+prompt = """/// Metni ters çevirir (Unicode karakterlerine göre).
+fn reverse_string(s: &str) -> String {
+"""
+solution = """    s.chars().rev().collect()
+}
+"""
+tests = """fn main() {
+    assert_eq!(reverse_string("abc"), "cba");
+    assert_eq!(reverse_string(""), "");
+    assert_eq!(reverse_string("sosis"), "sisos");
+    assert_eq!(reverse_string("çğü"), "üğç");
+}
+"""
+
+[[task]]
+id = "is_palindrome"
+prompt = """/// Harf ve rakamlar dışındakileri yok sayarak, büyük/küçük harf ayırmadan palindrom mu?
+fn is_palindrome(s: &str) -> bool {
+"""
+solution = """    let v: Vec<char> = s
+        .chars()
+        .filter(|c| c.is_alphanumeric())
+        .flat_map(|c| c.to_lowercase())
+        .collect();
+    v.iter().eq(v.iter().rev())
+}
+"""
+tests = """fn main() {
+    assert!(is_palindrome("A man, a plan, a canal: Panama"));
+    assert!(is_palindrome(""));
+    assert!(!is_palindrome("hello"));
+    assert!(is_palindrome("No 'x' in Nixon"));
+}
+"""
+
+[[task]]
+id = "factorial"
+prompt = """/// n! değerini döndürür.
+fn factorial(n: u64) -> u64 {
+"""
+solution = """    (1..=n).product()
+}
+"""
+tests = """fn main() {
+    assert_eq!(factorial(0), 1);
+    assert_eq!(factorial(1), 1);
+    assert_eq!(factorial(5), 120);
+    assert_eq!(factorial(15), 1307674368000);
+}
+"""
+
+[[task]]
+id = "sum_of_evens"
+prompt = """/// Dizideki çift sayıların toplamını döndürür.
+fn sum_of_evens(xs: &[i64]) -> i64 {
+"""
+solution = """    xs.iter().filter(|x| *x % 2 == 0).sum()
+}
+"""
+tests = """fn main() {
+    assert_eq!(sum_of_evens(&[1, 2, 3, 4]), 6);
+    assert_eq!(sum_of_evens(&[]), 0);
+    assert_eq!(sum_of_evens(&[-2, -3, 5]), -2);
+}
+"""
+
+[[task]]
+id = "max_element"
+prompt = """/// Dizinin en büyük elemanını döndürür; dizi boşsa None.
+fn max_element(xs: &[i32]) -> Option<i32> {
+"""
+solution = """    xs.iter().copied().max()
+}
+"""
+tests = """fn main() {
+    assert_eq!(max_element(&[3, 9, 2]), Some(9));
+    assert_eq!(max_element(&[]), None);
+    assert_eq!(max_element(&[-5, -1, -7]), Some(-1));
+}
+"""
+
+[[task]]
+id = "count_vowels"
+prompt = """/// İngilizce sesli harfleri (a, e, i, o, u; büyük/küçük) sayar.
+fn count_vowels(s: &str) -> usize {
+"""
+solution = """    s.chars().filter(|c| "aeiouAEIOU".contains(*c)).count()
+}
+"""
+tests = """fn main() {
+    assert_eq!(count_vowels("hello"), 2);
+    assert_eq!(count_vowels("AEIOU xyz"), 5);
+    assert_eq!(count_vowels(""), 0);
+}
+"""
+
+[[task]]
+id = "fizzbuzz"
+prompt = """/// 3'e bölünürse "Fizz", 5'e bölünürse "Buzz", ikisine de bölünürse "FizzBuzz", değilse sayının kendisi.
+fn fizzbuzz(n: u32) -> String {
+"""
+solution = """    match (n % 3, n % 5) {
+        (0, 0) => "FizzBuzz".to_string(),
+        (0, _) => "Fizz".to_string(),
+        (_, 0) => "Buzz".to_string(),
+        _ => n.to_string(),
+    }
+}
+"""
+tests = """fn main() {
+    assert_eq!(fizzbuzz(1), "1");
+    assert_eq!(fizzbuzz(3), "Fizz");
+    assert_eq!(fizzbuzz(10), "Buzz");
+    assert_eq!(fizzbuzz(15), "FizzBuzz");
+}
+"""
+
+[[task]]
+id = "binary_search"
+prompt = """/// Sıralı dizide hedefin indeksini ikili arama ile bulur; yoksa None.
+fn binary_search(xs: &[i32], target: i32) -> Option<usize> {
+"""
+solution = """    let (mut lo, mut hi) = (0usize, xs.len());
+    while lo < hi {
+        let mid = (lo + hi) / 2;
+        if xs[mid] == target {
+            return Some(mid);
+        } else if xs[mid] < target {
+            lo = mid + 1;
+        } else {
+            hi = mid;
+        }
+    }
+    None
+}
+"""
+tests = """fn main() {
+    let v = [1, 3, 5, 7, 9, 11];
+    assert_eq!(binary_search(&v, 7), Some(3));
+    assert_eq!(binary_search(&v, 1), Some(0));
+    assert_eq!(binary_search(&v, 4), None);
+    assert_eq!(binary_search(&[], 4), None);
+}
+"""
+
+[[task]]
+id = "sort_desc"
+prompt = """/// Vektörü büyükten küçüğe sıralanmış olarak döndürür.
+fn sort_desc(mut v: Vec<i32>) -> Vec<i32> {
+"""
+solution = """    v.sort_by(|a, b| b.cmp(a));
+    v
+}
+"""
+tests = """fn main() {
+    assert_eq!(sort_desc(vec![3, 1, 2]), vec![3, 2, 1]);
+    assert_eq!(sort_desc(vec![]), Vec::<i32>::new());
+    assert_eq!(sort_desc(vec![5, 5, -1]), vec![5, 5, -1]);
+}
+"""
+
+[[task]]
+id = "word_count"
+prompt = """/// Boşluklarla ayrılmış kelime sayısını döndürür.
+fn word_count(s: &str) -> usize {
+"""
+solution = """    s.split_whitespace().count()
+}
+"""
+tests = """fn main() {
+    assert_eq!(word_count("merhaba dünya"), 2);
+    assert_eq!(word_count("   "), 0);
+    assert_eq!(word_count(" bir  iki\\tüç\\n"), 3);
+}
+"""
+
+[[task]]
+id = "power"
+prompt = """/// base üssü exp değerini döndürür (hızlı üs alma).
+fn power(base: u64, exp: u32) -> u64 {
+"""
+solution = """    let (mut result, mut b, mut e) = (1u64, base, exp);
+    while e > 0 {
+        if e & 1 == 1 {
+            result *= b;
+        }
+        e >>= 1;
+        if e > 0 {
+            b *= b;
+        }
+    }
+    result
+}
+"""
+tests = """fn main() {
+    assert_eq!(power(2, 10), 1024);
+    assert_eq!(power(7, 0), 1);
+    assert_eq!(power(3, 13), 1594323);
+}
+"""
+
+[[task]]
+id = "is_anagram"
+prompt = """/// İki kelime birbirinin anagramı mı? (büyük/küçük harf ayrımı yok)
+fn is_anagram(a: &str, b: &str) -> bool {
+"""
+solution = """    let norm = |s: &str| {
+        let mut v: Vec<char> = s.to_lowercase().chars().collect();
+        v.sort();
+        v
+    };
+    norm(a) == norm(b)
+}
+"""
+tests = """fn main() {
+    assert!(is_anagram("Listen", "Silent"));
+    assert!(!is_anagram("abc", "abd"));
+    assert!(is_anagram("", ""));
+}
+"""
+
+[[task]]
+id = "remove_duplicates"
+prompt = """/// Tekrar eden elemanları, ilk görülme sırasını koruyarak çıkarır.
+fn remove_duplicates(v: Vec<i32>) -> Vec<i32> {
+"""
+solution = """    let mut seen = std::collections::HashSet::new();
+    v.into_iter().filter(|x| seen.insert(*x)).collect()
+}
+"""
+tests = """fn main() {
+    assert_eq!(remove_duplicates(vec![1, 2, 1, 3, 2]), vec![1, 2, 3]);
+    assert_eq!(remove_duplicates(vec![]), Vec::<i32>::new());
+    assert_eq!(remove_duplicates(vec![4, 4, 4]), vec![4]);
+}
+"""
+
+[[task]]
+id = "caesar"
+prompt = """/// Sezar şifresi: İngilizce harfleri `shift` kadar kaydırır, büyük/küçük harfi korur, diğerlerini değiştirmez.
+fn caesar(s: &str, shift: u8) -> String {
+"""
+solution = """    s.chars()
+        .map(|c| {
+            if c.is_ascii_lowercase() {
+                (((c as u8 - b'a' + shift) % 26) + b'a') as char
+            } else if c.is_ascii_uppercase() {
+                (((c as u8 - b'A' + shift) % 26) + b'A') as char
+            } else {
+                c
+            }
+        })
+        .collect()
+}
+"""
+tests = """fn main() {
+    assert_eq!(caesar("abc", 1), "bcd");
+    assert_eq!(caesar("xyz", 3), "abc");
+    assert_eq!(caesar("Hello, World!", 13), "Uryyb, Jbeyq!");
+}
+"""
+
+[[task]]
+id = "digit_sum"
+prompt = """/// Sayının rakamları toplamını döndürür.
+fn digit_sum(mut n: u64) -> u64 {
+"""
+solution = """    let mut s = 0;
+    while n > 0 {
+        s += n % 10;
+        n /= 10;
+    }
+    s
+}
+"""
+tests = """fn main() {
+    assert_eq!(digit_sum(0), 0);
+    assert_eq!(digit_sum(12345), 15);
+    assert_eq!(digit_sum(9999), 36);
+}
+"""
+
+[[task]]
+id = "transpose"
+prompt = """/// Dikdörtgen bir matrisin devriğini (transpose) döndürür.
+fn transpose(m: &[Vec<i32>]) -> Vec<Vec<i32>> {
+"""
+solution = """    if m.is_empty() {
+        return vec![];
+    }
+    (0..m[0].len())
+        .map(|j| m.iter().map(|row| row[j]).collect())
+        .collect()
+}
+"""
+tests = """fn main() {
+    assert_eq!(transpose(&[vec![1, 2, 3], vec![4, 5, 6]]), vec![vec![1, 4], vec![2, 5], vec![3, 6]]);
+    assert_eq!(transpose(&[]), Vec::<Vec<i32>>::new());
+}
+"""
+
+[[task]]
+id = "balanced_brackets"
+prompt = """/// (), [] ve {} parantezleri dengeli mi? Diğer karakterler yok sayılır.
+fn balanced_brackets(s: &str) -> bool {
+"""
+solution = """    let mut stack = Vec::new();
+    for c in s.chars() {
+        match c {
+            '(' | '[' | '{' => stack.push(c),
+            ')' => if stack.pop() != Some('(') { return false; },
+            ']' => if stack.pop() != Some('[') { return false; },
+            '}' => if stack.pop() != Some('{') { return false; },
+            _ => {}
+        }
+    }
+    stack.is_empty()
+}
+"""
+tests = """fn main() {
+    assert!(balanced_brackets("fn a() { let x = [1, (2)]; }"));
+    assert!(!balanced_brackets("(]"));
+    assert!(!balanced_brackets("(("));
+    assert!(balanced_brackets(""));
+}
+"""

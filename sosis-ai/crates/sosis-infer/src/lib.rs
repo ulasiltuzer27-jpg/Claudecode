@@ -202,29 +202,71 @@ impl Generator {
         params: &SamplingParams,
         on_text: &mut impl FnMut(&str),
     ) -> String {
+        self.stream_until(ids, params, on_text, &mut |_| None)
+    }
+
+    /// Hazır token dizisinden akışlı üretim. `until(çıktı)` bir kesme noktası döndürürse üretim
+    /// durur ve çıktı oraya kadar kesilir. `params.stop` dizileri de ayrıca uygulanır.
+    pub fn stream_until(
+        &self,
+        ids: &[u32],
+        params: &SamplingParams,
+        on_text: &mut dyn FnMut(&str),
+        until: &mut dyn FnMut(&str) -> Option<usize>,
+    ) -> String {
         let mut dec = StreamDecoder::default();
         let mut out = String::new();
-        self.generate_ids(ids, params, |id| {
-            let piece = dec.push(&self.tokenizer, id);
-            if !piece.is_empty() {
-                on_text(&piece);
-                out.push_str(&piece);
-            }
-            !params
+        let mut cut: Option<usize> = None;
+        let stop_at = |out: &str| {
+            params
                 .stop
                 .iter()
-                .any(|s| !s.is_empty() && out.contains(s.as_str()))
+                .filter(|s| !s.is_empty())
+                .filter_map(|s| out.find(s.as_str()))
+                .min()
+        };
+        self.generate_ids(ids, params, |id| {
+            let piece = dec.push(&self.tokenizer, id);
+            if piece.is_empty() {
+                return true;
+            }
+            out.push_str(&piece);
+            if let Some(c) = until(&out).or_else(|| stop_at(&out)) {
+                // Yalnızca kesme noktasına kadar olan kısmı akıt.
+                let shown = out.len() - piece.len();
+                if c > shown {
+                    on_text(&out[shown..c]);
+                }
+                cut = Some(c);
+                return false;
+            }
+            on_text(&piece);
+            true
         });
-        if let Some(cut) = params
-            .stop
-            .iter()
-            .filter(|s| !s.is_empty())
-            .filter_map(|s| out.find(s.as_str()))
-            .min()
-        {
-            out.truncate(cut);
+        if let Some(c) = cut.or_else(|| stop_at(&out)) {
+            out.truncate(c);
         }
         out
+    }
+
+    /// Kod tamamlama; `until` (ör. "fonksiyon bitti mi?") bir kesme noktası verince durur.
+    pub fn complete_until(
+        &self,
+        prompt: &str,
+        file: Option<&str>,
+        params: &SamplingParams,
+        until: &mut dyn FnMut(&str) -> Option<usize>,
+    ) -> String {
+        let mut ids = self.header(file);
+        ids.extend(self.tokenizer.encode(prompt));
+        self.stream_until(&ids, params, &mut |_| {}, until)
+    }
+
+    /// Belge başlığı + metin → token'lar (`<|file_sep|>dosya\n...`).
+    pub fn encode_prompt(&self, prompt: &str, file: Option<&str>) -> Vec<u32> {
+        let mut ids = self.header(file);
+        ids.extend(self.tokenizer.encode(prompt));
+        ids
     }
 
     /// Bir metnin modele göre perplexity'si (değerlendirme için).

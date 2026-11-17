@@ -1,0 +1,11 @@
+[package]
+name = "sosis-bench"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Sosy modelleri için derle-çalıştır değerlendirmesi (pass@k)"
+
+[dependencies]
+serde = { workspace = true }
+toml = { workspace = true }
+anyhow = { workspace = true }

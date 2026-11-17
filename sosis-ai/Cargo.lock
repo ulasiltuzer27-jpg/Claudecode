@@ -5536,11 +5536,21 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8c63890bd112432d974bab5e562a256e2ea23c6b690c02f0e2210d774e6ead2b"
 
 [[package]]
+name = "sosis-bench"
+version = "1.0.0"
+dependencies = [
+ "anyhow",
+ "serde",
+ "toml 0.8.23",
+]
+
+[[package]]
 name = "sosis-cli"
 version = "1.0.0"
 dependencies = [
  "anyhow",
  "clap",
+ "sosis-bench",
  "sosis-data",
  "sosis-infer",
  "sosis-model",

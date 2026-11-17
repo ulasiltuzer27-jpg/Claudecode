@@ -20,5 +20,6 @@ sosis-data = { workspace = true }
 sosis-model = { workspace = true, default-features = false }
 sosis-train = { workspace = true }
 sosis-infer = { workspace = true }
+sosis-bench = { workspace = true }
 anyhow = { workspace = true }
 clap = { workspace = true }

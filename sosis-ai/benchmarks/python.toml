@@ -1,0 +1,333 @@
+# Sosis AI derle-çalıştır görevleri (Python).
+# prompt: modele verilen başlangıç (imza + docstring). solution: referans gövde.
+# tests: programın sonuna eklenen assert'ler; hata / sıfır olmayan çıkış = başarısız.
+lang = "python"
+file = "main.py"
+
+[[task]]
+id = "fibonacci"
+prompt = '''def fibonacci(n):
+    """n'inci Fibonacci sayısını döndürür: fibonacci(0) == 0, fibonacci(1) == 1."""
+'''
+solution = '''    a, b = 0, 1
+    for _ in range(n):
+        a, b = b, a + b
+    return a
+'''
+tests = '''
+assert fibonacci(0) == 0
+assert fibonacci(1) == 1
+assert fibonacci(10) == 55
+assert fibonacci(30) == 832040
+'''
+
+[[task]]
+id = "is_prime"
+prompt = '''def is_prime(n):
+    """Sayı asal ise True döndürür."""
+'''
+solution = '''    if n < 2:
+        return False
+    i = 2
+    while i * i <= n:
+        if n % i == 0:
+            return False
+        i += 1
+    return True
+'''
+tests = '''
+assert not is_prime(1)
+assert is_prime(2)
+assert is_prime(97)
+assert not is_prime(91)
+'''
+
+[[task]]
+id = "gcd"
+prompt = '''def gcd(a, b):
+    """İki tam sayının en büyük ortak bölenini döndürür."""
+'''
+solution = '''    while b:
+        a, b = b, a % b
+    return a
+'''
+tests = '''
+assert gcd(12, 18) == 6
+assert gcd(17, 5) == 1
+assert gcd(0, 9) == 9
+'''
+
+[[task]]
+id = "reverse_words"
+prompt = '''def reverse_words(s):
+    """Cümledeki kelimelerin sırasını ters çevirir; kelimeler tek boşlukla birleştirilir."""
+'''
+solution = '''    return " ".join(reversed(s.split()))
+'''
+tests = '''
+assert reverse_words("merhaba güzel dünya") == "dünya güzel merhaba"
+assert reverse_words("  a  b ") == "b a"
+assert reverse_words("") == ""
+'''
+
+[[task]]
+id = "is_palindrome"
+prompt = '''def is_palindrome(s):
+    """Harf ve rakam dışındakileri yok sayarak, büyük/küçük harf ayırmadan palindrom mu?"""
+'''
+solution = '''    t = [c.lower() for c in s if c.isalnum()]
+    return t == t[::-1]
+'''
+tests = '''
+assert is_palindrome("A man, a plan, a canal: Panama")
+assert is_palindrome("")
+assert not is_palindrome("hello")
+'''
+
+[[task]]
+id = "flatten"
+prompt = '''def flatten(xs):
+    """İç içe listeleri (her derinlikte) tek düz listeye çevirir."""
+'''
+solution = '''    out = []
+    for x in xs:
+        if isinstance(x, list):
+            out.extend(flatten(x))
+        else:
+            out.append(x)
+    return out
+'''
+tests = '''
+assert flatten([1, [2, [3, [4]]], 5]) == [1, 2, 3, 4, 5]
+assert flatten([]) == []
+assert flatten([[[]]]) == []
+'''
+
+[[task]]
+id = "char_frequency"
+prompt = '''def char_frequency(s):
+    """Her karakterin kaç kez geçtiğini sözlük olarak döndürür."""
+'''
+solution = '''    d = {}
+    for c in s:
+        d[c] = d.get(c, 0) + 1
+    return d
+'''
+tests = '''
+assert char_frequency("aab") == {"a": 2, "b": 1}
+assert char_frequency("") == {}
+'''
+
+[[task]]
+id = "median"
+prompt = '''def median(xs):
+    """Sayı listesinin medyanını döndürür (çift uzunlukta ortadaki iki değerin ortalaması)."""
+'''
+solution = '''    s = sorted(xs)
+    n = len(s)
+    if n % 2 == 1:
+        return s[n // 2]
+    return (s[n // 2 - 1] + s[n // 2]) / 2
+'''
+tests = '''
+assert median([3, 1, 2]) == 2
+assert median([4, 1, 3, 2]) == 2.5
+assert median([7]) == 7
+'''
+
+[[task]]
+id = "to_roman"
+prompt = '''def to_roman(n):
+    """1..3999 arası tam sayıyı Roma rakamına çevirir."""
+'''
+solution = '''    vals = [(1000, "M"), (900, "CM"), (500, "D"), (400, "CD"), (100, "C"), (90, "XC"),
+            (50, "L"), (40, "XL"), (10, "X"), (9, "IX"), (5, "V"), (4, "IV"), (1, "I")]
+    out = ""
+    for v, s in vals:
+        while n >= v:
+            out += s
+            n -= v
+    return out
+'''
+tests = '''
+assert to_roman(4) == "IV"
+assert to_roman(1994) == "MCMXCIV"
+assert to_roman(3999) == "MMMCMXCIX"
+'''
+
+[[task]]
+id = "running_sum"
+prompt = '''def running_sum(xs):
+    """Kümülatif toplamlar listesini döndürür: [1, 2, 3] -> [1, 3, 6]."""
+'''
+solution = '''    out, total = [], 0
+    for x in xs:
+        total += x
+        out.append(total)
+    return out
+'''
+tests = '''
+assert running_sum([1, 2, 3]) == [1, 3, 6]
+assert running_sum([]) == []
+assert running_sum([5, -5]) == [5, 0]
+'''
+
+[[task]]
+id = "fizzbuzz"
+prompt = '''def fizzbuzz(n):
+    """3'e bölünürse "Fizz", 5'e "Buzz", ikisine de "FizzBuzz", değilse sayının metin hali."""
+'''
+solution = '''    if n % 15 == 0:
+        return "FizzBuzz"
+    if n % 3 == 0:
+        return "Fizz"
+    if n % 5 == 0:
+        return "Buzz"
+    return str(n)
+'''
+tests = '''
+assert fizzbuzz(1) == "1"
+assert fizzbuzz(9) == "Fizz"
+assert fizzbuzz(20) == "Buzz"
+assert fizzbuzz(45) == "FizzBuzz"
+'''
+
+[[task]]
+id = "binary_search"
+prompt = '''def binary_search(xs, target):
+    """Sıralı listede hedefin indeksini döndürür; yoksa -1."""
+'''
+solution = '''    lo, hi = 0, len(xs) - 1
+    while lo <= hi:
+        mid = (lo + hi) // 2
+        if xs[mid] == target:
+            return mid
+        if xs[mid] < target:
+            lo = mid + 1
+        else:
+            hi = mid - 1
+    return -1
+'''
+tests = '''
+assert binary_search([1, 3, 5, 7], 5) == 2
+assert binary_search([1, 3, 5, 7], 4) == -1
+assert binary_search([], 1) == -1
+'''
+
+[[task]]
+id = "count_words"
+prompt = '''def count_words(text):
+    """Küçük harfe çevrilmiş kelimelerin sayımını sözlük olarak döndürür (boşluğa göre ayrılır)."""
+'''
+solution = '''    d = {}
+    for w in text.lower().split():
+        d[w] = d.get(w, 0) + 1
+    return d
+'''
+tests = '''
+assert count_words("Bir iki bir") == {"bir": 2, "iki": 1}
+assert count_words("") == {}
+'''
+
+[[task]]
+id = "chunk"
+prompt = '''def chunk(xs, size):
+    """Listeyi `size` uzunluğunda parçalara böler; son parça kısa olabilir."""
+'''
+solution = '''    return [xs[i:i + size] for i in range(0, len(xs), size)]
+'''
+tests = '''
+assert chunk([1, 2, 3, 4, 5], 2) == [[1, 2], [3, 4], [5]]
+assert chunk([], 3) == []
+'''
+
+[[task]]
+id = "anagram"
+prompt = '''def is_anagram(a, b):
+    """İki metin birbirinin anagramı mı? (büyük/küçük harf ve boşluk önemsiz)"""
+'''
+solution = '''    norm = lambda s: sorted(s.replace(" ", "").lower())
+    return norm(a) == norm(b)
+'''
+tests = '''
+assert is_anagram("Listen", "Silent")
+assert is_anagram("dormitory", "dirty room")
+assert not is_anagram("abc", "abd")
+'''
+
+[[task]]
+id = "merge_sorted"
+prompt = '''def merge_sorted(a, b):
+    """İki sıralı listeyi tek sıralı listede birleştirir."""
+'''
+solution = '''    i = j = 0
+    out = []
+    while i < len(a) and j < len(b):
+        if a[i] <= b[j]:
+            out.append(a[i]); i += 1
+        else:
+            out.append(b[j]); j += 1
+    return out + a[i:] + b[j:]
+'''
+tests = '''
+assert merge_sorted([1, 4, 7], [2, 3, 8]) == [1, 2, 3, 4, 7, 8]
+assert merge_sorted([], [1]) == [1]
+'''
+
+[[task]]
+id = "digit_sum"
+prompt = '''def digit_sum(n):
+    """Negatif olmayan tam sayının rakamları toplamını döndürür."""
+'''
+solution = '''    return sum(int(c) for c in str(n))
+'''
+tests = '''
+assert digit_sum(0) == 0
+assert digit_sum(12345) == 15
+'''
+
+[[task]]
+id = "transpose"
+prompt = '''def transpose(m):
+    """Dikdörtgen matrisin (liste listesi) devriğini döndürür."""
+'''
+solution = '''    return [list(row) for row in zip(*m)]
+'''
+tests = '''
+assert transpose([[1, 2, 3], [4, 5, 6]]) == [[1, 4], [2, 5], [3, 6]]
+assert transpose([]) == []
+'''
+
+[[task]]
+id = "balanced"
+prompt = '''def balanced(s):
+    """(), [] ve {} parantezleri dengeli mi? Diğer karakterler yok sayılır."""
+'''
+solution = '''    pairs = {")": "(", "]": "[", "}": "{"}
+    stack = []
+    for c in s:
+        if c in "([{":
+            stack.append(c)
+        elif c in pairs:
+            if not stack or stack.pop() != pairs[c]:
+                return False
+    return not stack
+'''
+tests = '''
+assert balanced("f(a[1]) { }")
+assert not balanced("(]")
+assert not balanced("((")
+'''
+
+[[task]]
+id = "snake_to_camel"
+prompt = '''def snake_to_camel(s):
+    """snake_case metni camelCase'e çevirir: "sosis_ai_model" -> "sosisAiModel"."""
+'''
+solution = '''    parts = s.split("_")
+    return parts[0] + "".join(p.capitalize() for p in parts[1:])
+'''
+tests = '''
+assert snake_to_camel("sosis_ai_model") == "sosisAiModel"
+assert snake_to_camel("tek") == "tek"
+'''
