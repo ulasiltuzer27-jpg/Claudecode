@@ -1,0 +1,34 @@
+# Sosy-Tiny — yalnızca CPU'da hızlı deneme / uçtan uca test için.
+
+[model]
+name = "Sosy-Tiny"
+vocab_size = 2048
+d_model = 128
+n_layers = 4
+n_heads = 4
+ffn_hidden = 352
+max_seq_len = 256
+
+[train]
+data_dir = "demo/data"
+tokenizer = "demo/tokenizer.json"
+out_dir = "demo/runs/sosy-tiny"
+backend = "cpu"
+precision = "f32"
+
+seq_len = 128
+micro_batch = 8
+grad_accum = 2
+max_steps = 300
+warmup_steps = 30
+lr = 2e-3
+min_lr = 2e-4
+weight_decay = 0.1
+grad_clip = 1.0
+
+log_every = 20
+eval_every = 100
+eval_batches = 4
+save_every = 100
+keep_checkpoints = 2
+seed = 1337

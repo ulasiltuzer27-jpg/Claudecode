@@ -1,0 +1,18 @@
+[package]
+name = "sosis-model"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Sosy model mimarisi (Llama tarzı decoder-only Transformer)"
+
+[features]
+default = ["cpu"]
+# Saf Rust CPU backend'i (geliştirme ve test için)
+cpu = ["burn/flex"]
+# NVIDIA GPU (RTX 4060 Ti) — CUDA Toolkit 12.x gerektirir
+cuda = ["burn/cuda"]
+
+[dependencies]
+burn = { workspace = true, features = ["autodiff"] }
+serde = { workspace = true }
+anyhow = { workspace = true }

@@ -1,0 +1,11 @@
+[package]
+name = "sosis-tokenizer"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Sosis AI byte-level BPE tokenizer"
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+anyhow = { workspace = true }

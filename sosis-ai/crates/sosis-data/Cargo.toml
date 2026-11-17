@@ -1,0 +1,14 @@
+[package]
+name = "sosis-data"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Sosis AI veri hattı: kod toplama, filtreleme, FIM, token shard'ları"
+
+[dependencies]
+sosis-tokenizer = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+anyhow = { workspace = true }
+rand = { workspace = true }
+memmap2 = "0.9"

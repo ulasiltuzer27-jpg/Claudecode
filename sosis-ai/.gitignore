@@ -1,0 +1,10 @@
+# Rust derleme çıktıları
+target/
+
+# Eğitim verisi, tokenizer ve model ağırlıkları (büyük, kişisel; depoya girmez)
+/data/
+/runs/
+/demo/
+/tokenizer.json
+*.bpk
+*.bin

@@ -1,0 +1,24 @@
+[package]
+name = "sosis-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Sosis AI komut satırı: tokenizer, veri hazırlama, eğitim, üretim"
+
+[[bin]]
+name = "sosis"
+path = "src/main.rs"
+
+[features]
+default = ["cpu"]
+cpu = ["sosis-model/cpu"]
+cuda = ["sosis-model/cuda"]
+
+[dependencies]
+sosis-tokenizer = { workspace = true }
+sosis-data = { workspace = true }
+sosis-model = { workspace = true, default-features = false }
+sosis-train = { workspace = true }
+sosis-infer = { workspace = true }
+anyhow = { workspace = true }
+clap = { workspace = true }
