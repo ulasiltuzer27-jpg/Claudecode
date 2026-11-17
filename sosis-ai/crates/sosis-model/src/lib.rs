@@ -21,7 +21,7 @@ use burn::nn::{
 };
 use burn::tensor::module::attention;
 use burn::tensor::ops::AttentionModuleOptions;
-use burn::tensor::{Device, FloatDType, Int, Tensor, TensorData};
+use burn::tensor::{Bool, Device, FloatDType, Int, Tensor, TensorData};
 use serde::{Deserialize, Serialize};
 
 /// Kayıpta yok sayılan hedef id'si (tokenizer'daki `<|pad|>`). Talimat ince ayarında
@@ -262,18 +262,30 @@ impl Attention {
             k = repeat(k);
             v = repeat(v);
         }
-        // Tek token'lık adımda (önceki her şeye bakar) maske gerekmez; çok token'lı geçişler
-        // boş önbellekten başlar ve nedensel (causal) maskeyle hesaplanır.
-        let is_causal = t > 1;
-        debug_assert!(
-            !is_causal || start == 0,
-            "çok token'lı geçiş boş önbellekle başlamalı"
-        );
+        // Tek token'lık adımda (önceki her şeye bakar) maske gerekmez. Boş önbellekten başlayan
+        // çok token'lı geçiş hızlı nedensel yolu kullanır; önbellek doluyken (start > 0, ör.
+        // spekülatif doğrulama, önek önbelleği) açık maske kurulur: sorgu i, anahtar j'yi
+        // ancak j <= start + i ise görür.
+        let tk = k.dims()[2];
+        let (is_causal, mask) = if t == 1 {
+            (false, None)
+        } else if start == 0 && tk == t {
+            (true, None)
+        } else {
+            let past = tk - t;
+            let m: Vec<bool> = (0..t)
+                .flat_map(|i| (0..tk).map(move |j| j > past + i))
+                .collect();
+            let m = Tensor::<2, Bool>::from_data(TensorData::new(m, [t, tk]), &q.device())
+                .unsqueeze::<4>()
+                .expand([b, h, t, tk]);
+            (false, Some(m))
+        };
         let y = attention(
             q,
             k,
             v,
-            None,
+            mask,
             None,
             AttentionModuleOptions {
                 scale: None,
@@ -328,6 +340,22 @@ impl KvCache {
     pub fn clear(&mut self) {
         self.layers.iter_mut().for_each(|l| *l = None);
         self.len = 0;
+    }
+
+    /// Önbelleği ilk `len` token'a geri sarar (spekülatif ret, önek yeniden kullanımı).
+    pub fn truncate(&mut self, len: usize) {
+        if len >= self.len {
+            return;
+        }
+        if len == 0 {
+            return self.clear();
+        }
+        for slot in self.layers.iter_mut() {
+            if let Some((k, v)) = slot.take() {
+                *slot = Some((k.narrow(2, 0, len), v.narrow(2, 0, len)));
+            }
+        }
+        self.len = len;
     }
 }
 
@@ -478,6 +506,41 @@ mod tests {
             assert_eq!(cache.len, 6);
             for (a, b) in full_last.iter().zip(&vec(last.unwrap())) {
                 assert!((a - b).abs() < 1e-4, "kv={kv:?}: {a} != {b}");
+            }
+        }
+    }
+
+    #[test]
+    fn chunked_prefill_and_truncate_match_full() {
+        let device = Device::flex();
+        for kv in [None, Some(2)] {
+            let cfg = tiny(kv);
+            let model = cfg.init(&device);
+            let seq: Vec<i64> = vec![3, 7, 1, 9, 12, 5, 33, 2];
+            let full = vec(model
+                .forward(toks(seq.clone(), 1, 8, &device), None)
+                .reshape([8, 64]));
+            // 3 + 5 token'lık iki parça (ikincisi ofsetli, maskeli).
+            let mut cache = KvCache::new(cfg.n_layers);
+            let _ = model.forward(toks(seq[..3].to_vec(), 1, 3, &device), Some(&mut cache));
+            let part = vec(model
+                .forward(toks(seq[3..].to_vec(), 1, 5, &device), Some(&mut cache))
+                .reshape([5, 64]));
+            for (a, b) in full[3 * 64..].iter().zip(&part) {
+                assert!((a - b).abs() < 1e-4, "ofsetli geçiş farklı: {a} != {b}");
+            }
+            // Geri sar ve farklı bir devamla sürdür.
+            cache.truncate(4);
+            assert_eq!(cache.len, 4);
+            let alt: Vec<i64> = vec![3, 7, 1, 9, 40, 41];
+            let full_alt = vec(model
+                .forward(toks(alt.clone(), 1, 6, &device), None)
+                .reshape([6, 64]));
+            let cont = vec(model
+                .forward(toks(alt[4..].to_vec(), 1, 2, &device), Some(&mut cache))
+                .reshape([2, 64]));
+            for (a, b) in full_alt[4 * 64..].iter().zip(&cont) {
+                assert!((a - b).abs() < 1e-4, "truncate sonrası farklı: {a} != {b}");
             }
         }
     }

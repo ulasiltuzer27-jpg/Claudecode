@@ -244,6 +244,12 @@ struct ModelArgs {
     /// Proje hafızası: `sosis index` ile oluşturulan indeks (ilgili kod bağlama eklenir).
     #[arg(long)]
     index: Option<PathBuf>,
+    /// Spekülatif kod çözme: aynı tokenizer'lı küçük taslak model (ör. runs/sosy-flash-1.0).
+    #[arg(long)]
+    draft: Option<PathBuf>,
+    /// Tur başına taslak token sayısı.
+    #[arg(long, default_value_t = 4)]
+    draft_k: usize,
 }
 
 impl ModelArgs {
@@ -303,12 +309,26 @@ impl SamplingArgs {
 
 fn load_generator(m: &ModelArgs) -> Result<Generator> {
     let t = Instant::now();
-    let g = Generator::load(&m.run, &m.load_options())?;
+    let mut g = Generator::load(&m.run, &m.load_options())?;
+    if let Some(d) = &m.draft {
+        let draft = Generator::load(
+            d,
+            &LoadOptions {
+                weights: None,
+                backend: m.backend.clone(),
+                context: Some(g.context_len()),
+            },
+        )?;
+        g = g.with_draft(draft, m.draft_k)?;
+    }
     eprintln!(
-        "✓ {} yüklendi ({:.1}s, bağlam {} token)",
+        "✓ {} yüklendi ({:.1}s, bağlam {} token{})",
         g.config.name,
         t.elapsed().as_secs_f32(),
-        g.context_len()
+        g.context_len(),
+        g.draft_name()
+            .map(|d| format!(", taslak: {d}, k={}", m.draft_k))
+            .unwrap_or_default()
     );
     Ok(g)
 }
@@ -521,7 +541,19 @@ fn main() -> Result<()> {
                 }
             }
             println!();
-            eprintln!("— {n} parça, {:.1}s", t.elapsed().as_secs_f32());
+            let spec = g
+                .last_spec
+                .lock()
+                .unwrap()
+                .map(|st| {
+                    format!(
+                        ", taslak kabul %{:.0} ({} hedef geçişi)",
+                        100.0 * st.acceptance(),
+                        st.target_passes
+                    )
+                })
+                .unwrap_or_default();
+            eprintln!("— {n} parça, {:.1}s{spec}", t.elapsed().as_secs_f32());
         }
         Cmd::Fim {
             model,
