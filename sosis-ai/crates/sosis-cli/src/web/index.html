@@ -1,0 +1,383 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sosis AI</title>
+<style>
+  :root {
+    --bg: #f7f5f2; --panel: #ffffff; --soft: #efebe6; --line: #ded7cf;
+    --text: #22201d; --muted: #6f6860; --accent: #c2410c; --accent-soft: #fbe6da;
+    --code-bg: #1f1d1b; --code-text: #f3eee8; --user: #fff4ec; --danger: #b42318;
+    --radius: 10px; --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #151413; --panel: #1d1b1a; --soft: #262321; --line: #34302d;
+      --text: #ece7e1; --muted: #a39b92; --accent: #fb923c; --accent-soft: #3a2518;
+      --code-bg: #0f0e0d; --code-text: #ece7e1; --user: #2a211b; --danger: #f97066;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    display: grid; grid-template-columns: 260px 1fr; overflow: hidden;
+  }
+  aside {
+    background: var(--panel); border-right: 1px solid var(--line);
+    display: flex; flex-direction: column; min-height: 0;
+  }
+  .brand { padding: 16px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--line); }
+  .brand b { font-size: 17px; }
+  .brand small { display: block; color: var(--muted); font-size: 12px; }
+  .logo { width: 32px; height: 32px; border-radius: 9px; background: var(--accent-soft); display: grid; place-items: center; font-size: 18px; }
+  #newChat { margin: 12px; }
+  #sessions { list-style: none; margin: 0; padding: 0 8px 12px; overflow: auto; flex: 1; }
+  #sessions li {
+    display: flex; align-items: center; gap: 6px; padding: 8px 10px; border-radius: 8px;
+    cursor: pointer; color: var(--text); font-size: 14px;
+  }
+  #sessions li:hover { background: var(--soft); }
+  #sessions li.active { background: var(--accent-soft); }
+  #sessions li span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #sessions li button { visibility: hidden; padding: 2px 6px; font-size: 12px; }
+  #sessions li:hover button { visibility: visible; }
+  main { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+  header {
+    display: flex; align-items: center; gap: 8px; padding: 10px 16px;
+    border-bottom: 1px solid var(--line); background: var(--panel); flex-wrap: wrap;
+  }
+  .tabs { display: flex; gap: 4px; background: var(--soft); padding: 3px; border-radius: 9px; }
+  .tabs button { border: 0; background: transparent; padding: 6px 12px; border-radius: 7px; color: var(--muted); }
+  .tabs button.on { background: var(--panel); color: var(--text); box-shadow: 0 1px 2px rgb(0 0 0 / .08); }
+  .spacer { flex: 1; }
+  .settings { display: flex; gap: 12px; align-items: center; color: var(--muted); font-size: 13px; flex-wrap: wrap; }
+  .settings input[type=number] { width: 70px; }
+  button, input, textarea, select {
+    font: inherit; color: var(--text); background: var(--panel);
+    border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px;
+  }
+  button { cursor: pointer; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+  button:disabled { opacity: .5; cursor: default; }
+  textarea { width: 100%; resize: vertical; font-family: var(--mono); font-size: 14px; }
+  .view { flex: 1; min-height: 0; display: none; flex-direction: column; }
+  .view.on { display: flex; }
+  #messages { flex: 1; overflow: auto; padding: 20px 16px; }
+  .msg { max-width: 860px; margin: 0 auto 14px; padding: 12px 14px; border-radius: var(--radius); }
+  .msg.user { background: var(--user); border: 1px solid var(--line); }
+  .msg.assistant { background: var(--panel); border: 1px solid var(--line); }
+  .msg .role { font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 4px; }
+  .msg p { margin: 0 0 8px; white-space: pre-wrap; }
+  .empty { max-width: 560px; margin: 12vh auto 0; text-align: center; color: var(--muted); }
+  .empty h2 { color: var(--text); margin: 8px 0; }
+  pre {
+    background: var(--code-bg); color: var(--code-text); padding: 12px; border-radius: 8px;
+    overflow: auto; font: 13px/1.45 var(--mono); position: relative; margin: 6px 0 10px;
+  }
+  pre .copy { position: absolute; top: 6px; right: 6px; font-size: 11px; padding: 2px 8px; opacity: .8; }
+  .composer { padding: 12px 16px 16px; border-top: 1px solid var(--line); background: var(--panel); }
+  .composer .row { max-width: 860px; margin: 0 auto; display: flex; gap: 8px; align-items: flex-end; }
+  .composer textarea { font-family: inherit; min-height: 44px; max-height: 220px; }
+  .pane { padding: 16px; overflow: auto; flex: 1; display: grid; gap: 10px; align-content: start; max-width: 960px; width: 100%; margin: 0 auto; }
+  .pane label { font-size: 13px; color: var(--muted); }
+  .pane .bar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .out { min-height: 120px; white-space: pre-wrap; }
+  .out .gen { color: var(--accent); }
+  .status { font-size: 12px; color: var(--muted); }
+  .menu { display: none; }
+  @media (max-width: 760px) {
+    body { grid-template-columns: 1fr; }
+    aside { position: fixed; inset: 0 30% 0 0; z-index: 5; transform: translateX(-100%); transition: transform .2s; }
+    aside.open { transform: none; box-shadow: 0 0 40px rgb(0 0 0 / .3); }
+    .menu { display: inline-block; }
+    .settings .opt { display: none; }
+  }
+</style>
+</head>
+<body>
+<aside id="side">
+  <div class="brand">
+    <div class="logo">🌭</div>
+    <div><b>Sosis AI</b><small id="modelName">yükleniyor…</small></div>
+  </div>
+  <button id="newChat" class="primary">+ Yeni sohbet</button>
+  <ul id="sessions"></ul>
+</aside>
+<main>
+  <header>
+    <button class="menu" id="menuBtn" aria-label="Menü">☰</button>
+    <div class="tabs" role="tablist">
+      <button data-tab="chat" class="on">Sohbet</button>
+      <button data-tab="complete">Tamamla</button>
+      <button data-tab="fim">Ortayı doldur</button>
+    </div>
+    <div class="spacer"></div>
+    <div class="settings">
+      <label title="Proje hafızası: sosis index ile oluşturulur"><input type="checkbox" id="rag"> Proje hafızası</label>
+      <label class="opt">Sıcaklık <input type="number" id="temp" min="0" max="2" step="0.1" value="0.2"></label>
+      <label class="opt">En çok token <input type="number" id="maxTok" min="16" max="4096" step="16" value="512"></label>
+    </div>
+  </header>
+
+  <section class="view on" id="view-chat">
+    <div id="messages"></div>
+    <div class="composer">
+      <div class="row">
+        <textarea id="input" rows="1" placeholder="Bir şey sorun… (Enter: gönder)" title="Enter gönderir, Shift+Enter yeni satır"></textarea>
+        <button class="primary" id="send">Gönder</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="view" id="view-complete">
+    <div class="pane">
+      <div class="bar">
+        <label>Dosya adı (dil ipucu) <input id="cFile" value="main.rs" size="14"></label>
+        <button class="primary" id="cRun">Tamamla</button>
+        <span class="status" id="cStatus"></span>
+      </div>
+      <textarea id="cPrompt" rows="8">/// İki sayının en büyük ortak bölenini döndürür.
+fn gcd(a: u64, b: u64) -> u64 {
+</textarea>
+      <label>Sonuç</label>
+      <pre class="out" id="cOut"></pre>
+    </div>
+  </section>
+
+  <section class="view" id="view-fim">
+    <div class="pane">
+      <div class="bar">
+        <label>Dosya adı <input id="fFile" value="main.py" size="14"></label>
+        <button class="primary" id="fRun">Ortayı doldur</button>
+        <span class="status" id="fStatus"></span>
+      </div>
+      <label>Önce gelen kod</label>
+      <textarea id="fPrefix" rows="6">def is_prime(n):
+    """Sayı asal ise True döndürür."""
+</textarea>
+      <label>Sonra gelen kod</label>
+      <textarea id="fSuffix" rows="4">
+print(is_prime(7))
+</textarea>
+      <label>Sonuç (üretilen kısım renkli)</label>
+      <pre class="out" id="fOut"></pre>
+    </div>
+  </section>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+let current = null;   // aktif oturum
+let busy = false;
+let info = {};
+
+function esc(s) {
+  return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+// Basit markdown: ``` kod blokları + paragraflar.
+function render(text) {
+  const parts = text.split(/```/);
+  let html = "";
+  parts.forEach((part, i) => {
+    if (i % 2 === 1) {
+      const nl = part.indexOf("\n");
+      const code = nl >= 0 ? part.slice(nl + 1) : part;
+      html += `<pre><button class="copy">kopyala</button><code>${esc(code.replace(/\n$/, ""))}</code></pre>`;
+    } else if (part.trim()) {
+      html += `<p>${esc(part.trim())}</p>`;
+    }
+  });
+  return html;
+}
+
+document.addEventListener("click", (e) => {
+  if (e.target.classList.contains("copy")) {
+    const code = e.target.parentElement.querySelector("code").textContent;
+    navigator.clipboard?.writeText(code);
+    e.target.textContent = "kopyalandı";
+    setTimeout(() => (e.target.textContent = "kopyala"), 1200);
+  }
+});
+
+function opts() {
+  return {
+    temperature: parseFloat($("temp").value) || 0,
+    max_tokens: parseInt($("maxTok").value) || 512,
+    rag: $("rag").checked,
+  };
+}
+
+async function api(path, init) {
+  const r = await fetch(path, init);
+  if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || r.statusText);
+  return r.json();
+}
+
+// Akışlı üretim: her parçayı geldiği anda `onPiece`'e verir.
+async function generate(body, onPiece) {
+  const r = await fetch("/api/generate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ...body, ...opts() }),
+  });
+  if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || r.statusText);
+  const reader = r.body.getReader();
+  const dec = new TextDecoder();
+  let all = "";
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    const s = dec.decode(value, { stream: true });
+    all += s;
+    onPiece(all, s);
+  }
+  return all;
+}
+
+// --- oturumlar ---
+async function loadSessions() {
+  const list = await api("/api/sessions");
+  const ul = $("sessions");
+  ul.innerHTML = "";
+  for (const s of list) {
+    const li = document.createElement("li");
+    li.className = current && current.id === s.id ? "active" : "";
+    li.innerHTML = `<span>${esc(s.title)}</span><button title="Sil">✕</button>`;
+    li.onclick = () => openSession(s.id);
+    li.querySelector("button").onclick = async (e) => {
+      e.stopPropagation();
+      if (!confirm("Bu sohbet silinsin mi?")) return;
+      await api(`/api/sessions/${s.id}`, { method: "DELETE" });
+      if (current && current.id === s.id) current = null;
+      renderMessages();
+      loadSessions();
+    };
+    ul.appendChild(li);
+  }
+}
+
+async function openSession(id) {
+  current = await api(`/api/sessions/${id}`);
+  renderMessages();
+  loadSessions();
+  $("side").classList.remove("open");
+}
+
+async function newSession() {
+  current = await api("/api/sessions", { method: "POST", body: "{}" });
+  renderMessages();
+  loadSessions();
+  $("input").focus();
+}
+
+function msgEl(role, text) {
+  const d = document.createElement("div");
+  d.className = `msg ${role}`;
+  d.innerHTML = `<div class="role">${role === "user" ? "Sen" : "Sosy"}</div><div class="body">${render(text)}</div>`;
+  return d;
+}
+
+function renderMessages() {
+  const box = $("messages");
+  box.innerHTML = "";
+  const msgs = current ? current.messages.filter((m) => m.role !== "system") : [];
+  if (!msgs.length) {
+    box.innerHTML = `<div class="empty"><div style="font-size:40px">🌭</div><h2>${esc(info.name || "Sosy")}</h2>
+      Kod sorularınızı yazın. Konuşma geçmişi hatırlanır ve bu bilgisayarda saklanır.
+      ${info.rag ? `<br>Proje hafızası hazır (${info.chunks} kod parçası).` : ""}</div>`;
+    return;
+  }
+  for (const m of msgs) box.appendChild(msgEl(m.role, m.content));
+  box.scrollTop = box.scrollHeight;
+}
+
+async function send() {
+  const text = $("input").value.trim();
+  if (!text || busy) return;
+  if (!current) await newSession();
+  busy = true;
+  $("send").disabled = true;
+  $("input").value = "";
+  current.messages.push({ role: "user", content: text });
+  renderMessages();
+  const box = $("messages");
+  const el = msgEl("assistant", "…");
+  box.appendChild(el);
+  const body = el.querySelector(".body");
+  try {
+    const answer = await generate({ kind: "chat", id: current.id, message: text }, (all) => {
+      body.innerHTML = render(all);
+      box.scrollTop = box.scrollHeight;
+    });
+    current.messages.push({ role: "assistant", content: answer.trim() });
+  } catch (e) {
+    body.innerHTML = `<p style="color:var(--danger)">Hata: ${esc(e.message)}</p>`;
+  }
+  busy = false;
+  $("send").disabled = false;
+  loadSessions();
+}
+
+async function runInto(btn, status, out, body, prefix, suffix) {
+  if (busy) return;
+  busy = true;
+  btn.disabled = true;
+  status.textContent = "üretiliyor…";
+  const t0 = performance.now();
+  try {
+    await generate(body, (all) => {
+      out.innerHTML = esc(prefix) + `<span class="gen">${esc(all)}</span>` + esc(suffix);
+    });
+    status.textContent = `bitti (${((performance.now() - t0) / 1000).toFixed(1)} s)`;
+  } catch (e) {
+    status.textContent = "hata: " + e.message;
+  }
+  busy = false;
+  btn.disabled = false;
+}
+
+// --- olaylar ---
+document.querySelectorAll(".tabs button").forEach((b) => {
+  b.onclick = () => {
+    document.querySelectorAll(".tabs button").forEach((x) => x.classList.toggle("on", x === b));
+    document.querySelectorAll(".view").forEach((v) => v.classList.toggle("on", v.id === "view-" + b.dataset.tab));
+  };
+});
+$("send").onclick = send;
+$("newChat").onclick = newSession;
+$("menuBtn").onclick = () => $("side").classList.toggle("open");
+$("input").addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    send();
+  }
+});
+$("input").addEventListener("input", (e) => {
+  e.target.style.height = "auto";
+  e.target.style.height = Math.min(e.target.scrollHeight, 220) + "px";
+});
+$("cRun").onclick = () => {
+  const p = $("cPrompt").value;
+  runInto($("cRun"), $("cStatus"), $("cOut"), { kind: "complete", prompt: p, file: $("cFile").value }, p, "");
+};
+$("fRun").onclick = () => {
+  const pre = $("fPrefix").value, suf = $("fSuffix").value;
+  runInto($("fRun"), $("fStatus"), $("fOut"), { kind: "fim", prefix: pre, suffix: suf, file: $("fFile").value }, pre, suf);
+};
+
+(async () => {
+  info = await api("/api/info");
+  $("modelName").textContent = `${info.name} · ${info.context} token`;
+  $("rag").disabled = !info.rag;
+  $("rag").checked = info.rag;
+  if (!info.rag) $("rag").parentElement.title = "Kapalı: sunucuyu --index ile başlatın";
+  renderMessages();
+  loadSessions();
+})();
+</script>
+</body>
+</html>

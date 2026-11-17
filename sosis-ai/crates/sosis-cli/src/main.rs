@@ -8,6 +8,8 @@
 //! sosis generate       --run runs/sosy-flash-1.0 --file main.rs --prompt "fn fibonacci("
 //! ```
 
+mod web;
+
 use std::io::{BufRead, Write};
 use std::path::PathBuf;
 use std::time::Instant;
@@ -15,6 +17,8 @@ use std::time::Instant;
 use anyhow::{Context, Result};
 use clap::{Args, Parser, Subcommand};
 use sosis_data::{CollectOptions, FilterOptions, PrepareOptions};
+use sosis_infer::chat::{reply, ChatSession};
+use sosis_infer::rag::CodeIndex;
 use sosis_infer::{Generator, LoadOptions, SamplingParams};
 use sosis_tokenizer::{BpeTrainer, Tokenizer};
 use sosis_train::RunConfig;
@@ -132,6 +136,46 @@ enum Cmd {
         #[command(flatten)]
         sampling: SamplingArgs,
     },
+    /// Sohbet (talimat ince ayarı yapılmış model, ör. runs/sosy-pro-1.0-chat). Geçmiş hatırlanır.
+    Chat {
+        #[command(flatten)]
+        model: ModelArgs,
+        #[command(flatten)]
+        sampling: SamplingArgs,
+        /// Oturumların kaydedildiği klasör.
+        #[arg(long, default_value = "sessions")]
+        sessions: PathBuf,
+        /// Kayıtlı bir oturumu sürdür.
+        #[arg(long)]
+        session: Option<String>,
+        /// Sistem mesajı.
+        #[arg(long)]
+        system: Option<String>,
+    },
+    /// Yerel web arayüzü: sohbet, tamamlama, FIM (yalnızca bu bilgisayardan erişilir).
+    Serve {
+        #[command(flatten)]
+        model: ModelArgs,
+        #[arg(long, default_value = "sessions")]
+        sessions: PathBuf,
+        #[arg(long, default_value_t = 8080)]
+        port: u16,
+    },
+    /// Proje hafızası için kod tabanını indeksler (BM25).
+    Index {
+        #[arg(long, short, required = true, num_args = 1..)]
+        input: Vec<PathBuf>,
+        #[arg(long, short, default_value = ".sosis-index")]
+        out: PathBuf,
+    },
+    /// İndekste arama (hata ayıklama).
+    Search {
+        #[arg(long, default_value = ".sosis-index")]
+        index: PathBuf,
+        query: String,
+        #[arg(long, short, default_value_t = 5)]
+        k: usize,
+    },
     /// Dosyalar üzerinde perplexity ölçer.
     Eval {
         #[command(flatten)]
@@ -191,9 +235,23 @@ struct ModelArgs {
     /// Bağlam uzunluğu; eğitimdekinden büyükse RoPE ölçeklemeyle uzatılır (ör. 4096).
     #[arg(long)]
     context: Option<usize>,
+    /// Proje hafızası: `sosis index` ile oluşturulan indeks (ilgili kod bağlama eklenir).
+    #[arg(long)]
+    index: Option<PathBuf>,
 }
 
 impl ModelArgs {
+    fn load_index(&self) -> Result<Option<CodeIndex>> {
+        match &self.index {
+            Some(p) => {
+                let idx = CodeIndex::load(p)?;
+                eprintln!("📚 proje hafızası: {} parça", idx.chunks.len());
+                Ok(Some(idx))
+            }
+            None => Ok(None),
+        }
+    }
+
     fn load_options(&self) -> LoadOptions {
         LoadOptions {
             weights: self.weights.clone(),
@@ -422,13 +480,28 @@ fn main() -> Result<()> {
                 (None, None) => anyhow::bail!("--prompt veya --prompt-file verin"),
             };
             let g = load_generator(&model)?;
+            let index = model.load_index()?;
             print!("{prompt}");
             let t = Instant::now();
             let mut n = 0;
-            g.complete(&prompt, model.file.as_deref(), &sampling.params(), |s| {
+            let mut on = |s: &str| {
                 n += 1;
                 print_stream(s)
-            });
+            };
+            match &index {
+                Some(idx) => {
+                    g.complete_with_index(
+                        &prompt,
+                        model.file.as_deref(),
+                        idx,
+                        &sampling.params(),
+                        &mut on,
+                    );
+                }
+                None => {
+                    g.complete(&prompt, model.file.as_deref(), &sampling.params(), on);
+                }
+            }
             println!();
             eprintln!("— {n} parça, {:.1}s", t.elapsed().as_secs_f32());
         }
@@ -450,6 +523,7 @@ fn main() -> Result<()> {
         }
         Cmd::Repl { model, sampling } => {
             let g = load_generator(&model)?;
+            let index = model.load_index()?;
             let params = sampling.params();
             eprintln!("Kodunuzu yazın; boş satır gönderir, :q çıkar.");
             let stdin = std::io::stdin();
@@ -461,11 +535,118 @@ fn main() -> Result<()> {
                     break;
                 }
                 if line.trim().is_empty() && !buf.is_empty() {
-                    g.complete(&buf, model.file.as_deref(), &params, print_stream);
+                    match &index {
+                        Some(idx) => {
+                            g.complete_with_index(
+                                &buf,
+                                model.file.as_deref(),
+                                idx,
+                                &params,
+                                &mut print_stream,
+                            );
+                        }
+                        None => {
+                            g.complete(&buf, model.file.as_deref(), &params, print_stream);
+                        }
+                    }
                     println!("\n");
                     buf.clear();
                 } else {
                     buf.push_str(&line);
+                }
+            }
+        }
+        Cmd::Chat {
+            model,
+            sampling,
+            sessions,
+            session,
+            system,
+        } => {
+            let g = load_generator(&model)?;
+            let index = model.load_index()?;
+            let params = sampling.params();
+            let mut s = match &session {
+                Some(id) => ChatSession::load(&sessions, id)?,
+                None => ChatSession::new(system.as_deref()),
+            };
+            eprintln!(
+                "Sohbet ({}). Komutlar: /yeni  /liste  /yükle <id>  /çık   — oturum: {}",
+                g.config.name, s.id
+            );
+            for m in &s.messages {
+                eprintln!("{:?}: {}", m.role, m.content);
+            }
+            let stdin = std::io::stdin();
+            loop {
+                eprint!("\nsen> ");
+                let mut line = String::new();
+                if stdin.lock().read_line(&mut line)? == 0 {
+                    break;
+                }
+                let line = line.trim();
+                match line
+                    .split_once(' ')
+                    .map(|(a, b)| (a, b.trim()))
+                    .unwrap_or((line, ""))
+                {
+                    ("", _) => continue,
+                    ("/çık" | "/cik" | "/q", _) => break,
+                    ("/yeni" | "/new", _) => {
+                        s = ChatSession::new(system.as_deref());
+                        eprintln!("yeni oturum: {}", s.id);
+                        continue;
+                    }
+                    ("/liste" | "/list", _) => {
+                        for x in ChatSession::list(&sessions) {
+                            eprintln!("  {}  {} ({} mesaj)", x.id, x.title, x.messages.len());
+                        }
+                        continue;
+                    }
+                    ("/yükle" | "/yukle" | "/load", id) => {
+                        match ChatSession::load(&sessions, id) {
+                            Ok(x) => {
+                                eprintln!("yüklendi: {} ({} mesaj)", x.title, x.messages.len());
+                                s = x;
+                            }
+                            Err(e) => eprintln!("hata: {e}"),
+                        }
+                        continue;
+                    }
+                    _ => {}
+                }
+                print!("sosy> ");
+                reply(&g, &mut s, line, index.as_ref(), &params, &mut print_stream);
+                println!();
+                s.save(&sessions)?;
+            }
+        }
+        Cmd::Serve {
+            model,
+            sessions,
+            port,
+        } => {
+            let g = load_generator(&model)?;
+            let index = model.load_index()?;
+            web::serve(g, index, sessions, port)?;
+        }
+        Cmd::Index { input, out } => {
+            let t = Instant::now();
+            let idx = CodeIndex::build(&input)?;
+            idx.save(&out)?;
+            eprintln!(
+                "✓ {} parça indekslendi → {} ({:.1}s)",
+                idx.chunks.len(),
+                out.display(),
+                t.elapsed().as_secs_f32()
+            );
+        }
+        Cmd::Search { index, query, k } => {
+            let idx = CodeIndex::load(&index)?;
+            for (score, c) in idx.search(&query, k) {
+                println!("{score:6.2}  {}:{}", c.path, c.line);
+                for l in c.text.lines().take(4) {
+                    println!("        {l}");
                 }
             }
         }

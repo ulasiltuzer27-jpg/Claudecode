@@ -3,6 +3,8 @@
 //! Eğitilmiş bir Sosy modelini yerelde çalıştırır: kod tamamlama ve FIM (ortayı doldurma).
 //! Ollama, sunucu veya harici API yoktur; her şey bu süreçte, sizin GPU/CPU'nuzda döner.
 
+pub mod chat;
+pub mod rag;
 mod sampling;
 
 pub use sampling::{sample, SamplingParams};
@@ -260,6 +262,27 @@ impl Generator {
         let mut ids = self.header(file);
         ids.extend(self.tokenizer.encode(prompt));
         self.stream_until(&ids, params, &mut |_| {}, until)
+    }
+
+    /// Proje bağlamıyla (RAG) kod tamamlama: ilgili parçalar istemin önüne eklenir.
+    pub fn complete_with_index(
+        &self,
+        prompt: &str,
+        file: Option<&str>,
+        index: &rag::CodeIndex,
+        params: &SamplingParams,
+        on_text: &mut dyn FnMut(&str),
+    ) -> String {
+        let main = self.encode_prompt(prompt, file);
+        let budget = self
+            .context_len()
+            .saturating_sub(main.len() + params.max_new_tokens)
+            / 2;
+        let query = format!("{} {}", file.unwrap_or(""), prompt);
+        let chunks = index.retrieve(&query, &self.tokenizer, budget);
+        let mut ids = rag::context_ids(&self.tokenizer, &chunks);
+        ids.extend(main);
+        self.stream_until(&ids, params, on_text, &mut |_| None)
     }
 
     /// Belge başlığı + metin → token'lar (`<|file_sep|>dosya\n...`).
