@@ -12,3 +12,5 @@ serde_json = { workspace = true }
 anyhow = { workspace = true }
 rand = { workspace = true }
 memmap2 = "0.9"
+sysinfo = { version = "0.40.4", default-features = false, features = ["system"] }
+parquet = { version = "60.1.0", default-features = false, features = ["snap", "zstd", "flate2-rust_backend", "lz4"] }

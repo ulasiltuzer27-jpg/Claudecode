@@ -15,7 +15,7 @@ use std::time::Instant;
 use anyhow::{Context, Result};
 use clap::{Args, Parser, Subcommand};
 use sosis_data::{CollectOptions, FilterOptions, PrepareOptions};
-use sosis_infer::{Generator, SamplingParams};
+use sosis_infer::{Generator, LoadOptions, SamplingParams};
 use sosis_tokenizer::{BpeTrainer, Tokenizer};
 use sosis_train::RunConfig;
 
@@ -37,11 +37,14 @@ enum Cmd {
         /// Kaynak klasörler / dosyalar (.jsonl veri setleri de olabilir).
         #[arg(long, short, required = true, num_args = 1..)]
         input: Vec<PathBuf>,
-        #[arg(long, default_value_t = 16384)]
+        #[arg(long, default_value_t = 32768)]
         vocab_size: usize,
         /// Eğitimde kullanılacak en fazla metin (MB).
-        #[arg(long, default_value_t = 200)]
+        #[arg(long, default_value_t = 1000)]
         max_mb: u64,
+        /// RAM sınırı (GB); tokenizer istatistikleri bunun ~%35'ine ulaşınca okuma durur.
+        #[arg(long, default_value_t = sosis_data::ram::DEFAULT_MAX_RAM_GB)]
+        max_ram_gb: f64,
         #[arg(long, short, default_value = "tokenizer.json")]
         out: PathBuf,
     },
@@ -134,6 +137,19 @@ struct ModelArgs {
     /// Dil ipucu olarak dosya adı (ör. main.rs, app.py).
     #[arg(long)]
     file: Option<String>,
+    /// Bağlam uzunluğu; eğitimdekinden büyükse RoPE ölçeklemeyle uzatılır (ör. 4096).
+    #[arg(long)]
+    context: Option<usize>,
+}
+
+impl ModelArgs {
+    fn load_options(&self) -> LoadOptions {
+        LoadOptions {
+            weights: self.weights.clone(),
+            backend: self.backend.clone(),
+            context: self.context,
+        }
+    }
 }
 
 #[derive(Args)]
@@ -172,11 +188,12 @@ impl SamplingArgs {
 
 fn load_generator(m: &ModelArgs) -> Result<Generator> {
     let t = Instant::now();
-    let g = Generator::load(&m.run, m.weights.as_deref(), &m.backend)?;
+    let g = Generator::load(&m.run, &m.load_options())?;
     eprintln!(
-        "✓ {} yüklendi ({:.1}s)",
+        "✓ {} yüklendi ({:.1}s, bağlam {} token)",
         g.config.name,
-        t.elapsed().as_secs_f32()
+        t.elapsed().as_secs_f32(),
+        g.context_len()
     );
     Ok(g)
 }
@@ -192,6 +209,7 @@ fn main() -> Result<()> {
             input,
             vocab_size,
             max_mb,
+            max_ram_gb,
             out,
         } => {
             let mut trainer = BpeTrainer::new();
@@ -199,6 +217,7 @@ fn main() -> Result<()> {
                 &mut trainer,
                 &input,
                 max_mb * 1024 * 1024,
+                max_ram_gb,
                 &CollectOptions::default(),
                 &FilterOptions::default(),
                 1337,
@@ -276,19 +295,24 @@ fn main() -> Result<()> {
             if let Some(s) = max_steps {
                 cfg.train.max_steps = s;
             }
-            let (_, _, total) = cfg.vram_estimate_gb();
+            let mem = cfg.memory_estimate();
             eprintln!(
-                "🌭 {} | {:.1}M parametre | adım başına {} token | ~{:.1} GB VRAM (kaba tahmin) | backend {}",
+                "🌭 {} | {:.1}M parametre | adım başına {} token | ~{:.1} GB VRAM, ~{:.1} GB RAM (kaba) | backend {}",
                 cfg.model.name,
                 cfg.model.param_count() as f64 / 1e6,
                 cfg.tokens_per_step(),
-                total,
+                mem.vram_total_gb,
+                mem.ram_total_gb,
                 cfg.train.backend
             );
             let out = sosis_train::train(&cfg, resume, |r| {
+                let vram = r
+                    .vram_gb
+                    .map(|g| format!(" | VRAM {g:.2} GB"))
+                    .unwrap_or_default();
                 eprintln!(
-                    "adım {:>6}/{} | kayıp {:.4} | lr {:.2e} | {:.0} token/s",
-                    r.step, cfg.train.max_steps, r.loss, r.lr, r.tokens_per_sec
+                    "adım {:>6}/{} | kayıp {:.4} | lr {:.2e} | {:.0} token/s{vram} | RAM {:.1} GB",
+                    r.step, cfg.train.max_steps, r.loss, r.lr, r.tokens_per_sec, r.ram_gb
                 );
             })?;
             eprintln!(
@@ -379,23 +403,56 @@ fn main() -> Result<()> {
         Cmd::Info { config } => {
             for c in config {
                 let cfg = RunConfig::load(&c)?;
-                let (states, acts, total) = cfg.vram_estimate_gb();
+                let mem = cfg.memory_estimate();
+                let t = &cfg.train;
                 println!("{} ({})", cfg.model.name, c.display());
                 println!(
                     "  parametre        : {:.1}M",
                     cfg.model.param_count() as f64 / 1e6
                 );
                 println!(
-                    "  katman/d/kafa    : {} / {} / {}",
-                    cfg.model.n_layers, cfg.model.d_model, cfg.model.n_heads
+                    "  katman/d/kafa/kv : {} / {} / {} / {}",
+                    cfg.model.n_layers,
+                    cfg.model.d_model,
+                    cfg.model.n_heads,
+                    cfg.model.kv_heads()
                 );
-                println!("  bağlam           : {}", cfg.model.max_seq_len);
+                println!(
+                    "  bağlam           : eğitim {} (seq_len {}), çıkarım {}",
+                    cfg.model.max_seq_len,
+                    t.seq_len,
+                    cfg.inference.context.unwrap_or(cfg.model.context_len())
+                );
+                println!(
+                    "  hassasiyet       : {:?}{}{}",
+                    t.precision,
+                    if t.optimizer_offload {
+                        ", optimizer RAM'de"
+                    } else {
+                        ""
+                    },
+                    if t.gradient_checkpointing {
+                        ", gradient checkpointing"
+                    } else {
+                        ""
+                    }
+                );
                 println!("  adım başına token: {}", cfg.tokens_per_step());
                 println!(
                     "  toplam token     : {:.2}B",
                     (cfg.tokens_per_step() * cfg.train.max_steps) as f64 / 1e9
                 );
-                println!("  VRAM (kaba)      : ~{total:.1} GB  (ağırlık+optimizer {states:.1}, aktivasyon {acts:.1})");
+                println!(
+                    "  VRAM (kaba)      : ~{:.1} GB  (ağırlık+gradyan+optimizer {:.1}, aktivasyon+logit {:.1})",
+                    mem.vram_total_gb, mem.vram_states_gb, mem.vram_activations_gb
+                );
+                println!(
+                    "  RAM (kaba)       : ~{:.1} GB  (sınır {:.0} GB)",
+                    mem.ram_total_gb, t.max_ram_gb
+                );
+                if cfg.distill.is_some() {
+                    println!("  damıtma          : öğretmen modeli ayrıca VRAM kullanır");
+                }
             }
         }
     }

@@ -10,6 +10,38 @@ use sosis_model::{ModelConfig, Precision};
 pub struct RunConfig {
     pub model: ModelConfig,
     pub train: TrainConfig,
+    /// Varsa öğretmen modelden damıtma yapılır.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub distill: Option<DistillConfig>,
+    #[serde(default)]
+    pub inference: InferenceConfig,
+}
+
+/// `[inference]`: çıkarım varsayılanları (eğitimi etkilemez).
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct InferenceConfig {
+    /// Varsayılan bağlam; eğitimdekinden uzunsa RoPE ölçeklemeyle uzatılır.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub context: Option<usize>,
+}
+
+/// `[distill]`: öğrenci, öğretmenin olasılık dağılımını da taklit eder.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DistillConfig {
+    /// Öğretmenin eğitim klasörü (ör. runs/sosy-pro-1.0). Aynı tokenizer'ı kullanmalı.
+    pub teacher: PathBuf,
+    /// Kayıp = alpha·CE + (1−alpha)·T²·KL.
+    #[serde(default = "d_alpha")]
+    pub alpha: f32,
+    #[serde(default = "d_temp")]
+    pub temperature: f32,
+}
+
+fn d_alpha() -> f32 {
+    0.5
+}
+fn d_temp() -> f32 {
+    2.0
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -28,6 +60,18 @@ pub struct TrainConfig {
     /// Aktivasyonları geri yayılımda yeniden hesaplayarak VRAM tasarrufu.
     #[serde(default)]
     pub gradient_checkpointing: bool,
+    /// f32 ana ağırlıkları ve AdamW durumunu RAM'de tutar; GPU'da yalnızca çalışma kopyası kalır.
+    #[serde(default)]
+    pub optimizer_offload: bool,
+    /// Eğitime bu ağırlıklarla başla (eğitim klasörü veya .bpk). `--resume` varsa yok sayılır.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub init_from: Option<PathBuf>,
+    /// Bu sürecin kullanması beklenen en fazla RAM (GB); aşılırsa uyarılır.
+    #[serde(default = "d_ram")]
+    pub max_ram_gb: f64,
+    /// Arka planda önceden hazırlanan adım sayısı.
+    #[serde(default = "d_prefetch")]
+    pub prefetch_steps: usize,
 
     pub seq_len: usize,
     /// GPU'ya tek seferde giren dizi sayısı.
@@ -62,6 +106,12 @@ pub struct TrainConfig {
 
 fn d_backend() -> String {
     "auto".into()
+}
+fn d_ram() -> f64 {
+    sosis_data::ram::DEFAULT_MAX_RAM_GB
+}
+fn d_prefetch() -> usize {
+    2
 }
 fn d_wd() -> f32 {
     0.1
@@ -110,32 +160,41 @@ impl RunConfig {
         Ok(toml::to_string_pretty(self)?)
     }
 
-    /// Eğitim VRAM'inin *kaba* tahmini (GB): ağırlık + gradyan + AdamW durumu + aktivasyonlar + logit'ler.
-    /// Gradient checkpointing ve backend'in bellek havuzu bunu değiştirir; yalnızca boyut seçimi için rehberdir.
-    pub fn vram_estimate_gb(&self) -> (f64, f64, f64) {
+    /// Eğitim belleğinin *kaba* tahmini (GB). Gradient checkpointing ve backend'in bellek havuzu
+    /// bunu değiştirir; yalnızca boyut seçimi için rehberdir.
+    pub fn memory_estimate(&self) -> MemoryEstimate {
         let m = &self.model;
-        let bytes = if self.train.precision == Precision::Bf16 {
+        let t = &self.train;
+        let work = if t.precision == Precision::Bf16 {
             2.0
         } else {
             4.0
         };
         let params = m.param_count() as f64;
-        let states = params * (bytes * 2.0 + 8.0); // ağırlık + gradyan (+ f32 AdamW m, v)
-        let tokens = (self.train.micro_batch * self.train.seq_len) as f64;
+        let gb = 1024f64.powi(3);
+        // Çalışma kopyası + gradyanları GPU'da; f32 ana kopya + AdamW (m, v) + f32 biriktirme.
+        let (gpu_states, ram_states) = if t.optimizer_offload {
+            (params * work * 2.0, params * 4.0 * 4.0)
+        } else {
+            (params * (work * 2.0 + 8.0), 0.0)
+        };
+        let tokens = (t.micro_batch * t.seq_len) as f64;
         let per_token = 12.0 * m.d_model as f64
             + 4.0 * m.ffn_hidden as f64
-            + 2.0 * (m.n_heads * self.train.seq_len) as f64;
-        let mut acts = tokens * per_token * m.n_layers as f64 * bytes;
-        if self.train.gradient_checkpointing {
+            + 2.0 * (m.n_heads * t.seq_len) as f64;
+        let mut acts = tokens * per_token * m.n_layers as f64 * work;
+        if t.gradient_checkpointing {
             acts *= 0.5;
         }
-        let logits = tokens * m.vocab_size as f64 * 4.0 * 3.0;
-        let gb = 1024f64.powi(3);
-        (
-            states / gb,
-            (acts + logits) / gb,
-            (states + acts + logits) / gb,
-        )
+        let logits = tokens * m.vocab_size as f64 * (work + 8.0);
+        // Ön-yüklenen batch'ler + süreç tabanı (~1.5 GB). Damıtmada öğretmen ayrıca eklenir.
+        let prefetch = (t.prefetch_steps * t.grad_accum) as f64 * tokens * 16.0;
+        MemoryEstimate {
+            vram_states_gb: gpu_states / gb,
+            vram_activations_gb: (acts + logits) / gb,
+            vram_total_gb: (gpu_states + acts + logits) / gb + 0.4,
+            ram_total_gb: (ram_states + prefetch) / gb + 1.5,
+        }
     }
 
     /// Bir optimizer adımındaki token sayısı.
@@ -158,4 +217,13 @@ impl TrainConfig {
         let cos = 0.5 * (1.0 + (std::f64::consts::PI * progress).cos());
         self.min_lr + (self.lr - self.min_lr) * cos
     }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct MemoryEstimate {
+    pub vram_states_gb: f64,
+    pub vram_activations_gb: f64,
+    /// CUDA bağlamı (~0.4 GB) dahil.
+    pub vram_total_gb: f64,
+    pub ram_total_gb: f64,
 }

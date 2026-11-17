@@ -1,0 +1,47 @@
+# Sosy-Pro 1.0 — 2. aşama: bağlamı 2048'e genişletme (~0.5B token).
+# 1. aşamanın (configs/sosy-pro-1.0.toml) ağırlıklarıyla başlar. Çıkarımda 4096'ya ölçeklenir.
+
+[model]
+name = "Sosy-Pro 1.0"
+vocab_size = 32768
+d_model = 1024
+n_layers = 22
+n_heads = 16
+n_kv_heads = 4
+ffn_hidden = 2816
+max_seq_len = 2048
+rope_theta = 10000.0
+
+[inference]
+context = 4096       # 2048'de eğitilir; 2048 üstünde kalite bir miktar düşer
+
+[train]
+data_dir = "data"
+tokenizer = "tokenizer.json"
+out_dir = "runs/sosy-pro-1.0-ctx2048"
+init_from = "runs/sosy-pro-1.0"
+backend = "auto"
+precision = "bf16"
+gradient_checkpointing = true
+optimizer_offload = true
+max_ram_gb = 28
+prefetch_steps = 2
+
+seq_len = 2048
+micro_batch = 1
+grad_accum = 32      # adım başına 1 * 32 * 2048 = 65.536 token
+max_steps = 7600
+warmup_steps = 200
+lr = 1e-4
+min_lr = 1e-5
+weight_decay = 0.1
+beta1 = 0.9
+beta2 = 0.95
+grad_clip = 1.0
+
+log_every = 10
+eval_every = 500
+eval_batches = 20
+save_every = 500
+keep_checkpoints = 3
+seed = 2048

@@ -18,7 +18,8 @@ use sosis_model::{select_device, KvCache, ModelConfig, Precision, SosyModel};
 use sosis_tokenizer::{
     StreamDecoder, Tokenizer, EOS, FILE_SEP, FIM_MIDDLE, FIM_PREFIX, FIM_SUFFIX,
 };
-use sosis_train::{latest_checkpoint, RunConfig, BEST_FILE, CONFIG_FILE, TOKENIZER_FILE};
+pub use sosis_train::find_weights;
+use sosis_train::{RunConfig, CONFIG_FILE, TOKENIZER_FILE};
 
 pub struct Generator {
     model: SosyModel,
@@ -27,33 +28,48 @@ pub struct Generator {
     device: Device,
 }
 
-/// Bir çalıştırma klasöründeki ağırlık dosyasını bulur: önce `best.bpk`, yoksa son checkpoint.
-pub fn find_weights(run_dir: &Path) -> Option<PathBuf> {
-    let best = run_dir.join(BEST_FILE);
-    if best.exists() {
-        return Some(best);
+/// Model yükleme seçenekleri.
+#[derive(Debug, Clone)]
+pub struct LoadOptions {
+    /// Belirli bir ağırlık dosyası (varsayılan: `best.bpk` ya da son checkpoint).
+    pub weights: Option<PathBuf>,
+    /// "cuda", "cpu" veya "auto".
+    pub backend: String,
+    /// Eğitim bağlamından uzunsa RoPE ölçeklemeyle uzatılır (ör. 2048'de eğitilmiş → 4096).
+    pub context: Option<usize>,
+}
+
+impl Default for LoadOptions {
+    fn default() -> Self {
+        Self {
+            weights: None,
+            backend: "auto".into(),
+            context: None,
+        }
     }
-    latest_checkpoint(run_dir).map(|d| d.join("model.bpk"))
 }
 
 impl Generator {
     /// `run_dir`: eğitim çıktı klasörü (`config.toml`, `tokenizer.json`, ağırlıklar).
-    /// `weights` verilmezse `best.bpk` / son checkpoint kullanılır.
-    pub fn load(run_dir: &Path, weights: Option<&Path>, backend: &str) -> Result<Self> {
-        let cfg = RunConfig::load(run_dir.join(CONFIG_FILE)).with_context(|| {
+    pub fn load(run_dir: &Path, opts: &LoadOptions) -> Result<Self> {
+        let mut cfg = RunConfig::load(run_dir.join(CONFIG_FILE)).with_context(|| {
             format!(
                 "{} içinde config.toml yok — bu bir eğitim klasörü mü?",
                 run_dir.display()
             )
         })?;
+        if let Some(ctx) = opts.context.or(cfg.inference.context) {
+            let s = ctx as f32 / cfg.model.max_seq_len as f32;
+            cfg.model.rope_scaling = s.max(cfg.model.rope_scaling).max(1.0);
+        }
         let tokenizer = Tokenizer::load(run_dir.join(TOKENIZER_FILE))?;
-        let weights = match weights {
-            Some(w) => w.to_path_buf(),
+        let weights = match &opts.weights {
+            Some(w) => w.clone(),
             None => {
                 find_weights(run_dir).context("ağırlık bulunamadı (best.bpk ya da checkpoint)")?
             }
         };
-        let device = select_device(backend, Precision::F32)?;
+        let device = select_device(&opts.backend, Precision::F32)?;
         let model = cfg
             .model
             .init(&device)
@@ -65,6 +81,11 @@ impl Generator {
             config: cfg.model,
             device,
         })
+    }
+
+    /// Kullanılabilir bağlam uzunluğu (ölçekleme dahil).
+    pub fn context_len(&self) -> usize {
+        self.config.context_len()
     }
 
     /// Bellekteki bir modelden (ör. testlerde) üretici oluşturur.
@@ -105,7 +126,7 @@ impl Generator {
         if prompt.is_empty() {
             return vec![];
         }
-        let max_ctx = self.config.max_seq_len;
+        let max_ctx = self.config.context_len();
         // Bağlam dolduğunda son %75'lik pencere ile yeniden başlanır.
         let keep = (max_ctx * 3 / 4).max(1);
         let mut rng = StdRng::seed_from_u64(params.seed);
@@ -210,7 +231,7 @@ impl Generator {
     pub fn perplexity(&self, text: &str) -> Result<f32> {
         let mut ids = vec![FILE_SEP];
         ids.extend(self.tokenizer.encode(text));
-        ids.truncate(self.config.max_seq_len + 1);
+        ids.truncate(self.config.context_len() + 1);
         if ids.len() < 2 {
             bail!("metin çok kısa");
         }

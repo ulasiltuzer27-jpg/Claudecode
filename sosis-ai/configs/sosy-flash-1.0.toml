@@ -1,9 +1,10 @@
-# Sosy-Flash 1.0 — hızlı, küçük kod modeli (~20M parametre)
-# RTX 4060 Ti 8 GB: ~2-3 GB VRAM. 20k adım x 65k token = ~1.3B token.
+# Sosy-Flash 1.0 — hızlı, küçük kod modeli (~27M parametre)
+# RTX 4060 Ti 8 GB: ~3 GB VRAM. 20k adım x 65k token = ~1.3B token.
+# Damıtma için: aşağıdaki [distill] bölümünün yorumunu kaldırın (önce Sosy-Pro / Sosy 1.0 eğitilmeli).
 
 [model]
 name = "Sosy-Flash 1.0"
-vocab_size = 16384
+vocab_size = 32768
 d_model = 384
 n_layers = 8
 n_heads = 6          # head_dim = 64
@@ -11,13 +12,18 @@ ffn_hidden = 1024
 max_seq_len = 512
 rope_theta = 10000.0
 
+[inference]
+context = 1024       # 512'de eğitilir, RoPE ölçeklemeyle 1024'e uzatılır
+
 [train]
 data_dir = "data"
 tokenizer = "tokenizer.json"
 out_dir = "runs/sosy-flash-1.0"
 backend = "auto"     # cuda | cpu | auto
-precision = "f32"    # f32 | bf16 (deneysel)
+precision = "f32"    # f32 | bf16
 gradient_checkpointing = false
+optimizer_offload = false
+max_ram_gb = 28
 
 seq_len = 512
 micro_batch = 8      # VRAM yetmezse düşürün, grad_accum'u aynı oranda artırın
@@ -37,3 +43,8 @@ eval_batches = 20
 save_every = 1000
 keep_checkpoints = 3
 seed = 1337
+
+# [distill]
+# teacher = "runs/sosy-pro-1.0"   # aynı tokenizer'la eğitilmiş öğretmen
+# alpha = 0.5                     # kayıp = alpha*CE + (1-alpha)*T²*KL
+# temperature = 2.0

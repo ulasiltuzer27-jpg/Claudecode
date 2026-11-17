@@ -1,0 +1,45 @@
+# Sosy-Pro 1.0 — en büyük model (~281M parametre), 1. aşama: 1024 bağlam.
+# 8 GB VRAM'e sığması için: bf16 çalışma kopyası + optimizer RAM'de (offload) + gradient checkpointing.
+# ~4.0B token (61k adım x 65k). Ardından: configs/sosy-pro-1.0-ctx2048.toml
+# Tahmini süre RTX 4060 Ti'de ~1-2 hafta sürekli eğitim; Ctrl+C + --resume ile bölünebilir.
+
+[model]
+name = "Sosy-Pro 1.0"
+vocab_size = 32768
+d_model = 1024
+n_layers = 22
+n_heads = 16         # head_dim = 64
+n_kv_heads = 4       # GQA: KV-cache 4 kat küçük
+ffn_hidden = 2816
+max_seq_len = 1024
+rope_theta = 10000.0
+
+[train]
+data_dir = "data"
+tokenizer = "tokenizer.json"
+out_dir = "runs/sosy-pro-1.0"
+backend = "auto"
+precision = "bf16"
+gradient_checkpointing = true
+optimizer_offload = true     # f32 ağırlık + AdamW (~4.5 GB) RAM'de
+max_ram_gb = 28
+prefetch_steps = 2
+
+seq_len = 1024
+micro_batch = 2
+grad_accum = 32      # adım başına 2 * 32 * 1024 = 65.536 token
+max_steps = 61000
+warmup_steps = 2000
+lr = 3e-4
+min_lr = 3e-5
+weight_decay = 0.1
+beta1 = 0.9
+beta2 = 0.95
+grad_clip = 1.0
+
+log_every = 10
+eval_every = 1000
+eval_batches = 20
+save_every = 500
+keep_checkpoints = 3
+seed = 1337

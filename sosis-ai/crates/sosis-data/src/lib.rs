@@ -9,6 +9,7 @@
 
 pub mod collect;
 pub mod filter;
+pub mod ram;
 pub mod shard;
 
 use std::collections::HashSet;
@@ -100,6 +101,26 @@ impl DataMeta {
     }
 }
 
+const FLUSH_TOKENS: usize = 1 << 20;
+
+/// Ardışık ve aynı klasördeki dosyaları gruplar; veri seti dosyaları tek başına birimdir.
+fn group_by_dir(sources: Vec<Source>) -> Vec<Vec<Source>> {
+    let mut units: Vec<Vec<Source>> = Vec::new();
+    let mut last_dir: Option<PathBuf> = None;
+    for src in sources {
+        let dir = match &src {
+            Source::File { path, .. } => path.parent().map(Path::to_path_buf),
+            _ => None,
+        };
+        match (&dir, &last_dir, units.last_mut()) {
+            (Some(d), Some(l), Some(u)) if d == l => u.push(src),
+            _ => units.push(vec![src]),
+        }
+        last_dir = dir;
+    }
+    units
+}
+
 /// Kaynakları tarar, filtreler, tekilleştirir, token'lar ve `train.bin`/`val.bin` yazar.
 pub fn prepare(
     tok: &Tokenizer,
@@ -117,6 +138,9 @@ pub fn prepare(
     if sources.is_empty() {
         bail!("hiç kaynak dosya bulunamadı: {:?}", opts.inputs);
     }
+    // Aynı klasörün dosyaları bir birim olur ve ardışık yazılır: model, eğitim penceresinde
+    // birbiriyle ilişkili dosyaları birlikte görür (çok dosyalı bağlam / RAG için faydalı).
+    let units = group_by_dir(sources);
 
     let seen = Mutex::new(HashSet::<u64>::new());
     let next = AtomicUsize::new(0);
@@ -132,37 +156,50 @@ pub fn prepare(
     std::thread::scope(|s| -> Result<()> {
         for _ in 0..opts.threads.max(1) {
             let tx = txs.clone();
-            let (sources, seen, next) = (&sources, &seen, &next);
+            let (units, seen, next) = (&units, &seen, &next);
             let (docs, fim_docs, dups, rejected) = (&docs, &fim_docs, &dups, &rejected);
             s.spawn(move || loop {
                 let i = next.fetch_add(1, Ordering::Relaxed);
-                let Some(src) = sources.get(i) else { break };
-                let _ = collect::read_source(src, |doc| {
-                    if filter::check(&doc.content, &opts.filter).is_err() {
-                        rejected.fetch_add(1, Ordering::Relaxed);
-                        return;
+                let Some(unit) = units.get(i) else { break };
+                let (mut tbuf, mut vbuf) = (Vec::<u16>::new(), Vec::<u16>::new());
+                for src in unit {
+                    let _ = collect::read_source(src, |doc| {
+                        if filter::check(&doc.content, &opts.filter).is_err() {
+                            rejected.fetch_add(1, Ordering::Relaxed);
+                            return;
+                        }
+                        let h = filter::content_hash(&doc.content);
+                        if !seen.lock().unwrap().insert(h) {
+                            dups.fetch_add(1, Ordering::Relaxed);
+                            return;
+                        }
+                        // Belge başına deterministik rastgelelik.
+                        let mut rng = rand::rngs::StdRng::seed_from_u64(h ^ opts.seed);
+                        let is_val = ((h % 10_000) as f64) < opts.val_percent * 100.0;
+                        let fim = if rng.gen_bool(opts.fim_rate.clamp(0.0, 1.0)) {
+                            fim_docs.fetch_add(1, Ordering::Relaxed);
+                            Some(fim_points(&mut rng, doc.content.chars().count()))
+                        } else {
+                            None
+                        };
+                        let ids: Vec<u16> = encode_document(tok, &doc, fim)
+                            .into_iter()
+                            .map(|t| t as u16)
+                            .collect();
+                        docs.fetch_add(1, Ordering::Relaxed);
+                        let buf = if is_val { &mut vbuf } else { &mut tbuf };
+                        buf.extend_from_slice(&ids);
+                        // Büyük veri seti dosyalarında belleği sınırlı tut.
+                        if buf.len() > FLUSH_TOKENS {
+                            let _ = tx.send((is_val, std::mem::take(buf)));
+                        }
+                    });
+                }
+                for (is_val, buf) in [(false, tbuf), (true, vbuf)] {
+                    if !buf.is_empty() {
+                        let _ = tx.send((is_val, buf));
                     }
-                    let h = filter::content_hash(&doc.content);
-                    if !seen.lock().unwrap().insert(h) {
-                        dups.fetch_add(1, Ordering::Relaxed);
-                        return;
-                    }
-                    // Belge başına deterministik rastgelelik.
-                    let mut rng = rand::rngs::StdRng::seed_from_u64(h ^ opts.seed);
-                    let is_val = ((h % 10_000) as f64) < opts.val_percent * 100.0;
-                    let fim = if rng.gen_bool(opts.fim_rate.clamp(0.0, 1.0)) {
-                        fim_docs.fetch_add(1, Ordering::Relaxed);
-                        Some(fim_points(&mut rng, doc.content.chars().count()))
-                    } else {
-                        None
-                    };
-                    let ids: Vec<u16> = encode_document(tok, &doc, fim)
-                        .into_iter()
-                        .map(|t| t as u16)
-                        .collect();
-                    docs.fetch_add(1, Ordering::Relaxed);
-                    let _ = tx.send((is_val, ids));
-                });
+                }
             });
         }
         drop(txs);
@@ -198,24 +235,38 @@ pub fn prepare(
 }
 
 /// Tokenizer eğitimi için kaynaklardan (karıştırılmış sırayla) en fazla `max_bytes` metin besler.
+/// BPE istatistikleri RAM'de tutulur; birleştirme aşaması bunun ~2-3 katına çıktığı için süreç
+/// `max_ram_gb`'nin %35'ine ulaşınca okuma durur.
 pub fn feed_tokenizer_trainer(
     trainer: &mut BpeTrainer,
     inputs: &[PathBuf],
     max_bytes: u64,
+    max_ram_gb: f64,
     collect_opts: &CollectOptions,
     filter_opts: &FilterOptions,
     seed: u64,
 ) -> Result<u64> {
+    let mut guard = ram::RamGuard::new(max_ram_gb, 200);
+    let mut stopped_for_ram = false;
     let mut sources = collect::find_sources(inputs, collect_opts)?;
     sources.shuffle(&mut rand::rngs::StdRng::seed_from_u64(seed));
     let mut seen = HashSet::new();
     let mut docs = 0;
     for src in &sources {
-        if trainer.bytes_seen >= max_bytes {
+        if trainer.bytes_seen >= max_bytes || stopped_for_ram {
             break;
         }
         collect::read_source(src, |doc| {
-            if trainer.bytes_seen >= max_bytes
+            if !stopped_for_ram && guard.over(0.35) {
+                stopped_for_ram = true;
+                eprintln!(
+                    "\n⚠ RAM {:.1} GB — tokenizer örneği burada kesildi (sınır {:.0} GB)",
+                    guard.last_gb(),
+                    max_ram_gb
+                );
+            }
+            if stopped_for_ram
+                || trainer.bytes_seen >= max_bytes
                 || filter::check(&doc.content, filter_opts).is_err()
                 || !seen.insert(filter::content_hash(&doc.content))
             {

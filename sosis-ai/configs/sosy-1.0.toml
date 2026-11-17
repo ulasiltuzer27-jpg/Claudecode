@@ -1,16 +1,19 @@
-# Sosy 1.0 — ana kod modeli (~97M parametre)
+# Sosy 1.0 — ana kod modeli (~110M parametre)
 # RTX 4060 Ti 8 GB: ~4-6 GB VRAM (micro_batch 2 + gradient checkpointing).
 # 40k adım x 65k token = ~2.6B token.
 
 [model]
 name = "Sosy 1.0"
-vocab_size = 16384
+vocab_size = 32768
 d_model = 768
 n_layers = 12
 n_heads = 12         # head_dim = 64
 ffn_hidden = 2048
 max_seq_len = 1024
 rope_theta = 10000.0
+
+[inference]
+context = 2048
 
 [train]
 data_dir = "data"
@@ -19,6 +22,8 @@ out_dir = "runs/sosy-1.0"
 backend = "auto"
 precision = "f32"
 gradient_checkpointing = true
+optimizer_offload = false   # true: ağırlık+optimizer RAM'e taşınır (~1.7 GB VRAM kazanç)
+max_ram_gb = 28
 
 seq_len = 1024
 micro_batch = 2
