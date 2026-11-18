@@ -123,12 +123,24 @@ pub fn apply_block(content: &str, b: &EditBlock) -> Result<String, ApplyError> {
         }
         return Ok(s);
     }
-    let n = content.matches(b.search.as_str()).count();
-    if n == 1 {
-        return Ok(content.replacen(b.search.as_str(), &b.replace, 1));
+    // Tam eşleşme yalnızca satır başında başlıyorsa geçerli; aksi halde (ör. girintisiz yazılmış ARA)
+    // satırın ortasına yazılıp girinti bozulurdu — o durum boşluk-toleranslı yola düşer.
+    let starts: Vec<usize> = content
+        .match_indices(b.search.as_str())
+        .map(|(i, _)| i)
+        .filter(|&i| i == 0 || content[..i].ends_with('\n'))
+        .collect();
+    if starts.len() == 1 {
+        let i = starts[0];
+        return Ok(format!(
+            "{}{}{}",
+            &content[..i],
+            b.replace,
+            &content[i + b.search.len()..]
+        ));
     }
-    if n > 1 {
-        return Err(ApplyError::Ambiguous(n));
+    if starts.len() > 1 {
+        return Err(ApplyError::Ambiguous(starts.len()));
     }
     // Boşluk-toleranslı: satırları kırpıp karşılaştır.
     let lines: Vec<&str> = content.split_inclusive('\n').collect();
@@ -269,15 +281,22 @@ mod tests {
             replace: "".into(),
         };
         assert_eq!(apply_block(FILE, &missing), Err(ApplyError::NotFound));
-        let twice = EditBlock {
+        // Satır ortasındaki parça eşleşmesi kabul edilmez (tam satırlar yazılmalı).
+        let partial = EditBlock {
             path: "m.rs".into(),
             search: "x".into(),
             replace: "y".into(),
         };
-        assert!(matches!(
-            apply_block(FILE, &twice),
-            Err(ApplyError::Ambiguous(_))
-        ));
+        assert!(apply_block(FILE, &partial).is_err());
+        let twice = EditBlock {
+            path: "m.rs".into(),
+            search: "a".into(),
+            replace: "c".into(),
+        };
+        assert_eq!(
+            apply_block("a\nb\na\n", &twice),
+            Err(ApplyError::Ambiguous(2))
+        );
         let create = EditBlock {
             path: "n.rs".into(),
             search: "".into(),

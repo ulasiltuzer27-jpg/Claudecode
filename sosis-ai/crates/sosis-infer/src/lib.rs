@@ -3,6 +3,7 @@
 //! Eğitilmiş bir Sosy modelini yerelde çalıştırır: kod tamamlama ve FIM (ortayı doldurma).
 //! Ollama, sunucu veya harici API yoktur; her şey bu süreçte, sizin GPU/CPU'nuzda döner.
 
+pub mod agent;
 pub mod chat;
 pub mod evalrun;
 pub mod githelp;

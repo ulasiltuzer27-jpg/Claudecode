@@ -271,7 +271,7 @@ mod tests {
         };
         commit(&dir, &msg).unwrap();
         assert!(staged_diff(&dir).unwrap().is_empty());
-        let rep = review(&g, &DIFF.to_string(), &greedy(8));
+        let rep = review(&g, DIFF, &greedy(8));
         assert!(rep.contains("Kesin kontroller") && rep.contains("dbg!"));
         std::fs::remove_dir_all(&dir).ok();
     }

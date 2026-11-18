@@ -8,6 +8,7 @@
 //! sosis generate       --run runs/sosy-flash-1.0 --file main.rs --prompt "fn fibonacci("
 //! ```
 
+mod agent_ui;
 mod dashboard;
 mod download;
 mod watch;
@@ -296,6 +297,36 @@ enum Cmd {
         /// Ağırlıkları int8'e nicemle (~4 kat küçük).
         #[arg(long)]
         int8: bool,
+    },
+    /// Proje ajanı: ilgili kodu bulur, plan sunar, dosyalarda değişiklik önerir (diff + onay),
+    /// yedekleyip uygular ve --check komutuyla doğrular; hata varsa düzeltir.
+    Agent {
+        #[command(flatten)]
+        model: ModelArgs,
+        #[command(flatten)]
+        sampling: SamplingArgs,
+        /// Görev (ör. "Oyuncu canı negatif olmasın").
+        task: String,
+        /// Proje kökü; yalnızca bunun altındaki dosyalar düzenlenir.
+        #[arg(long, default_value = ".")]
+        root: PathBuf,
+        /// Değişiklik sonrası çalıştırılacak kontrol (ör. "cargo test", "dotnet build").
+        #[arg(long)]
+        check: Option<String>,
+        #[arg(long, default_value_t = 3)]
+        rounds: usize,
+        /// Plan adımını atla.
+        #[arg(long)]
+        no_plan: bool,
+        /// Değişiklikleri sormadan uygula.
+        #[arg(long)]
+        evet: bool,
+    },
+    /// Ajanın son değişikliğini yedekten geri alır.
+    #[command(name = "geri-al")]
+    GeriAl {
+        #[arg(long, default_value = ".")]
+        root: PathBuf,
     },
     /// Hazırlanmış (git add) değişikliklerden commit mesajı üretir; --yaz ile onaydan sonra commit eder.
     CommitMsg {
@@ -915,7 +946,7 @@ fn main() -> Result<()> {
                 None => ChatSession::new(system.as_deref()),
             };
             eprintln!(
-                "Sohbet ({}). Komutlar: /yeni  /liste  /yükle <id>  /plan <görev>  /çöz [rust|python] <görev>  /çık   — oturum: {}",
+                "Sohbet ({}). Komutlar: /yeni  /liste  /yükle <id>  /plan <görev>  /çöz [rust|python] <görev>  /ajan <görev>  /çık   — oturum: {}",
                 g.config.name, s.id
             );
             for m in &s.messages {
@@ -945,6 +976,33 @@ fn main() -> Result<()> {
                         for x in ChatSession::list(&sessions) {
                             eprintln!("  {}  {} ({} mesaj)", x.id, x.title, x.messages.len());
                         }
+                        continue;
+                    }
+                    ("/ajan", task) if !task.is_empty() => {
+                        // Çalışma klasöründe ajan (değişiklikler onayla uygulanır, geri alınabilir).
+                        let root = PathBuf::from(".");
+                        let idx = match &index {
+                            Some(_) => None,
+                            None => Some(CodeIndex::build(std::slice::from_ref(&root))?),
+                        };
+                        let use_idx = index.as_ref().or(idx.as_ref()).unwrap();
+                        let mut ui = agent_ui::TerminalUi { yes_all: false };
+                        let opts = sosis_infer::agent::AgentOptions {
+                            root,
+                            check: None,
+                            max_rounds: 2,
+                            plan: true,
+                            snippets: 4,
+                        };
+                        let r =
+                            sosis_infer::agent::run_agent(task, &opts, use_idx, &mut ui, |msg| {
+                                reply(&g, &mut s, msg, None, &params, &mut |_| {})
+                            })?;
+                        s.save(&sessions)?;
+                        eprintln!(
+                            "ajan: {} dosya değişti (geri almak için: sosis geri-al)",
+                            r.applied.len()
+                        );
                         continue;
                     }
                     ("/plan", task) if !task.is_empty() => {
@@ -1256,6 +1314,59 @@ fn main() -> Result<()> {
                 out.display(),
                 std::fs::metadata(&out)?.len() as f64 / 1048576.0
             );
+        }
+        Cmd::Agent {
+            model,
+            sampling,
+            task,
+            root,
+            check,
+            rounds,
+            no_plan,
+            evet,
+        } => {
+            use sosis_infer::agent;
+            let g = load_generator(&model)?;
+            let index = match model.load_index()? {
+                Some(i) => i,
+                None => CodeIndex::build(std::slice::from_ref(&root))?,
+            };
+            let mut params = sampling.params();
+            params.max_new_tokens = params.max_new_tokens.max(512);
+            let mut session = ChatSession::new(None);
+            let mut ui = agent_ui::TerminalUi { yes_all: evet };
+            let opts = agent::AgentOptions {
+                root: root.clone(),
+                check,
+                max_rounds: rounds,
+                plan: !no_plan,
+                snippets: 4,
+            };
+            let report = agent::run_agent(&task, &opts, &index, &mut ui, |msg| {
+                reply(&g, &mut session, msg, None, &params, &mut |_| {})
+            })?;
+            let _ = session.save(&PathBuf::from("sessions"));
+            eprintln!(
+                "\nAjan bitti: {} tur, değişen dosyalar: {}{}",
+                report.rounds,
+                if report.applied.is_empty() {
+                    "yok".into()
+                } else {
+                    report.applied.join(", ")
+                },
+                match report.check_passed {
+                    Some(true) => " — kontrol ✓".to_string(),
+                    Some(false) => " — kontrol ✗".to_string(),
+                    None => String::new(),
+                }
+            );
+            if !report.applied.is_empty() {
+                eprintln!("Geri almak için: sosis geri-al --root {}", root.display());
+            }
+        }
+        Cmd::GeriAl { root } => {
+            let files = sosis_infer::agent::undo_last(&root)?;
+            eprintln!("✓ geri alındı: {}", files.join(", "));
         }
         Cmd::CommitMsg { model, repo, yaz } => {
             use sosis_infer::githelp;
