@@ -62,6 +62,34 @@ enum Job {
         #[serde(flatten)]
         opts: GenOpts,
     },
+    /// Önce plan: model numaralı plan yazar (onay arayüzde).
+    Plan {
+        id: String,
+        message: String,
+        #[serde(flatten)]
+        opts: GenOpts,
+    },
+    /// Onaylanan / düzenlenen planla kod.
+    Execute {
+        id: String,
+        plan: String,
+        #[serde(flatten)]
+        opts: GenOpts,
+    },
+    /// Çalıştırıp düzelt: kod derlenir/çalıştırılır, hata varsa model düzeltir.
+    Solve {
+        id: String,
+        message: String,
+        lang: String,
+        #[serde(default = "d_rounds")]
+        rounds: usize,
+        #[serde(flatten)]
+        opts: GenOpts,
+    },
+}
+
+fn d_rounds() -> usize {
+    3
 }
 
 enum Piece {
@@ -137,6 +165,71 @@ fn worker(
                         &opts.params(),
                         send,
                     );
+                }
+                Job::Plan { id, message, opts } => {
+                    let mut s = ChatSession::load(&sessions, &id)?;
+                    let idx = if opts.rag { index.as_ref() } else { None };
+                    sosis_infer::plan::make_plan(
+                        &generator,
+                        &mut s,
+                        &message,
+                        idx,
+                        &opts.params(),
+                        &mut |p| send(p),
+                    );
+                    s.save(&sessions)?;
+                }
+                Job::Execute { id, plan, opts } => {
+                    let mut s = ChatSession::load(&sessions, &id)?;
+                    let idx = if opts.rag { index.as_ref() } else { None };
+                    sosis_infer::plan::execute_plan(
+                        &generator,
+                        &mut s,
+                        &plan,
+                        idx,
+                        &opts.params(),
+                        &mut |p| send(p),
+                    );
+                    s.save(&sessions)?;
+                }
+                Job::Solve {
+                    id,
+                    message,
+                    lang,
+                    rounds,
+                    opts,
+                } => {
+                    let lang = match lang.as_str() {
+                        "python" | "py" => sosis_bench::Lang::Python,
+                        _ => sosis_bench::Lang::Rust,
+                    };
+                    let mut s = ChatSession::load(&sessions, &id)?;
+                    let idx = if opts.rag { index.as_ref() } else { None };
+                    sosis_infer::repair::solve(
+                        &generator,
+                        &mut s,
+                        &message,
+                        lang,
+                        None,
+                        rounds.clamp(1, 5),
+                        idx,
+                        &opts.params(),
+                        &mut |p| send(p),
+                        |a| {
+                            let status = match &a.outcome {
+                                sosis_bench::Outcome::Pass => "✓ derlendi ve çalıştı".to_string(),
+                                sosis_bench::Outcome::CompileError(e) => {
+                                    format!("✗ derleme hatası: {}", e.lines().next().unwrap_or(""))
+                                }
+                                sosis_bench::Outcome::Fail(e) => {
+                                    format!("✗ çalışma hatası: {}", e.lines().next().unwrap_or(""))
+                                }
+                                sosis_bench::Outcome::Timeout => "✗ zaman aşımı".to_string(),
+                            };
+                            send(&format!("\n\n[[tur {}: {status}]]\n\n", a.round));
+                        },
+                    )?;
+                    s.save(&sessions)?;
                 }
             }
             Ok(())
@@ -265,7 +358,11 @@ fn handle(mut req: Request, sh: &Shared) {
                 Ok(j) => j,
                 Err(e) => return respond_json(req, 400, &json!({"error": e.to_string()})),
             };
-            if let Job::Chat { id, .. } = &job {
+            if let Job::Chat { id, .. }
+            | Job::Plan { id, .. }
+            | Job::Execute { id, .. }
+            | Job::Solve { id, .. } = &job
+            {
                 if !valid_id(id) || ChatSession::load(&sh.sessions, id).is_err() {
                     return respond_json(req, 404, &json!({"error": "oturum bulunamadı"}));
                 }

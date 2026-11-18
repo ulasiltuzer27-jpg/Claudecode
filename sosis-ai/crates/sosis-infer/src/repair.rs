@@ -50,6 +50,14 @@ pub fn extract_code(text: &str, lang: Lang) -> String {
     first.unwrap_or_else(|| text.trim().to_string())
 }
 
+/// Kod gerçekten bir şey tanımlıyor mu? (yorum satırları sayılmaz)
+pub fn defines_something(code: &str, lang: Lang) -> bool {
+    code.lines().map(str::trim).any(|l| match lang {
+        Lang::Rust => !l.starts_with("//") && l.contains("fn ") && l.contains('('),
+        Lang::Python => !l.starts_with('#') && (l.starts_with("def ") || l.starts_with("class ")),
+    })
+}
+
 /// Kodu (ve varsa testleri) çalıştırılabilir bir programa dönüştürür.
 pub fn build_program(code: &str, tests: Option<&str>, lang: Lang) -> String {
     let mut p = code.to_string();
@@ -95,7 +103,12 @@ pub fn repair_loop(
         let answer = respond(&history);
         history.push(Message::new(Role::Assistant, answer.clone()));
         let code = extract_code(&answer, lang);
-        let outcome = run_program(lang, &build_program(&code, tests, lang), timeout)?;
+        let outcome = if tests.is_none() && !defines_something(&code, lang) {
+            // Testsiz yalnızca derleme kontrolü yapılır; yorumdan ibaret bir blok "geçmesin".
+            Outcome::CompileError("kod bloğunda fonksiyon tanımı yok".into())
+        } else {
+            run_program(lang, &build_program(&code, tests, lang), timeout)?
+        };
         let a = Attempt {
             round,
             code,
@@ -216,6 +229,18 @@ mod tests {
         )
         .unwrap();
         assert!(a[0].passed());
+        // Yalnızca yorumdan oluşan blok testsiz modda geçmez.
+        let c = repair_loop(
+            "x",
+            Lang::Rust,
+            None,
+            1,
+            Duration::from_secs(60),
+            |_| "```rust\n/// sadece yorum\n```".into(),
+            |_| {},
+        )
+        .unwrap();
+        assert!(!c[0].passed());
         // Testsiz Rust: yalnızca derleme kontrolü.
         let b = repair_loop(
             "x",

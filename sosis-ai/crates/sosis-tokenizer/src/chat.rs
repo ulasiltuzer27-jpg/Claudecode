@@ -38,6 +38,35 @@ impl Message {
 pub const DEFAULT_SYSTEM: &str =
     "Sen Sosy'sin: Sosis AI tarafından geliştirilen, kod yazan yardımcı bir yapay zekâsın.";
 
+/// Planlama: kod yazmadan önce plan isteyen kullanıcı mesajı (eğitim verisi ve çıkarım aynı kalıbı kullanır).
+pub fn plan_request(task: &str) -> String {
+    format!("{task}\n\nKod yazmadan önce numaralı, kısa bir plan çıkar.")
+}
+
+/// Planlama: onaylanan (veya düzenlenen) planla kodu isteyen mesaj.
+pub fn plan_approved(plan: &str) -> String {
+    format!(
+        "Plan onaylandı:\n{}\n\nŞimdi bu plana göre kodu yaz.",
+        plan.trim()
+    )
+}
+
+/// Plan metnindeki adımlar ("1. ...", "- ..." satırları).
+pub fn plan_steps(plan: &str) -> Vec<String> {
+    plan.lines()
+        .map(str::trim)
+        .filter_map(|l| {
+            let rest = l
+                .trim_start_matches(|c: char| c.is_ascii_digit())
+                .strip_prefix(['.', ')'])
+                .or_else(|| l.strip_prefix("- "))
+                .or_else(|| l.strip_prefix("* "))?;
+            let rest = rest.trim();
+            (!rest.is_empty()).then(|| rest.to_string())
+        })
+        .collect()
+}
+
 /// Mesajları token'lara çevirir; `mask[i]`, `ids[i]`'nin öğrenilecek bir hedef olup olmadığıdır.
 /// `generation_prompt` ise sona `<|assistant|>` eklenir (modelin cevap yazması için).
 pub fn encode_chat(
@@ -78,6 +107,14 @@ pub fn encode_chat(
 mod tests {
     use super::*;
     use crate::BpeTrainer;
+
+    #[test]
+    fn plan_parsing() {
+        let p = "Plan:\n1. Girdiyi oku\n2) Doğrula\n- Kaydet\nnot: bitti";
+        assert_eq!(plan_steps(p), vec!["Girdiyi oku", "Doğrula", "Kaydet"]);
+        assert!(plan_request("X yaz").contains("plan"));
+        assert!(plan_approved("1. a").starts_with("Plan onaylandı"));
+    }
 
     #[test]
     fn mask_covers_only_answers() {

@@ -87,6 +87,19 @@
   .out { min-height: 120px; white-space: pre-wrap; }
   .out .gen { color: var(--accent); }
   .status { font-size: 12px; color: var(--muted); }
+  .pill {
+    display: inline-block; font-size: 12px; padding: 2px 8px; border-radius: 999px;
+    background: var(--soft); border: 1px solid var(--line); margin: 2px 0;
+  }
+  .pill.ok { background: #dcfce7; border-color: #86efac; color: #14532d; }
+  .pill.bad { background: #fee2e2; border-color: #fca5a5; color: #7f1d1d; }
+  @media (prefers-color-scheme: dark) {
+    .pill.ok { background: #14321f; border-color: #22663a; color: #b7f5c9; }
+    .pill.bad { background: #3b1414; border-color: #7a2626; color: #fbcaca; }
+  }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  .actions textarea { font-family: var(--mono); min-height: 120px; }
+  #mode { max-width: 190px; }
   .menu { display: none; }
   @media (max-width: 760px) {
     body { grid-template-columns: 1fr; }
@@ -126,6 +139,12 @@
     <div id="messages"></div>
     <div class="composer">
       <div class="row">
+        <select id="mode" title="Cevap modu">
+          <option value="chat">Normal</option>
+          <option value="plan">Önce planla</option>
+          <option value="solve-rust">Çalıştırıp düzelt · Rust</option>
+          <option value="solve-python">Çalıştırıp düzelt · Python</option>
+        </select>
         <textarea id="input" rows="1" placeholder="Bir şey sorun… (Enter: gönder)" title="Enter gönderir, Shift+Enter yeni satır"></textarea>
         <button class="primary" id="send">Gönder</button>
       </div>
@@ -179,7 +198,19 @@ function esc(s) {
 }
 
 // Basit markdown: ``` kod blokları + paragraflar.
+// Tur etiketleri ([[...]]) kendi başına çizilir; böylece modelin kapatmadığı bir kod bloğu
+// etiketleri yutmaz. Her bölüm ayrı işlenir.
 function render(text) {
+  const segs = text.split(/\n*\[\[(.+?)\]\]\n*/);
+  if (segs.length > 1) {
+    return segs.map((seg, i) => i % 2 === 1
+      ? `<p><span class="pill ${seg.includes("✓") ? "ok" : seg.includes("✗") ? "bad" : ""}">${esc(seg)}</span></p>`
+      : renderMd(seg)).join("");
+  }
+  return renderMd(text);
+}
+
+function renderMd(text) {
   const parts = text.split(/```/);
   let html = "";
   parts.forEach((part, i) => {
@@ -188,7 +219,9 @@ function render(text) {
       const code = nl >= 0 ? part.slice(nl + 1) : part;
       html += `<pre><button class="copy">kopyala</button><code>${esc(code.replace(/\n$/, ""))}</code></pre>`;
     } else if (part.trim()) {
-      html += `<p>${esc(part.trim())}</p>`;
+      const p = esc(part.trim()).replace(/\[\[(.+?)\]\]/g, (_, t) =>
+        `<span class="pill ${t.includes("✓") ? "ok" : t.includes("✗") ? "bad" : ""}">${t}</span>`);
+      html += `<p>${p}</p>`;
     }
   });
   return html;
@@ -295,31 +328,77 @@ function renderMessages() {
   box.scrollTop = box.scrollHeight;
 }
 
+// Bir asistan mesajını akışla doldurur; tamamlanınca metni döndürür.
+async function streamInto(body, el) {
+  const box = $("messages");
+  const target = el.querySelector(".body");
+  try {
+    const answer = await generate(body, (all) => {
+      target.innerHTML = render(all);
+      box.scrollTop = box.scrollHeight;
+    });
+    return answer.trim();
+  } catch (e) {
+    target.innerHTML = `<p style="color:var(--danger)">Hata: ${esc(e.message)}</p>`;
+    return null;
+  }
+}
+
+function setBusy(b) {
+  busy = b;
+  $("send").disabled = b;
+}
+
 async function send() {
   const text = $("input").value.trim();
   if (!text || busy) return;
   if (!current) await newSession();
-  busy = true;
-  $("send").disabled = true;
+  setBusy(true);
   $("input").value = "";
+  const mode = $("mode").value;
   current.messages.push({ role: "user", content: text });
   renderMessages();
-  const box = $("messages");
   const el = msgEl("assistant", "…");
-  box.appendChild(el);
-  const body = el.querySelector(".body");
-  try {
-    const answer = await generate({ kind: "chat", id: current.id, message: text }, (all) => {
-      body.innerHTML = render(all);
-      box.scrollTop = box.scrollHeight;
-    });
-    current.messages.push({ role: "assistant", content: answer.trim() });
-  } catch (e) {
-    body.innerHTML = `<p style="color:var(--danger)">Hata: ${esc(e.message)}</p>`;
+  $("messages").appendChild(el);
+  let body = { kind: "chat", id: current.id, message: text };
+  if (mode === "plan") body = { kind: "plan", id: current.id, message: text };
+  if (mode.startsWith("solve-")) body = { kind: "solve", id: current.id, message: text, lang: mode.slice(6) };
+  const answer = await streamInto(body, el);
+  if (answer !== null) {
+    current.messages.push({ role: "assistant", content: answer });
+    if (mode === "plan") planActions(el, answer);
   }
-  busy = false;
-  $("send").disabled = false;
+  setBusy(false);
   loadSessions();
+}
+
+// Plan onayı: onayla / düzenle / reddet.
+function planActions(el, plan) {
+  const bar = document.createElement("div");
+  bar.className = "actions";
+  bar.innerHTML = `<button class="primary" data-a="ok">Onayla ve kodla</button>
+    <button data-a="edit">Düzenle</button><button data-a="no">Reddet</button>`;
+  el.appendChild(bar);
+  const run = async (p) => {
+    bar.remove();
+    setBusy(true);
+    current.messages.push({ role: "user", content: "Plan onaylandı:\n" + p });
+    const out = msgEl("assistant", "…");
+    $("messages").appendChild(msgEl("user", "Plan onaylandı:\n" + p));
+    $("messages").appendChild(out);
+    const code = await streamInto({ kind: "execute", id: current.id, plan: p }, out);
+    if (code !== null) current.messages.push({ role: "assistant", content: code });
+    setBusy(false);
+  };
+  bar.querySelector('[data-a="ok"]').onclick = () => run(plan);
+  bar.querySelector('[data-a="no"]').onclick = () => {
+    bar.innerHTML = `<span class="status">Plan reddedildi — isteğinizi değiştirip tekrar deneyebilirsiniz.</span>`;
+  };
+  bar.querySelector('[data-a="edit"]').onclick = () => {
+    bar.innerHTML = `<textarea style="width:100%">${esc(plan)}</textarea>
+      <button class="primary">Bu planla kodla</button>`;
+    bar.querySelector("button").onclick = () => run(bar.querySelector("textarea").value);
+  };
 }
 
 async function runInto(btn, status, out, body, prefix, suffix) {

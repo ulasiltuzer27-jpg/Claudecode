@@ -14,7 +14,9 @@ use std::path::{Path, PathBuf};
 
 use anyhow::{bail, Result};
 use serde::{Deserialize, Serialize};
-use sosis_tokenizer::chat::{encode_chat, Message, Role, DEFAULT_SYSTEM};
+use sosis_tokenizer::chat::{
+    encode_chat, plan_approved, plan_request, Message, Role, DEFAULT_SYSTEM,
+};
 use sosis_tokenizer::Tokenizer;
 
 use crate::collect::{self, CollectOptions, Document};
@@ -252,7 +254,17 @@ fn extract_braced(text: &str, is_rust: bool) -> Vec<DocumentedFn> {
         if doc.chars().count() >= MIN_DOC_CHARS && end > sig_start {
             out.push(DocumentedFn {
                 doc,
-                signature: t.trim_end_matches('{').trim().to_string(),
+                signature: lines[sig_start..=end]
+                    .iter()
+                    .map(|l| l.trim())
+                    .take_while(|l| !l.starts_with('{'))
+                    .collect::<Vec<_>>()
+                    .join(" ")
+                    .split('{')
+                    .next()
+                    .unwrap_or("")
+                    .trim()
+                    .to_string(),
                 code: dedent(&lines[doc_start..=end]),
             });
         }
@@ -394,12 +406,19 @@ pub fn example_from_fn(f: &DocumentedFn, path: &str) -> Option<SftExample> {
 pub fn extract_from_code(
     inputs: &[PathBuf],
     collect_opts: &CollectOptions,
+    plans: bool,
 ) -> Result<Vec<SftExample>> {
     let mut seen = std::collections::HashSet::new();
     let mut out = Vec::new();
     for src in collect::find_sources(inputs, collect_opts)? {
         collect::read_source(&src, |doc| {
-            for f in documented_functions(&doc) {
+            let fns = documented_functions(&doc);
+            if plans {
+                if let Some(e) = plan_example(&fns, &doc.path) {
+                    out.push(e);
+                }
+            }
+            for f in fns {
                 if seen.insert(hash_of(&f.code)) {
                     if let Some(e) = example_from_fn(&f, &doc.path) {
                         out.push(e);
@@ -409,6 +428,59 @@ pub fn extract_from_code(
         })?;
     }
     Ok(out)
+}
+
+/// Açıklamanın ilk cümlesi (en fazla ~100 karakter).
+fn short(doc: &str) -> String {
+    let first = doc.split(". ").next().unwrap_or(doc).trim_end_matches('.');
+    let mut s: String = first.chars().take(100).collect();
+    if first.chars().count() > 100 {
+        s.push('…');
+    }
+    s
+}
+
+/// Planlama örneği: dosyadaki birden çok belgelenmiş fonksiyondan çok turlu konuşma
+/// (görev + plan isteği → numaralı plan → "plan onaylandı" → kod).
+pub fn plan_example(fns: &[DocumentedFn], path: &str) -> Option<SftExample> {
+    if fns.len() < 2 {
+        return None;
+    }
+    let lang = lang_of(path)?;
+    let fns = &fns[..fns.len().min(6)];
+    let file = Path::new(path).file_name()?.to_string_lossy().to_string();
+    let task = format!(
+        "{file} için şu işleri yapan {} kodunu yaz:\n{}",
+        lang.name,
+        fns.iter()
+            .map(|f| format!("- {}", short(&f.doc)))
+            .collect::<Vec<_>>()
+            .join("\n")
+    );
+    let plan = format!(
+        "Plan:\n{}",
+        fns.iter()
+            .enumerate()
+            .map(|(i, f)| format!("{}. `{}` — {}", i + 1, f.signature, short(&f.doc)))
+            .collect::<Vec<_>>()
+            .join("\n")
+    );
+    let code = format!(
+        "İşte plana göre kod:\n\n```{}\n{}\n```",
+        lang.fence,
+        fns.iter()
+            .map(|f| f.code.as_str())
+            .collect::<Vec<_>>()
+            .join("\n\n")
+    );
+    Some(SftExample {
+        messages: vec![
+            Message::new(Role::User, plan_request(&task)),
+            Message::new(Role::Assistant, plan.clone()),
+            Message::new(Role::User, plan_approved(&plan)),
+            Message::new(Role::Assistant, code),
+        ],
+    })
 }
 
 /// SFT örneklerini maskeli shard'lara yazar (`train.bin` + `train.mask`, `val.*`, `meta.json`).
@@ -494,7 +566,7 @@ mod tests {
 
     #[test]
     fn extracts_csharp_summary() {
-        let src = "class P {\n    /// <summary>Oyuncunun canını verilen miktar kadar azaltır.</summary>\n    /// <param name=\"amount\">hasar</param>\n    public void TakeDamage(int amount)\n    {\n        Health -= amount;\n    }\n\n    /// <summary>Can değeri.</summary>\n    public int Health { get; set; }\n}\n";
+        let src = "class P {\n    /// <summary>Oyuncunun canını verilen miktar kadar azaltır.</summary>\n    /// <param name=\"amount\">hasar</param>\n    public void TakeDamage(int amount,\n        bool crit)\n    {\n        Health -= amount;\n    }\n\n    /// <summary>Can değeri.</summary>\n    public int Health { get; set; }\n}\n";
         let fns = documented_functions(&doc("Player.cs", src));
         assert_eq!(fns.len(), 1, "{fns:?}");
         assert_eq!(
@@ -503,6 +575,10 @@ mod tests {
         );
         assert!(fns[0].code.contains("Health -= amount;"));
         assert!(fns[0].code.starts_with("/// <summary>"));
+        assert_eq!(
+            fns[0].signature,
+            "public void TakeDamage(int amount, bool crit)"
+        );
     }
 
     #[test]
@@ -515,6 +591,22 @@ mod tests {
         let ex = example_from_fn(&fns[0], "u.py").unwrap();
         assert_eq!(ex.messages[0].role, Role::User);
         assert!(ex.messages[1].content.contains("```python\ndef slugify"));
+    }
+
+    #[test]
+    fn plan_example_from_file() {
+        let src = "/// Dosyadan ayarları okur. Hata varsa döner.\nfn load(p: &str) -> Cfg {\n    todo!()\n}\n\n/// Ayarların geçerli olduğunu kontrol eder.\nfn check(c: &Cfg) -> bool {\n    true\n}\n";
+        let fns = documented_functions(&doc("src/config.rs", src));
+        let e = plan_example(&fns, "src/config.rs").unwrap();
+        assert_eq!(e.messages.len(), 4);
+        assert!(e.messages[0].content.contains("config.rs"));
+        assert!(e.messages[0].content.contains("plan"));
+        let steps = sosis_tokenizer::chat::plan_steps(&e.messages[1].content);
+        assert_eq!(steps.len(), 2);
+        assert!(steps[0].starts_with("`fn load(p: &str) -> Cfg` — Dosyadan ayarları okur"));
+        assert!(e.messages[2].content.starts_with("Plan onaylandı"));
+        assert!(e.messages[3].content.contains("fn check(c: &Cfg) -> bool"));
+        assert!(plan_example(&fns[..1], "src/config.rs").is_none());
     }
 
     #[test]

@@ -85,6 +85,9 @@ enum Cmd {
         input: Vec<PathBuf>,
         #[arg(long, short, default_value = "sft.jsonl")]
         out: PathBuf,
+        /// Planlama örneklerini (plan → onay → kod) üretme.
+        #[arg(long)]
+        no_plans: bool,
     },
     /// SFT .jsonl dosyalarını maskeli eğitim verisine çevirir (yalnızca cevaplar öğrenilir).
     PrepareSft {
@@ -505,10 +508,21 @@ fn main() -> Result<()> {
                 );
             }
         }
-        Cmd::SftData { input, out } => {
-            let ex = sosis_data::sft::extract_from_code(&input, &CollectOptions::default())?;
+        Cmd::SftData {
+            input,
+            out,
+            no_plans,
+        } => {
+            let ex =
+                sosis_data::sft::extract_from_code(&input, &CollectOptions::default(), !no_plans)?;
             sosis_data::sft::write_jsonl(&out, &ex)?;
-            eprintln!("✓ {} örnek → {}", ex.len(), out.display());
+            let plans = ex.iter().filter(|e| e.messages.len() == 4).count();
+            eprintln!(
+                "✓ {} örnek ({} planlama örneği) → {}",
+                ex.len(),
+                plans,
+                out.display()
+            );
             if let Some(e) = ex.first() {
                 eprintln!(
                     "örnek soru: {}",
@@ -709,7 +723,7 @@ fn main() -> Result<()> {
                 None => ChatSession::new(system.as_deref()),
             };
             eprintln!(
-                "Sohbet ({}). Komutlar: /yeni  /liste  /yükle <id>  /çöz [rust|python] <görev>  /çık   — oturum: {}",
+                "Sohbet ({}). Komutlar: /yeni  /liste  /yükle <id>  /plan <görev>  /çöz [rust|python] <görev>  /çık   — oturum: {}",
                 g.config.name, s.id
             );
             for m in &s.messages {
@@ -738,6 +752,60 @@ fn main() -> Result<()> {
                     ("/liste" | "/list", _) => {
                         for x in ChatSession::list(&sessions) {
                             eprintln!("  {}  {} ({} mesaj)", x.id, x.title, x.messages.len());
+                        }
+                        continue;
+                    }
+                    ("/plan", task) if !task.is_empty() => {
+                        print!("sosy> ");
+                        let plan = sosis_infer::plan::make_plan(
+                            &g,
+                            &mut s,
+                            task,
+                            index.as_ref(),
+                            &params,
+                            &mut print_stream,
+                        );
+                        println!();
+                        s.save(&sessions)?;
+                        eprint!(
+                            "Plan ({} adım). [o]nayla / [d]üzenle / [r]eddet: ",
+                            sosis_infer::plan::step_count(&plan)
+                        );
+                        let mut ans = String::new();
+                        stdin.lock().read_line(&mut ans)?;
+                        let approved = match ans.trim().chars().next() {
+                            Some('o' | 'e' | 'y') => Some(plan),
+                            Some('d') => {
+                                eprintln!("Yeni planı yazın (boş satırla bitirin):");
+                                let mut edited = String::new();
+                                loop {
+                                    let mut l = String::new();
+                                    if stdin.lock().read_line(&mut l)? == 0 || l.trim().is_empty() {
+                                        break;
+                                    }
+                                    edited.push_str(&l);
+                                }
+                                Some(edited)
+                            }
+                            _ => None,
+                        };
+                        match approved {
+                            Some(p) => {
+                                print!("sosy> ");
+                                sosis_infer::plan::execute_plan(
+                                    &g,
+                                    &mut s,
+                                    &p,
+                                    index.as_ref(),
+                                    &params,
+                                    &mut print_stream,
+                                );
+                                println!();
+                                s.save(&sessions)?;
+                            }
+                            None => {
+                                eprintln!("Plan reddedildi; yeni bir istekle devam edebilirsiniz.")
+                            }
                         }
                         continue;
                     }
