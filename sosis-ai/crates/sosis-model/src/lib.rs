@@ -433,6 +433,17 @@ impl SosyModel {
         self.project(h.reshape([b * t, d])).cast(FloatDType::F32)
     }
 
+    /// Dizi başına toplam log-olasılık `[b]`: hedefi [`IGNORE_ID`] olmayan konumlar üzerinden
+    /// `Σ log p(hedef)`. DPO'da cevabın modele göre olasılığı için kullanılır.
+    pub fn seq_logprob(&self, inputs: Tensor<2, Int>, targets: Tensor<2, Int>) -> Tensor<1> {
+        let [b, t] = inputs.dims();
+        let logp = burn::tensor::activation::log_softmax(self.logits_flat(inputs), 1);
+        let flat = targets.reshape([b * t]);
+        let mask = flat.clone().not_equal_elem(IGNORE_ID as i64).float();
+        let picked = logp.gather(1, flat.unsqueeze_dim::<2>(1)).reshape([b * t]);
+        (picked * mask).reshape([b, t]).sum_dim(1).reshape([b])
+    }
+
     /// Bir sonraki token tahmini için ortalama çapraz entropi kaybı (f32).
     /// Hedefi [`IGNORE_ID`] olan konumlar kayba katılmaz.
     pub fn loss(&self, inputs: Tensor<2, Int>, targets: Tensor<2, Int>) -> Tensor<1> {
@@ -602,6 +613,23 @@ mod tests {
             .into_scalar();
         assert!(full.is_finite() && masked.is_finite());
         assert!((full - masked).abs() > 1e-6);
+    }
+
+    #[test]
+    fn seq_logprob_matches_manual() {
+        let device = Device::flex();
+        let model = tiny(None).init(&device);
+        let x = toks(vec![5, 6, 7, 8], 1, 4, &device);
+        let y = toks(vec![0, 7, 0, 9], 1, 4, &device); // yalnızca 2 konum sayılır
+        let lp: f32 = model.seq_logprob(x.clone(), y).into_scalar();
+        let logits = vec(model.forward(x, None).reshape([4, 64]));
+        let lsm = |row: &[f32], k: usize| {
+            let m = row.iter().cloned().fold(f32::MIN, f32::max);
+            let z: f32 = row.iter().map(|v| (v - m).exp()).sum();
+            row[k] - m - z.ln()
+        };
+        let manual = lsm(&logits[64..128], 7) + lsm(&logits[192..256], 9);
+        assert!((lp - manual).abs() < 1e-4, "{lp} != {manual}");
     }
 
     #[test]

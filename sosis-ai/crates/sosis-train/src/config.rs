@@ -15,6 +15,9 @@ pub struct RunConfig {
     pub distill: Option<DistillConfig>,
     #[serde(default)]
     pub inference: InferenceConfig,
+    /// Varsa tercih eğitimi (DPO) yapılır.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub dpo: Option<crate::dpo::DpoConfig>,
 }
 
 /// `[inference]`: çıkarım varsayılanları (eğitimi etkilemez).

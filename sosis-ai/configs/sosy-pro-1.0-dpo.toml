@@ -1,0 +1,52 @@
+# Sosy-Pro 1.0 Chat — DPO tercih eğitimi (LoRA ile; taban sohbet modeli donuk).
+#   sosis dpo-data -r runs/sosy-pro-1.0-chat --tasks tasks --samples 8 -o dpo.jsonl
+#   sosis train -c configs/sosy-pro-1.0-dpo.toml
+#   sosis bench -r runs/sosy-pro-1.0-dpo --repair 3      (öncesi/sonrası karşılaştırın)
+# Not: DPO checkpoint'ten devam desteklemez; kısa sürer (birkaç yüz adım).
+
+[model]
+name = "Sosy-Pro 1.0 Chat (DPO)"
+vocab_size = 32768
+d_model = 1024
+n_layers = 22
+n_heads = 16
+n_kv_heads = 4
+ffn_hidden = 2816
+max_seq_len = 2048
+rope_theta = 10000.0
+
+[inference]
+context = 4096
+
+[train]
+data_dir = "data-sft"            # DPO'da kullanılmaz; config biçimi gereği
+tokenizer = "tokenizer.json"
+out_dir = "runs/sosy-pro-1.0-dpo"
+init_from = "runs/sosy-pro-1.0-chat"
+backend = "auto"
+precision = "bf16"
+gradient_checkpointing = true
+
+seq_len = 1024
+micro_batch = 2                  # çift sayısı (her çift 2 dizi)
+grad_accum = 8
+max_steps = 300
+warmup_steps = 20
+lr = 5e-5
+min_lr = 5e-6
+weight_decay = 0.0
+grad_clip = 1.0
+
+log_every = 10
+eval_every = 100
+eval_batches = 1
+save_every = 50
+seed = 3
+
+[train.lora]
+rank = 16
+alpha = 32.0
+
+[dpo]
+data = "dpo.jsonl"
+beta = 0.1

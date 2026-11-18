@@ -631,3 +631,71 @@ mod tests {
         fs::remove_dir_all(&dir).ok();
     }
 }
+
+/// DPO tercih çifti: aynı bağlama verilmiş iyi (`chosen`) ve kötü (`rejected`) cevap.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct DpoPair {
+    /// Cevaptan önceki konuşma (en az bir kullanıcı mesajı).
+    pub context: Vec<Message>,
+    pub chosen: String,
+    pub rejected: String,
+}
+
+/// `.jsonl` DPO dosyası: `{"prompt"|"messages", "chosen", "rejected", "system"?}`.
+pub fn read_dpo_jsonl(path: &Path) -> Result<Vec<DpoPair>> {
+    #[derive(Deserialize)]
+    struct Raw {
+        prompt: Option<String>,
+        messages: Option<Vec<Message>>,
+        system: Option<String>,
+        chosen: String,
+        rejected: String,
+    }
+    let mut out = Vec::new();
+    for line in BufReader::new(fs::File::open(path)?).lines() {
+        let Ok(line) = line else { continue };
+        let Ok(r) = serde_json::from_str::<Raw>(&line) else {
+            continue;
+        };
+        let mut context = vec![];
+        if let Some(s) = r.system {
+            context.push(Message::new(Role::System, s));
+        }
+        match (r.messages, r.prompt) {
+            (Some(m), _) => context.extend(m),
+            (None, Some(p)) => context.push(Message::new(Role::User, p)),
+            _ => continue,
+        }
+        if r.chosen.trim().is_empty() || r.chosen == r.rejected {
+            continue;
+        }
+        out.push(DpoPair {
+            context,
+            chosen: r.chosen,
+            rejected: r.rejected,
+        });
+    }
+    Ok(out)
+}
+
+pub fn write_dpo_jsonl(path: &Path, pairs: &[DpoPair]) -> Result<()> {
+    let mut s = String::new();
+    for p in pairs {
+        s.push_str(&serde_json::to_string(&serde_json::json!({
+            "messages": p.context, "chosen": p.chosen, "rejected": p.rejected
+        }))?);
+        s.push('\n');
+    }
+    fs::write(path, s)?;
+    Ok(())
+}
+
+/// Bir cevabı (bağlamla birlikte) token'lara çevirir; maske yalnızca cevapta açıktır.
+pub fn encode_answer(tok: &Tokenizer, context: &[Message], answer: &str) -> (Vec<u32>, Vec<bool>) {
+    let mut msgs = context.to_vec();
+    if !msgs.iter().any(|m| m.role == Role::System) {
+        msgs.insert(0, Message::new(Role::System, DEFAULT_SYSTEM));
+    }
+    msgs.push(Message::new(Role::Assistant, answer));
+    encode_chat(tok, &msgs, false)
+}

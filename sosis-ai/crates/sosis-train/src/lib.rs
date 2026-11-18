@@ -17,6 +17,7 @@
 //! ```
 
 pub mod config;
+pub mod dpo;
 pub mod offload;
 
 pub use config::{DistillConfig, InferenceConfig, MemoryEstimate, RunConfig, TrainConfig};
@@ -115,11 +116,11 @@ pub fn trainable_params(model: &SosyModel) -> usize {
     c.0
 }
 
-fn rec_err<E: std::fmt::Debug>(e: E) -> anyhow::Error {
+pub(crate) fn rec_err<E: std::fmt::Debug>(e: E) -> anyhow::Error {
     anyhow::anyhow!("{e:?}")
 }
 
-fn build_optimizer(t: &TrainConfig) -> ModuleOptimizer {
+pub(crate) fn build_optimizer(t: &TrainConfig) -> ModuleOptimizer {
     let clip = (t.grad_clip > 0.0).then_some(GradientClippingConfig::Norm(t.grad_clip));
     AdamWConfig::new()
         .with_beta_1(t.beta1)
@@ -308,6 +309,9 @@ pub fn train(
     resume: bool,
     mut on_step: impl FnMut(&StepReport),
 ) -> Result<TrainOutcome> {
+    if cfg.dpo.is_some() {
+        return dpo::train_dpo(cfg, on_step);
+    }
     let t = &cfg.train;
     let out = &t.out_dir;
     fs::create_dir_all(out.join("checkpoints"))?;

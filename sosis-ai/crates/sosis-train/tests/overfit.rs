@@ -97,6 +97,7 @@ fn config(root: &Path, run: &str, d_model: usize, kv: Option<usize>) -> RunConfi
         },
         distill: None,
         inference: Default::default(),
+        dpo: None,
     }
 }
 
@@ -288,5 +289,46 @@ fn lora_adapts_frozen_base_to_new_code() {
     let (_, out2) = run(&l2, true);
     assert_eq!(out2.final_step, 160);
     assert!(out2.last_loss < first * 0.6);
+    std::fs::remove_dir_all(&root).ok();
+}
+
+#[test]
+fn dpo_learns_preference() {
+    use sosis_data::sft::{write_dpo_jsonl, DpoPair};
+    use sosis_tokenizer::chat::{Message, Role};
+    let root = setup("dpo");
+    let base = config(&root, "base", 64, Some(2));
+    run(&base, false);
+
+    let pairs: Vec<DpoPair> = (0..24)
+        .map(|i| DpoPair {
+            context: vec![Message::new(Role::User, format!("soru {i}: fibonacci yaz"))],
+            chosen: "fn fibonacci(n: u64) -> u64 { n }".into(),
+            rejected: "olmaz, yazamam".into(),
+        })
+        .collect();
+    let data = root.join("dpo.jsonl");
+    write_dpo_jsonl(&data, &pairs).unwrap();
+
+    let mut cfg = config(&root, "dpo", 64, Some(2));
+    cfg.train.init_from = Some(base.train.out_dir.clone());
+    cfg.train.max_steps = 40;
+    cfg.train.warmup_steps = 5;
+    cfg.train.lr = 1e-3;
+    cfg.train.micro_batch = 4;
+    cfg.train.log_every = 1;
+    cfg.dpo = Some(sosis_train::dpo::DpoConfig { data, beta: 0.5 });
+    let (first, out) = run(&cfg, false);
+    eprintln!("dpo: kayıp {first:.3} → {:.3}", out.last_loss);
+    assert!(
+        (first - std::f32::consts::LN_2).abs() < 0.05,
+        "başlangıç ln2 olmalı: {first}"
+    );
+    assert!(
+        out.last_loss < 0.2,
+        "tercih öğrenilemedi: {}",
+        out.last_loss
+    );
+    assert!(cfg.train.out_dir.join("best.bpk").exists());
     std::fs::remove_dir_all(&root).ok();
 }

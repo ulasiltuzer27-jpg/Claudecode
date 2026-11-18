@@ -1,0 +1,48 @@
+# DPO / tercih verisi üretimi için örnek görevler (benchmarks/'tan AYRI tutun: aynı görevlerle
+# eğitmek, değerlendirme sonuçlarını şişirir). Biçim benchmarks/*.toml ile aynıdır.
+# Kendi projenize uygun görevleri buraya ekleyin.
+lang = "rust"
+file = "main.rs"
+
+[[task]]
+id = "clamp_health"
+prompt = """/// Canı 0 ile max arasında tutar.
+fn clamp_health(hp: i32, max: i32) -> i32 {
+"""
+solution = """    hp.max(0).min(max)
+}
+"""
+tests = """fn main() {
+    assert_eq!(clamp_health(-5, 100), 0);
+    assert_eq!(clamp_health(150, 100), 100);
+    assert_eq!(clamp_health(42, 100), 42);
+}
+"""
+
+[[task]]
+id = "count_items"
+prompt = """/// Envanterde verilen eşyadan kaç tane olduğunu sayar.
+fn count_items(inventory: &[&str], item: &str) -> usize {
+"""
+solution = """    inventory.iter().filter(|x| **x == item).count()
+}
+"""
+tests = """fn main() {
+    assert_eq!(count_items(&["odun", "taş", "odun"], "odun"), 2);
+    assert_eq!(count_items(&[], "odun"), 0);
+}
+"""
+
+[[task]]
+id = "manhattan"
+prompt = """/// İki ızgara noktası arasındaki Manhattan uzaklığı.
+fn manhattan(a: (i32, i32), b: (i32, i32)) -> i32 {
+"""
+solution = """    (a.0 - b.0).abs() + (a.1 - b.1).abs()
+}
+"""
+tests = """fn main() {
+    assert_eq!(manhattan((0, 0), (3, 4)), 7);
+    assert_eq!(manhattan((-1, 2), (-1, 2)), 0);
+}
+"""

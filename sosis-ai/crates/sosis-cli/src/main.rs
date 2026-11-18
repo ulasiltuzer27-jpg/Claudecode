@@ -211,6 +211,26 @@ enum Cmd {
         #[arg(long, default_value = "sessions")]
         sessions: PathBuf,
     },
+    /// DPO tercih çiftleri üretir: model her görev için N cevap yazar; testi geçen = tercih edilen,
+    /// geçmeyen = reddedilen. Görevleri benchmarks/'tan ayrı tutun (ör. tasks/).
+    DpoData {
+        #[command(flatten)]
+        model: ModelArgs,
+        /// Test içeren görev klasörü (benchmarks biçimi).
+        #[arg(long, default_value = "tasks")]
+        tasks: PathBuf,
+        #[arg(long, default_value_t = 6)]
+        samples: usize,
+        #[arg(long, default_value_t = 0.9)]
+        temperature: f32,
+        #[arg(long, default_value_t = 384)]
+        max_tokens: usize,
+        /// Görev başına en fazla çift.
+        #[arg(long, default_value_t = 2)]
+        pairs_per_task: usize,
+        #[arg(long, short, default_value = "dpo.jsonl")]
+        out: PathBuf,
+    },
     /// Proje hafızası için kod tabanını indeksler (BM25).
     Index {
         #[arg(long, short, required = true, num_args = 1..)]
@@ -942,6 +962,81 @@ fn main() -> Result<()> {
             match attempts.iter().find(|a| a.passed()) {
                 Some(a) => eprintln!("✓ {}. turda çalıştı (oturum {})", a.round, s.id),
                 None => eprintln!("✗ {} turda çözülemedi (oturum {})", attempts.len(), s.id),
+            }
+        }
+        Cmd::DpoData {
+            model,
+            tasks,
+            samples,
+            temperature,
+            max_tokens,
+            pairs_per_task,
+            out,
+        } => {
+            use sosis_infer::repair::{build_program, extract_code};
+            use sosis_tokenizer::chat::{Message, Role};
+            if tasks.canonicalize().ok() == PathBuf::from("benchmarks").canonicalize().ok() {
+                eprintln!(
+                    "⚠ benchmarks/ ile tercih verisi üretmek, bench sonuçlarını anlamsız kılar."
+                );
+            }
+            let g = load_generator(&model)?;
+            let suites = sosis_bench::load_suites(&tasks)?;
+            let mut pairs = Vec::new();
+            for suite in &suites {
+                let fence = match suite.lang {
+                    sosis_bench::Lang::Rust => "rust",
+                    sosis_bench::Lang::Python => "python",
+                };
+                for task in &suite.tasks {
+                    let ask = format!(
+                        "Şu fonksiyonu tamamla. Fonksiyonun tamamını tek bir kod bloğunda yaz.\n```{fence}\n{}```",
+                        task.prompt
+                    );
+                    let (mut good, mut bad) = (Vec::new(), Vec::new());
+                    for i in 0..samples {
+                        let params = SamplingParams {
+                            temperature,
+                            max_new_tokens: max_tokens,
+                            seed: 7_000 + i as u64,
+                            ..Default::default()
+                        };
+                        let mut s = ChatSession::new(None);
+                        let answer = reply(&g, &mut s, &ask, None, &params, &mut |_| {});
+                        let code = extract_code(&answer, suite.lang);
+                        let outcome = sosis_bench::run_program(
+                            suite.lang,
+                            &build_program(&code, Some(&task.tests), suite.lang),
+                            std::time::Duration::from_secs(10),
+                        )?;
+                        if outcome.passed() {
+                            good.push(answer)
+                        } else {
+                            bad.push(answer)
+                        }
+                    }
+                    let n = good.len().min(bad.len()).min(pairs_per_task);
+                    println!(
+                        "{:?}/{:<18} geçen {}/{}  → {} çift",
+                        suite.lang,
+                        task.id,
+                        good.len(),
+                        samples,
+                        n
+                    );
+                    for (c, r) in good.into_iter().zip(bad).take(n) {
+                        pairs.push(sosis_data::sft::DpoPair {
+                            context: vec![Message::new(Role::User, ask.clone())],
+                            chosen: c,
+                            rejected: r,
+                        });
+                    }
+                }
+            }
+            sosis_data::sft::write_dpo_jsonl(&out, &pairs)?;
+            eprintln!("✓ {} çift → {}", pairs.len(), out.display());
+            if pairs.is_empty() {
+                eprintln!("  Hiç çift çıkmadı: model ya hep geçiyor ya hep kalıyor. --samples veya --temperature'ı artırın.");
             }
         }
         Cmd::Index { input, out } => {

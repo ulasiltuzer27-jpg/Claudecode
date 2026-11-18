@@ -1,0 +1,28 @@
+# DPO için örnek Python görevleri (benchmarks/'tan ayrı).
+lang = "python"
+file = "main.py"
+
+[[task]]
+id = "xp_to_level"
+prompt = '''def xp_to_level(xp):
+    """Her seviye 100 XP: 0-99 → 1, 100-199 → 2 ..."""
+'''
+solution = '''    return xp // 100 + 1
+'''
+tests = '''
+assert xp_to_level(0) == 1
+assert xp_to_level(99) == 1
+assert xp_to_level(250) == 3
+'''
+
+[[task]]
+id = "unique_sorted"
+prompt = '''def unique_sorted(xs):
+    """Tekrarları kaldırıp küçükten büyüğe sıralı liste döndürür."""
+'''
+solution = '''    return sorted(set(xs))
+'''
+tests = '''
+assert unique_sorted([3, 1, 3, 2]) == [1, 2, 3]
+assert unique_sorted([]) == []
+'''

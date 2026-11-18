@@ -8,6 +8,7 @@ description = "Sosy modelleri için eğitim döngüsü"
 [dependencies]
 sosis-model = { workspace = true, default-features = false }
 sosis-data = { workspace = true }
+sosis-tokenizer = { workspace = true }
 burn = { workspace = true, features = ["autodiff", "optim"] }
 serde = { workspace = true }
 serde_json = { workspace = true }
