@@ -9,6 +9,7 @@
 //! ```
 
 mod dashboard;
+mod watch;
 mod web;
 
 use std::io::{BufRead, Write};
@@ -231,6 +232,22 @@ enum Cmd {
         pairs_per_task: usize,
         #[arg(long, short, default_value = "dpo.jsonl")]
         out: PathBuf,
+    },
+    /// Eğitimi gözet: çökerse --resume ile yeniden başlat; bellek yetmezse batch'i küçült.
+    Watch {
+        #[arg(long, short)]
+        config: PathBuf,
+        #[arg(long, default_value_t = 20)]
+        max_restarts: usize,
+        /// Bellek yetmezliğinde micro_batch'i yarıya indir, grad_accum'u ikiye katla.
+        #[arg(long)]
+        auto_oom: bool,
+        /// Yeniden başlatmadan önce bekleme (sn).
+        #[arg(long, default_value_t = 30)]
+        delay: u64,
+        /// train'e aktarılacak ek seçenekler (ör. --backend cuda).
+        #[arg(last = true)]
+        extra: Vec<String>,
     },
     /// Eğitimi canlı izleme paneli (kayıp, hız, VRAM/RAM, kalan süre).
     Dashboard {
@@ -1062,6 +1079,25 @@ fn main() -> Result<()> {
             }
         }
         Cmd::Dashboard { run, port, lan } => dashboard::serve(run, port, lan)?,
+        Cmd::Watch {
+            config,
+            max_restarts,
+            auto_oom,
+            delay,
+            extra,
+        } => {
+            let cfg = RunConfig::load(&config)?;
+            let mut log = watch::TeeLog::open(cfg.train.out_dir.join("watch.log"))?;
+            let opts = watch::WatchOptions {
+                max_restarts,
+                auto_oom,
+                delay: std::time::Duration::from_secs(delay),
+            };
+            let n = watch::run_watch(&config, &opts, &mut log, || {
+                watch::spawn_train(&config, &extra)
+            })?;
+            eprintln!("bekçi: {n} yeniden başlatmayla tamamlandı");
+        }
         Cmd::Pack { run, out, int8 } => {
             sosis_infer::package::pack(&run, &out, int8)?;
             eprintln!(

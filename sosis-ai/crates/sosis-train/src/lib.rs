@@ -50,8 +50,15 @@ pub const TOKENIZER_FILE: &str = "tokenizer.json";
 pub struct TrainState {
     /// Tamamlanan optimizer adımı sayısı.
     pub step: usize,
+    /// Henüz doğrulama yapılmadıysa sonsuz; JSON'da `null` olarak saklanır.
+    #[serde(deserialize_with = "nullable_inf")]
     pub best_val_loss: f32,
     pub tokens_seen: u64,
+}
+
+/// `null` (JSON'un sonsuz için yazdığı değer) → `f32::INFINITY`.
+fn nullable_inf<'de, D: serde::Deserializer<'de>>(d: D) -> Result<f32, D::Error> {
+    Ok(Option::<f32>::deserialize(d)?.unwrap_or(f32::INFINITY))
 }
 
 /// Eğitimden bir adım raporu (CLI ve testler için).
@@ -628,6 +635,19 @@ fn save_checkpoint(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn state_with_infinite_best_roundtrips() {
+        let s = TrainState {
+            step: 10,
+            best_val_loss: f32::INFINITY,
+            tokens_seen: 5,
+        };
+        let json = serde_json::to_string(&s).unwrap();
+        let back: TrainState = serde_json::from_str(&json).unwrap();
+        assert!(back.best_val_loss.is_infinite());
+        assert_eq!(back.step, 10);
+    }
 
     #[test]
     fn lr_schedule() {
