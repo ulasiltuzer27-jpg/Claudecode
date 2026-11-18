@@ -8,7 +8,9 @@
 //! ```
 
 pub mod collect;
+pub mod edits;
 pub mod filter;
+pub mod gitmine;
 pub mod minhash;
 pub mod ram;
 pub mod sft;

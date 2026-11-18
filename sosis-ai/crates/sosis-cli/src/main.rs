@@ -84,8 +84,13 @@ enum Cmd {
     },
     /// Koddaki belgelenmiş fonksiyonlardan (///, <summary>, docstring) soru→kod örnekleri çıkarır.
     SftData {
-        #[arg(long, short, required = true, num_args = 1..)]
+        #[arg(long, short, num_args = 1.., required_unless_present = "git")]
         input: Vec<PathBuf>,
+        /// Git depoları: commit'lerden mesaj, açıklama ve ARA/DEĞİŞTİR düzenleme örnekleri.
+        #[arg(long, num_args = 1..)]
+        git: Vec<PathBuf>,
+        #[arg(long, default_value_t = 5000)]
+        max_commits: usize,
         #[arg(long, short, default_value = "sft.jsonl")]
         out: PathBuf,
         /// Planlama örneklerini (plan → onay → kod) üretme.
@@ -657,9 +662,19 @@ fn main() -> Result<()> {
             input,
             out,
             no_plans,
+            git,
+            max_commits,
         } => {
-            let ex =
-                sosis_data::sft::extract_from_code(&input, &CollectOptions::default(), !no_plans)?;
+            let mut ex = if input.is_empty() {
+                vec![]
+            } else {
+                sosis_data::sft::extract_from_code(&input, &CollectOptions::default(), !no_plans)?
+            };
+            for repo in &git {
+                let g = sosis_data::gitmine::mine(repo, max_commits)?;
+                eprintln!("  {}: git geçmişinden {} örnek", repo.display(), g.len());
+                ex.extend(g);
+            }
             sosis_data::sft::write_jsonl(&out, &ex)?;
             let plans = ex.iter().filter(|e| e.messages.len() == 4).count();
             eprintln!(
