@@ -71,6 +71,12 @@ enum Cmd {
         /// Yalnızca bu uzantılar (ör. `--ext rs --ext py`). Boşsa varsayılan liste.
         #[arg(long)]
         ext: Vec<String>,
+        /// Yakın kopyaları MinHash ile ele (eşik: tahmini Jaccard benzerliği).
+        #[arg(long, num_args = 0..=1, default_missing_value = "0.8")]
+        near_dedup: Option<f64>,
+        /// Bu klasördeki değerlendirme görevlerini içeren belgeleri at (ör. benchmarks).
+        #[arg(long)]
+        decontaminate: Option<PathBuf>,
     },
     /// Koddaki belgelenmiş fonksiyonlardan (///, <summary>, docstring) soru→kod örnekleri çıkarır.
     SftData {
@@ -388,8 +394,20 @@ fn main() -> Result<()> {
             val_percent,
             threads,
             ext,
+            near_dedup,
+            decontaminate,
         } => {
             let tok = Tokenizer::load(&tokenizer)?;
+            let mut contam_texts = Vec::new();
+            if let Some(dir) = &decontaminate {
+                for suite in sosis_bench::load_suites(dir)? {
+                    for t in suite.tasks {
+                        contam_texts.push(format!("{}{}", t.prompt, t.solution));
+                        contam_texts.push(t.tests);
+                    }
+                }
+                eprintln!("sızıntı temizliği: {} metin", contam_texts.len());
+            }
             let mut collect = CollectOptions::default();
             if !ext.is_empty() {
                 collect.extensions = ext;
@@ -407,6 +425,8 @@ fn main() -> Result<()> {
                 seed: 1337,
                 collect,
                 filter: FilterOptions::default(),
+                near_dedup,
+                decontaminate: contam_texts,
             };
             let t = Instant::now();
             let meta = sosis_data::prepare(&tok, &opts, |docs, toks| {
@@ -424,6 +444,12 @@ fn main() -> Result<()> {
                 meta.rejected,
                 t.elapsed().as_secs_f32()
             );
+            if near_dedup.is_some() || decontaminate.is_some() {
+                eprintln!(
+                    "  yakın kopya: {} | sızıntı: {}",
+                    meta.near_duplicates, meta.contaminated
+                );
+            }
         }
         Cmd::SftData { input, out } => {
             let ex = sosis_data::sft::extract_from_code(&input, &CollectOptions::default())?;

@@ -40,6 +40,8 @@ fn setup(name: &str) -> PathBuf {
             seed: 1,
             collect: CollectOptions::default(),
             filter: FilterOptions::default(),
+            near_dedup: None,
+            decontaminate: vec![],
         },
         |_, _| {},
     )

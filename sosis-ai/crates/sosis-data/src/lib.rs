@@ -9,6 +9,7 @@
 
 pub mod collect;
 pub mod filter;
+pub mod minhash;
 pub mod ram;
 pub mod sft;
 pub mod shard;
@@ -81,6 +82,10 @@ pub struct PrepareOptions {
     pub seed: u64,
     pub collect: CollectOptions,
     pub filter: FilterOptions,
+    /// Yakın kopya eşiği (tahmini Jaccard, ör. 0.8). `None` = kapalı.
+    pub near_dedup: Option<f64>,
+    /// Bu metinlerle (ör. benchmark görevleri) 13 kelimelik ortak dizisi olan belgeler atılır.
+    pub decontaminate: Vec<String>,
 }
 
 #[derive(Debug, Default, Serialize, Deserialize)]
@@ -92,6 +97,10 @@ pub struct DataMeta {
     pub fim_docs: u64,
     pub duplicates: u64,
     pub rejected: u64,
+    #[serde(default)]
+    pub near_duplicates: u64,
+    #[serde(default)]
+    pub contaminated: u64,
 }
 
 impl DataMeta {
@@ -149,6 +158,12 @@ pub fn prepare(
     let fim_docs = AtomicU64::new(0);
     let dups = AtomicU64::new(0);
     let rejected = AtomicU64::new(0);
+    let near_dups = AtomicU64::new(0);
+    let contaminated = AtomicU64::new(0);
+    let near_index = opts
+        .near_dedup
+        .map(|t| Mutex::new(minhash::NearDedup::new(t)));
+    let contam = minhash::Contamination::new(&opts.decontaminate);
     let (txs, rx) = mpsc::sync_channel::<(bool, Vec<u16>)>(256);
 
     let mut train = ShardWriter::create(&opts.out_dir.join(TRAIN_FILE))?;
@@ -163,6 +178,8 @@ pub fn prepare(
             let tx = txs.clone();
             let (units, seen, next) = (&units, &seen, &next);
             let (docs, fim_docs, dups, rejected) = (&docs, &fim_docs, &dups, &rejected);
+            let (near, near_dups, contam, contaminated) =
+                (near_index.as_ref(), &near_dups, &contam, &contaminated);
             s.spawn(move || loop {
                 let i = next.fetch_add(1, Ordering::Relaxed);
                 let Some(unit) = units.get(i) else { break };
@@ -177,6 +194,16 @@ pub fn prepare(
                         if !seen.lock().unwrap().insert(h) {
                             dups.fetch_add(1, Ordering::Relaxed);
                             return;
+                        }
+                        if contam.contains(&doc.content) {
+                            contaminated.fetch_add(1, Ordering::Relaxed);
+                            return;
+                        }
+                        if let Some(nd) = near {
+                            if nd.lock().unwrap().is_duplicate(&doc.content) {
+                                near_dups.fetch_add(1, Ordering::Relaxed);
+                                return;
+                            }
                         }
                         // Belge başına deterministik rastgelelik.
                         let mut rng = rand::rngs::StdRng::seed_from_u64(h ^ opts.seed);
@@ -231,6 +258,8 @@ pub fn prepare(
         fim_docs: fim_docs.into_inner(),
         duplicates: dups.into_inner(),
         rejected: rejected.into_inner(),
+        near_duplicates: near_dups.into_inner(),
+        contaminated: contaminated.into_inner(),
     };
     std::fs::write(
         opts.out_dir.join(META_FILE),
