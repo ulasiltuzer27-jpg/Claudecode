@@ -44,16 +44,40 @@ VRAM ve RAM değerleri `sosis info` ile hesaplanan kaba tahminlerdir. Hedef dona
 - **Yerel web arayüzü (`sosis serve`):** Sohbet, tamamlama ve FIM sekmeleri; cevap token token akar.
   Yalnızca `127.0.0.1`'den erişilir, internete bağlanmaz.
 
+### v1.2'de eklenenler
+
+- **Hız:**
+  - *Spekülatif kod çözme* (`--draft`): Flash taslak token önerir, Pro tek geçişte doğrular; çıktı
+    aynı kalır, kabul oranına göre ~1.5–2.5 kat hızlanır.
+  - *int8 nicemleme* (`sosis quantize`): ağırlıklar ~4 kat küçülür.
+  - *Önek önbelleği:* sohbette önceki mesajlar yeniden hesaplanmaz.
+- **Projeye özel ayar (LoRA / QLoRA):** Pro donar, yalnızca ~20 MB'lık adaptör eğitilir; birkaç
+  saatte kendi kodunuza uyarlanır. `sosis merge` ile adaptör tabana katılır.
+- **Planlama (Claude gibi):** model önce numaralı bir plan yazar; siz **onaylar, düzenler veya
+  reddedersiniz**; kod onaylanan plana göre yazılır. Plan örnekleri de kodunuzdan otomatik üretilir.
+- **Kendini düzelten kod:** kod derlenip çalıştırılır, hata varsa model hata mesajını görüp düzeltir
+  (`sosis solve`, sohbette `/çöz`, web'de "Çalıştırıp düzelt", `bench --repair`).
+- **Tercih eğitimi (DPO):** testi geçen ve geçmeyen cevap çiftlerinden "iyi cevabı" tercih etmeyi
+  öğrenir (`sosis dpo-data` + `[dpo]`).
+- **Veri temizliği:** MinHash ile yakın kopya eleme (`--near-dedup`); benchmark görevlerinin eğitim
+  verisine sızmasını engelleme (`--decontaminate benchmarks`).
+- **Araçlar:**
+  - *Eğitim paneli* (`sosis dashboard`): canlı grafikler ve kalan süre; `--lan` ile telefondan izlenebilir.
+  - *`.sosy` model paketi* (`sosis pack`): config, tokenizer, ağırlıklar ve model kartı tek dosyada.
+  - *VS Code eklentisi* (`editors/vscode`): satır içi öneriler ve "açıkla / düzelt".
+
 ```
 sosis-ai/
-  configs/      sosy-{flash-1.0,1.0,pro-1.0,pro-1.0-ctx2048}.toml, *-chat.toml, sosy-tiny*.toml
-  benchmarks/   rust.toml, python.toml (derle-çalıştır görevleri)
+  configs/      sosy-{flash-1.0,1.0,pro-1.0,pro-1.0-ctx2048}.toml, *-chat, *-lora, *-dpo, sosy-tiny*
+  benchmarks/   rust.toml, python.toml (değerlendirme görevleri — eğitimde kullanmayın)
+  tasks/        DPO verisi üretmek için ayrı örnek görevler
+  editors/vscode/  VS Code eklentisi (TypeScript)
   crates/
     sosis-tokenizer/  BPE, sohbet şablonu
-    sosis-data/       toplama, filtre, FIM, parquet, SFT verisi, maskeli shard'lar, RAM bekçisi
-    sosis-model/      Transformer, GQA, RoPE ölçekleme, KV-cache, backend seçimi
-    sosis-train/      eğitim döngüsü, optimizer offload, damıtma, checkpoint/devam
-    sosis-infer/      örnekleme, tamamlama, FIM, sohbet hafızası, RAG
+    sosis-data/       toplama, filtre, MinHash, FIM, parquet, SFT/DPO verisi, maskeli shard'lar, RAM bekçisi
+    sosis-model/      Transformer, GQA, RoPE ölçekleme, KV-cache, int8, LoRA, backend seçimi
+    sosis-train/      eğitim döngüsü, optimizer offload, damıtma, DPO, checkpoint/devam
+    sosis-infer/      örnekleme, spekülatif, önek önbelleği, sohbet, RAG, plan, onarım, .sosy
     sosis-bench/      pass@k değerlendirmesi
     sosis-cli/        `sosis` komutu + web arayüzü
 ```
@@ -153,7 +177,55 @@ sosis fim -r runs/sosy-pro-1.0-ctx2048 --file util.py --prefix "def slug(s):\n" 
 - **Örnekleme seçenekleri:** `--temperature` (0 = deterministik), `--top-k`, `--top-p`,
   `--repetition-penalty`, `--max-tokens`, `--stop`, `--seed`.
 - **Bağlam:** `--context 4096` ile uzatılır (varsayılan değer config'deki `[inference] context`).
-- **Sohbet komutları:** `/yeni`, `/liste`, `/yükle <id>`, `/çık`. Oturumlar `sessions/` klasöründe saklanır.
+- **Sohbet komutları:** `/yeni`, `/liste`, `/yükle <id>`, `/plan <görev>`, `/çöz [rust|python] <görev>`,
+  `/çık`. Oturumlar `sessions/` klasöründe saklanır.
+
+### 8) Hızlandırma
+
+```bash
+sosis generate -r runs/sosy-pro-1.0-chat --draft runs/sosy-flash-1.0 -p "fn "   # spekülatif (aynı tokenizer)
+sosis quantize -r runs/sosy-pro-1.0-chat -o runs/sosy-pro-1.0-chat-int8         # int8
+sosis serve -r runs/sosy-pro-1.0-chat-int8 --draft runs/sosy-flash-1.0
+```
+
+Spekülatif modda çıktının sonunda taslak kabul oranı yazılır. Damıtılmış bir Flash daha çok kabul alır.
+
+### 9) Kendi projenize özel ayar (LoRA)
+
+```bash
+sosis prepare -i ~/oyun_kodum -t tokenizer.json -o data-proje --near-dedup
+sosis train -c configs/sosy-pro-1.0-lora.toml        # yalnızca adaptör eğitilir (birkaç saat)
+sosis chat  -r runs/sosy-pro-1.0-lora --index .sosis-index
+sosis merge -r runs/sosy-pro-1.0-lora -o runs/sosy-pro-1.0-proje   # isteğe bağlı: tek başına model
+```
+
+### 10) Planlama, onarım ve tercih eğitimi
+
+```bash
+sosis chat -r runs/sosy-pro-1.0-chat
+#   /plan Envantere eşya ekleyen bir sınıf yaz   → plan → [o]nayla / [d]üzenle / [r]eddet → kod
+#   /çöz rust iki tarihi karşılaştıran fonksiyon → derle → hata varsa düzelt (3 tura kadar)
+sosis solve -r runs/sosy-pro-1.0-chat --lang python --tests testlerim.py "CSV'den ortalama hesapla"
+sosis bench -r runs/sosy-pro-1.0-chat --repair 3      # onarımsız / onarımlı pass@1
+
+sosis dpo-data -r runs/sosy-pro-1.0-chat --tasks tasks --samples 8 -o dpo.jsonl
+sosis train -c configs/sosy-pro-1.0-dpo.toml          # LoRA + DPO
+```
+
+`tasks/` klasörüne kendi test içeren görevlerinizi ekleyin. `benchmarks/`'ı burada kullanmayın, yoksa
+değerlendirme sonuçları anlamsızlaşır.
+
+### 11) Araçlar
+
+```bash
+sosis dashboard -r runs/sosy-pro-1.0            # http://127.0.0.1:8081 — canlı eğitim paneli
+sosis dashboard -r runs/sosy-pro-1.0 --lan      # telefondan: yazdırılan adres ve anahtarla
+sosis pack -r runs/sosy-pro-1.0-chat --int8 -o sosy-pro-chat.sosy
+sosis serve -r sosy-pro-chat.sosy               # .sosy her komutta -r ile kullanılabilir
+```
+
+**VS Code:** `editors/vscode/README.md`'deki adımlarla `.vsix` paketini kurun. `sosis serve` açıkken
+yazdıkça gri öneriler çıkar (`Tab` ile kabul). Sağ tık menüsünde "Seçili kodu açıkla / düzelt" bulunur.
 
 ## CPU'da birkaç dakikalık deneme
 
@@ -187,6 +259,16 @@ Testlerin kapsadıkları:
   - offload + bf16, init_from, damıtma ve SFT ile küçük modellerin ezberleyip devam edebilmesi.
 - **Değerlendirme:** 40 referans çözümün gerçekten derlenip geçmesi, pass@k tahmincisi.
 - **Hafıza:** BM25 sıralaması, oturum kaydı ve kimlik güvenliği.
+- **v1.2:**
+  - spekülatif ve önek önbellekli üretimin normal üretimle birebir aynı olması;
+  - ofsetli geçiş ve `truncate`;
+  - int8 doğruluğu;
+  - LoRA'da yalnızca adaptörlerin değişmesi, birleştirmenin aynı çıktıyı vermesi ve devam;
+  - DPO'da kaybın ln 2'den düşmesi;
+  - onarım döngüsü;
+  - plan örnekleri;
+  - MinHash ve sızıntı tespiti;
+  - `.sosy`'de yol enjeksiyonunun reddi.
 
 ## Sınırlar ve notlar
 
@@ -194,3 +276,7 @@ Testlerin kapsadıkları:
 - `precision = "bf16"` offload olmadan da kullanılabilir, ancak o durumda ağırlıklar da bf16 tutulur.
   Bu kararsız olabilir; Pro yapılandırması bu yüzden offload kullanır.
 - Gradyan kırpma, Burn'de parametre tensörü başına uygulanır (tüm model üzerinden tek norm değil).
+- Planlama, onarım ve DPO'nun faydası model boyutuna bağlıdır. Pro-chat ile anlamlı sonuç verir;
+  tiny demo modelde yalnızca akış görülür.
+- Spekülatif ve int8 hızları GPU'da ölçülmedi. Hızlanma kabul oranına ve backend'e bağlıdır.
+- DPO, checkpoint'ten devam etmeyi desteklemez (kısa sürer).
