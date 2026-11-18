@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sosis AI Eğitim Paneli</title>
+<style>
+  :root {
+    --bg: #f7f5f2; --panel: #ffffff; --line: #e4ded6; --grid: #eee9e3; --text: #22201d; --muted: #6f6860;
+    --s1: #c2410c; --s2: #2563eb; --s3: #059669; --s4: #7c3aed; --ok: #15803d; --warn: #b45309;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #151413; --panel: #1d1b1a; --line: #34302d; --grid: #2a2725; --text: #ece7e1; --muted: #a39b92;
+      --s1: #fb923c; --s2: #60a5fa; --s3: #34d399; --s4: #a78bfa; --ok: #4ade80; --warn: #fbbf24;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 1100px; margin: 0 auto; padding: 20px 16px 40px; }
+  header { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+  header h1 { font-size: 20px; margin: 0; }
+  .live { font-size: 12px; color: var(--muted); }
+  .live b { color: var(--ok); }
+  .live b.stale { color: var(--warn); }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 16px; }
+  .tile { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+  .tile small { color: var(--muted); font-size: 12px; display: block; }
+  .tile b { font-size: 22px; font-variant-numeric: tabular-nums; }
+  .bar { height: 6px; background: var(--grid); border-radius: 3px; margin-top: 8px; overflow: hidden; }
+  .bar i { display: block; height: 100%; background: var(--s1); }
+  .charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 12px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+  .card h2 { font-size: 14px; margin: 0 0 6px; }
+  .legend { display: flex; gap: 12px; font-size: 12px; color: var(--muted); margin-bottom: 4px; flex-wrap: wrap; }
+  .legend span::before { content: ""; display: inline-block; width: 10px; height: 3px; margin-right: 5px; vertical-align: middle; background: var(--c); }
+  svg { width: 100%; height: auto; display: block; }
+  svg text { fill: var(--muted); font-size: 10px; }
+  .empty { color: var(--muted); padding: 40px 0; text-align: center; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div style="font-size:26px">🌭</div>
+    <div><h1 id="name">Eğitim paneli</h1><div class="live" id="live">yükleniyor…</div></div>
+  </header>
+  <section class="tiles" id="tiles"></section>
+  <section class="charts" id="charts"></section>
+</main>
+<script>
+const key = new URLSearchParams(location.search).get("key");
+const q = key ? `?key=${encodeURIComponent(key)}` : "";
+const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+
+function fmtDur(s) {
+  if (s == null || !isFinite(s)) return "—";
+  const d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), m = Math.floor((s % 3600) / 60);
+  return d ? `${d} g ${h} sa` : h ? `${h} sa ${m} dk` : `${m} dk`;
+}
+const fmt = (v, n = 3) => (v == null || !isFinite(v) ? "—" : Number(v).toFixed(n));
+
+// Eksen etiketi: aralığa göre yeterli basamak; çok küçük değerler bilimsel gösterimle.
+function tick(v, range) {
+  const a = Math.abs(v);
+  if (a !== 0 && (a < 0.01 || range < 0.01)) return v.toExponential(1);
+  const dec = range >= 50 ? 0 : range >= 5 ? 1 : range >= 0.5 ? 2 : 3;
+  return v.toFixed(dec);
+}
+
+// Çok serili SVG çizgi grafiği. series: [{label, color, points:[[x,y]...], dots?}]
+function chart(title, series, unit = "") {
+  const pts = series.flatMap((s) => s.points);
+  if (!pts.length) return "";
+  const W = 600, H = 200, L = 44, R = 10, T = 8, B = 22;
+  const xs = pts.map((p) => p[0]), ys = pts.map((p) => p[1]);
+  let [x0, x1, y0, y1] = [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)];
+  if (x1 === x0) x1 = x0 + 1;
+  if (y1 === y0) { y1 += 1; y0 -= 1; }
+  const pad = (y1 - y0) * 0.08; const nonneg = y0 >= 0; y0 -= pad; y1 += pad;
+  if (nonneg && y0 < 0) y0 = 0;
+  const X = (x) => L + ((x - x0) / (x1 - x0)) * (W - L - R);
+  const Y = (y) => T + (1 - (y - y0) / (y1 - y0)) * (H - T - B);
+  let g = "";
+  for (let i = 0; i <= 4; i++) {
+    const v = y0 + ((y1 - y0) * i) / 4, y = Y(v);
+    g += `<line x1="${L}" x2="${W - R}" y1="${y}" y2="${y}" stroke="${css("--grid")}"/>`;
+    g += `<text x="${L - 6}" y="${y + 3}" text-anchor="end">${tick(v, y1 - y0)}</text>`;
+  }
+  g += `<text x="${L}" y="${H - 6}">${x0}</text><text x="${W - R}" y="${H - 6}" text-anchor="end">adım ${x1}</text>`;
+  for (const s of series) {
+    if (!s.points.length) continue;
+    const c = css(s.color);
+    if (s.dots) {
+      for (const [x, y] of s.points) g += `<circle cx="${X(x)}" cy="${Y(y)}" r="3" fill="${c}"/>`;
+      if (s.points.length > 1) g += `<polyline fill="none" stroke="${c}" stroke-width="1.5" stroke-dasharray="4 3" points="${s.points.map(([x, y]) => `${X(x)},${Y(y)}`).join(" ")}"/>`;
+    } else {
+      g += `<polyline fill="none" stroke="${c}" stroke-width="2" points="${s.points.map(([x, y]) => `${X(x)},${Y(y)}`).join(" ")}"/>`;
+    }
+  }
+  const legend = series.filter((s) => s.points.length).map((s) => `<span style="--c:${css(s.color)}">${s.label}</span>`).join("");
+  return `<div class="card"><h2>${title}${unit ? ` <small style="color:var(--muted);font-weight:400">(${unit})</small>` : ""}</h2>
+    <div class="legend">${legend}</div><svg viewBox="0 0 ${W} ${H}">${g}</svg></div>`;
+}
+
+const series = (rows, k) => rows.filter((r) => r[k] != null).map((r) => [r.step, r[k]]);
+// Çok uzun eğitimlerde grafik için seyrekleştir (en fazla ~400 nokta).
+const thin = (pts) => (pts.length <= 400 ? pts : pts.filter((_, i) => i % Math.ceil(pts.length / 400) === 0 || i === pts.length - 1));
+
+async function refresh() {
+  let st;
+  try { st = await (await fetch("/api/status" + q)).json(); } catch { document.getElementById("live").textContent = "bağlantı yok"; return; }
+  document.getElementById("name").textContent = `${st.name} · ${(st.params / 1e6).toFixed(1)}M parametre`;
+  const rows = st.rows || [];
+  const last = rows[rows.length - 1] || {};
+  const since = st.seconds_since_update;
+  const fresh = since != null && since < 300;
+  document.getElementById("live").innerHTML = rows.length
+    ? `<b class="${fresh ? "" : "stale"}">●</b> son güncelleme ${since != null ? fmtDur(since) + " önce" : "?"} · her 5 sn yenilenir`
+    : "henüz log yok — eğitim başlayınca burada görünecek";
+  const progress = st.max_steps ? Math.min(1, (last.step || 0) / st.max_steps) : 0;
+  const lastVal = [...rows].reverse().find((r) => r.val_loss != null);
+  const dpo = rows.some((r) => r.reward_acc != null);
+  const tiles = [
+    ["Adım", `${last.step ?? 0} / ${st.max_steps}`, `<div class="bar"><i style="width:${(progress * 100).toFixed(1)}%"></i></div>`],
+    ["Kayıp", fmt(last.loss)],
+    dpo ? ["Ödül doğruluğu", last.reward_acc != null ? `%${(last.reward_acc * 100).toFixed(0)}` : "—"]
+        : ["Doğrulama kaybı", lastVal ? `${fmt(lastVal.val_loss)} <small style="display:inline">ppl ${Math.exp(lastVal.val_loss).toFixed(1)}</small>` : "—"],
+    ["Hız", last.tokens_per_sec != null ? `${Math.round(last.tokens_per_sec).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ")} tok/s` : "—"],
+    ["Kalan süre", st.max_steps && (last.step || 0) >= st.max_steps ? "bitti ✓" : fmtDur(st.eta_seconds)],
+    ["Görülen token", last.tokens_seen != null ? `${(last.tokens_seen / 1e9).toFixed(3)} B` : "—"],
+  ];
+  document.getElementById("tiles").innerHTML = tiles.map(([k, v, extra = ""]) => `<div class="tile"><small>${k}</small><b>${v}</b>${extra}</div>`).join("");
+  if (!rows.length) { document.getElementById("charts").innerHTML = `<div class="empty">Grafikler için log bekleniyor.</div>`; return; }
+  const charts = [
+    chart("Kayıp", [
+      { label: "eğitim", color: "--s1", points: thin(series(rows, "loss")) },
+      { label: "doğrulama", color: "--s2", points: series(rows, "val_loss"), dots: true },
+    ]),
+    dpo ? chart("DPO", [
+      { label: "ödül doğruluğu", color: "--s3", points: thin(series(rows, "reward_acc")) },
+    ]) : chart("Hız", [{ label: "token/s", color: "--s3", points: thin(series(rows, "tokens_per_sec")) }], "token/s"),
+    chart("Bellek", [
+      { label: "VRAM", color: "--s4", points: thin(series(rows, "vram_gb")) },
+      { label: "RAM", color: "--s2", points: thin(series(rows, "ram_gb")) },
+    ], "GB"),
+    chart("Öğrenme oranı", [{ label: "lr", color: "--s1", points: thin(series(rows, "lr")) }]),
+  ];
+  document.getElementById("charts").innerHTML = charts.join("");
+}
+refresh();
+setInterval(refresh, 5000);
+</script>
+</body>
+</html>

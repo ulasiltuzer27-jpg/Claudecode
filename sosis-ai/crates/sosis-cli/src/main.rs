@@ -8,6 +8,7 @@
 //! sosis generate       --run runs/sosy-flash-1.0 --file main.rs --prompt "fn fibonacci("
 //! ```
 
+mod dashboard;
 mod web;
 
 use std::io::{BufRead, Write};
@@ -230,6 +231,16 @@ enum Cmd {
         pairs_per_task: usize,
         #[arg(long, short, default_value = "dpo.jsonl")]
         out: PathBuf,
+    },
+    /// Eğitimi canlı izleme paneli (kayıp, hız, VRAM/RAM, kalan süre).
+    Dashboard {
+        #[arg(long, short)]
+        run: PathBuf,
+        #[arg(long, default_value_t = 8081)]
+        port: u16,
+        /// Yerel ağdan (telefon/tablet) erişime aç; rastgele erişim anahtarı ister.
+        #[arg(long)]
+        lan: bool,
     },
     /// Proje hafızası için kod tabanını indeksler (BM25).
     Index {
@@ -1039,6 +1050,7 @@ fn main() -> Result<()> {
                 eprintln!("  Hiç çift çıkmadı: model ya hep geçiyor ya hep kalıyor. --samples veya --temperature'ı artırın.");
             }
         }
+        Cmd::Dashboard { run, port, lan } => dashboard::serve(run, port, lan)?,
         Cmd::Index { input, out } => {
             let t = Instant::now();
             let idx = CodeIndex::build(&input)?;
