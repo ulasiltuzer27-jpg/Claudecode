@@ -47,3 +47,10 @@ eval_batches = 20
 save_every = 500
 keep_checkpoints = 3
 seed = 1337
+
+# Türkçe metin karışımı (daha doğal Türkçe açıklamalar için). Önce:
+#   sosis download --dataset <türkçe metin seti> --include "*.parquet" -o indirilenler
+#   sosis prepare -i indirilenler/... notlarım/ --text -t tokenizer.json -o data-tr
+# [[train.mix]]
+# data_dir = "data-tr"
+# weight = 0.15

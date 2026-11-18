@@ -50,6 +50,14 @@ fn d_temp() -> f32 {
     2.0
 }
 
+/// `[[train.mix]]`: eğitime belirli oranda karıştırılan ek veri.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct MixSource {
+    pub data_dir: PathBuf,
+    /// Pencerelerin bu kümeden gelme olasılığı (ör. 0.15).
+    pub weight: f64,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TrainConfig {
     /// `sosis prepare` çıktısı (train.bin, val.bin, meta.json).
@@ -69,6 +77,9 @@ pub struct TrainConfig {
     /// f32 ana ağırlıkları ve AdamW durumunu RAM'de tutar; GPU'da yalnızca çalışma kopyası kalır.
     #[serde(default)]
     pub optimizer_offload: bool,
+    /// Ek veri kümeleri ve örnekleme ağırlıkları (ör. Türkçe metin %15).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub mix: Vec<MixSource>,
     /// LoRA / QLoRA: taban (init_from) donar, yalnızca küçük adaptörler eğitilir.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub lora: Option<sosis_model::lora::LoraConfig>,

@@ -74,6 +74,7 @@ fn config(root: &Path, run: &str, d_model: usize, kv: Option<usize>) -> RunConfi
             gradient_checkpointing: false,
             optimizer_offload: false,
             lora: None,
+            mix: vec![],
             init_from: None,
             max_ram_gb: 28.0,
             prefetch_steps: 2,

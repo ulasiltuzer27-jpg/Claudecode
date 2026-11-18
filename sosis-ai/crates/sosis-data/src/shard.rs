@@ -215,3 +215,82 @@ mod tests {
         }
     }
 }
+
+/// Birden çok veri kümesini ağırlıklarına göre karıştıran örnekleyici (ör. kod + %15 Türkçe metin).
+/// Her pencere, ağırlıklara göre seçilen bir kümeden alınır.
+pub struct MixedDataset {
+    sets: Vec<(TokenDataset, f64)>,
+}
+
+impl MixedDataset {
+    /// `main`: ana küme; `extra`: (küme, ağırlık). Ana kümenin ağırlığı `1 − Σ ek ağırlıklar`.
+    pub fn new(main: TokenDataset, extra: Vec<(TokenDataset, f64)>) -> Result<Self> {
+        let sum: f64 = extra.iter().map(|(_, w)| *w).sum();
+        if sum >= 1.0 || extra.iter().any(|(_, w)| *w <= 0.0) {
+            bail!("karışım ağırlıkları 0'dan büyük ve toplamı 1'den küçük olmalı (toplam {sum})");
+        }
+        let mut sets = vec![(main, 1.0 - sum)];
+        sets.extend(extra);
+        Ok(Self { sets })
+    }
+
+    pub fn single(main: TokenDataset) -> Self {
+        Self {
+            sets: vec![(main, 1.0)],
+        }
+    }
+
+    pub fn sample_batch(
+        &self,
+        rng: &mut impl Rng,
+        batch: usize,
+        seq_len: usize,
+    ) -> (Vec<i64>, Vec<i64>) {
+        let (mut x, mut y) = (
+            Vec::with_capacity(batch * seq_len),
+            Vec::with_capacity(batch * seq_len),
+        );
+        for _ in 0..batch {
+            let mut r = rng.gen::<f64>();
+            let mut idx = 0;
+            for (i, (_, w)) in self.sets.iter().enumerate() {
+                if r < *w {
+                    idx = i;
+                    break;
+                }
+                r -= w;
+                idx = i;
+            }
+            let (xi, yi) = self.sets[idx].0.sample_batch(rng, 1, seq_len);
+            x.extend(xi);
+            y.extend(yi);
+        }
+        (x, y)
+    }
+}
+
+#[cfg(test)]
+mod mix_tests {
+    use super::*;
+    use rand::SeedableRng;
+
+    #[test]
+    fn mixing_ratio_holds() {
+        let dir = std::env::temp_dir().join(format!("sosis_mix_{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let mk = |name: &str, base: u16| {
+            let p = dir.join(name);
+            let mut w = ShardWriter::create(&p).unwrap();
+            w.write(&vec![base; 2000]).unwrap();
+            w.finish().unwrap();
+            TokenDataset::open(&p).unwrap()
+        };
+        let mixed = MixedDataset::new(mk("kod.bin", 100), vec![(mk("tr.bin", 200), 0.15)]).unwrap();
+        let mut rng = rand::rngs::StdRng::seed_from_u64(9);
+        let (x, _) = mixed.sample_batch(&mut rng, 4000, 4);
+        let tr = x.chunks(4).filter(|c| c[0] == 200).count() as f64 / 4000.0;
+        assert!((tr - 0.15).abs() < 0.02, "Türkçe oranı {tr}");
+        assert!(MixedDataset::new(mk("a.bin", 1), vec![(mk("b.bin", 2), 1.2)]).is_err());
+        std::fs::remove_dir_all(&dir).ok();
+    }
+}

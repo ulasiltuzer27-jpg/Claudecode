@@ -29,7 +29,7 @@ use sosis_tokenizer::{BpeTrainer, Tokenizer, EOS, FILE_SEP, FIM_MIDDLE, FIM_PREF
 
 pub use collect::{CollectOptions, Document, Source};
 pub use filter::FilterOptions;
-pub use shard::{ShardWriter, TokenDataset};
+pub use shard::{MixedDataset, ShardWriter, TokenDataset};
 
 pub const TRAIN_FILE: &str = "train.bin";
 pub const VAL_FILE: &str = "val.bin";

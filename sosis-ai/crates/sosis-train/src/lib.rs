@@ -39,7 +39,7 @@ use rand::rngs::StdRng;
 use rand::SeedableRng;
 use serde::{Deserialize, Serialize};
 use sosis_data::ram::RamGuard;
-use sosis_data::{DataMeta, TokenDataset, TRAIN_FILE, VAL_FILE};
+use sosis_data::{DataMeta, MixedDataset, TokenDataset, TRAIN_FILE, VAL_FILE};
 use sosis_model::{select_device, Precision, SosyModel};
 
 pub const BEST_FILE: &str = "best.bpk";
@@ -306,7 +306,7 @@ pub fn evaluate(model: &SosyModel, val: &TokenDataset, cfg: &TrainConfig, device
 type StepBatches = Vec<(Vec<i64>, Vec<i64>)>;
 
 /// Adım başına tohum: devam edildiğinde de aynı veri sırası.
-fn step_batches(ds: &TokenDataset, t: &TrainConfig, step: usize) -> StepBatches {
+fn step_batches(ds: &MixedDataset, t: &TrainConfig, step: usize) -> StepBatches {
     let mut rng = StdRng::seed_from_u64(t.seed.wrapping_mul(1_000_003).wrapping_add(step as u64));
     (0..t.grad_accum)
         .map(|_| ds.sample_batch(&mut rng, t.micro_batch, t.seq_len))
@@ -358,7 +358,26 @@ pub fn train_with_hooks(
             cfg.model.vocab_size
         );
     }
-    let train_ds = TokenDataset::open(&t.data_dir.join(TRAIN_FILE))?;
+    let mut extra = Vec::new();
+    for m in &t.mix {
+        let mm = DataMeta::load(&m.data_dir)
+            .with_context(|| format!("karışım verisi yok: {}", m.data_dir.display()))?;
+        if mm.vocab_size > cfg.model.vocab_size {
+            bail!("{}: farklı tokenizer ile hazırlanmış", m.data_dir.display());
+        }
+        extra.push((TokenDataset::open(&m.data_dir.join(TRAIN_FILE))?, m.weight));
+        eprintln!(
+            "➕ karışım: {} (%{:.0}, {:.1}M token)",
+            m.data_dir.display(),
+            m.weight * 100.0,
+            mm.train_tokens as f64 / 1e6
+        );
+    }
+    let train_ds = if extra.is_empty() {
+        MixedDataset::single(TokenDataset::open(&t.data_dir.join(TRAIN_FILE))?)
+    } else {
+        MixedDataset::new(TokenDataset::open(&t.data_dir.join(TRAIN_FILE))?, extra)?
+    };
     let val_ds = TokenDataset::open(&t.data_dir.join(VAL_FILE))?;
     let val_ds = if val_ds.len() > t.seq_len + 2 {
         val_ds

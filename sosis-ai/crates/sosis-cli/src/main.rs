@@ -82,6 +82,9 @@ enum Cmd {
         /// Bu klasördeki değerlendirme görevlerini içeren belgeleri at (ör. benchmarks).
         #[arg(long)]
         decontaminate: Option<PathBuf>,
+        /// Düz metin modu (Türkçe makale/not): .txt/.md, uzun paragraflar kabul, FIM kapalı.
+        #[arg(long)]
+        text: bool,
     },
     /// Koddaki belgelenmiş fonksiyonlardan (///, <summary>, docstring) soru→kod örnekleri çıkarır.
     SftData {
@@ -657,8 +660,10 @@ fn main() -> Result<()> {
             ext,
             near_dedup,
             decontaminate,
+            text,
         } => {
             let tok = Tokenizer::load(&tokenizer)?;
+            let fim_rate = if text { 0.0 } else { fim_rate };
             let mut contam_texts = Vec::new();
             if let Some(dir) = &decontaminate {
                 for suite in sosis_bench::load_suites(dir)? {
@@ -672,6 +677,8 @@ fn main() -> Result<()> {
             let mut collect = CollectOptions::default();
             if !ext.is_empty() {
                 collect.extensions = ext;
+            } else if text {
+                collect.extensions = vec!["txt".into(), "md".into()];
             }
             let opts = PrepareOptions {
                 inputs: input,
@@ -685,7 +692,11 @@ fn main() -> Result<()> {
                 }),
                 seed: 1337,
                 collect,
-                filter: FilterOptions::default(),
+                filter: if text {
+                    FilterOptions::text()
+                } else {
+                    FilterOptions::default()
+                },
                 near_dedup,
                 decontaminate: contam_texts,
             };
