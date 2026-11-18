@@ -4,6 +4,7 @@
 //! Ollama, sunucu veya harici API yoktur; her şey bu süreçte, sizin GPU/CPU'nuzda döner.
 
 pub mod chat;
+pub mod evalrun;
 pub mod package;
 pub mod plan;
 pub mod rag;

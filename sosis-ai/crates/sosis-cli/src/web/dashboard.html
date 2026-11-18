@@ -145,6 +145,11 @@ async function refresh() {
       { label: "RAM", color: "--s2", points: thin(series(rows, "ram_gb")) },
     ], "GB"),
     chart("Öğrenme oranı", [{ label: "lr", color: "--s1", points: thin(series(rows, "lr")) }]),
+    (st.bench || []).length ? chart("Kod başarısı (pass@1)", [
+      { label: "toplam", color: "--s1", points: st.bench.map((b) => [b.step, 100 * b.pass1]), dots: true },
+      { label: "rust", color: "--s2", points: st.bench.map((b) => [b.step, 100 * b.rust]) },
+      { label: "python", color: "--s3", points: st.bench.map((b) => [b.step, 100 * b.python]) },
+    ], "%") : "",
   ];
   document.getElementById("charts").innerHTML = charts.join("");
 }

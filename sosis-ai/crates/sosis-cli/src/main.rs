@@ -439,6 +439,70 @@ fn load_generator(m: &ModelArgs) -> Result<Generator> {
     Ok(g)
 }
 
+/// Eğitim sırasında checkpoint'lerde otomatik bench; sonucu `bench.csv`'ye yazar, pass@1 döndürür.
+fn auto_bench(
+    cfg: &RunConfig,
+    suites: Option<&[sosis_bench::Suite]>,
+    info: &sosis_train::CheckpointInfo,
+) -> Option<f64> {
+    let t = &cfg.train;
+    let every = t.bench_every?;
+    let suites = suites?;
+    if !info.step.is_multiple_of(every.max(1)) && info.step != info.max_steps {
+        return None;
+    }
+    let started = Instant::now();
+    let g = Generator::load(
+        &info.out_dir,
+        &LoadOptions {
+            weights: Some(info.dir.join("model.bpk")),
+            backend: t.bench_backend.clone(),
+            context: None,
+        },
+    )
+    .map_err(|e| eprintln!("  bench: model yüklenemedi: {e}"))
+    .ok()?;
+    let temperature = if t.bench_samples > 1 { 0.8 } else { 0.0 };
+    let report = sosis_infer::evalrun::bench_completion(
+        &g,
+        suites,
+        t.bench_samples,
+        temperature,
+        t.bench_max_tokens,
+        std::time::Duration::from_secs(10),
+        |_| {},
+    )
+    .map_err(|e| eprintln!("  bench hatası: {e}"))
+    .ok()?;
+    use sosis_bench::Lang;
+    let (all, rust, py) = (
+        report.pass_at(1, None),
+        report.pass_at(1, Some(Lang::Rust)),
+        report.pass_at(1, Some(Lang::Python)),
+    );
+    let path = info.out_dir.join("bench.csv");
+    let new = !path.exists();
+    if let Ok(mut f) = std::fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(&path)
+    {
+        if new {
+            let _ = writeln!(f, "step,pass1,rust,python");
+        }
+        let _ = writeln!(f, "{},{all:.4},{rust:.4},{py:.4}", info.step);
+    }
+    eprintln!(
+        "  bench (adım {}): pass@1 %{:.1} (rust %{:.1}, python %{:.1}) — {:.0}s",
+        info.step,
+        100.0 * all,
+        100.0 * rust,
+        100.0 * py,
+        started.elapsed().as_secs_f32()
+    );
+    Some(all)
+}
+
 fn parse_lang(l: &str) -> Result<sosis_bench::Lang> {
     Ok(match l {
         "rust" | "rs" => sosis_bench::Lang::Rust,
@@ -648,16 +712,25 @@ fn main() -> Result<()> {
                 mem.ram_total_gb,
                 cfg.train.backend
             );
-            let out = sosis_train::train(&cfg, resume, |r| {
-                let vram = r
-                    .vram_gb
-                    .map(|g| format!(" | VRAM {g:.2} GB"))
-                    .unwrap_or_default();
-                eprintln!(
+            let bench_suites = match cfg.train.bench_every {
+                Some(_) => Some(sosis_bench::load_suites(&cfg.train.bench_suite)?),
+                None => None,
+            };
+            let out = sosis_train::train_with_hooks(
+                &cfg,
+                resume,
+                |r| {
+                    let vram = r
+                        .vram_gb
+                        .map(|g| format!(" | VRAM {g:.2} GB"))
+                        .unwrap_or_default();
+                    eprintln!(
                     "adım {:>6}/{} | kayıp {:.4} | lr {:.2e} | {:.0} token/s{vram} | RAM {:.1} GB",
                     r.step, cfg.train.max_steps, r.loss, r.lr, r.tokens_per_sec, r.ram_gb
                 );
-            })?;
+                },
+                |info| auto_bench(&cfg, bench_suites.as_deref(), info),
+            )?;
             eprintln!(
                 "✓ eğitim bitti: {} adım, son kayıp {:.4}, en iyi doğrulama {:.4} → {}",
                 out.final_step,
@@ -1156,7 +1229,7 @@ fn main() -> Result<()> {
             timeout,
             repair,
         } => {
-            use sosis_bench::{evaluate, function_end, load_suites, Lang};
+            use sosis_bench::{evaluate, load_suites, Lang};
             if repair > 0 {
                 let run = run.context("--repair için --run (sohbet modeli) verin")?;
                 let g = Generator::load(
@@ -1263,39 +1336,39 @@ fn main() -> Result<()> {
                 Some((g, run))
             };
             let t0 = Instant::now();
-            let report = evaluate(
-                &suites,
-                samples,
-                std::time::Duration::from_secs(timeout),
-                |suite, task, sample| match &generator {
-                    None => task.solution.clone(),
-                    Some((g, _)) => {
-                        let params = SamplingParams {
-                            temperature,
-                            max_new_tokens: max_tokens,
-                            seed: 1000 + sample as u64,
-                            ..Default::default()
-                        };
-                        g.complete_until(&task.prompt, Some(&suite.file), &params, &mut |out| {
-                            function_end(suite.lang, &task.prompt, out)
-                        })
-                    }
-                },
-                |r| {
-                    let mark = if r.passed == r.samples {
-                        "✓"
-                    } else if r.passed > 0 {
-                        "~"
-                    } else {
-                        "✗"
-                    };
-                    let err = r.first_error.as_deref().unwrap_or("");
-                    println!(
-                        "{mark} {:?}/{:<18} {}/{}  {err}",
-                        r.suite, r.id, r.passed, r.samples
-                    );
-                },
-            )?;
+            let print_result = |r: &sosis_bench::TaskResult| {
+                let mark = if r.passed == r.samples {
+                    "✓"
+                } else if r.passed > 0 {
+                    "~"
+                } else {
+                    "✗"
+                };
+                let err = r.first_error.as_deref().unwrap_or("");
+                println!(
+                    "{mark} {:?}/{:<18} {}/{}  {err}",
+                    r.suite, r.id, r.passed, r.samples
+                );
+            };
+            let to = std::time::Duration::from_secs(timeout);
+            let report = match &generator {
+                None => evaluate(
+                    &suites,
+                    samples,
+                    to,
+                    |_, task, _| task.solution.clone(),
+                    print_result,
+                )?,
+                Some((g, _)) => sosis_infer::evalrun::bench_completion(
+                    g,
+                    &suites,
+                    samples,
+                    temperature,
+                    max_tokens,
+                    to,
+                    print_result,
+                )?,
+            };
             let mut summary = String::new();
             for (name, l) in [
                 ("toplam", None),

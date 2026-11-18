@@ -54,6 +54,9 @@ pub struct TrainState {
     #[serde(deserialize_with = "nullable_inf")]
     pub best_val_loss: f32,
     pub tokens_seen: u64,
+    /// En iyi otomatik bench puanı (pass@1).
+    #[serde(default)]
+    pub best_bench: Option<f64>,
 }
 
 /// `null` (JSON'un sonsuz için yazdığı değer) → `f32::INFINITY`.
@@ -314,7 +317,30 @@ fn step_batches(ds: &TokenDataset, t: &TrainConfig, step: usize) -> StepBatches 
 pub fn train(
     cfg: &RunConfig,
     resume: bool,
+    on_step: impl FnMut(&StepReport),
+) -> Result<TrainOutcome> {
+    train_with_hooks(cfg, resume, on_step, |_| None)
+}
+
+/// Kaydedilen bir checkpoint hakkında bilgi (otomatik bench için).
+#[derive(Debug, Clone)]
+pub struct CheckpointInfo {
+    pub step: usize,
+    pub max_steps: usize,
+    /// `model.bpk` içeren klasör.
+    pub dir: PathBuf,
+    pub out_dir: PathBuf,
+}
+
+pub const BEST_BENCH_FILE: &str = "best_bench.bpk";
+
+/// `on_checkpoint` bir puan (ör. pass@1) döndürürse, en yüksek puanlı checkpoint
+/// `best_bench.bpk` olarak saklanır.
+pub fn train_with_hooks(
+    cfg: &RunConfig,
+    resume: bool,
     mut on_step: impl FnMut(&StepReport),
+    mut on_checkpoint: impl FnMut(&CheckpointInfo) -> Option<f64>,
 ) -> Result<TrainOutcome> {
     if cfg.dpo.is_some() {
         return dpo::train_dpo(cfg, on_step);
@@ -382,6 +408,7 @@ pub fn train(
         step: 0,
         best_val_loss: f32::INFINITY,
         tokens_seen: 0,
+        best_bench: None,
     };
     let checkpoint = if resume { latest_checkpoint(out) } else { None };
     if let Some(l) = &lora {
@@ -579,13 +606,30 @@ pub fn train(
                 }
             }
             if do_save {
-                save_checkpoint(
+                let dir = save_checkpoint(
                     out,
                     engine.weights(),
                     engine.optim(),
                     &state,
                     t.keep_checkpoints,
                 )?;
+                let info = CheckpointInfo {
+                    step: s,
+                    max_steps: t.max_steps,
+                    dir: dir.clone(),
+                    out_dir: out.clone(),
+                };
+                if let Some(score) = on_checkpoint(&info) {
+                    if state.best_bench.is_none_or(|b| score > b) {
+                        state.best_bench = Some(score);
+                        fs::copy(dir.join("model.bpk"), out.join(BEST_BENCH_FILE))?;
+                        // Devam edildiğinde en iyi puan bilinsin.
+                        fs::write(
+                            dir.join("state.json"),
+                            serde_json::to_string_pretty(&state)?,
+                        )?;
+                    }
+                }
             }
         }
         Ok(())
@@ -604,7 +648,7 @@ fn save_checkpoint(
     optim: &ModuleOptimizer,
     state: &TrainState,
     keep: usize,
-) -> Result<()> {
+) -> Result<PathBuf> {
     let dir = checkpoint_dir(out, state.step);
     fs::create_dir_all(&dir)?;
     model
@@ -629,7 +673,7 @@ fn save_checkpoint(
             fs::remove_dir_all(old).ok();
         }
     }
-    Ok(())
+    Ok(dir)
 }
 
 #[cfg(test)]
@@ -642,6 +686,7 @@ mod tests {
             step: 10,
             best_val_loss: f32::INFINITY,
             tokens_seen: 5,
+            best_bench: None,
         };
         let json = serde_json::to_string(&s).unwrap();
         let back: TrainState = serde_json::from_str(&json).unwrap();

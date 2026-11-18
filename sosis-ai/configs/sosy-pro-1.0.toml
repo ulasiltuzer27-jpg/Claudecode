@@ -24,6 +24,10 @@ gradient_checkpointing = true
 optimizer_offload = true     # f32 ağırlık + AdamW (~4.5 GB) RAM'de
 max_ram_gb = 28
 prefetch_steps = 2
+# Otomatik bench: her 5000 adımda CPU'da pass@1 ölçülür (eğitim VRAM'ine dokunmaz);
+# en iyi kod başarısına sahip checkpoint best_bench.bpk olarak saklanır. Panelde grafik çizilir.
+bench_every = 5000
+bench_backend = "cpu"
 
 seq_len = 1024
 micro_batch = 2

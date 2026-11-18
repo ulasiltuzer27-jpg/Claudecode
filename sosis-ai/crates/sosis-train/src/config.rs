@@ -78,6 +78,18 @@ pub struct TrainConfig {
     /// Bu sürecin kullanması beklenen en fazla RAM (GB); aşılırsa uyarılır.
     #[serde(default = "d_ram")]
     pub max_ram_gb: f64,
+    /// Her N adımda (checkpoint kaydında) derle-çalıştır bench'i çalıştır; en iyisi best_bench.bpk.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub bench_every: Option<usize>,
+    #[serde(default = "d_bench_suite")]
+    pub bench_suite: PathBuf,
+    #[serde(default = "d_one")]
+    pub bench_samples: usize,
+    /// Bench'in çalışacağı backend; "cpu" eğitimin VRAM'ine dokunmaz.
+    #[serde(default = "d_bench_backend")]
+    pub bench_backend: String,
+    #[serde(default = "d_bench_tokens")]
+    pub bench_max_tokens: usize,
     /// Arka planda önceden hazırlanan adım sayısı.
     #[serde(default = "d_prefetch")]
     pub prefetch_steps: usize,
@@ -118,6 +130,18 @@ fn d_backend() -> String {
 }
 fn d_ram() -> f64 {
     sosis_data::ram::DEFAULT_MAX_RAM_GB
+}
+fn d_bench_suite() -> PathBuf {
+    "benchmarks".into()
+}
+fn d_one() -> usize {
+    1
+}
+fn d_bench_backend() -> String {
+    "cpu".into()
+}
+fn d_bench_tokens() -> usize {
+    256
 }
 fn d_prefetch() -> usize {
     2

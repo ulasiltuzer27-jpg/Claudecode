@@ -78,6 +78,7 @@ pub fn status(run: &Path) -> Value {
         "rows": rows,
         "eta_seconds": eta,
         "seconds_since_update": modified,
+        "bench": read("bench.csv").map(|t| parse_log(&t)).unwrap_or_default(),
         "state": read("state.json").and_then(|s| serde_json::from_str::<Value>(&s).ok()),
         "data": cfg.as_ref().and_then(|c| std::fs::read_to_string(c.train.data_dir.join("meta.json")).ok())
             .and_then(|s| serde_json::from_str::<Value>(&s).ok()),
