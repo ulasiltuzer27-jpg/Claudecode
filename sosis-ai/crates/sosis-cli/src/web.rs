@@ -26,6 +26,8 @@ struct GenOpts {
     top_p: Option<f32>,
     max_tokens: Option<usize>,
     rag: bool,
+    /// Görüldüğünde üretimi durduran diziler (ör. editör tamamlamasında "\n\n").
+    stop: Vec<String>,
 }
 
 impl GenOpts {
@@ -35,6 +37,7 @@ impl GenOpts {
             temperature: self.temperature.unwrap_or(d.temperature).clamp(0.0, 2.0),
             top_p: self.top_p.unwrap_or(d.top_p).clamp(0.05, 1.0),
             max_new_tokens: self.max_tokens.unwrap_or(512).clamp(1, 4096),
+            stop: self.stop.iter().take(8).cloned().collect(),
             ..d
         }
     }

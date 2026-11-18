@@ -1,0 +1,99 @@
+{
+  "name": "sosis-ai",
+  "displayName": "Sosis AI",
+  "description": "Kendi bilgisayarınızda çalışan Sosy modelleriyle satır içi kod tamamlama, açıklama ve düzeltme. Harici API yok.",
+  "version": "1.2.0",
+  "publisher": "sosis-ai",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Machine Learning"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "sosis.toggle",
+        "title": "Sosis AI: Satır içi önerileri aç/kapat"
+      },
+      {
+        "command": "sosis.explain",
+        "title": "Sosis AI: Seçili kodu açıkla"
+      },
+      {
+        "command": "sosis.fix",
+        "title": "Sosis AI: Seçili kodu düzelt"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "sosis.explain",
+          "when": "editorHasSelection",
+          "group": "sosis@1"
+        },
+        {
+          "command": "sosis.fix",
+          "when": "editorHasSelection",
+          "group": "sosis@2"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Sosis AI",
+      "properties": {
+        "sosis.serverUrl": {
+          "type": "string",
+          "default": "http://127.0.0.1:8080",
+          "description": "`sosis serve` adresi (yalnızca yerel)."
+        },
+        "sosis.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Satır içi önerileri göster."
+        },
+        "sosis.maxTokens": {
+          "type": "number",
+          "default": 64,
+          "description": "Öneri başına en fazla token."
+        },
+        "sosis.temperature": {
+          "type": "number",
+          "default": 0.2,
+          "description": "Örnekleme sıcaklığı (0 = deterministik)."
+        },
+        "sosis.debounceMs": {
+          "type": "number",
+          "default": 250,
+          "description": "Yazmayı bıraktıktan sonra bekleme (ms)."
+        },
+        "sosis.contextLines": {
+          "type": "number",
+          "default": 80,
+          "description": "İmlecin önünden gönderilecek satır sayısı."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p .",
+    "test": "npm run compile && node test/client.test.js",
+    "package": "npm run compile && vsce package --no-dependencies"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/vscode": "1.85.0",
+    "typescript": "^5.4.0",
+    "@vscode/vsce": "^3.2.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ulasiltuzer27-jpg/Claudecode"
+  }
+}
