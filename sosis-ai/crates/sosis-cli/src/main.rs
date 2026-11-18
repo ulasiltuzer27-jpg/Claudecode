@@ -9,6 +9,7 @@
 //! ```
 
 mod dashboard;
+mod download;
 mod watch;
 mod web;
 
@@ -232,6 +233,27 @@ enum Cmd {
         pairs_per_task: usize,
         #[arg(long, short, default_value = "dpo.jsonl")]
         out: PathBuf,
+    },
+    /// Hugging Face'ten açık veri seti dosyalarını indirir (bir kerelik; yarım kalırsa kaldığı yerden).
+    Download {
+        /// Veri seti, ör. codeparrot/github-code-clean
+        #[arg(long)]
+        dataset: String,
+        /// Dosya deseni (birden çok verilebilir), ör. "data/*.parquet"
+        #[arg(long)]
+        include: Vec<String>,
+        /// Yalnızca bu alt klasörü listele.
+        #[arg(long, default_value = "")]
+        dir: String,
+        #[arg(long, default_value = "main")]
+        revision: String,
+        #[arg(long, short, default_value = "indirilenler")]
+        out: PathBuf,
+        /// En fazla indirilecek toplam boyut (GB).
+        #[arg(long, default_value_t = 20.0)]
+        max_gb: f64,
+        #[arg(long, default_value = download::DEFAULT_ENDPOINT)]
+        endpoint: String,
     },
     /// Eğitimi gözet: çökerse --resume ile yeniden başlat; bellek yetmezse batch'i küçült.
     Watch {
@@ -1152,6 +1174,24 @@ fn main() -> Result<()> {
             }
         }
         Cmd::Dashboard { run, port, lan } => dashboard::serve(run, port, lan)?,
+        Cmd::Download {
+            dataset,
+            include,
+            dir,
+            revision,
+            out,
+            max_gb,
+            endpoint,
+        } => {
+            let paths =
+                download::run(&endpoint, &dataset, &revision, &dir, &include, &out, max_gb)?;
+            eprintln!(
+                "✓ {} dosya → {}\nSonraki adım: sosis prepare -i {} -t tokenizer.json -o data --near-dedup --decontaminate benchmarks",
+                paths.len(),
+                out.display(),
+                out.join(dataset.replace('/', "__")).display()
+            );
+        }
         Cmd::Watch {
             config,
             max_restarts,
