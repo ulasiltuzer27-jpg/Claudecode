@@ -5607,6 +5607,7 @@ dependencies = [
  "sosis-model",
  "sosis-tokenizer",
  "sosis-train",
+ "tar",
 ]
 
 [[package]]

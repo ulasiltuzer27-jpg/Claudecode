@@ -16,6 +16,7 @@ sosis-train = { workspace = true }
 burn = { workspace = true }
 anyhow = { workspace = true }
 rand = { workspace = true }
+tar = { version = "0.4", default-features = false }
 
 [dev-dependencies]
 sosis-model = { workspace = true, features = ["cpu"] }

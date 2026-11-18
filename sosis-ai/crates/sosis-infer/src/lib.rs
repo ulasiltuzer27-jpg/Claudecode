@@ -4,6 +4,7 @@
 //! Ollama, sunucu veya harici API yoktur; her şey bu süreçte, sizin GPU/CPU'nuzda döner.
 
 pub mod chat;
+pub mod package;
 pub mod plan;
 pub mod rag;
 pub mod repair;
@@ -104,6 +105,8 @@ pub fn load_model(cfg: &RunConfig, weights: &Path, device: &Device) -> Result<So
 impl Generator {
     /// `run_dir`: eğitim çıktı klasörü (`config.toml`, `tokenizer.json`, ağırlıklar).
     pub fn load(run_dir: &Path, opts: &LoadOptions) -> Result<Self> {
+        let resolved = package::resolve_run(run_dir)?;
+        let run_dir = resolved.as_path();
         let mut cfg = RunConfig::load(run_dir.join(CONFIG_FILE)).with_context(|| {
             format!(
                 "{} içinde config.toml yok — bu bir eğitim klasörü mü?",

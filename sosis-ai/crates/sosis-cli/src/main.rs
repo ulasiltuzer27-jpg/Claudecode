@@ -242,6 +242,17 @@ enum Cmd {
         #[arg(long)]
         lan: bool,
     },
+    /// Tek dosyalık model paketi (.sosy): config + tokenizer + ağırlıklar + model kartı.
+    /// LoRA adaptörü tabana katılır. `-r model.sosy` ile doğrudan kullanılır.
+    Pack {
+        #[arg(long, short)]
+        run: PathBuf,
+        #[arg(long, short)]
+        out: PathBuf,
+        /// Ağırlıkları int8'e nicemle (~4 kat küçük).
+        #[arg(long)]
+        int8: bool,
+    },
     /// Proje hafızası için kod tabanını indeksler (BM25).
     Index {
         #[arg(long, short, required = true, num_args = 1..)]
@@ -1051,6 +1062,14 @@ fn main() -> Result<()> {
             }
         }
         Cmd::Dashboard { run, port, lan } => dashboard::serve(run, port, lan)?,
+        Cmd::Pack { run, out, int8 } => {
+            sosis_infer::package::pack(&run, &out, int8)?;
+            eprintln!(
+                "✓ {} ({:.1} MB) — model kartı içinde: MODEL_CARD.md",
+                out.display(),
+                std::fs::metadata(&out)?.len() as f64 / 1048576.0
+            );
+        }
         Cmd::Index { input, out } => {
             let t = Instant::now();
             let idx = CodeIndex::build(&input)?;
