@@ -99,6 +99,22 @@ pub fn find_weights(path: &Path) -> Option<PathBuf> {
     latest_checkpoint(path).map(|d| d.join("model.bpk"))
 }
 
+/// Gradyan alan parametre sayısı.
+pub fn trainable_params(model: &SosyModel) -> usize {
+    struct Count(usize);
+    impl burn::module::ModuleVisitor for Count {
+        fn visit_float<const D: usize>(&mut self, p: &burn::module::Param<Tensor<D>>) {
+            let v = p.val();
+            if v.is_require_grad() {
+                self.0 += v.shape().num_elements();
+            }
+        }
+    }
+    let mut c = Count(0);
+    model.visit(&mut c);
+    c.0
+}
+
 fn rec_err<E: std::fmt::Debug>(e: E) -> anyhow::Error {
     anyhow::anyhow!("{e:?}")
 }
@@ -320,7 +336,11 @@ pub fn train(
     }
 
     // --- Cihazlar ---
-    let offload = t.optimizer_offload;
+    let lora = t.lora.clone();
+    if lora.is_some() && t.optimizer_offload {
+        eprintln!("ℹ LoRA'da optimizer durumu zaten küçük; optimizer_offload kapatıldı");
+    }
+    let offload = t.optimizer_offload && lora.is_none();
     let precision = if offload { Precision::F32 } else { t.precision };
     let base = select_device(&t.backend, precision)?;
     base.seed(t.seed);
@@ -353,6 +373,26 @@ pub fn train(
         tokens_seen: 0,
     };
     let checkpoint = if resume { latest_checkpoint(out) } else { None };
+    if let Some(l) = &lora {
+        if checkpoint.is_none() {
+            let init = t
+                .init_from
+                .as_ref()
+                .context("LoRA için `init_from` (taban model) gerekir")?;
+            let w = find_weights(init)
+                .with_context(|| format!("taban ağırlığı bulunamadı: {}", init.display()))?;
+            model = model.try_load_file(&w).map_err(rec_err)?;
+            eprintln!("⤷ taban ağırlıklar: {}", w.display());
+        }
+        model = sosis_model::lora::apply(model, l);
+        eprintln!(
+            "🧩 {} r={} α={}: {:.2}M eğitilebilir parametre (taban donuk)",
+            if l.qlora { "QLoRA" } else { "LoRA" },
+            l.rank,
+            l.alpha,
+            trainable_params(&model) as f64 / 1e6
+        );
+    }
     match (&checkpoint, &t.init_from) {
         (Some(dir), _) => {
             model = model
@@ -362,14 +402,14 @@ pub fn train(
             state = serde_json::from_str(&fs::read_to_string(dir.join("state.json"))?)?;
             eprintln!("↻ {} adımından devam ediliyor", state.step);
         }
-        (None, Some(init)) => {
+        (None, Some(init)) if lora.is_none() => {
             let w = find_weights(init)
                 .with_context(|| format!("init_from ağırlığı bulunamadı: {}", init.display()))?;
             model = model.try_load_file(&w).map_err(rec_err)?;
             eprintln!("⤷ başlangıç ağırlıkları: {}", w.display());
         }
-        (None, None) => {
-            if resume {
+        _ => {
+            if resume && checkpoint.is_none() {
                 eprintln!("checkpoint bulunamadı, sıfırdan başlanıyor");
             }
         }
@@ -476,11 +516,16 @@ pub fn train(
                 val_loss = Some(v);
                 if v < state.best_val_loss {
                     state.best_val_loss = v;
-                    engine
-                        .weights()
-                        .clone()
-                        .save_file(out.join(BEST_FILE))
-                        .map_err(rec_err)?;
+                    if lora.is_some() {
+                        // LoRA: yalnızca adaptörler (taban init_from'da).
+                        sosis_model::lora::save_adapter(engine.weights(), &out.join(BEST_FILE))?;
+                    } else {
+                        engine
+                            .weights()
+                            .clone()
+                            .save_file(out.join(BEST_FILE))
+                            .map_err(rec_err)?;
+                    }
                 }
             }
             if do_log || do_eval {

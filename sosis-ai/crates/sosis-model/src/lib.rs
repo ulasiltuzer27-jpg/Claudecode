@@ -10,6 +10,7 @@
 //! - Çıkarım için KV-cache
 
 mod device;
+pub mod lora;
 pub mod quant;
 
 pub use burn::module::Module as BurnModule;

@@ -66,6 +66,9 @@ pub struct TrainConfig {
     /// f32 ana ağırlıkları ve AdamW durumunu RAM'de tutar; GPU'da yalnızca çalışma kopyası kalır.
     #[serde(default)]
     pub optimizer_offload: bool,
+    /// LoRA / QLoRA: taban (init_from) donar, yalnızca küçük adaptörler eğitilir.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub lora: Option<sosis_model::lora::LoraConfig>,
     /// Eğitime bu ağırlıklarla başla (eğitim klasörü veya .bpk). `--resume` varsa yok sayılır.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub init_from: Option<PathBuf>,

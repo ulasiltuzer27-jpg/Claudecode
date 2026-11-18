@@ -73,6 +73,7 @@ fn config(root: &Path, run: &str, d_model: usize, kv: Option<usize>) -> RunConfi
             precision: Precision::F32,
             gradient_checkpointing: false,
             optimizer_offload: false,
+            lora: None,
             init_from: None,
             max_ram_gb: 28.0,
             prefetch_steps: 2,
@@ -211,5 +212,81 @@ fn sft_learns_answers_only() {
         "cevap ezberlenemedi: {}",
         out.last_loss
     );
+    std::fs::remove_dir_all(&root).ok();
+}
+
+#[test]
+fn lora_adapts_frozen_base_to_new_code() {
+    use sosis_model::lora::LoraConfig;
+    let root = setup("lora");
+    // 1) Taban: fibonacci'yi ezberler.
+    let base = config(&root, "base", 64, Some(2));
+    let (_, bout) = run(&base, false);
+    assert!(bout.last_loss < 1.0);
+    let base_file = base.train.out_dir.join("best.bpk");
+    let base_bytes = std::fs::read(&base_file).unwrap();
+
+    // 2) Yeni veri: farklı bir kod parçası.
+    let other = "fn gcd(a: u64, b: u64) -> u64 {\n    if b == 0 {\n        a\n    } else {\n        gcd(b, a % b)\n    }\n}\n";
+    let tok = sosis_tokenizer::Tokenizer::load(root.join("tok.json")).unwrap();
+    let src2 = root.join("src2");
+    std::fs::create_dir_all(&src2).unwrap();
+    for i in 0..40 {
+        std::fs::write(
+            src2.join(format!("g{i}.rs")),
+            format!("// gcd {i}\n{other}"),
+        )
+        .unwrap();
+    }
+    sosis_data::prepare(
+        &tok,
+        &PrepareOptions {
+            inputs: vec![src2],
+            out_dir: root.join("data2"),
+            fim_rate: 0.0,
+            val_percent: 0.0,
+            threads: 2,
+            seed: 1,
+            collect: CollectOptions::default(),
+            filter: FilterOptions::default(),
+            near_dedup: None,
+            decontaminate: vec![],
+        },
+        |_, _| {},
+    )
+    .unwrap();
+
+    // 3) LoRA (gradient checkpointing açık): taban donuk, yalnızca adaptör öğrenir.
+    let mut l = config(&root, "lora", 64, Some(2));
+    l.train.data_dir = root.join("data2");
+    l.train.init_from = Some(base.train.out_dir.clone());
+    l.train.lora = Some(LoraConfig {
+        rank: 8,
+        alpha: 16.0,
+        qlora: false,
+    });
+    l.train.gradient_checkpointing = true;
+    l.train.lr = 1e-2;
+    l.train.max_steps = 150;
+    let (first, out) = run(&l, false);
+    eprintln!("lora: kayıp {first:.3} → {:.3}", out.last_loss);
+    assert!(out.last_loss < first * 0.5, "{first} → {}", out.last_loss);
+    // Taban dosyası değişmedi; adaptör tabandan çok küçük.
+    assert_eq!(std::fs::read(&base_file).unwrap(), base_bytes);
+    let adapter = std::fs::metadata(l.train.out_dir.join("best.bpk"))
+        .unwrap()
+        .len();
+    assert!(
+        adapter * 2 < base_bytes.len() as u64,
+        "adaptör {adapter} B, taban {} B",
+        base_bytes.len()
+    );
+
+    // 4) Devam: checkpoint'ten LoRA ile sürer.
+    let mut l2 = l.clone();
+    l2.train.max_steps = 160;
+    let (_, out2) = run(&l2, true);
+    assert_eq!(out2.final_step, 160);
+    assert!(out2.last_loss < first * 0.6);
     std::fs::remove_dir_all(&root).ok();
 }

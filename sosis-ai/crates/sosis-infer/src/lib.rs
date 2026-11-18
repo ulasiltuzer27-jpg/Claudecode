@@ -67,6 +67,38 @@ impl Default for LoadOptions {
     }
 }
 
+/// Bir eğitimin ağırlıklarını yükler: düz, int8 nicemli ya da LoRA (taban + adaptör, birleştirilmiş).
+pub fn load_model(cfg: &RunConfig, weights: &Path, device: &Device) -> Result<SosyModel> {
+    let mut skeleton = cfg.model.init(device);
+    if let Some(l) = &cfg.train.lora {
+        let base_dir = cfg
+            .train
+            .init_from
+            .as_ref()
+            .context("LoRA modelinin config'inde init_from (taban) yok")?;
+        let base = find_weights(base_dir).with_context(|| {
+            format!(
+                "LoRA tabanı bulunamadı: {} (komutu proje kökünden çalıştırın ya da `sosis merge` kullanın)",
+                base_dir.display()
+            )
+        })?;
+        skeleton = skeleton
+            .try_load_file(&base)
+            .with_context(|| format!("taban yüklenemedi: {}", base.display()))?;
+        let adapted = sosis_model::lora::apply(skeleton, l);
+        let adapted = sosis_model::lora::load_adapter(adapted, weights)?;
+        return Ok(sosis_model::lora::merge(adapted));
+    }
+    match cfg.inference.quantized.as_deref() {
+        None => {}
+        Some("int8") => skeleton = sosis_model::quant::quantize_int8(skeleton, device),
+        Some(other) => bail!("bilinmeyen nicemleme: {other}"),
+    }
+    skeleton
+        .try_load_file(weights)
+        .with_context(|| format!("ağırlıklar yüklenemedi: {}", weights.display()))
+}
+
 impl Generator {
     /// `run_dir`: eğitim çıktı klasörü (`config.toml`, `tokenizer.json`, ağırlıklar).
     pub fn load(run_dir: &Path, opts: &LoadOptions) -> Result<Self> {
@@ -88,15 +120,7 @@ impl Generator {
             }
         };
         let device = select_device(&opts.backend, Precision::F32)?;
-        let mut skeleton = cfg.model.init(&device);
-        match cfg.inference.quantized.as_deref() {
-            None => {}
-            Some("int8") => skeleton = sosis_model::quant::quantize_int8(skeleton, &device),
-            Some(other) => bail!("bilinmeyen nicemleme: {other}"),
-        }
-        let model = skeleton
-            .try_load_file(&weights)
-            .with_context(|| format!("ağırlıklar yüklenemedi: {}", weights.display()))?;
+        let model = load_model(&cfg, &weights, &device)?;
         Ok(Self {
             model,
             tokenizer,

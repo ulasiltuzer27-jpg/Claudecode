@@ -174,6 +174,13 @@ enum Cmd {
         #[arg(long, default_value_t = 8080)]
         port: u16,
     },
+    /// LoRA adaptörünü tabana kalıcı olarak katar (tek başına çalışan model).
+    Merge {
+        #[arg(long, short)]
+        run: PathBuf,
+        #[arg(long, short)]
+        out: PathBuf,
+    },
     /// Ağırlıkları int8'e nicemler (çıkarım için ~4 kat küçük, daha az VRAM).
     Quantize {
         #[arg(long, short)]
@@ -713,6 +720,27 @@ fn main() -> Result<()> {
             let g = load_generator(&model)?;
             let index = model.load_index()?;
             web::serve(g, index, sessions, port)?;
+        }
+        Cmd::Merge { run, out } => {
+            let mut cfg = RunConfig::load(run.join(sosis_train::CONFIG_FILE))?;
+            if cfg.train.lora.is_none() {
+                anyhow::bail!("bu bir LoRA eğitimi değil");
+            }
+            let weights = sosis_train::find_weights(&run).context("adaptör bulunamadı")?;
+            let device = sosis_model::select_device("cpu", sosis_model::Precision::F32)?;
+            let merged = sosis_infer::load_model(&cfg, &weights, &device)?;
+            std::fs::create_dir_all(&out)?;
+            merged
+                .save_file(out.join(sosis_train::BEST_FILE))
+                .map_err(|e| anyhow::anyhow!("{e:?}"))?;
+            cfg.train.lora = None;
+            cfg.train.init_from = None;
+            std::fs::write(out.join(sosis_train::CONFIG_FILE), cfg.to_toml()?)?;
+            std::fs::copy(
+                run.join(sosis_train::TOKENIZER_FILE),
+                out.join(sosis_train::TOKENIZER_FILE),
+            )?;
+            eprintln!("✓ {} + taban → {}", weights.display(), out.display());
         }
         Cmd::Quantize { run, out } => {
             let mut cfg = RunConfig::load(run.join(sosis_train::CONFIG_FILE))?;

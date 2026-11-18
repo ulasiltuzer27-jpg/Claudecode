@@ -5,6 +5,9 @@ edition.workspace = true
 license.workspace = true
 description = "Sosy model mimarisi (Llama tarzı decoder-only Transformer)"
 
+[dev-dependencies]
+burn = { workspace = true, features = ["autodiff", "optim"] }
+
 [features]
 default = ["cpu"]
 # Saf Rust CPU backend'i (geliştirme ve test için)
