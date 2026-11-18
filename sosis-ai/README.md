@@ -8,7 +8,7 @@ sohbet ve web arayüzü bu depoda ve tamamen kendi bilgisayarınızda çalışı
 |---|---|---|---|---|---|---|---|
 | **Sosy-Flash 1.0** | 27M | 8 / 384 / 6 | 512 | 1024 | 1.3B | ~4 GB | ~2 GB |
 | **Sosy 1.0** | 110M | 12 / 768 / 12 | 1024 | 2048 | 2.6B | ~5 GB | ~2 GB |
-| **Sosy-Pro 1.0** | 281M | 22 / 1024 / 16 (4) | 1024 → 2048 | 4096 | 4.5B | ~4.5–6 GB | ~6 GB |
+| **Sosy-Pro 1.0** | 281M | 22 / 1024 / 16 (4) | 1024 → 2048 (→ 4096) | 4096 (8192) | 4.5B | ~4.5–6 GB | ~6 GB |
 
 VRAM ve RAM değerleri `sosis info` ile hesaplanan kaba tahminlerdir. Hedef donanım: **RTX 4060 Ti 8 GB**, 32 GB RAM.
 
@@ -25,8 +25,8 @@ VRAM ve RAM değerleri `sosis info` ile hesaplanan kaba tahminlerdir. Hedef dona
   ve AdamW durumu RAM'de, gradyanlar CPU'da f32 biriktirilir) ve **gradient checkpointing**.
   Eğitim, `max_ram_gb = 28` sınırını izler.
 - **Uzun bağlam:** 1024 ile eğitim, ardından 2048'e genişletme aşaması. Çıkarımda NTK-uyumlu RoPE
-  ölçekleme ile 4096. Burn'ün autodiff'inde bellek-verimli dikkat geri yayılımı yok; 4096 ile eğitim
-  8 GB'a sığmadığı için bu yol seçildi.
+  ölçekleme ile 4096. v1.3'teki **flash attention** ile isteğe bağlı 4096 aşaması da var
+  (çıkarımda 8192).
 - **32k byte-level BPE tokenizer:** Kod için ön-bölümleme kullanır; girinti, `::` ve `->` tek token
   olabilir. Türkçe dahil her metni kayıpsız kodlar.
 - **FIM (ortayı doldurma):** Belgelerin %50'si önek / sonek → orta biçiminde eğitilir.
@@ -66,18 +66,61 @@ VRAM ve RAM değerleri `sosis info` ile hesaplanan kaba tahminlerdir. Hedef dona
   - *`.sosy` model paketi* (`sosis pack`): config, tokenizer, ağırlıklar ve model kartı tek dosyada.
   - *VS Code eklentisi* (`editors/vscode`): satır içi öneriler ve "açıkla / düzelt".
 
+### v1.3'te eklenenler
+
+- **Proje ajanı (`sosis agent`, sohbette `/ajan`):**
+  1. İlgili kodu bulur.
+  2. Plan sunar; siz onaylar, düzenler ya da reddedersiniz.
+  3. Dosyalardaki değişikliği `ARA/DEĞİŞTİR` blokları olarak önerir; renkli diff gösterir ve dosya
+     dosya onay alır.
+  4. Değiştirmeden önce yedek alır; `sosis geri-al` ile geri dönülür.
+  5. Verdiğiniz `--check` komutuyla doğrular; hata varsa düzeltir.
+
+  Adımları program yönetir; model komut çalıştıramaz ve `--root` dışına yazamaz.
+- **Git yardımcısı:**
+  - `sosis commit-msg`: hazırlanmış değişikliklerden commit mesajı yazar.
+  - `sosis review`: değişiklikleri inceler; kesin kontrollerin yanında modelin açıklaması da olur.
+  - `sosis sft-data --git <depo>`: kendi git geçmişinizden API'siz eğitim verisi üretir. Commit
+    mesajı, inceleme ve ajanın düzenleme biçimi böyle öğretilir.
+- **Türkçe sohbet:**
+  - `prepare --text`: Türkçe metin ve notları hazırlar.
+  - `[[train.mix]]`: kod ile Türkçe metni seçtiğiniz oranda karıştırır.
+  - `examples/turkce-sft.jsonl`: Türkçe soru-cevap örnekleri.
+- **Eğitim altyapısı:**
+  - `scripts/kur.*`: tek tık kurulum.
+  - `scripts/egit.*`: Pro'nun iki aşamasını panel açıkken tek komutla eğitir.
+  - `sosis watch`: bekçi. Çökünce kaldığı yerden sürdürür. `--auto-oom` ile bellek yetmezse batch'i
+    küçültür; kayıp NaN olursa durur.
+  - Checkpoint'lerde otomatik bench: `bench_every` ile pass@1 ölçülür, `bench.csv` yazılır, en iyi
+    model `best_bench.bpk` olarak saklanır ve panelde grafiği çizilir.
+- **Veri indirici (`sosis download`):** Hugging Face'teki açık veri setlerini bir kez indirir.
+  Yarım kalan indirme kaldığı yerden sürer, boyut sınırı uygulanır. Token gerekirse yalnızca
+  `HF_TOKEN` ortam değişkeninden okunur, diske yazılmaz.
+- **Flash attention (`attention = "flash"`):** Blok bazlı ileri ve geri geçiş yapar; t×t dikkat
+  matrisi hiç saklanmaz. CPU'da ölçüldü (tek katman, 8 kafa, t = 4096, ileri + geri):
+
+  | | Tepe bellek | Süre |
+  |---|---|---|
+  | Standart dikkat | 2.18 GB | 6.8 sn |
+  | Flash attention | **87 MB** | **2.0 sn** |
+
+  Bu sayede 4096 bağlamla eğitim 8 GB'a sığar (`configs/sosy-pro-1.0-ctx4096.toml`). Ağırlıklar iki
+  yolda da aynıdır; config'teki tek satırla geçilir.
+
 ```
 sosis-ai/
-  configs/      sosy-{flash-1.0,1.0,pro-1.0,pro-1.0-ctx2048}.toml, *-chat, *-lora, *-dpo, sosy-tiny*
+  scripts/      kur.{bat,sh} (kurulum), egit.{bat,sh} (bekçili Pro eğitimi)
+  examples/     turkce-sft.jsonl
+  configs/      sosy-{flash-1.0,1.0,pro-1.0,pro-1.0-ctx2048,pro-1.0-ctx4096}.toml, *-chat, *-lora, *-dpo, sosy-tiny*
   benchmarks/   rust.toml, python.toml (değerlendirme görevleri — eğitimde kullanmayın)
   tasks/        DPO verisi üretmek için ayrı örnek görevler
   editors/vscode/  VS Code eklentisi (TypeScript)
   crates/
     sosis-tokenizer/  BPE, sohbet şablonu
-    sosis-data/       toplama, filtre, MinHash, FIM, parquet, SFT/DPO verisi, maskeli shard'lar, RAM bekçisi
-    sosis-model/      Transformer, GQA, RoPE ölçekleme, KV-cache, int8, LoRA, backend seçimi
+    sosis-data/       toplama, filtre, git madencisi, ARA/DEĞİŞTİR, MinHash, FIM, parquet, SFT/DPO verisi, maskeli shard'lar, RAM bekçisi
+    sosis-model/      Transformer, GQA, RoPE ölçekleme, KV-cache, flash attention, int8, LoRA, backend seçimi
     sosis-train/      eğitim döngüsü, optimizer offload, damıtma, DPO, checkpoint/devam
-    sosis-infer/      örnekleme, spekülatif, önek önbelleği, sohbet, RAG, plan, onarım, .sosy
+    sosis-infer/      örnekleme, spekülatif, önek önbelleği, sohbet, RAG, plan, onarım, ajan, git, .sosy
     sosis-bench/      pass@k değerlendirmesi
     sosis-cli/        `sosis` komutu + web arayüzü
 ```
@@ -94,6 +137,11 @@ cargo build --release --features cuda
 # ikili dosya: target/release/sosis   (Windows'ta sosis.exe)
 ```
 
+**Kısayol:**
+- Windows'ta `scripts\kur.bat`'a çift tıklayın; Linux'ta `scripts/kur.sh` çalıştırın.
+- Betik sürücüyü, `nvcc`'yi ve `cargo`'yu kontrol eder; eksik olanın nereden kurulacağını yazar.
+- Ardından CUDA ile derleyip `sosis info` çıktısını gösterir.
+
 İlk CUDA derlemesi, Burn'ün GPU derleyicisi için ~45 MB'lık bir LLVM paketini bir kez indirir
 (`~/.cache/tracel`); sonraki derlemeler çevrimdışı çalışır. `--backend auto` (varsayılan) GPU varsa
 onu, yoksa CPU'yu kullanır.
@@ -108,6 +156,16 @@ onu, yoksa CPU'yu kullanır.
 
 `target/`, `node_modules/`, `.git/`, küçültülmüş (minified) veya otomatik üretilmiş dosyalar ve kopyalar
 otomatik elenir.
+
+**İndirici:** Veri setlerini `sosis download` ile indirebilirsiniz:
+
+```bash
+sosis download --dataset <kullanıcı/veri-seti> --include "data/python/*.parquet" -o indirilenler --max-gb 20
+```
+
+- Erişimi kısıtlı setler için token yalnızca ortam değişkeninden okunur:
+  `HF_TOKEN=... sosis download ...`
+- Lisansı kontrol edin; izinli lisanslı alt kümeleri seçin.
 
 ### 2) Tokenizer ve veri
 
@@ -126,6 +184,16 @@ sosis train -c configs/sosy-pro-1.0.toml           # 1. aşama, 1024 bağlam (~4
 sosis train -c configs/sosy-pro-1.0-ctx2048.toml   # 2. aşama, 2048 bağlam (~0.5B token)
 ```
 
+- **Bekçiyle tek komut:**
+  - `scripts/egit.bat` (Windows) veya `scripts/egit.sh`: paneli açar ve iki aşamayı
+    `sosis watch --auto-oom` ile çalıştırır. Bilgisayar açık kaldıkça çökmelerden kendisi döner.
+  - Elle kullanım: `sosis watch -c configs/sosy-pro-1.0.toml --auto-oom`.
+    Kayıtlar `runs/<model>/watch.log`'a yazılır.
+- **Otomatik bench:** Pro config'inde `bench_every = 5000` açık.
+  - pass@1 CPU'da ölçülür; eğitimin VRAM'ine dokunmaz.
+  - Sonuçlar `runs/<model>/bench.csv`'ye yazılır; en iyi model `best_bench.bpk` olarak saklanır.
+- **4096 bağlam (isteğe bağlı 3. aşama):** `sosis train -c configs/sosy-pro-1.0-ctx4096.toml`.
+  Flash attention kullanır (~0.25B token).
 - `Ctrl+C` ile durdurup `--resume` ile kaldığınız yerden sürdürebilirsiniz; bilgisayar sürekli açık kalabilir.
 - Log satırlarında kayıp, `token/s`, VRAM ve RAM görünür; ayrıca `runs/<model>/log.csv` dosyasına yazılır.
 - **VRAM yetmezse:** `micro_batch`'i yarıya indirip `grad_accum`'u iki katına çıkarın.
@@ -227,6 +295,43 @@ sosis serve -r sosy-pro-chat.sosy               # .sosy her komutta -r ile kulla
 **VS Code:** `editors/vscode/README.md`'deki adımlarla `.vsix` paketini kurun. `sosis serve` açıkken
 yazdıkça gri öneriler çıkar (`Tab` ile kabul). Sağ tık menüsünde "Seçili kodu açıkla / düzelt" bulunur.
 
+### 12) Proje ajanı ve Git yardımcısı
+
+Önce modele kendi git geçmişinizden düzenleme, commit mesajı ve inceleme örnekleri gösterin.
+Bu örnekler sohbet SFT verisine eklenir:
+
+```bash
+sosis sft-data -i ~/kod --git ~/kod/projem --git ~/kod/baska-depo -o sft.jsonl
+```
+
+Ardından:
+
+```bash
+cd ~/kod/projem
+sosis agent -r runs/sosy-pro-1.0-chat --root . --check "cargo test" "Oyuncu canı negatif olmasın"
+#   → plan: [o]nayla / [d]üzenle / [r]eddet
+#   → her dosya için renkli diff: [e]vet / [h]ayır / [t]ümü
+#   → --check başarısızsa hata modele verilir ve düzeltmesi istenir (--rounds, varsayılan 3)
+sosis geri-al --root .                       # son ajan değişikliğini yedekten geri al
+git add -p && sosis commit-msg -r runs/sosy-pro-1.0-chat --yaz
+sosis review -r runs/sosy-pro-1.0-chat --range main..HEAD -o inceleme.md
+```
+
+Sohbette de kullanılabilir: `/ajan <görev>`. Yedekler `.sosis/yedek/<zaman>/` altında tutulur.
+
+### 13) Türkçe sohbet
+
+Türkçe metinler ayrı bir klasöre hazırlanır, sonra kod verisiyle karıştırılır:
+
+```bash
+sosis prepare -i indirilenler/turkce-metin notlarim/ --text -t tokenizer.json -o data-tr
+```
+
+- `configs/sosy-pro-1.0.toml` içindeki yorumlu `[[train.mix]]` bloğunu açın
+  (`data_dir = "data-tr"`, `weight = 0.15`). Böylece örneklerin ~%15'i Türkçe metinden gelir.
+- SFT için `examples/turkce-sft.jsonl` dosyasını kendi Türkçe soru-cevaplarınızla çoğaltıp
+  `prepare-sft`'e ekleyin.
+
 ## CPU'da birkaç dakikalık deneme
 
 ```bash
@@ -269,6 +374,19 @@ Testlerin kapsadıkları:
   - plan örnekleri;
   - MinHash ve sızıntı tespiti;
   - `.sosy`'de yol enjeksiyonunun reddi.
+- **v1.3:**
+  - bekçi: yeniden başlatma, en fazla tekrar, `--auto-oom`, NaN'da durma ve uçtan uca devam;
+  - otomatik bench'in `bench.csv` ve `best_bench.bpk` üretmesi;
+  - indiricide adres, desen, Range ile devam ve boyut sınırı;
+  - git madencisi;
+  - ARA/DEĞİŞTİR: tam, boşluk-toleranslı ve hatalı eşleşme;
+  - ajan: `--root` dışı yolun reddi, yedek / geri alma ve sahte modelle bul → planla → düzenle →
+    kontrol → düzelt akışı;
+  - Türkçe karışım oranı;
+  - flash attention: ileri ve gradyanların standart dikkatle eşleşmesi (< 1e-3), model düzeyinde
+    aynı kayıp ve aynı KV-cache çıktısı.
+- **Bellek ölçümü (elle):**
+  `SOSIS_ATTN=flash cargo test --release -p sosis-model mem_probe -- --ignored --nocapture`
 
 ## Sınırlar ve notlar
 
@@ -280,3 +398,13 @@ Testlerin kapsadıkları:
   tiny demo modelde yalnızca akış görülür.
 - Spekülatif ve int8 hızları GPU'da ölçülmedi. Hızlanma kabul oranına ve backend'e bağlıdır.
 - DPO, checkpoint'ten devam etmeyi desteklemez (kısa sürer).
+- **Flash attention:**
+  - Burn'ün tensör işlemleriyle yazıldı; özel bir CUDA çekirdeği değildir.
+  - CPU'da doğrulandı; CUDA ile derleniyor ama GPU'da çalıştırılmadı.
+  - Kartınızda sorun çıkarsa `attention = "standard"` yapın; ağırlıklar aynıdır.
+- **Ajan:**
+  - ~280M'lik bir model ancak küçük ve yerel düzenlemelerde iyidir.
+  - Her değişikliği diff'ten okuyup onaylayın.
+  - Web arayüzünde ajan sekmesi yok; ajan komut satırında ve sohbette (`/ajan`) çalışır.
+- **İndirici:** Bu geliştirme ortamında Hugging Face'e ağ erişimi yoktu. İndirme mantığı yerel test
+  sunucusuyla doğrulandı; gerçek Hugging Face'e karşı denenmedi.
