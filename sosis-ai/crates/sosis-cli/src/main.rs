@@ -297,6 +297,29 @@ enum Cmd {
         #[arg(long)]
         int8: bool,
     },
+    /// Hazırlanmış (git add) değişikliklerden commit mesajı üretir; --yaz ile onaydan sonra commit eder.
+    CommitMsg {
+        #[command(flatten)]
+        model: ModelArgs,
+        #[arg(long, default_value = ".")]
+        repo: PathBuf,
+        /// Mesajı onaylatıp `git commit` yap.
+        #[arg(long)]
+        yaz: bool,
+    },
+    /// Değişiklikleri incele: kesin kontroller + model açıklaması (Markdown).
+    Review {
+        #[command(flatten)]
+        model: ModelArgs,
+        #[arg(long, default_value = ".")]
+        repo: PathBuf,
+        /// Git aralığı (ör. main..HEAD); verilmezse HEAD'e göre tüm değişiklikler.
+        #[arg(long)]
+        range: Option<String>,
+        /// Raporu dosyaya yaz.
+        #[arg(long, short)]
+        out: Option<PathBuf>,
+    },
     /// Proje hafızası için kod tabanını indeksler (BM25).
     Index {
         #[arg(long, short, required = true, num_args = 1..)]
@@ -1233,6 +1256,58 @@ fn main() -> Result<()> {
                 out.display(),
                 std::fs::metadata(&out)?.len() as f64 / 1048576.0
             );
+        }
+        Cmd::CommitMsg { model, repo, yaz } => {
+            use sosis_infer::githelp;
+            let diff = githelp::staged_diff(&repo)?;
+            if diff.trim().is_empty() {
+                anyhow::bail!("hazırlanmış değişiklik yok (önce `git add`)");
+            }
+            let g = load_generator(&model)?;
+            let params = SamplingParams {
+                temperature: 0.2,
+                max_new_tokens: 96,
+                ..Default::default()
+            };
+            let msg = githelp::commit_message(&g, &diff, &params);
+            println!("{msg}");
+            if yaz {
+                eprint!("\nBu mesajla commit edilsin mi? [e/h] ");
+                let mut a = String::new();
+                std::io::stdin().read_line(&mut a)?;
+                if a.trim().starts_with(['e', 'E', 'y', 'Y']) {
+                    githelp::commit(&repo, &msg)?;
+                    eprintln!("✓ commit edildi");
+                } else {
+                    eprintln!("commit edilmedi");
+                }
+            }
+        }
+        Cmd::Review {
+            model,
+            repo,
+            range,
+            out,
+        } => {
+            use sosis_infer::githelp;
+            let diff = githelp::range_diff(&repo, range.as_deref())?;
+            if diff.trim().is_empty() {
+                anyhow::bail!("incelenecek değişiklik yok");
+            }
+            let g = load_generator(&model)?;
+            let params = SamplingParams {
+                temperature: 0.2,
+                max_new_tokens: 192,
+                ..Default::default()
+            };
+            let report = githelp::review(&g, &diff, &params);
+            match out {
+                Some(p) => {
+                    std::fs::write(&p, &report)?;
+                    eprintln!("✓ rapor: {}", p.display());
+                }
+                None => println!("{report}"),
+            }
         }
         Cmd::Index { input, out } => {
             let t = Instant::now();

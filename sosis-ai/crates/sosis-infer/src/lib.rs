@@ -5,6 +5,7 @@
 
 pub mod chat;
 pub mod evalrun;
+pub mod githelp;
 pub mod package;
 pub mod plan;
 pub mod rag;
