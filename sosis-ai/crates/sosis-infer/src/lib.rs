@@ -88,9 +88,13 @@ impl Generator {
             }
         };
         let device = select_device(&opts.backend, Precision::F32)?;
-        let model = cfg
-            .model
-            .init(&device)
+        let mut skeleton = cfg.model.init(&device);
+        match cfg.inference.quantized.as_deref() {
+            None => {}
+            Some("int8") => skeleton = sosis_model::quant::quantize_int8(skeleton, &device),
+            Some(other) => bail!("bilinmeyen nicemleme: {other}"),
+        }
+        let model = skeleton
             .try_load_file(&weights)
             .with_context(|| format!("ağırlıklar yüklenemedi: {}", weights.display()))?;
         Ok(Self {

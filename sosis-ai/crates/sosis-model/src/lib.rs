@@ -10,7 +10,9 @@
 //! - Çıkarım için KV-cache
 
 mod device;
+pub mod quant;
 
+pub use burn::module::Module as BurnModule;
 pub use device::{select_device, Precision};
 
 use burn::module::Module;

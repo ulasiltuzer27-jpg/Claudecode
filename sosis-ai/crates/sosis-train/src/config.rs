@@ -23,6 +23,9 @@ pub struct InferenceConfig {
     /// Varsayılan bağlam; eğitimdekinden uzunsa RoPE ölçeklemeyle uzatılır.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub context: Option<usize>,
+    /// Ağırlıklar nicemli mi? (`"int8"`; `sosis quantize` yazar.)
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub quantized: Option<String>,
 }
 
 /// `[distill]`: öğrenci, öğretmenin olasılık dağılımını da taklit eder.

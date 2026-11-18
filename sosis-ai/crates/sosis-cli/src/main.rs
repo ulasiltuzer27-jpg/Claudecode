@@ -20,6 +20,7 @@ use sosis_data::{CollectOptions, FilterOptions, PrepareOptions};
 use sosis_infer::chat::{reply, ChatSession};
 use sosis_infer::rag::CodeIndex;
 use sosis_infer::{Generator, LoadOptions, SamplingParams};
+use sosis_model::BurnModule as _;
 use sosis_tokenizer::{BpeTrainer, Tokenizer};
 use sosis_train::RunConfig;
 
@@ -166,6 +167,13 @@ enum Cmd {
         sessions: PathBuf,
         #[arg(long, default_value_t = 8080)]
         port: u16,
+    },
+    /// Ağırlıkları int8'e nicemler (çıkarım için ~4 kat küçük, daha az VRAM).
+    Quantize {
+        #[arg(long, short)]
+        run: PathBuf,
+        #[arg(long, short)]
+        out: PathBuf,
     },
     /// Proje hafızası için kod tabanını indeksler (BM25).
     Index {
@@ -679,6 +687,37 @@ fn main() -> Result<()> {
             let g = load_generator(&model)?;
             let index = model.load_index()?;
             web::serve(g, index, sessions, port)?;
+        }
+        Cmd::Quantize { run, out } => {
+            let mut cfg = RunConfig::load(run.join(sosis_train::CONFIG_FILE))?;
+            if cfg.inference.quantized.is_some() {
+                anyhow::bail!("bu model zaten nicemli");
+            }
+            let weights = sosis_train::find_weights(&run).context("ağırlık bulunamadı")?;
+            let device = sosis_model::select_device("cpu", sosis_model::Precision::F32)?;
+            let model = cfg.model.init(&device).try_load_file(&weights)?;
+            let q = sosis_model::quant::quantize_int8(model, &device);
+            std::fs::create_dir_all(&out)?;
+            q.save_file(out.join(sosis_train::BEST_FILE))
+                .map_err(|e| anyhow::anyhow!("{e:?}"))?;
+            cfg.inference.quantized = Some("int8".into());
+            cfg.model.name = format!("{} (int8)", cfg.model.name);
+            std::fs::write(out.join(sosis_train::CONFIG_FILE), cfg.to_toml()?)?;
+            std::fs::copy(
+                run.join(sosis_train::TOKENIZER_FILE),
+                out.join(sosis_train::TOKENIZER_FILE),
+            )?;
+            let (a, b) = (
+                std::fs::metadata(&weights)?.len(),
+                std::fs::metadata(out.join(sosis_train::BEST_FILE))?.len(),
+            );
+            eprintln!(
+                "✓ {} → {} ({:.1} MB → {:.1} MB)",
+                weights.display(),
+                out.display(),
+                a as f64 / 1048576.0,
+                b as f64 / 1048576.0
+            );
         }
         Cmd::Index { input, out } => {
             let t = Instant::now();
