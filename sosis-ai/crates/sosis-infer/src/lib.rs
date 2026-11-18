@@ -5,6 +5,7 @@
 
 pub mod chat;
 pub mod rag;
+pub mod repair;
 mod sampling;
 pub mod speculative;
 

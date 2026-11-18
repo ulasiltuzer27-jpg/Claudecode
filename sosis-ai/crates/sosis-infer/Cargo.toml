@@ -9,6 +9,7 @@ description = "Sosy modelleriyle yerel kod üretimi (API'siz)"
 sosis-model = { workspace = true, default-features = false }
 sosis-tokenizer = { workspace = true }
 sosis-data = { workspace = true }
+sosis-bench = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 sosis-train = { workspace = true }

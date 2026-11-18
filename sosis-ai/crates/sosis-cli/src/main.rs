@@ -19,6 +19,7 @@ use clap::{Args, Parser, Subcommand};
 use sosis_data::{CollectOptions, FilterOptions, PrepareOptions};
 use sosis_infer::chat::{reply, ChatSession};
 use sosis_infer::rag::CodeIndex;
+use sosis_infer::repair::solve;
 use sosis_infer::{Generator, LoadOptions, SamplingParams};
 use sosis_model::BurnModule as _;
 use sosis_tokenizer::{BpeTrainer, Tokenizer};
@@ -188,6 +189,25 @@ enum Cmd {
         #[arg(long, short)]
         out: PathBuf,
     },
+    /// Görevi çöz: model kod yazar, kod derlenip/çalıştırılır, hata varsa düzeltir (sohbet modeli).
+    Solve {
+        #[command(flatten)]
+        model: ModelArgs,
+        #[command(flatten)]
+        sampling: SamplingArgs,
+        /// Görev açıklaması.
+        task: String,
+        /// rust | python
+        #[arg(long, default_value = "rust")]
+        lang: String,
+        /// Koda eklenecek test dosyası (Rust: `fn main` içinde assert'ler; Python: assert'ler).
+        #[arg(long)]
+        tests: Option<PathBuf>,
+        #[arg(long, default_value_t = 3)]
+        rounds: usize,
+        #[arg(long, default_value = "sessions")]
+        sessions: PathBuf,
+    },
     /// Proje hafızası için kod tabanını indeksler (BM25).
     Index {
         #[arg(long, short, required = true, num_args = 1..)]
@@ -238,6 +258,9 @@ enum Cmd {
         /// Program başına zaman aşımı (saniye).
         #[arg(long, default_value_t = 10)]
         timeout: u64,
+        /// Onarım modu (sohbet modeli): hata mesajıyla en fazla N tur düzeltme; 1. tur ile karşılaştırılır.
+        #[arg(long, default_value_t = 0)]
+        repair: usize,
     },
     /// Yapılandırmanın parametre sayısı ve VRAM tahmini.
     Info {
@@ -352,6 +375,30 @@ fn load_generator(m: &ModelArgs) -> Result<Generator> {
             .unwrap_or_default()
     );
     Ok(g)
+}
+
+fn parse_lang(l: &str) -> Result<sosis_bench::Lang> {
+    Ok(match l {
+        "rust" | "rs" => sosis_bench::Lang::Rust,
+        "python" | "py" => sosis_bench::Lang::Python,
+        other => anyhow::bail!("bilinmeyen dil: {other} (rust | python)"),
+    })
+}
+
+fn outcome_text(o: &sosis_bench::Outcome) -> String {
+    match o {
+        sosis_bench::Outcome::Pass => "✓ çalıştı".into(),
+        sosis_bench::Outcome::CompileError(e) => {
+            format!("✗ derleme hatası: {}", e.lines().next().unwrap_or(""))
+        }
+        sosis_bench::Outcome::Fail(e) => format!(
+            "✗ test başarısız: {}",
+            e.lines()
+                .find(|l| l.contains("panicked") || l.contains("Error"))
+                .unwrap_or("")
+        ),
+        sosis_bench::Outcome::Timeout => "✗ zaman aşımı".into(),
+    }
 }
 
 fn print_stream(s: &str) {
@@ -662,7 +709,7 @@ fn main() -> Result<()> {
                 None => ChatSession::new(system.as_deref()),
             };
             eprintln!(
-                "Sohbet ({}). Komutlar: /yeni  /liste  /yükle <id>  /çık   — oturum: {}",
+                "Sohbet ({}). Komutlar: /yeni  /liste  /yükle <id>  /çöz [rust|python] <görev>  /çık   — oturum: {}",
                 g.config.name, s.id
             );
             for m in &s.messages {
@@ -691,6 +738,30 @@ fn main() -> Result<()> {
                     ("/liste" | "/list", _) => {
                         for x in ChatSession::list(&sessions) {
                             eprintln!("  {}  {} ({} mesaj)", x.id, x.title, x.messages.len());
+                        }
+                        continue;
+                    }
+                    ("/çöz" | "/coz" | "/solve", rest) => {
+                        let (lang, task) = match rest.split_once(' ') {
+                            Some((l, t)) if parse_lang(l).is_ok() => (parse_lang(l)?, t),
+                            _ => (sosis_bench::Lang::Rust, rest),
+                        };
+                        print!("sosy> ");
+                        let attempts = solve(
+                            &g,
+                            &mut s,
+                            task,
+                            lang,
+                            None,
+                            3,
+                            index.as_ref(),
+                            &params,
+                            &mut print_stream,
+                            |a| eprintln!("\n— tur {}: {}", a.round, outcome_text(&a.outcome)),
+                        )?;
+                        s.save(&sessions)?;
+                        if !attempts.iter().any(|a| a.passed()) {
+                            eprintln!("3 turda çalışan kod üretilemedi.");
                         }
                         continue;
                     }
@@ -773,6 +844,38 @@ fn main() -> Result<()> {
                 b as f64 / 1048576.0
             );
         }
+        Cmd::Solve {
+            model,
+            sampling,
+            task,
+            lang,
+            tests,
+            rounds,
+            sessions,
+        } => {
+            let lang = parse_lang(&lang)?;
+            let tests = tests.map(std::fs::read_to_string).transpose()?;
+            let g = load_generator(&model)?;
+            let index = model.load_index()?;
+            let mut s = ChatSession::new(None);
+            let attempts = solve(
+                &g,
+                &mut s,
+                &task,
+                lang,
+                tests.as_deref(),
+                rounds,
+                index.as_ref(),
+                &sampling.params(),
+                &mut print_stream,
+                |a| eprintln!("\n— tur {}: {}", a.round, outcome_text(&a.outcome)),
+            )?;
+            s.save(&sessions)?;
+            match attempts.iter().find(|a| a.passed()) {
+                Some(a) => eprintln!("✓ {}. turda çalıştı (oturum {})", a.round, s.id),
+                None => eprintln!("✗ {} turda çözülemedi (oturum {})", attempts.len(), s.id),
+            }
+        }
         Cmd::Index { input, out } => {
             let t = Instant::now();
             let idx = CodeIndex::build(&input)?;
@@ -821,8 +924,88 @@ fn main() -> Result<()> {
             lang,
             check_solutions,
             timeout,
+            repair,
         } => {
             use sosis_bench::{evaluate, function_end, load_suites, Lang};
+            if repair > 0 {
+                let run = run.context("--repair için --run (sohbet modeli) verin")?;
+                let g = Generator::load(
+                    &run,
+                    &LoadOptions {
+                        weights,
+                        backend,
+                        context: None,
+                    },
+                )?;
+                let mut suites = load_suites(&suite)?;
+                if let Some(l) = &lang {
+                    let want = parse_lang(l)?;
+                    suites.retain(|s| s.lang == want);
+                }
+                let params = SamplingParams {
+                    temperature,
+                    max_new_tokens: max_tokens.max(256),
+                    ..Default::default()
+                };
+                let (mut first, mut fixed, mut total) = (0usize, 0usize, 0usize);
+                for suite in &suites {
+                    let fence = match suite.lang {
+                        Lang::Rust => "rust",
+                        Lang::Python => "python",
+                    };
+                    for task in &suite.tasks {
+                        total += 1;
+                        let ask = format!(
+                            "Şu fonksiyonu tamamla. Fonksiyonun tamamını tek bir kod bloğunda yaz.\n```{fence}\n{}```",
+                            task.prompt
+                        );
+                        let mut session = ChatSession::new(None);
+                        let mut pending = Some(ask.clone());
+                        let attempts = sosis_infer::repair::repair_loop(
+                            &ask,
+                            suite.lang,
+                            Some(&task.tests),
+                            repair,
+                            std::time::Duration::from_secs(timeout),
+                            |history| {
+                                let user = pending.take().unwrap_or_else(|| {
+                                    history
+                                        .last()
+                                        .map(|m| m.content.clone())
+                                        .unwrap_or_default()
+                                });
+                                sosis_infer::chat::reply(
+                                    &g,
+                                    &mut session,
+                                    &user,
+                                    None,
+                                    &params,
+                                    &mut |_| {},
+                                )
+                            },
+                            |_| {},
+                        )?;
+                        let ok1 = attempts.first().is_some_and(|a| a.passed());
+                        let okn = attempts.iter().any(|a| a.passed());
+                        first += ok1 as usize;
+                        fixed += okn as usize;
+                        println!(
+                            "{} {:?}/{:<18} {} tur",
+                            if okn { "✓" } else { "✗" },
+                            suite.lang,
+                            task.id,
+                            attempts.len()
+                        );
+                    }
+                }
+                let pct = |n: usize| 100.0 * n as f64 / total.max(1) as f64;
+                println!(
+                    "\npass@1 (onarımsız) {:.1}%  →  onarımlı ({repair} tura kadar) {:.1}%",
+                    pct(first),
+                    pct(fixed)
+                );
+                return Ok(());
+            }
             let mut suites = load_suites(&suite)?;
             if let Some(l) = lang {
                 let want = match l.as_str() {

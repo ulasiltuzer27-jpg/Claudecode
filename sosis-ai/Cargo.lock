@@ -5602,6 +5602,7 @@ dependencies = [
  "rand 0.8.8",
  "serde",
  "serde_json",
+ "sosis-bench",
  "sosis-data",
  "sosis-model",
  "sosis-tokenizer",
