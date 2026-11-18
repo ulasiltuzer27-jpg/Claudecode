@@ -10,6 +10,7 @@
 //! - Çıkarım için KV-cache
 
 mod device;
+pub mod flash;
 pub mod lora;
 pub mod quant;
 
@@ -53,6 +54,10 @@ pub struct ModelConfig {
     /// Ör. 2048'de eğitilmiş model için 2.0 → 4096 token.
     #[serde(default = "default_one")]
     pub rope_scaling: f32,
+    /// "standard" (varsayılan) ya da "flash": eğitimde O(t²) yerine O(t·d) bellekli dikkat.
+    /// Uzun bağlamla (ör. 4096) eğitim için. Çıkarımdaki tek token'lık adımlar standart kalır.
+    #[serde(default = "default_attention", skip_serializing_if = "is_standard")]
+    pub attention: String,
     #[serde(default = "default_eps")]
     pub norm_eps: f64,
     #[serde(default = "default_std")]
@@ -61,6 +66,12 @@ pub struct ModelConfig {
 
 fn default_theta() -> f32 {
     10_000.0
+}
+fn default_attention() -> String {
+    "standard".into()
+}
+fn is_standard(a: &String) -> bool {
+    a == "standard"
 }
 fn default_one() -> f32 {
     1.0
@@ -111,6 +122,10 @@ impl ModelConfig {
             "geçersiz boyutlar"
         );
         anyhow::ensure!(self.rope_scaling >= 1.0, "rope_scaling >= 1 olmalı");
+        anyhow::ensure!(
+            self.attention == "standard" || self.attention == "flash",
+            "attention: \"standard\" ya da \"flash\" olmalı"
+        );
         Ok(())
     }
 
@@ -148,6 +163,7 @@ impl ModelConfig {
                     n_heads: h,
                     n_kv_heads: kv,
                     head_dim: hd,
+                    flash: self.attention == "flash",
                 },
                 mlp_norm: RmsNormConfig::new(self.d_model)
                     .with_epsilon(self.norm_eps)
@@ -223,6 +239,7 @@ pub struct Attention {
     n_heads: usize,
     n_kv_heads: usize,
     head_dim: usize,
+    flash: bool,
 }
 
 impl Attention {
@@ -284,18 +301,23 @@ impl Attention {
                 .expand([b, h, t, tk]);
             (false, Some(m))
         };
-        let y = attention(
-            q,
-            k,
-            v,
-            mask,
-            None,
-            AttentionModuleOptions {
-                scale: None,
-                softcap: None,
-                is_causal,
-            },
-        );
+        // Bellek-verimli yol: önbelleksiz (eğitim / ön-doldurma) nedensel geçişler.
+        let y = if self.flash && is_causal && mask.is_none() {
+            flash::flash_attention(q, k, v, true)
+        } else {
+            attention(
+                q,
+                k,
+                v,
+                mask,
+                None,
+                AttentionModuleOptions {
+                    scale: None,
+                    softcap: None,
+                    is_causal,
+                },
+            )
+        };
         self.out.forward(y.swap_dims(1, 2).reshape([b, t, h * hd]))
     }
 }
@@ -474,6 +496,7 @@ mod tests {
             max_seq_len: 32,
             rope_theta: 10_000.0,
             rope_scaling: 1.0,
+            attention: "standard".into(),
             norm_eps: 1e-5,
             init_std: 0.02,
         }
@@ -557,6 +580,31 @@ mod tests {
                 assert!((a - b).abs() < 1e-4, "truncate sonrası farklı: {a} != {b}");
             }
         }
+    }
+
+    #[test]
+    fn flash_model_matches_standard() {
+        let dev = Device::flex().autodiff();
+        crate::flash::set_block_size(8);
+        let std_cfg = tiny(Some(2));
+        let mut fl_cfg = std_cfg.clone();
+        fl_cfg.attention = "flash".into();
+        let a = std_cfg.init(&dev);
+        let dir = std::env::temp_dir().join(format!("sosis_flash_{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        a.clone().save_file(dir.join("m.bpk")).unwrap();
+        let b = fl_cfg.init(&dev).try_load_file(dir.join("m.bpk")).unwrap();
+        let x = toks((0..30).map(|i| (i * 7) % 63 + 1).collect(), 1, 30, &dev);
+        let y = toks((1..31).map(|i| (i * 7) % 63 + 1).collect(), 1, 30, &dev);
+        let la: f32 = a.loss(x.clone(), y.clone()).into_scalar();
+        let lb: f32 = b.loss(x.clone(), y.clone()).into_scalar();
+        assert!((la - lb).abs() < 1e-4, "{la} != {lb}");
+        // Çıkarım (KV-cache) yolu da aynı kalmalı.
+        let fa = vec(a.valid().forward_last(x.clone().inner(), None));
+        let fb = vec(b.valid().forward_last(x.inner(), None));
+        assert!(fa.iter().zip(&fb).all(|(p, q)| (p - q).abs() < 1e-4));
+        crate::flash::set_block_size(128);
+        std::fs::remove_dir_all(&dir).ok();
     }
 
     #[test]

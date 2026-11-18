@@ -111,6 +111,7 @@ mod tests {
             max_seq_len: 16,
             rope_theta: 1e4,
             rope_scaling: 1.0,
+            attention: "standard".into(),
             norm_eps: 1e-5,
             init_std: 0.02,
         }

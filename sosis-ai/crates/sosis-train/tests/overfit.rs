@@ -62,6 +62,7 @@ fn config(root: &Path, run: &str, d_model: usize, kv: Option<usize>) -> RunConfi
             max_seq_len: 64,
             rope_theta: 10_000.0,
             rope_scaling: 1.0,
+            attention: "standard".into(),
             norm_eps: 1e-5,
             init_std: 0.02,
         },

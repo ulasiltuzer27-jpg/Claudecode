@@ -223,9 +223,15 @@ impl RunConfig {
             (params * (work * 2.0 + 8.0), 0.0)
         };
         let tokens = (t.micro_batch * t.seq_len) as f64;
+        // Standart dikkat t×t skor matrisini saklar; flash yalnızca bir blok (128) kadarını tutar.
+        let attn_span = if m.attention == "flash" {
+            t.seq_len.min(128)
+        } else {
+            t.seq_len
+        };
         let per_token = 12.0 * m.d_model as f64
             + 4.0 * m.ffn_hidden as f64
-            + 2.0 * (m.n_heads * t.seq_len) as f64;
+            + 2.0 * (m.n_heads * attn_span) as f64;
         let mut acts = tokens * per_token * m.n_layers as f64 * work;
         if t.gradient_checkpointing {
             acts *= 0.5;

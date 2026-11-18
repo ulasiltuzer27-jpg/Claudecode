@@ -466,6 +466,7 @@ pub(crate) mod test_util {
             max_seq_len: 64,
             rope_theta: 10_000.0,
             rope_scaling: 1.0,
+            attention: "standard".into(),
             norm_eps: 1e-5,
             init_std: 0.5, // rastgele ama belirgin dağılımlar
         }

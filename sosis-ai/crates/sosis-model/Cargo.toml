@@ -16,6 +16,6 @@ cpu = ["burn/flex"]
 cuda = ["burn/cuda"]
 
 [dependencies]
-burn = { workspace = true, features = ["autodiff"] }
+burn = { workspace = true, features = ["autodiff", "extension"] }
 serde = { workspace = true }
 anyhow = { workspace = true }
