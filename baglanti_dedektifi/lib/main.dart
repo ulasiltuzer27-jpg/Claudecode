@@ -1,3 +1,5 @@
+import 'dart:ui' show PlatformDispatcher;
+
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -6,6 +8,7 @@ import 'app/game_state.dart';
 import 'audio/sound_service.dart';
 import 'data/content_loader.dart';
 import 'monetization/platform_services.dart';
+import 'notify/platform_reminders.dart';
 import 'progress/progress_store.dart';
 
 Future<void> main() async {
@@ -24,6 +27,10 @@ Future<void> main() async {
     ads: createPlatformAds(),
     purchases: createPlatformPurchases(),
     sound: AudioplayersSoundService(),
+    reminders: createPlatformReminders(),
+    deviceLanguage: PlatformDispatcher.instance.locale.languageCode == 'tr'
+        ? 'tr'
+        : 'en',
   );
 
   runApp(DetectiveApp(state: state));

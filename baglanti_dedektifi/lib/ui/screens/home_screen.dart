@@ -5,6 +5,7 @@ import '../../app/game_state.dart';
 import '../../app/strings.dart';
 import '../../app/theme.dart';
 import '../widgets/common.dart';
+import '../widgets/daily_prompts.dart';
 import '../widgets/rain_background.dart';
 import 'board_screen.dart';
 import 'case_hub_screen.dart';
@@ -12,8 +13,21 @@ import 'case_list_screen.dart';
 import 'settings_screen.dart';
 import 'shop_screen.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) maybeShowLoginReward(context);
+    });
+  }
 
   void _push(BuildContext context, Widget screen) =>
       Navigator.push(context, MaterialPageRoute<void>(builder: (_) => screen));
@@ -213,12 +227,17 @@ class _DailyCard extends StatelessWidget {
     return Card(
       child: InkWell(
         borderRadius: BorderRadius.circular(14),
-        onTap: () => Navigator.push(
-          context,
-          MaterialPageRoute<bool>(
-            builder: (_) => BoardScreen(board: gs.todaysBoard),
-          ),
-        ),
+        onTap: () async {
+          final solved = await Navigator.push(
+            context,
+            MaterialPageRoute<bool>(
+              builder: (_) => BoardScreen(board: gs.todaysBoard),
+            ),
+          );
+          if (solved == true && context.mounted) {
+            await maybeAskReminders(context);
+          }
+        },
         child: Padding(
           padding: const EdgeInsets.all(14),
           child: Row(

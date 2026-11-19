@@ -5,19 +5,27 @@ import 'package:flutter_test/flutter_test.dart';
 LocalizedText t(String s) => LocalizedText({'tr': s, 'en': s});
 
 Board sampleBoard({List<String> decoys = const []}) => Board(
-      id: 'b',
-      clueId: 'c1',
-      decoys: decoys,
-      groups: [
-        BoardGroup(id: 'cold', theme: t('cold'), items: const ['ice', 'snow', 'penguin']),
-        BoardGroup(id: 'red', theme: t('red'), items: const ['apple', 'rose', 'fire-engine']),
-        BoardGroup(
-          id: 'time',
-          theme: t('time'),
-          items: const ['clock', 'hourglass', 'calendar', 'stopwatch'],
-        ),
-      ],
-    );
+  id: 'b',
+  clueId: 'c1',
+  decoys: decoys,
+  groups: [
+    BoardGroup(
+      id: 'cold',
+      theme: t('cold'),
+      items: const ['ice', 'snow', 'penguin'],
+    ),
+    BoardGroup(
+      id: 'red',
+      theme: t('red'),
+      items: const ['apple', 'rose', 'fire-engine'],
+    ),
+    BoardGroup(
+      id: 'time',
+      theme: t('time'),
+      items: const ['clock', 'hourglass', 'calendar', 'stopwatch'],
+    ),
+  ],
+);
 
 void main() {
   group('BoardSession', () {
@@ -91,22 +99,25 @@ void main() {
       expect(s.mistakes, 1);
     });
 
-    test('hata siniri dolunca iz soguk; forgive devam ettirir ama yildizi korumaz', () {
-      final s = BoardSession(sampleBoard(), seed: 1, maxMistakes: 2);
-      s.toggle('ice');
-      s.toggle('rose');
-      s.toggle('clock');
-      s.submit();
-      s.toggle('clock');
-      s.toggle('apple');
-      s.submit();
-      expect(s.status, BoardStatus.failed);
-      expect(s.toggle('snow'), isFalse);
-      s.forgive();
-      expect(s.status, BoardStatus.playing);
-      expect(s.totalMistakes, 2);
-      expect(s.stars, 1);
-    });
+    test(
+      'hata siniri dolunca iz soguk; forgive devam ettirir ama yildizi korumaz',
+      () {
+        final s = BoardSession(sampleBoard(), seed: 1, maxMistakes: 2);
+        s.toggle('ice');
+        s.toggle('rose');
+        s.toggle('clock');
+        s.submit();
+        s.toggle('clock');
+        s.toggle('apple');
+        s.submit();
+        expect(s.status, BoardStatus.failed);
+        expect(s.toggle('snow'), isFalse);
+        s.forgive();
+        expect(s.status, BoardStatus.playing);
+        expect(s.totalMistakes, 2);
+        expect(s.stars, 1);
+      },
+    );
 
     test('buyutec en kolay cozulmemis grubun temasini acar', () {
       final s = BoardSession(sampleBoard(), seed: 1);

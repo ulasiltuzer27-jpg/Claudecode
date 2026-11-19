@@ -67,6 +67,20 @@ class SettingsScreen extends StatelessWidget {
               onChanged: gs.setHaptics,
               title: Text(s.haptics),
             ),
+            SwitchListTile(
+              value: gs.remindersOn,
+              onChanged: (on) async {
+                if (!on) {
+                  await gs.disableReminders();
+                  return;
+                }
+                final granted = await gs.enableReminders();
+                if (!granted && context.mounted) {
+                  showSnack(context, s.remindersDenied);
+                }
+              },
+              title: Text(s.remindersSetting),
+            ),
             const Divider(),
             if (gs.ads.privacyOptionsRequired)
               ListTile(

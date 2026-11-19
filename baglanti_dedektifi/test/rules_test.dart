@@ -8,35 +8,49 @@ import 'package:flutter_test/flutter_test.dart';
 LocalizedText t(String s) => LocalizedText({'tr': s, 'en': s});
 
 CaseFile sampleCase() => CaseFile(
-      id: 'c',
-      order: 1,
-      premium: false,
-      icon: 'gem-stone',
-      title: t('t'),
-      intro: const [],
-      suspects: [
-        for (final id in ['a', 'b', 'c'])
-          Suspect(id: id, icon: 'x', name: t(id), role: t(id), bio: t(id)),
-      ],
-      clues: [for (final id in ['k1', 'k2', 'k3', 'k4']) Clue(id: id, text: t(id))],
-      boards: const [],
-      culpritId: 'b',
-      proofClueIds: const ['k2', 'k3', 'k4'],
-      ending: t('e'),
-      teaser: t('n'),
-    );
+  id: 'c',
+  order: 1,
+  premium: false,
+  icon: 'gem-stone',
+  title: t('t'),
+  intro: const [],
+  suspects: [
+    for (final id in ['a', 'b', 'c'])
+      Suspect(id: id, icon: 'x', name: t(id), role: t(id), bio: t(id)),
+  ],
+  clues: [
+    for (final id in ['k1', 'k2', 'k3', 'k4']) Clue(id: id, text: t(id)),
+  ],
+  boards: const [],
+  culpritId: 'b',
+  proofClueIds: const ['k2', 'k3', 'k4'],
+  ending: t('e'),
+  teaser: t('n'),
+);
 
 void main() {
   group('suclama', () {
     test('dogru kisi + iki gecerli kanit', () {
-      expect(judgeAccusation(sampleCase(), 'b', {'k2', 'k4'}), AccusationOutcome.correct);
+      expect(
+        judgeAccusation(sampleCase(), 'b', {'k2', 'k4'}),
+        AccusationOutcome.correct,
+      );
     });
     test('dogru kisi ama zayif kanit', () {
-      expect(judgeAccusation(sampleCase(), 'b', {'k1', 'k2'}), AccusationOutcome.weakEvidence);
-      expect(judgeAccusation(sampleCase(), 'b', {'k2'}), AccusationOutcome.weakEvidence);
+      expect(
+        judgeAccusation(sampleCase(), 'b', {'k1', 'k2'}),
+        AccusationOutcome.weakEvidence,
+      );
+      expect(
+        judgeAccusation(sampleCase(), 'b', {'k2'}),
+        AccusationOutcome.weakEvidence,
+      );
     });
     test('yanlis kisi', () {
-      expect(judgeAccusation(sampleCase(), 'a', {'k2', 'k3'}), AccusationOutcome.wrongSuspect);
+      expect(
+        judgeAccusation(sampleCase(), 'a', {'k2', 'k3'}),
+        AccusationOutcome.wrongSuspect,
+      );
     });
     test('dava yildizi denemeye gore', () {
       expect(caseStarsForAttempts(1), 3);

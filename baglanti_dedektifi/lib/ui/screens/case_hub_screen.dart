@@ -6,6 +6,7 @@ import '../../app/strings.dart';
 import '../../app/theme.dart';
 import '../../data/models.dart';
 import '../widgets/common.dart';
+import '../widgets/daily_prompts.dart';
 import 'accusation_screen.dart';
 import 'board_screen.dart';
 import 'story_screen.dart';
@@ -61,6 +62,8 @@ class _CaseHubScreenState extends State<CaseHubScreen> {
     );
     if (!mounted || solved != true) return;
     final gs = context.read<GameState>();
+    await maybeAskReminders(context);
+    if (!mounted) return;
     if (gs.canAccuse(c) && !gs.record(c).solved) {
       showSnack(context, S.of(context).accuseReady);
     }

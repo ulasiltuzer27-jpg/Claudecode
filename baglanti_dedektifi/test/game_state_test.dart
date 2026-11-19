@@ -70,7 +70,10 @@ void main() {
     expect(h.state.isBoardUnlocked(c, 1), isTrue);
     expect(h.state.isBoardUnlocked(c, 2), isFalse);
 
-    final r2 = h.state.completeCaseBoard(c, solved(c.boards[0], withMistake: true));
+    final r2 = h.state.completeCaseBoard(
+      c,
+      solved(c.boards[0], withMistake: true),
+    );
     expect(r2.firstTime, isFalse);
     expect(r2.coins, Economy.replayCoins);
     expect(r2.clue, isNull);
@@ -79,25 +82,30 @@ void main() {
     expect(h.store.saves, greaterThan(0));
   });
 
-  test('suclama yalnizca tum panolar bitince; dogru suclama dosyayi kapatir', () {
-    final h = Harness();
-    final c = content.cases.first;
-    expect(h.state.canAccuse(c), isFalse);
-    for (final b in c.boards) {
-      h.state.completeCaseBoard(c, solved(b));
-    }
-    expect(h.state.canAccuse(c), isTrue);
-    expect(h.state.collectedClues(c).length, c.boards.length);
+  test(
+    'suclama yalnizca tum panolar bitince; dogru suclama dosyayi kapatir',
+    () {
+      final h = Harness();
+      final c = content.cases.first;
+      expect(h.state.canAccuse(c), isFalse);
+      for (final b in c.boards) {
+        h.state.completeCaseBoard(c, solved(b));
+      }
+      expect(h.state.canAccuse(c), isTrue);
+      expect(h.state.collectedClues(c).length, c.boards.length);
 
-    final wrong = c.suspects.firstWhere((s) => s.id != c.culpritId).id;
-    expect(h.state.accuse(c, wrong, c.proofClueIds.take(2).toSet()).outcome,
-        AccusationOutcome.wrongSuspect);
-    final r = h.state.accuse(c, c.culpritId, c.proofClueIds.take(2).toSet());
-    expect(r.outcome, AccusationOutcome.correct);
-    expect(r.stars, 2);
-    expect(h.state.record(c).solved, isTrue);
-    expect(h.state.isPreviousClosed(content.cases[1]), isTrue);
-  });
+      final wrong = c.suspects.firstWhere((s) => s.id != c.culpritId).id;
+      expect(
+        h.state.accuse(c, wrong, c.proofClueIds.take(2).toSet()).outcome,
+        AccusationOutcome.wrongSuspect,
+      );
+      final r = h.state.accuse(c, c.culpritId, c.proofClueIds.take(2).toSet());
+      expect(r.outcome, AccusationOutcome.correct);
+      expect(r.stars, 2);
+      expect(h.state.record(c).solved, isTrue);
+      expect(h.state.isPreviousClosed(content.cases[1]), isTrue);
+    },
+  );
 
   test('kilit: ucretsiz davalar sirayla; premium ilk dava kapaninca + satin alinca', () async {
     final h = Harness();
@@ -162,26 +170,43 @@ void main() {
     await pumpEventQueue();
     expect(h.state.coins, coins);
     expect(h.state.noAds, isTrue);
-    expect(notices, containsAllInOrder([StoreNotice.thanks, StoreNotice.restored]));
+    expect(
+      notices,
+      containsAllInOrder([StoreNotice.thanks, StoreNotice.restored]),
+    );
   });
 
-  test('gecis reklami: ilk panolarda yok, sonra her 3 panoda bir, reklamsizda hic', () {
-    final h = Harness();
-    final c = content.cases.first;
-    final slots = <bool>[];
-    for (var i = 0; i < 10; i++) {
-      h.state.completeCaseBoard(c, solved(c.boards[i]));
-      slots.add(h.state.takeInterstitialSlot());
-    }
-    // 5 panoluk muhlet; 6. panoda sayac 6 >= 3 -> reklam; sonra 9. panoda.
-    expect(slots, [false, false, false, false, false, true, false, false, true, false]);
+  test(
+    'gecis reklami: ilk panolarda yok, sonra her 3 panoda bir, reklamsizda hic',
+    () {
+      final h = Harness();
+      final c = content.cases.first;
+      final slots = <bool>[];
+      for (var i = 0; i < 10; i++) {
+        h.state.completeCaseBoard(c, solved(c.boards[i]));
+        slots.add(h.state.takeInterstitialSlot());
+      }
+      // 5 panoluk muhlet; 6. panoda sayac 6 >= 3 -> reklam; sonra 9. panoda.
+      expect(slots, [
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        false,
+        false,
+        true,
+        false,
+      ]);
 
-    final noAds = Harness()..state.entitlements.removeAds = true;
-    for (var i = 0; i < 10; i++) {
-      noAds.state.completeCaseBoard(c, solved(c.boards[i]));
-      expect(noAds.state.takeInterstitialSlot(), isFalse);
-    }
-  });
+      final noAds = Harness()..state.entitlements.removeAds = true;
+      for (var i = 0; i < 10; i++) {
+        noAds.state.completeCaseBoard(c, solved(c.boards[i]));
+        expect(noAds.state.takeInterstitialSlot(), isFalse);
+      }
+    },
+  );
 
   test('buyutec: once kulubun bedava hakki, sonra jeton', () {
     final h = Harness()..state.entitlements.clubActive = true;
@@ -230,7 +255,10 @@ void main() {
       expect(await h.state.watchAdForCoins(), isTrue);
     }
     expect(await h.state.watchAdForCoins(), isFalse);
-    expect(h.state.coins, coins + Economy.rewardedCoins * Economy.rewardedCoinsPerDay);
+    expect(
+      h.state.coins,
+      coins + Economy.rewardedCoins * Economy.rewardedCoinsPerDay,
+    );
   });
 
   test('devam et dugmesi siradaki adimi gosterir', () {

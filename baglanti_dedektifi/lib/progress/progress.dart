@@ -118,6 +118,8 @@ class Progress {
     this.freeHintsUsed = 0,
     this.rewardedCoinsDay,
     this.rewardedCoinsUsed = 0,
+    this.loginRewardDate,
+    this.loginRewardIndex = 0,
     Entitlements? entitlements,
     Settings? settings,
   }) : boardStars = boardStars ?? {},
@@ -152,6 +154,10 @@ class Progress {
   String? rewardedCoinsDay;
   int rewardedCoinsUsed;
 
+  /// Gunluk giris odulunun en son alindigi gun ve takvimdeki sirasi (0-6).
+  String? loginRewardDate;
+  int loginRewardIndex;
+
   final Entitlements entitlements;
   final Settings settings;
 
@@ -178,6 +184,8 @@ class Progress {
     'freeHintsUsed': freeHintsUsed,
     'adCoinsDay': rewardedCoinsDay,
     'adCoinsUsed': rewardedCoinsUsed,
+    'loginDate': loginRewardDate,
+    'loginIndex': loginRewardIndex,
     'ent': entitlements.toJson(),
     'settings': settings.toJson(),
   };
@@ -205,6 +213,8 @@ class Progress {
       freeHintsUsed: (j['freeHintsUsed'] as int?) ?? 0,
       rewardedCoinsDay: j['adCoinsDay'] as String?,
       rewardedCoinsUsed: (j['adCoinsUsed'] as int?) ?? 0,
+      loginRewardDate: j['loginDate'] as String?,
+      loginRewardIndex: (j['loginIndex'] as int?) ?? 0,
       entitlements: Entitlements.fromJson(obj('ent')),
       settings: Settings.fromJson(obj('settings')),
     );

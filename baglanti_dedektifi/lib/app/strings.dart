@@ -211,6 +211,30 @@ class S {
   String get caseClosedStamp => _('DOSYA KAPANDI', 'CASE CLOSED');
   String get toBeContinued => _('Devam edecek...', 'To be continued...');
 
+  // Gunluk odul ve hatirlatma
+  String get loginTitle => _('Günlük ödül', 'Daily reward');
+  String loginDay(int n) => _('$n. gün', 'Day $n');
+  String get loginNote => _(
+    'Her gün gel, 7. günde büyük ödül seni bekliyor. Bir gün kaçırırsan takvim başa döner.',
+    'Come back every day for a big prize on day 7. Miss a day and the calendar starts over.',
+  );
+  String get claim => _('Al', 'Claim');
+  String get claimDouble =>
+      _('Reklam izle, 2 katını al', 'Watch an ad for double');
+  String get remindersTitle => _('Hatırlatalım mı?', 'Want a reminder?');
+  String get remindersAsk => _(
+    'Günün Delili hazır olduğunda akşam 19.00\'da haber verelim mi? Böylece serin bozulmaz.',
+    "Shall we let you know at 7 pm when the Daily Evidence is ready? That way you won't lose your streak.",
+  );
+  String get remindYes => _('Evet, hatırlat', 'Yes, remind me');
+  String get notNow => _('Şimdi değil', 'Not now');
+  String get remindersSetting =>
+      _('Günlük hatırlatma (19.00)', 'Daily reminder (7 pm)');
+  String get remindersDenied => _(
+    'Bildirim izni verilmedi. Telefon ayarlarından açabilirsin.',
+    'Notification permission was not granted. You can enable it in your phone settings.',
+  );
+
   // Magaza
   String get clubTitle => _('Dedektif Kulübü', 'Detective Club');
   String get clubPerk1 => _('Reklamsız oyun', 'No ads');

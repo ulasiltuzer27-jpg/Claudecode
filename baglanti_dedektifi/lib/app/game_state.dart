@@ -10,7 +10,10 @@ import '../game/economy.dart';
 import '../monetization/ads_service.dart';
 import '../monetization/products.dart';
 import '../monetization/purchase_service.dart';
+import '../notify/reminder_plan.dart';
+import '../notify/reminder_service.dart';
 import '../progress/daily.dart';
+import '../progress/login_reward.dart';
 import '../progress/progress.dart';
 import '../progress/progress_store.dart';
 
@@ -66,8 +69,11 @@ class GameState extends ChangeNotifier {
     required this.ads,
     required this.purchases,
     SoundService? sound,
+    ReminderService? reminders,
+    this.deviceLanguage = 'tr',
     DateTime Function()? clock,
   }) : sound = sound ?? SilentSoundService(),
+       reminders = reminders ?? NoopReminderService(),
        _clock = clock ?? DateTime.now {
     _purchaseSub = purchases.events.listen(_onPurchaseEvent);
   }
@@ -78,6 +84,10 @@ class GameState extends ChangeNotifier {
   final AdsService ads;
   final PurchaseService purchases;
   final SoundService sound;
+  final ReminderService reminders;
+
+  /// Cihazin dili ('tr' ya da 'en'); bildirim metinleri icin.
+  final String deviceLanguage;
   final DateTime Function() _clock;
   late final StreamSubscription<PurchaseEvent> _purchaseSub;
 
@@ -298,6 +308,7 @@ class GameState extends ChangeNotifier {
     progress.coins += coins + keen;
     _countBoard();
     _changed();
+    unawaited(refreshReminders());
     return BoardReward(
       coins: coins,
       stars: session.stars,
@@ -384,6 +395,85 @@ class GameState extends ChangeNotifier {
     );
   }
 
+  // --- Gunluk giris odulu --------------------------------------------------
+
+  bool get loginRewardAvailable =>
+      isLoginRewardAvailable(lastDate: progress.loginRewardDate, today: now);
+
+  /// Bugun alinacak (ya da bugun alinmis) odulun takvimdeki sirasi.
+  int get loginRewardIndex => loginRewardIndexFor(
+    lastDate: progress.loginRewardDate,
+    lastIndex: progress.loginRewardIndex,
+    today: now,
+  );
+
+  /// Odulu verir; ayni gun ikinci kez cagrilirsa 0 doner.
+  int claimLoginReward({bool doubled = false}) {
+    if (!loginRewardAvailable) return 0;
+    final index = loginRewardIndex;
+    final coins = loginRewards[index] * (doubled ? 2 : 1);
+    progress
+      ..loginRewardIndex = index
+      ..loginRewardDate = todayKey
+      ..coins += coins;
+    _changed();
+    return coins;
+  }
+
+  // --- Hatirlatmalar --------------------------------------------------------
+
+  bool get remindersOn => progress.settings.reminders;
+
+  String get language => languageOverride ?? deviceLanguage;
+
+  /// Yumusak soru zamani geldi mi: bir kez, ilk gunluk panodan ya da
+  /// 3. panodan sonra.
+  bool get shouldAskReminders =>
+      !progress.settings.reminderAsked &&
+      !remindersOn &&
+      (progress.lastDailyDate != null || progress.boardsCompleted >= 3);
+
+  void markRemindersAsked() {
+    progress.settings.reminderAsked = true;
+    _changed();
+  }
+
+  /// Sistem iznini ister; verildiyse hatirlatmalari acar.
+  Future<bool> enableReminders() async {
+    progress.settings.reminderAsked = true;
+    final granted = await reminders.requestPermission();
+    progress.settings.reminders = granted;
+    _changed();
+    await refreshReminders();
+    return granted;
+  }
+
+  Future<void> disableReminders() async {
+    progress.settings.reminders = false;
+    _changed();
+    await refreshReminders();
+  }
+
+  /// Onumuzdeki 7 gunun bildirimlerini yeniden kurar (ya da hepsini siler).
+  Future<void> refreshReminders() async {
+    try {
+      if (!remindersOn) {
+        await reminders.cancelAll();
+        return;
+      }
+      await reminders.schedule(
+        planReminders(
+          now: now,
+          doneToday: dailyDoneToday,
+          streak: streak,
+          lang: language,
+        ),
+      );
+    } catch (e) {
+      debugPrint('Hatirlatmalar kurulamadi: $e');
+    }
+  }
+
   // --- Reklam (muzik reklam boyunca susar) ----------------------------------
 
   Future<bool> showRewardedAd() async {
@@ -427,6 +517,14 @@ class GameState extends ChangeNotifier {
       debugPrint('Reklamlar baslatilamadi: $e');
     }
     notifyListeners();
+    if (remindersOn) {
+      try {
+        await reminders.init();
+      } catch (e) {
+        debugPrint('Bildirimler baslatilamadi: $e');
+      }
+      await refreshReminders();
+    }
   }
 
   // --- Magaza --------------------------------------------------------------
