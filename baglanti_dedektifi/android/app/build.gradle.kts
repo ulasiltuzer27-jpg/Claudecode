@@ -52,6 +52,13 @@ android {
         }
     }
 
+    // Release derlemesindeki "lintVital" denetimi, bazi eklentilerde (or.
+    // in_app_purchase_android) JDK 17 ile Lint'in kendi hatasiyla cokuyor
+    // (List.removeLast NoSuchMethodError). Lint gelistirmede ayrica calisir.
+    lint {
+        checkReleaseBuilds = false
+    }
+
     buildTypes {
         release {
             signingConfig = if (hasReleaseKey) {
