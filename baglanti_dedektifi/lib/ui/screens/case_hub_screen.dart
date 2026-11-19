@@ -235,7 +235,10 @@ class _BoardTile extends StatelessWidget {
     final solved = stars != null;
     return Semantics(
       button: unlocked,
-      label: '$number${solved ? ', $stars/3' : ''}',
+      excludeSemantics: true,
+      onTap: unlocked ? onTap : null,
+      label:
+          '$number${solved ? ', $stars/3' : ''}${unlocked ? '' : ', ${S.of(context).locked}'}',
       child: InkWell(
         onTap: unlocked ? onTap : null,
         borderRadius: BorderRadius.circular(8),

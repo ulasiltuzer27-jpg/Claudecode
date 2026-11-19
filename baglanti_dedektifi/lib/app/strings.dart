@@ -113,6 +113,7 @@ class S {
     'Premium case. You can unlock it in the shop.',
   );
   String get premium => _('Premium', 'Premium');
+  String get locked => _('kilitli', 'locked');
 
   // Pano
   String get link => _('Bağla', 'Link');

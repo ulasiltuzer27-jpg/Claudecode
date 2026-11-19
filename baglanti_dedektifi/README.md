@@ -8,7 +8,11 @@ gösterilir.
 - **Gelir**: ödüllü + geçiş reklamları (AdMob), uygulama içi satın almalar
   (jeton, reklamsız, başlangıç paketi, premium dosyalar) ve "Dedektif
   Kulübü" aboneliği (Google Play Billing).
-- **İçerik**: 3 dava (30 pano, 3. dava premium), 14 günlük pano, 430 kart. TR + EN.
+- **İçerik**: 8 dava (80 pano; 1–6 ücretsiz ana hikâye, 7–8 premium Özel
+  Dosyalar), 60 günlük pano, 664 kart. TR + EN.
+- **Bağlılık**: 7 günlük giriş ödülü, Günün Delili serisi, akşam hatırlatma
+  bildirimi (izinle), 16 başarım, isteğe bağlı Google Play Games sıralaması.
+- **Ses**: kodla üretilen efektler ve yağmurlu noir ambiyansı (`tool/audio`).
 - **Yayın rehberi**: [docs/play_store.md](docs/play_store.md)
 
 ## Çalıştırma
@@ -44,6 +48,9 @@ lib/
   game/          saf Dart oyun motoru (pano, suçlama, ekonomi)
   progress/      kayıt, günlük pano ve seri
   monetization/  AdMob, Play Billing, sahte servisler
+  audio/         ses servisi (audioplayers)
+  notify/        hatırlatma planı ve bildirimler
+  social/        Google Play Games (isteğe bağlı)
   app/           GameState, tema, TR/EN metinler
   ui/            ekranlar ve widget'lar
 assets/
@@ -51,7 +58,8 @@ assets/
   icons/         Fluent Emoji Flat SVG'leri (MIT)
   fonts/         Courier Prime, Playfair Display (OFL)
 tool/
-  content/       içeriğin kaynağı: items.py, cases.py, daily.py, build_content.py
+  content/       içeriğin kaynağı: items.py, cases*.py, daily*.py, build_content.py
+  audio/         ses sentezi
   validate_content.dart
 ```
 
@@ -74,6 +82,15 @@ Bulmaca kuralları:
 - Mantık tek çözümlü olmalı: grup boyutları ve diğer gruplar hesaba
   katıldığında her kartın tek bir yeri kalmalı.
 - Kelime oyunu yok: bağlantı TR ve EN'de aynı şekilde geçerli olmalı.
+
+## Sesler
+
+Tüm sesler kodla sentezlenir (lisans gerekmez). Değiştirmek için
+`tool/audio/synth_sfx.py` dosyasını düzenleyip çalıştır (numpy ve ffmpeg gerekir):
+
+```bash
+python3 tool/audio/synth_sfx.py      # assets/audio/*.ogg
+```
 
 ## Lisanslar
 

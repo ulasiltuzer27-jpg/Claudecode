@@ -66,7 +66,7 @@ Play Console → uygulama → Para kazanma → Ürünler. Kimlikler kodla
 | `coins_2500` | Uygulama içi, tüketilebilir | ₺199,99 | 2500 jeton |
 | `starter_pack` | Uygulama içi | ₺79,99 | 1000 jeton + reklamsız (tek sefer) |
 | `remove_ads` | Uygulama içi | ₺119,99 | Geçiş reklamları kalkar |
-| `case_pack_1` | Uygulama içi | ₺59,99 | Premium dosyalar (şu an: Sisli Fener) |
+| `case_pack_1` | Uygulama içi | ₺59,99 | Özel Dosyalar: Sahte Antika + Kayıp Makara |
 | `club_weekly` | Abonelik, haftalık temel plan | ₺49,99 | Dedektif Kulübü |
 | `club_yearly` | Abonelik, yıllık temel plan | ₺799,99 | Dedektif Kulübü |
 
@@ -79,6 +79,32 @@ sonra oluşturulabilir. Gerçek satın almayı denemek için Play Console →
 Ayarlar → **Lisans testi** listesine kendi Gmail adresini ekle; böylece ödeme
 alınmaz.
 
+## 4b. Google Play Games: başarımlar ve sıralama (isteğe bağlı)
+
+Oyun içi başarımlar Play Games olmadan da çalışır. Play Games yalnızca
+derlemeye açıkça verilince devreye girer; verilmezse SDK hiç başlatılmaz.
+
+1. Play Console → **Play Games hizmetleri → Kurulum ve yönetim → Yapılandırma**:
+   oyun projesi oluştur, uygulamayı bağla, OAuth onay ekranını doldur.
+2. **Kimlik bilgileri**: Android kimlik bilgisi ekle. SHA-1 olarak hem yükleme
+   anahtarının hem de Play App Signing anahtarının SHA-1'ini ekle (Play
+   Console → Uygulama bütünlüğü bölümünde yazar).
+3. **Başarımlar**: `lib/game/achievements.dart` içindeki 16 başarımın her biri
+   için birer başarım oluştur (ad ve açıklamayı oradan kopyala). Play Console'un
+   verdiği kimlikleri (`CgkI...`) `lib/social/play_games_ids.dart` içinde ilgili
+   yerel kimliğin karşısına yaz.
+4. **Sıralama tabloları**: "Toplam yıldız" ve "En uzun seri" adlı iki tablo
+   oluştur (büyük değer daha iyi); kimlikleri aynı dosyaya yaz.
+5. Play Games **uygulama kimliğini** (yalnızca rakamlar, ör. `123456789012`)
+   derlemeye ver:
+
+```bash
+flutter build appbundle --release --dart-define=STORE=real \
+  --dart-define=PLAY_GAMES=true -PplayGamesAppId=123456789012 ...
+```
+
+6. Play Games yapılandırmasını **yayınla** ve test kullanıcılarını ekle.
+
 ## 5. Mağaza kaydı ve formlar
 
 - **Uygulama simgesi**: `store/icon_512.png`
@@ -89,6 +115,9 @@ alınmaz.
   da Google Sites ücretsiz) ve URL'yi buraya yaz.
 - **Uygulama içeriği** formları:
   - Reklam içeriyor mu: **Evet**
+  - Bildirimler: oyun yalnızca oyuncu "evet" derse, akşam 19.00'da yerel
+    "Günün Delili hazır" bildirimi gönderir (sunucu yok, veri toplanmaz).
+    Android 13+ izni oyun içinde sorulur.
   - Hedef kitle: **18 ve üzeri** (Families politikasına girmemek için)
   - İçerik derecelendirmesi (IARC anketi): şiddet yok, kumar yok (jetonlar
     gerçek paraya çevrilmiyor), kullanıcı etkileşimi yok
@@ -138,10 +167,11 @@ hikâyeleriyle birleştiriyor. Her dosyada 10 pano çöz, ipuçlarını topla,
 şüphelileri sorgula ve sonunda suçluyu doğru kanıtlarla göster.
 
 • Özenle hazırlanmış bağlantı bulmacaları
-• Her dosyada yeni bir gizem: müzede kaybolan elmas, gece treninde soygun,
-  sisli fenerdeki batık...
+• 8 dosya: müzede kaybolan elmas, gece treninde soygun, sisli fener, opera
+  gecesi, karlı otel ve Gölge'nin yüzü... artı Özel Dosyalar
 • Sahte delillere dikkat: hepsini bulursan "Keskin Göz" bonusu!
-• Günün Delili: her gün yeni bir pano ve seri ödülleri
+• Günün Delili: her gün yeni bir pano, seri ödülleri ve günlük giriş ödülü
+• Başarımlar ve Google Play Games sıralamaları
 • Takıldığında büyüteç her zaman yanında
 • Türkçe ve İngilizce
 
@@ -165,10 +195,12 @@ Solve 10 boards in every case, collect clues, size up the suspects, and
 finally name the culprit with the right evidence.
 
 • Handcrafted connection puzzles
-• A new mystery in every case: a vanished diamond, a heist on the night
-  train, a shipwreck at the foggy lighthouse...
+• 8 case files: a vanished diamond, a heist on the night train, the foggy
+  lighthouse, a night at the opera, a snowbound hotel and the Shadow's face...
+  plus the Special Files
 • Watch out for fake evidence: spot them all for a Keen Eye bonus!
-• Daily Evidence: a fresh board every day, with streak rewards
+• Daily Evidence: a fresh board every day, streak rewards and a daily login gift
+• Achievements and Google Play Games leaderboards
 • Stuck? Your magnifier is always at hand
 • English and Turkish
 

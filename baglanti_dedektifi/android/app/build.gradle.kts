@@ -28,7 +28,9 @@ val playGamesAppId: String = (project.findProperty("playGamesAppId") as String?)
 
 android {
     namespace = "com.baglantidedektifi.baglanti_dedektifi"
-    compileSdk = flutter.compileSdkVersion
+    // androidx.core 1.19 (bildirim eklentisinden) en az API 37 ile derlemeyi
+    // istiyor. Yalnizca derleme hedefi; targetSdk (calisma davranisi) degismez.
+    compileSdk = maxOf(flutter.compileSdkVersion, 37)
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
