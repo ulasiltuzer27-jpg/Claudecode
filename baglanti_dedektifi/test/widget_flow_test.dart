@@ -200,7 +200,11 @@ void main() {
         sound.played.where((s) => s == Sfx.correct).length,
         board.groups.length,
       );
-      expect(sound.played.where((s) => s == Sfx.star).length, 3);
+      // 3 yildiz + acilan basarimlarin bandi.
+      expect(
+        sound.played.where((s) => s == Sfx.star).length,
+        3 + state.progress.achievements.length,
+      );
       // Ana ekrandaki sonsuz yagmur animasyonu testin sonunda durdurulsun.
       await tester.pumpWidget(const SizedBox());
     },

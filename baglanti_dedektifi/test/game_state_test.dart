@@ -4,6 +4,7 @@ import 'package:baglanti_dedektifi/app/game_state.dart';
 import 'package:baglanti_dedektifi/data/content_loader.dart';
 import 'package:baglanti_dedektifi/data/models.dart';
 import 'package:baglanti_dedektifi/game/accusation.dart';
+import 'package:baglanti_dedektifi/game/achievements.dart';
 import 'package:baglanti_dedektifi/game/board_session.dart';
 import 'package:baglanti_dedektifi/game/economy.dart';
 import 'package:baglanti_dedektifi/monetization/ads_service.dart';
@@ -66,7 +67,8 @@ void main() {
     expect(r1.stars, 3);
     expect(r1.coins, Economy.boardReward(3));
     expect(r1.clue!.id, c.boards[0].clueId);
-    expect(h.state.coins, start + r1.coins);
+    final firstBoard = achievements.firstWhere((a) => a.id == 'first_board');
+    expect(h.state.coins, start + r1.coins + firstBoard.reward);
     expect(h.state.isBoardUnlocked(c, 1), isTrue);
     expect(h.state.isBoardUnlocked(c, 2), isFalse);
 
@@ -209,7 +211,10 @@ void main() {
   );
 
   test('buyutec: once kulubun bedava hakki, sonra jeton', () {
-    final h = Harness()..state.entitlements.clubActive = true;
+    final h = Harness()
+      ..state.entitlements.clubActive = true
+      // Kulup basariminin odulu bu testi etkilemesin.
+      ..state.progress.achievements.add('club');
     final coins = h.state.coins;
     for (var i = 0; i < Economy.clubFreeHintsPerDay; i++) {
       expect(h.state.payForHint(), isTrue);

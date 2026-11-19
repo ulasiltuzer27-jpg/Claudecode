@@ -235,6 +235,17 @@ class S {
     'Notification permission was not granted. You can enable it in your phone settings.',
   );
 
+  // Basarimlar
+  String get achievementsTitle => _('Başarımlar', 'Achievements');
+  String achievementUnlocked(String title, int reward) => _(
+    'Başarım açıldı: $title (+$reward jeton)',
+    'Achievement unlocked: $title (+$reward coins)',
+  );
+  String achievementsCount(int n, int total) =>
+      _('$n/$total açıldı', '$n/$total unlocked');
+  String get leaderboards => _('Sıralama', 'Leaderboards');
+  String reward(int n) => _('Ödül: $n jeton', 'Reward: $n coins');
+
   // Magaza
   String get clubTitle => _('Dedektif Kulübü', 'Detective Club');
   String get clubPerk1 => _('Reklamsız oyun', 'No ads');

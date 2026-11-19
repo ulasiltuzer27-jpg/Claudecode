@@ -6,6 +6,7 @@ import '../audio/sound_service.dart';
 import '../data/models.dart';
 import '../game/accusation.dart';
 import '../game/board_session.dart';
+import '../game/achievements.dart';
 import '../game/economy.dart';
 import '../monetization/ads_service.dart';
 import '../monetization/products.dart';
@@ -16,6 +17,7 @@ import '../progress/daily.dart';
 import '../progress/login_reward.dart';
 import '../progress/progress.dart';
 import '../progress/progress_store.dart';
+import '../social/play_games.dart';
 
 /// Bir pano bitince oyuncuya gosterilenler.
 class BoardReward {
@@ -70,10 +72,12 @@ class GameState extends ChangeNotifier {
     required this.purchases,
     SoundService? sound,
     ReminderService? reminders,
+    PlayGamesService? playGames,
     this.deviceLanguage = 'tr',
     DateTime Function()? clock,
   }) : sound = sound ?? SilentSoundService(),
        reminders = reminders ?? NoopReminderService(),
+       playGames = playGames ?? NoopPlayGames(),
        _clock = clock ?? DateTime.now {
     _purchaseSub = purchases.events.listen(_onPurchaseEvent);
   }
@@ -85,6 +89,7 @@ class GameState extends ChangeNotifier {
   final PurchaseService purchases;
   final SoundService sound;
   final ReminderService reminders;
+  final PlayGamesService playGames;
 
   /// Cihazin dili ('tr' ya da 'en'); bildirim metinleri icin.
   final String deviceLanguage;
@@ -97,15 +102,47 @@ class GameState extends ChangeNotifier {
   DateTime get now => _clock();
   String get todayKey => dateKey(now);
 
+  final _achievementEvents = StreamController<AchievementDef>.broadcast();
+
+  /// Yeni acilan basarimlar (arayuz bir bant gosterir).
+  Stream<AchievementDef> get achievementUnlocks => _achievementEvents.stream;
+
+  bool _checkingAchievements = false;
+
+  /// Hedefi tutturulmus ama henuz acilmamis basarimlari acar ve odullerini
+  /// verir. Ayni basarim iki kez odul vermez.
+  void _checkAchievements() {
+    if (_checkingAchievements) return;
+    _checkingAchievements = true;
+    try {
+      for (final a in newlyEarned(progress, content)) {
+        progress.achievements.add(a.id);
+        progress.coins += a.reward;
+        _achievementEvents.add(a);
+        unawaited(playGames.unlock(a.id));
+      }
+    } finally {
+      _checkingAchievements = false;
+    }
+  }
+
   void _changed() {
+    _checkAchievements();
     notifyListeners();
     unawaited(store.save(progress));
+    unawaited(
+      playGames.submitScores(
+        totalStars: totalStars,
+        bestStreak: progress.bestStreak,
+      ),
+    );
   }
 
   @override
   void dispose() {
     _purchaseSub.cancel();
     _notices.close();
+    _achievementEvents.close();
     super.dispose();
   }
 
@@ -524,6 +561,14 @@ class GameState extends ChangeNotifier {
         debugPrint('Bildirimler baslatilamadi: $e');
       }
       await refreshReminders();
+    }
+    // Eski kayitlar icin: guncellemeden once kazanilmis basarimlari ac.
+    _changed();
+    try {
+      await playGames.init(progress.achievements);
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Play Games baslatilamadi: $e');
     }
   }
 

@@ -120,9 +120,11 @@ class Progress {
     this.rewardedCoinsUsed = 0,
     this.loginRewardDate,
     this.loginRewardIndex = 0,
+    Set<String>? achievements,
     Entitlements? entitlements,
     Settings? settings,
-  }) : boardStars = boardStars ?? {},
+  }) : achievements = achievements ?? {},
+       boardStars = boardStars ?? {},
        cases = cases ?? {},
        entitlements = entitlements ?? Entitlements(),
        settings = settings ?? Settings();
@@ -158,6 +160,9 @@ class Progress {
   String? loginRewardDate;
   int loginRewardIndex;
 
+  /// Acilan basarimlarin kimlikleri.
+  final Set<String> achievements;
+
   final Entitlements entitlements;
   final Settings settings;
 
@@ -186,6 +191,7 @@ class Progress {
     'adCoinsUsed': rewardedCoinsUsed,
     'loginDate': loginRewardDate,
     'loginIndex': loginRewardIndex,
+    'achievements': achievements.toList()..sort(),
     'ent': entitlements.toJson(),
     'settings': settings.toJson(),
   };
@@ -215,6 +221,9 @@ class Progress {
       rewardedCoinsUsed: (j['adCoinsUsed'] as int?) ?? 0,
       loginRewardDate: j['loginDate'] as String?,
       loginRewardIndex: (j['loginIndex'] as int?) ?? 0,
+      achievements: ((j['achievements'] as List?) ?? const [])
+          .cast<String>()
+          .toSet(),
       entitlements: Entitlements.fromJson(obj('ent')),
       settings: Settings.fromJson(obj('settings')),
     );

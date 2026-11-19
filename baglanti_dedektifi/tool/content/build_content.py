@@ -39,6 +39,10 @@ CONTENT = os.path.join(ROOT, "assets", "content")
 UI_ICONS = [
     "coin", "fire", "magnifying-glass-tilted-left", "detective", "calendar",
     "crown", "wrapped-gift", "prohibited", "card-index-dividers", "money-bag",
+    "alarm-clock",
+    # Basarim ikonlari (lib/game/achievements.dart)
+    "pushpin", "file-folder", "sports-medal", "bust-in-silhouette", "gem-stone",
+    "bullseye", "eye", "glowing-star", "trophy", "1st-place-medal",
 ]
 ICONS = os.path.join(ROOT, "assets", "icons")
 

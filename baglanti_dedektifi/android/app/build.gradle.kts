@@ -21,6 +21,11 @@ val hasReleaseKey = keystoreProperties.getProperty("storeFile") != null
 val admobAppId: String =
     (project.findProperty("admobAppId") as String?) ?: "ca-app-pub-3940256099942544~3347511713"
 
+// Google Play Games uygulama kimligi (yalnizca rakamlar). Bos birakilirsa
+// MainActivity Play Games SDK'sini hic baslatmaz.
+// Yayinda: -PplayGamesAppId=123456789012 ve --dart-define=PLAY_GAMES=true
+val playGamesAppId: String = (project.findProperty("playGamesAppId") as String?) ?: ""
+
 android {
     namespace = "com.baglantidedektifi.baglanti_dedektifi"
     compileSdk = flutter.compileSdkVersion
@@ -41,6 +46,7 @@ android {
         versionCode = flutter.versionCode
         versionName = flutter.versionName
         manifestPlaceholders["admobAppId"] = admobAppId
+        resValue("string", "play_games_app_id", playGamesAppId)
     }
 
     signingConfigs {
@@ -52,6 +58,11 @@ android {
                 storePassword = keystoreProperties.getProperty("storePassword")
             }
         }
+    }
+
+    buildFeatures {
+        // play_games_app_id kaynagi resValue ile uretiliyor.
+        resValues = true
     }
 
     // Release derlemesindeki "lintVital" denetimi, bazi eklentilerde (or.
@@ -84,4 +95,6 @@ flutter {
 
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
+    // MainActivity'de PlayGamesSdk.initialize icin (games_services ile ayni surum).
+    implementation("com.google.android.gms:play-services-games-v2:21.0.0")
 }

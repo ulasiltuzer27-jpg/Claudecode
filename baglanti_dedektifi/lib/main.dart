@@ -10,6 +10,7 @@ import 'data/content_loader.dart';
 import 'monetization/platform_services.dart';
 import 'notify/platform_reminders.dart';
 import 'progress/progress_store.dart';
+import 'social/platform_play_games.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,6 +29,7 @@ Future<void> main() async {
     purchases: createPlatformPurchases(),
     sound: AudioplayersSoundService(),
     reminders: createPlatformReminders(),
+    playGames: createPlatformPlayGames(),
     deviceLanguage: PlatformDispatcher.instance.locale.languageCode == 'tr'
         ? 'tr'
         : 'en',

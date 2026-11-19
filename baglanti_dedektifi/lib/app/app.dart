@@ -8,6 +8,8 @@ import 'package:material_ui/material_ui.dart';
 import 'package:provider/provider.dart';
 
 import '../audio/sound_service.dart';
+import '../game/achievements.dart';
+import '../ui/widgets/common.dart';
 import '../ui/screens/home_screen.dart';
 import 'game_state.dart';
 import 'strings.dart';
@@ -26,11 +28,13 @@ class _DetectiveAppState extends State<DetectiveApp>
     with WidgetsBindingObserver {
   final _messenger = GlobalKey<ScaffoldMessengerState>();
   late final StreamSubscription<StoreNotice> _sub;
+  late final StreamSubscription<AchievementDef> _achievementSub;
 
   @override
   void initState() {
     super.initState();
     _sub = widget.state.notices.listen(_showNotice);
+    _achievementSub = widget.state.achievementUnlocks.listen(_showAchievement);
     WidgetsBinding.instance.addObserver(this);
   }
 
@@ -38,6 +42,7 @@ class _DetectiveAppState extends State<DetectiveApp>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _sub.cancel();
+    _achievementSub.cancel();
     super.dispose();
   }
 
@@ -53,6 +58,28 @@ class _DetectiveAppState extends State<DetectiveApp>
       case AppLifecycleState.inactive:
         break;
     }
+  }
+
+  void _showAchievement(AchievementDef a) {
+    final messenger = _messenger.currentState;
+    final ctx = _messenger.currentContext;
+    if (messenger == null || ctx == null) return;
+    final s = S.of(ctx);
+    widget.state.sound.play(Sfx.star);
+    messenger.showSnackBar(
+      SnackBar(
+        duration: const Duration(seconds: 3),
+        content: Row(
+          children: [
+            SvgIcon(a.assetPath, size: 28),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(s.achievementUnlocked(a.title.of(s.lang), a.reward)),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   void _showNotice(StoreNotice notice) {

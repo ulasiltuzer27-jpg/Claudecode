@@ -7,6 +7,7 @@ import '../../app/theme.dart';
 import '../widgets/common.dart';
 import '../widgets/daily_prompts.dart';
 import '../widgets/rain_background.dart';
+import 'achievements_screen.dart';
 import 'board_screen.dart';
 import 'case_hub_screen.dart';
 import 'case_list_screen.dart';
@@ -68,6 +69,18 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: [
                     const CoinChip(),
                     const Spacer(),
+                    IconButton(
+                      tooltip: s.achievementsTitle,
+                      onPressed: () =>
+                          _push(context, const AchievementsScreen()),
+                      icon: const Icon(Icons.emoji_events_outlined),
+                    ),
+                    if (gs.playGames.enabled)
+                      IconButton(
+                        tooltip: s.leaderboards,
+                        onPressed: gs.playGames.showLeaderboards,
+                        icon: const Icon(Icons.leaderboard_outlined),
+                      ),
                     IconButton(
                       tooltip: s.shop,
                       onPressed: () => _push(context, const ShopScreen()),

@@ -43,6 +43,11 @@
                 <action android:name="com.htc.intent.action.QUICKBOOT_POWERON"/>
             </intent-filter>
         </receiver>
+        <!-- Play Games uygulama kimligi: build.gradle.kts icindeki playGamesAppId.
+             Bos oldugunda SDK baslatilmaz (MainActivity). -->
+        <meta-data
+            android:name="com.google.android.gms.games.APP_ID"
+            android:value="@string/play_games_app_id" />
         <!-- AdMob uygulama kimligi: build.gradle.kts icindeki admobAppId. -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
