@@ -20,7 +20,10 @@ abstract class AdsService {
 
 /// Web, testler ve `STORE=fake` icin: reklam yerine kisa bir bekleme.
 class FakeAdsService implements AdsService {
-  FakeAdsService({this.delay = const Duration(milliseconds: 700), this.alwaysReady = true});
+  FakeAdsService({
+    this.delay = const Duration(milliseconds: 700),
+    this.alwaysReady = true,
+  });
 
   final Duration delay;
   final bool alwaysReady;

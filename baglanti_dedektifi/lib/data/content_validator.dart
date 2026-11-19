@@ -14,7 +14,9 @@ List<String> validateContent(GameContent content, Set<String> availableIcons) {
   }
 
   void icon(String where, String name) {
-    if (!availableIcons.contains(name)) errors.add('$where: ikon dosyasi yok ($name)');
+    if (!availableIcons.contains(name)) {
+      errors.add('$where: ikon dosyasi yok ($name)');
+    }
   }
 
   for (final item in catalog.items.values) {
@@ -24,12 +26,21 @@ List<String> validateContent(GameContent content, Set<String> availableIcons) {
 
   final boardIds = <String>{};
 
-  void board(String where, Board b, {required bool needsClue, Set<String>? clueIds}) {
-    if (!boardIds.add(b.id)) errors.add('$where: tekrar eden pano kimligi ${b.id}');
+  void board(
+    String where,
+    Board b, {
+    required bool needsClue,
+    Set<String>? clueIds,
+  }) {
+    if (!boardIds.add(b.id)) {
+      errors.add('$where: tekrar eden pano kimligi ${b.id}');
+    }
     if (b.groups.length < 2) errors.add('$where: en az 2 grup olmali');
     final seen = <String>{};
     for (final id in b.allItems) {
-      if (!catalog.items.containsKey(id)) errors.add('$where: katalogda yok: $id');
+      if (!catalog.items.containsKey(id)) {
+        errors.add('$where: katalogda yok: $id');
+      }
       if (!seen.add(id)) errors.add('$where: ayni kart iki kez: $id');
     }
     // Ayni gorunen iki kart (ayni ikon) bir panoda olmamali.
@@ -38,7 +49,9 @@ List<String> validateContent(GameContent content, Set<String> availableIcons) {
       final it = catalog.items[id];
       if (it == null) continue;
       final other = icons[it.icon];
-      if (other != null) errors.add('$where: $other ve $id ayni ikonu kullaniyor');
+      if (other != null) {
+        errors.add('$where: $other ve $id ayni ikonu kullaniyor');
+      }
       icons[it.icon] = id;
     }
     // Ayni etiketli iki kart da oyuncuyu yaniltir (ornegin TR'de "Kupa").
@@ -49,22 +62,30 @@ List<String> validateContent(GameContent content, Set<String> availableIcons) {
         if (it == null) continue;
         final label = it.label.of(lang).toLowerCase();
         final other = labels[label];
-        if (other != null) errors.add('$where: $other ve $id ayni etiket ($lang: $label)');
+        if (other != null) {
+          errors.add('$where: $other ve $id ayni etiket ($lang: $label)');
+        }
         labels[label] = id;
       }
     }
     final groupIds = <String>{};
     for (final g in b.groups) {
       if (!groupIds.add(g.id)) errors.add('$where: tekrar eden grup ${g.id}');
-      if (g.size < 3 || g.size > 5) errors.add('$where/${g.id}: grup 3-5 kart olmali');
+      if (g.size < 3 || g.size > 5) {
+        errors.add('$where/${g.id}: grup 3-5 kart olmali');
+      }
       text('$where/${g.id} temasi', g.theme);
       for (final e in g.alsoFits.entries) {
         if (g.items.contains(e.key)) {
-          errors.add('$where/${g.id}: alsoFits kendi kartini gosteriyor (${e.key})');
+          errors.add(
+            '$where/${g.id}: alsoFits kendi kartini gosteriyor (${e.key})',
+          );
         } else if (!seen.contains(e.key)) {
           errors.add('$where/${g.id}: alsoFits panoda olmayan kart (${e.key})');
         }
-        if (e.value.trim().isEmpty) errors.add('$where/${g.id}: alsoFits aciklamasi bos');
+        if (e.value.trim().isEmpty) {
+          errors.add('$where/${g.id}: alsoFits aciklamasi bos');
+        }
       }
     }
     if (b.decoys.length > 3) errors.add('$where: en fazla 3 sahte delil');
@@ -103,7 +124,9 @@ List<String> validateContent(GameContent content, Set<String> availableIcons) {
       text('$w/${s.id} rolu', s.role);
       text('$w/${s.id} biyografi', s.bio);
     }
-    if (!suspectIds.contains(c.culpritId)) errors.add('$w: suclu supheliler arasinda yok');
+    if (!suspectIds.contains(c.culpritId)) {
+      errors.add('$w: suclu supheliler arasinda yok');
+    }
 
     final clueIds = <String>{};
     for (final cl in c.clues) {
@@ -115,7 +138,9 @@ List<String> validateContent(GameContent content, Set<String> availableIcons) {
       if (!clueIds.contains(p)) errors.add('$w: kanit ipucu tanimsiz: $p');
     }
 
-    if (c.boards.length != 10) errors.add('$w: 10 pano olmali (${c.boards.length})');
+    if (c.boards.length != 10) {
+      errors.add('$w: 10 pano olmali (${c.boards.length})');
+    }
     final usedClues = <String>{};
     for (final b in c.boards) {
       board('$w/${b.id}', b, needsClue: true, clueIds: clueIds);

@@ -20,7 +20,8 @@ AccusationOutcome judgeAccusation(
   Set<String> clueIds,
 ) {
   if (suspectId != caseFile.culpritId) return AccusationOutcome.wrongSuspect;
-  final valid = clueIds.length == requiredProofCount &&
+  final valid =
+      clueIds.length == requiredProofCount &&
       clueIds.every(caseFile.proofClueIds.contains);
   return valid ? AccusationOutcome.correct : AccusationOutcome.weakEvidence;
 }

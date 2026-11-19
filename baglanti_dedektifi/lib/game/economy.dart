@@ -38,7 +38,8 @@ abstract final class Economy {
   /// ...sonra her bu kadar panoda bir.
   static const interstitialEveryBoards = 3;
 
-  static int boardReward(int stars) => boardBaseCoins + boardCoinsPerStar * stars;
+  static int boardReward(int stars) =>
+      boardBaseCoins + boardCoinsPerStar * stars;
 
   static int dailyReward(int streak) {
     final bonusDays = streak.clamp(0, dailyStreakBonusCap);

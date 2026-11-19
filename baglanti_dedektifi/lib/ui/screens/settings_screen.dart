@@ -23,18 +23,45 @@ class SettingsScreen extends StatelessWidget {
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-              child: Text(s.language, style: const TextStyle(color: Noir.brass, fontWeight: FontWeight.w700)),
+              child: Text(
+                s.language,
+                style: const TextStyle(
+                  color: Noir.brass,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ),
             RadioGroup<String?>(
               groupValue: current,
               onChanged: gs.setLanguage,
-              child: Column(children: [
-                RadioListTile<String?>(value: null, title: Text(s.systemLanguage)),
-                const RadioListTile<String?>(value: 'tr', title: Text('Türkçe')),
-                const RadioListTile<String?>(value: 'en', title: Text('English')),
-              ]),
+              child: Column(
+                children: [
+                  RadioListTile<String?>(
+                    value: null,
+                    title: Text(s.systemLanguage),
+                  ),
+                  const RadioListTile<String?>(
+                    value: 'tr',
+                    title: Text('Türkçe'),
+                  ),
+                  const RadioListTile<String?>(
+                    value: 'en',
+                    title: Text('English'),
+                  ),
+                ],
+              ),
             ),
             const Divider(),
+            SwitchListTile(
+              value: gs.sfxOn,
+              onChanged: gs.setSfx,
+              title: Text(s.soundEffects),
+            ),
+            SwitchListTile(
+              value: gs.musicOn,
+              onChanged: gs.setMusic,
+              title: Text(s.musicAmbience),
+            ),
             SwitchListTile(
               value: gs.haptics,
               onChanged: gs.setHaptics,
@@ -58,7 +85,8 @@ class SettingsScreen extends StatelessWidget {
             ListTile(
               leading: const Icon(Icons.description_outlined),
               title: Text(s.licenses),
-              onTap: () => showLicensePage(context: context, applicationName: s.appName),
+              onTap: () =>
+                  showLicensePage(context: context, applicationName: s.appName),
             ),
           ],
         ),
@@ -76,9 +104,14 @@ class PrivacyScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: Text(s.privacyPolicy)),
       body: SafeArea(
-        child: ListView(padding: const EdgeInsets.all(16), children: [
-          PaperCard(child: Text(s.privacyText, style: const TextStyle(fontSize: 15))),
-        ]),
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            PaperCard(
+              child: Text(s.privacyText, style: const TextStyle(fontSize: 15)),
+            ),
+          ],
+        ),
       ),
     );
   }

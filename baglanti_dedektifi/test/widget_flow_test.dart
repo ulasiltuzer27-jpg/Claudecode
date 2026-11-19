@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:baglanti_dedektifi/app/app.dart';
 import 'package:baglanti_dedektifi/app/game_state.dart';
+import 'package:baglanti_dedektifi/audio/sound_service.dart';
 import 'package:baglanti_dedektifi/data/content_loader.dart';
 import 'package:baglanti_dedektifi/data/models.dart';
 import 'package:baglanti_dedektifi/monetization/ads_service.dart';
@@ -27,6 +28,11 @@ Future<void> pumpApp(WidgetTester tester, GameState state) async {
   tester.view.physicalSize = const Size(412 * 3, 915 * 3);
   tester.view.devicePixelRatio = 3;
   addTearDown(tester.view.reset);
+  // "Animasyonlari azalt": yagmur durur, konfeti ve kart ucusu atlanir;
+  // boylece pumpAndSettle sonsuz animasyonda takilmaz.
+  tester.platformDispatcher.accessibilityFeaturesTestValue =
+      const FakeAccessibilityFeatures(disableAnimations: true);
+  addTearDown(tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
   await tester.pumpWidget(DetectiveApp(state: state));
   await tester.pumpAndSettle();
 }
@@ -37,6 +43,12 @@ Future<void> tapCards(WidgetTester tester, Iterable<String> ids, String lang) as
   for (final id in ids) {
     await tester.tap(find.text(label(id, lang)));
     await tester.pump();
+  }
+}
+
+Future<void> step(WidgetTester tester, [int ms = 400]) async {
+  for (var i = 0; i < ms ~/ 50; i++) {
+    await tester.pump(const Duration(milliseconds: 50));
   }
 }
 
@@ -127,5 +139,47 @@ void main() {
     final premium = content.cases.firstWhere((c) => c.premium);
     expect(find.text(premium.title.of('tr')), findsOneWidget);
     expect(find.text('Premium dosya. Mağazadan açabilirsin.'), findsOneWidget);
+  });
+
+  testWidgets('animasyonlar acikken: kart ucusu, konfeti, yildizlar ve sesler', (tester) async {
+    final sound = SilentSoundService();
+    final c = content.cases.first;
+    final state = GameState(
+      content: content,
+      progress: Progress(tutorialDone: true)..settings.language = 'tr',
+      store: MemoryProgressStore(),
+      ads: FakeAdsService(delay: Duration.zero),
+      purchases: FakePurchaseService(delay: Duration.zero),
+      sound: sound,
+      clock: () => DateTime(2026, 11, 19, 10),
+    );
+    state.record(c).introSeen = true;
+    tester.view.physicalSize = const Size(412 * 3, 915 * 3);
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(DetectiveApp(state: state));
+    await step(tester);
+    await tester.tap(find.text('Soruşturmaya devam'));
+    await step(tester, 1200);
+
+    final board = c.boards.first;
+    for (final g in board.groups) {
+      await tapCards(tester, g.items, 'tr');
+      await tester.tap(find.text('Bağla'));
+      // Hayalet kartlar ucarken bir sonraki gruba gecilir.
+      await step(tester, 700);
+    }
+    await step(tester, 1600);
+    expect(find.text('Pano çözüldü!'), findsOneWidget);
+    await step(tester, 1500);
+    await tester.tap(find.text('Devam'));
+    await step(tester, 1200);
+
+    expect(state.boardStars(board), 3);
+    expect(sound.played, containsAllInOrder([Sfx.pick, Sfx.thread, Sfx.correct]));
+    expect(sound.played.where((s) => s == Sfx.correct).length, board.groups.length);
+    expect(sound.played.where((s) => s == Sfx.star).length, 3);
+    // Ana ekrandaki sonsuz yagmur animasyonu testin sonunda durdurulsun.
+    await tester.pumpWidget(const SizedBox());
   });
 }

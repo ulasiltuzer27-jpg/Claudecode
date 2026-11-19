@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
+import '../audio/sound_service.dart';
 import '../data/models.dart';
 import '../game/accusation.dart';
 import '../game/board_session.dart';
@@ -64,8 +65,10 @@ class GameState extends ChangeNotifier {
     required this.store,
     required this.ads,
     required this.purchases,
+    SoundService? sound,
     DateTime Function()? clock,
-  }) : _clock = clock ?? DateTime.now {
+  }) : sound = sound ?? SilentSoundService(),
+       _clock = clock ?? DateTime.now {
     _purchaseSub = purchases.events.listen(_onPurchaseEvent);
   }
 
@@ -74,6 +77,7 @@ class GameState extends ChangeNotifier {
   final ProgressStore store;
   final AdsService ads;
   final PurchaseService purchases;
+  final SoundService sound;
   final DateTime Function() _clock;
   late final StreamSubscription<PurchaseEvent> _purchaseSub;
 
@@ -112,6 +116,21 @@ class GameState extends ChangeNotifier {
     _changed();
   }
 
+  bool get sfxOn => progress.settings.sfx;
+  bool get musicOn => progress.settings.music;
+
+  void setSfx(bool on) {
+    progress.settings.sfx = on;
+    sound.setSfxEnabled(on);
+    _changed();
+  }
+
+  void setMusic(bool on) {
+    progress.settings.music = on;
+    sound.setMusicEnabled(on);
+    _changed();
+  }
+
   bool get tutorialDone => progress.tutorialDone;
 
   void finishTutorial() {
@@ -144,7 +163,9 @@ class GameState extends ChangeNotifier {
   bool get noAds => entitlements.noAds;
 
   bool hasAccess(CaseFile c) =>
-      !c.premium || clubActive || (c.packId != null && entitlements.ownedPacks.contains(c.packId));
+      !c.premium ||
+      clubActive ||
+      (c.packId != null && entitlements.ownedPacks.contains(c.packId));
 
   /// Ucretsiz davalar kendi aralarinda sirayla acilir. Premium "Ozel
   /// Dosyalar" ana hikayeyi beklemez: ilk dava kapaninca acilir (satin alan
@@ -173,9 +194,9 @@ class GameState extends ChangeNotifier {
   int solvedBoardCount(CaseFile c) => c.boards.where(isBoardSolved).length;
 
   List<Clue> collectedClues(CaseFile c) => [
-        for (final b in c.boards)
-          if (isBoardSolved(b) && b.clueId != null) c.clue(b.clueId!),
-      ];
+    for (final b in c.boards)
+      if (isBoardSolved(b) && b.clueId != null) c.clue(b.clueId!),
+  ];
 
   bool canAccuse(CaseFile c) => solvedBoardCount(c) == c.boards.length;
 
@@ -229,8 +250,12 @@ class GameState extends ChangeNotifier {
   /// Gecis reklami zamani geldi mi? Geldiyse sayaci sifirlar.
   bool takeInterstitialSlot() {
     if (noAds) return false;
-    if (progress.boardsCompleted <= Economy.interstitialGracePeriodBoards) return false;
-    if (progress.boardsSinceInterstitial < Economy.interstitialEveryBoards) return false;
+    if (progress.boardsCompleted <= Economy.interstitialGracePeriodBoards) {
+      return false;
+    }
+    if (progress.boardsSinceInterstitial < Economy.interstitialEveryBoards) {
+      return false;
+    }
     progress.boardsSinceInterstitial = 0;
     _changed();
     return true;
@@ -244,15 +269,20 @@ class GameState extends ChangeNotifier {
   bool get dailyDoneToday => progress.lastDailyDate == todayKey;
 
   int get streak => visibleStreak(
-        lastDate: progress.lastDailyDate,
-        streak: progress.dailyStreak,
-        today: now,
-      );
+    lastDate: progress.lastDailyDate,
+    streak: progress.dailyStreak,
+    today: now,
+  );
 
   BoardReward completeDaily(BoardSession session) {
     if (dailyDoneToday) {
       // Ayni gun tekrar oynandi: odul yok.
-      return BoardReward(coins: 0, stars: session.stars, firstTime: false, streak: streak);
+      return BoardReward(
+        coins: 0,
+        stars: session.stars,
+        firstTime: false,
+        streak: streak,
+      );
     }
     final newStreak = nextStreak(
       lastDate: progress.lastDailyDate,
@@ -282,7 +312,10 @@ class GameState extends ChangeNotifier {
   int get freeHintsLeft {
     if (!clubActive) return 0;
     final used = progress.freeHintDay == todayKey ? progress.freeHintsUsed : 0;
-    return (Economy.clubFreeHintsPerDay - used).clamp(0, Economy.clubFreeHintsPerDay);
+    return (Economy.clubFreeHintsPerDay - used).clamp(
+      0,
+      Economy.clubFreeHintsPerDay,
+    );
   }
 
   /// Buyutec bedelini oder: once kulubun bedava hakki, sonra jeton.
@@ -303,14 +336,19 @@ class GameState extends ChangeNotifier {
   bool payForContinue() => spendCoins(Economy.continueCost);
 
   int get rewardedCoinsLeft {
-    final used = progress.rewardedCoinsDay == todayKey ? progress.rewardedCoinsUsed : 0;
-    return (Economy.rewardedCoinsPerDay - used).clamp(0, Economy.rewardedCoinsPerDay);
+    final used = progress.rewardedCoinsDay == todayKey
+        ? progress.rewardedCoinsUsed
+        : 0;
+    return (Economy.rewardedCoinsPerDay - used).clamp(
+      0,
+      Economy.rewardedCoinsPerDay,
+    );
   }
 
   /// Magazadaki odullu reklam. Reklam izlendiyse jeton verir.
   Future<bool> watchAdForCoins() async {
     if (rewardedCoinsLeft <= 0) return false;
-    final earned = await ads.showRewarded();
+    final earned = await showRewardedAd();
     if (!earned) return false;
     if (progress.rewardedCoinsDay != todayKey) {
       progress
@@ -339,7 +377,31 @@ class GameState extends ChangeNotifier {
       ..stars = caseStarsForAttempts(rec.accusationAttempts);
     progress.coins += Economy.caseSolvedCoins;
     _changed();
-    return AccusationResult(outcome, stars: rec.stars, coins: Economy.caseSolvedCoins);
+    return AccusationResult(
+      outcome,
+      stars: rec.stars,
+      coins: Economy.caseSolvedCoins,
+    );
+  }
+
+  // --- Reklam (muzik reklam boyunca susar) ----------------------------------
+
+  Future<bool> showRewardedAd() async {
+    sound.pauseMusic();
+    try {
+      return await ads.showRewarded();
+    } finally {
+      sound.resumeMusic();
+    }
+  }
+
+  Future<void> showInterstitialAd() async {
+    sound.pauseMusic();
+    try {
+      await ads.showInterstitial();
+    } finally {
+      sound.resumeMusic();
+    }
   }
 
   // --- Servisler -----------------------------------------------------------
@@ -347,6 +409,11 @@ class GameState extends ChangeNotifier {
   /// Magaza ve reklamlari baslatir. Ilk kareden sonra cagrilir; hata olsa da
   /// oyun calismaya devam eder (cevrimdisi oynanabilir).
   Future<void> startServices() async {
+    try {
+      await sound.init(sfx: sfxOn, music: musicOn);
+    } catch (e) {
+      debugPrint('Ses baslatilamadi: $e');
+    }
     try {
       await purchases.init();
       await syncEntitlements();
@@ -377,7 +444,9 @@ class GameState extends ChangeNotifier {
     final owned = await purchases.ownedProductIds();
     if (owned == null) return;
     final e = entitlements
-      ..removeAds = owned.contains(ProductIds.removeAds) || owned.contains(ProductIds.starterPack)
+      ..removeAds =
+          owned.contains(ProductIds.removeAds) ||
+          owned.contains(ProductIds.starterPack)
       ..starterBought = owned.contains(ProductIds.starterPack)
       ..clubActive = owned.any(ProductIds.subscriptions.contains);
     e.ownedPacks

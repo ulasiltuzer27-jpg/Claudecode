@@ -12,7 +12,8 @@ String casePath(String id) => '$contentRoot/cases/$id.json';
 /// Dosya okuma soyutlamasi: uygulamada `rootBundle`, testte `File`.
 typedef TextReader = Future<String> Function(String path);
 
-Map<String, Object?> _obj(String s) => (jsonDecode(s) as Map).cast<String, Object?>();
+Map<String, Object?> _obj(String s) =>
+    (jsonDecode(s) as Map).cast<String, Object?>();
 
 Future<GameContent> loadContent(TextReader read) async {
   final catalog = Catalog.fromJson(_obj(await read(itemsPath)));

@@ -30,7 +30,11 @@ int dailyIndexFor(DateTime day, int boardCount) {
 
 /// Bugun cozulunce yeni seri degeri.
 /// Dun cozulduyse +1, bugun zaten cozulduyse ayni, aksi halde 1.
-int nextStreak({required String? lastDate, required int streak, required DateTime today}) {
+int nextStreak({
+  required String? lastDate,
+  required int streak,
+  required DateTime today,
+}) {
   final last = parseDateKey(lastDate);
   if (last == null) return 1;
   final gap = daysBetween(last, today);
@@ -40,7 +44,11 @@ int nextStreak({required String? lastDate, required int streak, required DateTim
 }
 
 /// Ekranda gosterilecek seri: dunden beri cozulmediyse seri kopmustur.
-int visibleStreak({required String? lastDate, required int streak, required DateTime today}) {
+int visibleStreak({
+  required String? lastDate,
+  required int streak,
+  required DateTime today,
+}) {
   final last = parseDateKey(lastDate);
   if (last == null) return 0;
   return daysBetween(last, today) <= 1 ? streak : 0;

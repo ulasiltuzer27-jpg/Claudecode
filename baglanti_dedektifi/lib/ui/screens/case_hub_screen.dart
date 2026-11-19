@@ -34,14 +34,18 @@ class _CaseHubScreenState extends State<CaseHubScreen> {
       }
       if (!mounted) return;
       final open = widget.openBoard;
-      if (open != null && gs.isBoardUnlocked(widget.caseFile, open)) await _openBoard(open);
+      if (open != null && gs.isBoardUnlocked(widget.caseFile, open)) {
+        await _openBoard(open);
+      }
     });
   }
 
   Future<void> _readIntro() async {
     await Navigator.push(
       context,
-      MaterialPageRoute<bool>(builder: (_) => StoryScreen.intro(caseFile: widget.caseFile)),
+      MaterialPageRoute<bool>(
+        builder: (_) => StoryScreen.intro(caseFile: widget.caseFile),
+      ),
     );
     if (mounted) context.read<GameState>().markIntroSeen(widget.caseFile);
   }
@@ -51,12 +55,15 @@ class _CaseHubScreenState extends State<CaseHubScreen> {
     final solved = await Navigator.push(
       context,
       MaterialPageRoute<bool>(
-        builder: (_) => BoardScreen(board: c.boards[index], caseFile: c, boardIndex: index),
+        builder: (_) =>
+            BoardScreen(board: c.boards[index], caseFile: c, boardIndex: index),
       ),
     );
     if (!mounted || solved != true) return;
     final gs = context.read<GameState>();
-    if (gs.canAccuse(c) && !gs.record(c).solved) showSnack(context, S.of(context).accuseReady);
+    if (gs.canAccuse(c) && !gs.record(c).solved) {
+      showSnack(context, S.of(context).accuseReady);
+    }
   }
 
   Future<void> _accuse() async {
@@ -68,7 +75,9 @@ class _CaseHubScreenState extends State<CaseHubScreen> {
     if (!mounted || stars == null) return;
     await Navigator.push(
       context,
-      MaterialPageRoute<bool>(builder: (_) => StoryScreen.ending(caseFile: c, stars: stars)),
+      MaterialPageRoute<bool>(
+        builder: (_) => StoryScreen.ending(caseFile: c, stars: stars),
+      ),
     );
   }
 
@@ -90,23 +99,33 @@ class _CaseHubScreenState extends State<CaseHubScreen> {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
           children: [
-            Row(children: [
-              SvgIcon(c.assetPath, size: 56),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(s.caseN(c.order), style: const TextStyle(color: Noir.brass)),
-                  Text(s.boardsSolved(gs.solvedBoardCount(c), c.boards.length),
-                      style: const TextStyle(color: Noir.textMuted)),
-                  if (rec.solved) StarRow(rec.stars),
-                ]),
-              ),
-              TextButton.icon(
-                onPressed: _readIntro,
-                icon: const Icon(Icons.menu_book_outlined),
-                label: Text(s.readStory),
-              ),
-            ]),
+            Row(
+              children: [
+                SvgIcon(c.assetPath, size: 56),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        s.caseN(c.order),
+                        style: const TextStyle(color: Noir.brass),
+                      ),
+                      Text(
+                        s.boardsSolved(gs.solvedBoardCount(c), c.boards.length),
+                        style: const TextStyle(color: Noir.textMuted),
+                      ),
+                      if (rec.solved) StarRow(rec.stars),
+                    ],
+                  ),
+                ),
+                TextButton.icon(
+                  onPressed: _readIntro,
+                  icon: const Icon(Icons.menu_book_outlined),
+                  label: Text(s.readStory),
+                ),
+              ],
+            ),
             SectionTitle(s.boards),
             GridView.count(
               crossAxisCount: 5,
@@ -131,14 +150,19 @@ class _CaseHubScreenState extends State<CaseHubScreen> {
                 onPressed: () => Navigator.push(
                   context,
                   MaterialPageRoute<bool>(
-                      builder: (_) => StoryScreen.ending(caseFile: c, stars: rec.stars)),
+                    builder: (_) =>
+                        StoryScreen.ending(caseFile: c, stars: rec.stars),
+                  ),
                 ),
                 icon: const Icon(Icons.task_alt),
                 label: Text('${s.caseClosed} · ${s.readEnding}'),
               ),
             ] else ...[
               FilledButton.icon(
-                style: FilledButton.styleFrom(backgroundColor: Noir.thread, foregroundColor: Noir.paper),
+                style: FilledButton.styleFrom(
+                  backgroundColor: Noir.thread,
+                  foregroundColor: Noir.paper,
+                ),
                 onPressed: gs.canAccuse(c) ? _accuse : null,
                 icon: const Icon(Icons.gavel),
                 label: Text(s.accuse),
@@ -146,8 +170,11 @@ class _CaseHubScreenState extends State<CaseHubScreen> {
               if (!gs.canAccuse(c))
                 Padding(
                   padding: const EdgeInsets.only(top: 6),
-                  child: Text(s.accuseLocked,
-                      textAlign: TextAlign.center, style: const TextStyle(color: Noir.textMuted, fontSize: 13)),
+                  child: Text(
+                    s.accuseLocked,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Noir.textMuted, fontSize: 13),
+                  ),
                 ),
             ],
             SectionTitle(s.clues(clues.length, c.clues.length)),
@@ -158,12 +185,20 @@ class _CaseHubScreenState extends State<CaseHubScreen> {
                 Padding(
                   padding: const EdgeInsets.only(bottom: 10),
                   child: PaperCard(
-                    child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text('${i + 1}.',
-                          style: const TextStyle(fontWeight: FontWeight.w700, color: Noir.thread)),
-                      const SizedBox(width: 8),
-                      Expanded(child: Text(clue.text.of(lang))),
-                    ]),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${i + 1}.',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            color: Noir.thread,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(child: Text(clue.text.of(lang))),
+                      ],
+                    ),
                   ),
                 ),
             SectionTitle(s.suspects),
@@ -180,7 +215,12 @@ class _CaseHubScreenState extends State<CaseHubScreen> {
 }
 
 class _BoardTile extends StatelessWidget {
-  const _BoardTile({required this.number, required this.stars, required this.unlocked, required this.onTap});
+  const _BoardTile({
+    required this.number,
+    required this.stars,
+    required this.unlocked,
+    required this.onTap,
+  });
 
   final int number;
   final int? stars;
@@ -198,22 +238,33 @@ class _BoardTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
         child: Container(
           decoration: BoxDecoration(
-            color: solved ? Noir.paper : (unlocked ? Noir.surfaceHigh : Noir.surface),
+            color: solved
+                ? Noir.paper
+                : (unlocked ? Noir.surfaceHigh : Noir.surface),
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: unlocked && !solved ? Noir.brass : Noir.outline, width: unlocked && !solved ? 2 : 1),
+            border: Border.all(
+              color: unlocked && !solved ? Noir.brass : Noir.outline,
+              width: unlocked && !solved ? 2 : 1,
+            ),
           ),
-          child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-            if (!unlocked)
-              const Icon(Icons.lock_outline, color: Noir.outline)
-            else
-              Text('$number',
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (!unlocked)
+                const Icon(Icons.lock_outline, color: Noir.outline)
+              else
+                Text(
+                  '$number',
                   style: TextStyle(
-                      fontFamily: displayFont,
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
-                      color: solved ? Noir.ink : Noir.text)),
-            if (solved) StarRow(stars!, size: 11),
-          ]),
+                    fontFamily: displayFont,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                    color: solved ? Noir.ink : Noir.text,
+                  ),
+                ),
+              if (solved) StarRow(stars!, size: 11),
+            ],
+          ),
         ),
       ),
     );

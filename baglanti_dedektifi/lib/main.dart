@@ -3,6 +3,7 @@ import 'package:material_ui/material_ui.dart';
 
 import 'app/app.dart';
 import 'app/game_state.dart';
+import 'audio/sound_service.dart';
 import 'data/content_loader.dart';
 import 'monetization/platform_services.dart';
 import 'progress/progress_store.dart';
@@ -22,6 +23,7 @@ Future<void> main() async {
     store: store,
     ads: createPlatformAds(),
     purchases: createPlatformPurchases(),
+    sound: AudioplayersSoundService(),
   );
 
   runApp(DetectiveApp(state: state));

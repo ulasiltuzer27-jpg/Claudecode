@@ -15,14 +15,17 @@ class PrefsProgressStore implements ProgressStore {
 
   SharedPreferences? _prefs;
 
-  Future<SharedPreferences> get _p async => _prefs ??= await SharedPreferences.getInstance();
+  Future<SharedPreferences> get _p async =>
+      _prefs ??= await SharedPreferences.getInstance();
 
   @override
   Future<Progress> load() async {
     final raw = (await _p).getString(_key);
     if (raw == null) return Progress();
     try {
-      return Progress.fromJson((jsonDecode(raw) as Map).cast<String, Object?>());
+      return Progress.fromJson(
+        (jsonDecode(raw) as Map).cast<String, Object?>(),
+      );
     } catch (_) {
       // Bozuk kayit oyunu kilitlemesin; sifirdan basla.
       return Progress();
@@ -42,8 +45,11 @@ class MemoryProgressStore implements ProgressStore {
   int saves = 0;
 
   @override
-  Future<Progress> load() async =>
-      _json == null ? Progress() : Progress.fromJson(jsonDecode(jsonEncode(_json)) as Map<String, Object?>);
+  Future<Progress> load() async => _json == null
+      ? Progress()
+      : Progress.fromJson(
+          jsonDecode(jsonEncode(_json)) as Map<String, Object?>,
+        );
 
   @override
   Future<void> save(Progress progress) async {

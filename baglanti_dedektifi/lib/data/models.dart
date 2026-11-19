@@ -16,7 +16,9 @@ class LocalizedText {
   }
 
   String of(String lang) =>
-      values[lang] ?? values['en'] ?? (values.isEmpty ? '' : values.values.first);
+      values[lang] ??
+      values['en'] ??
+      (values.isEmpty ? '' : values.values.first);
 
   bool hasAll(Iterable<String> langs) =>
       langs.every((l) => (values[l] ?? '').trim().isNotEmpty);
@@ -49,7 +51,10 @@ class Catalog {
           return Item(
             id: e.key,
             icon: (m['icon'] as String?) ?? e.key,
-            label: LocalizedText({'tr': m['tr'] as String, 'en': m['en'] as String}),
+            label: LocalizedText({
+              'tr': m['tr'] as String,
+              'en': m['en'] as String,
+            }),
           );
         }(),
     });
@@ -128,14 +133,14 @@ class Board {
   }
 
   factory Board.fromJson(Map<String, Object?> json) => Board(
-        id: json['id'] as String,
-        groups: [
-          for (final (i, g) in (json['groups'] as List).indexed)
-            BoardGroup.fromJson((g as Map).cast<String, Object?>(), i),
-        ],
-        decoys: ((json['decoys'] as List?) ?? const []).cast<String>(),
-        clueId: json['clue'] as String?,
-      );
+    id: json['id'] as String,
+    groups: [
+      for (final (i, g) in (json['groups'] as List).indexed)
+        BoardGroup.fromJson((g as Map).cast<String, Object?>(), i),
+    ],
+    decoys: ((json['decoys'] as List?) ?? const []).cast<String>(),
+    clueId: json['clue'] as String?,
+  );
 }
 
 class Suspect {
@@ -156,12 +161,12 @@ class Suspect {
   String get assetPath => 'assets/icons/$icon.svg';
 
   factory Suspect.fromJson(Map<String, Object?> json) => Suspect(
-        id: json['id'] as String,
-        icon: json['icon'] as String,
-        name: LocalizedText.fromJson(json['name']),
-        role: LocalizedText.fromJson(json['role']),
-        bio: LocalizedText.fromJson(json['bio']),
-      );
+    id: json['id'] as String,
+    icon: json['icon'] as String,
+    name: LocalizedText.fromJson(json['name']),
+    role: LocalizedText.fromJson(json['role']),
+    bio: LocalizedText.fromJson(json['bio']),
+  );
 }
 
 class Clue {
@@ -170,8 +175,10 @@ class Clue {
   final String id;
   final LocalizedText text;
 
-  factory Clue.fromJson(Map<String, Object?> json) =>
-      Clue(id: json['id'] as String, text: LocalizedText.fromJson(json['text']));
+  factory Clue.fromJson(Map<String, Object?> json) => Clue(
+    id: json['id'] as String,
+    text: LocalizedText.fromJson(json['text']),
+  );
 }
 
 /// Hikaye sahnesi: buyuk bir ikon ve bir paragraf.
@@ -184,9 +191,9 @@ class StoryPanel {
   String get assetPath => 'assets/icons/$icon.svg';
 
   factory StoryPanel.fromJson(Map<String, Object?> json) => StoryPanel(
-        icon: json['icon'] as String,
-        text: LocalizedText.fromJson(json['text']),
-      );
+    icon: json['icon'] as String,
+    text: LocalizedText.fromJson(json['text']),
+  );
 }
 
 class CaseFile {
@@ -233,8 +240,8 @@ class CaseFile {
 
   factory CaseFile.fromJson(Map<String, Object?> json) {
     List<Map<String, Object?>> list(String key) => [
-          for (final e in (json[key] as List)) (e as Map).cast<String, Object?>(),
-        ];
+      for (final e in (json[key] as List)) (e as Map).cast<String, Object?>(),
+    ];
     return CaseFile(
       id: json['id'] as String,
       order: json['order'] as int,

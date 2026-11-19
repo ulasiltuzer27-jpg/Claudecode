@@ -17,7 +17,10 @@ class CaseListScreen extends StatelessWidget {
     final s = S.of(context);
     final gs = context.watch<GameState>();
     return Scaffold(
-      appBar: AppBar(title: Text(s.caseFiles), actions: const [CoinChip(), SizedBox(width: 12)]),
+      appBar: AppBar(
+        title: Text(s.caseFiles),
+        actions: const [CoinChip(), SizedBox(width: 12)],
+      ),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(16),
@@ -43,14 +46,22 @@ class CaseFolderCard extends StatelessWidget {
   void _open(BuildContext context, GameState gs) {
     final s = S.of(context);
     if (!gs.hasAccess(caseFile)) {
-      Navigator.push(context, MaterialPageRoute<void>(builder: (_) => const ShopScreen()));
+      Navigator.push(
+        context,
+        MaterialPageRoute<void>(builder: (_) => const ShopScreen()),
+      );
       return;
     }
     if (!gs.isPreviousClosed(caseFile)) {
       showSnack(context, caseFile.premium ? s.lockedFirstCase : s.lockedPrev);
       return;
     }
-    Navigator.push(context, MaterialPageRoute<void>(builder: (_) => CaseHubScreen(caseFile: caseFile)));
+    Navigator.push(
+      context,
+      MaterialPageRoute<void>(
+        builder: (_) => CaseHubScreen(caseFile: caseFile),
+      ),
+    );
   }
 
   @override
@@ -64,10 +75,10 @@ class CaseFolderCard extends StatelessWidget {
     final subtitle = !access
         ? s.premiumLocked
         : !playable
-            ? (c.premium ? s.lockedFirstCase : s.lockedPrev)
-            : rec.solved
-                ? s.caseClosed
-                : s.boardsSolved(gs.solvedBoardCount(c), c.boards.length);
+        ? (c.premium ? s.lockedFirstCase : s.lockedPrev)
+        : rec.solved
+        ? s.caseClosed
+        : s.boardsSolved(gs.solvedBoardCount(c), c.boards.length);
 
     return InkWell(
       onTap: () => _open(context, gs),
@@ -80,41 +91,84 @@ class CaseFolderCard extends StatelessWidget {
             bottomLeft: Radius.circular(10),
             bottomRight: Radius.circular(10),
           ),
-          boxShadow: const [BoxShadow(color: Colors.black54, blurRadius: 6, offset: Offset(0, 3))],
+          boxShadow: const [
+            BoxShadow(
+              color: Colors.black54,
+              blurRadius: 6,
+              offset: Offset(0, 3),
+            ),
+          ],
         ),
         padding: const EdgeInsets.all(14),
-        child: Row(children: [
-          Opacity(opacity: playable ? 1 : 0.55, child: SvgIcon(c.assetPath, size: 52)),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Row(children: [
-                Text(s.caseN(c.order),
-                    style: const TextStyle(color: Noir.ink, fontWeight: FontWeight.w700, fontSize: 13)),
-                if (c.premium) ...[
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-                    decoration: BoxDecoration(color: Noir.ink, borderRadius: BorderRadius.circular(4)),
-                    child: Text(s.premium,
-                        style: const TextStyle(color: Noir.brass, fontSize: 11, fontWeight: FontWeight.w700)),
+        child: Row(
+          children: [
+            Opacity(
+              opacity: playable ? 1 : 0.55,
+              child: SvgIcon(c.assetPath, size: 52),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        s.caseN(c.order),
+                        style: const TextStyle(
+                          color: Noir.ink,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13,
+                        ),
+                      ),
+                      if (c.premium) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 1,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Noir.ink,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            s.premium,
+                            style: const TextStyle(
+                              color: Noir.brass,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  Text(
+                    c.title.of(s.lang),
+                    style: const TextStyle(
+                      fontFamily: displayFont,
+                      fontSize: 21,
+                      fontWeight: FontWeight.w700,
+                      color: Noir.ink,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(color: Noir.ink, fontSize: 13),
                   ),
                 ],
-              ]),
-              Text(c.title.of(s.lang),
-                  style: const TextStyle(
-                      fontFamily: displayFont, fontSize: 21, fontWeight: FontWeight.w700, color: Noir.ink)),
-              const SizedBox(height: 2),
-              Text(subtitle, style: const TextStyle(color: Noir.ink, fontSize: 13)),
-            ]),
-          ),
-          if (!playable)
-            const Icon(Icons.lock, color: Noir.ink)
-          else if (rec.solved)
-            StarRow(rec.stars)
-          else
-            const Icon(Icons.chevron_right, color: Noir.ink),
-        ]),
+              ),
+            ),
+            if (!playable)
+              const Icon(Icons.lock, color: Noir.ink)
+            else if (rec.solved)
+              StarRow(rec.stars)
+            else
+              const Icon(Icons.chevron_right, color: Noir.ink),
+          ],
+        ),
       ),
     );
   }

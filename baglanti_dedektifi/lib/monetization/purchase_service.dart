@@ -73,13 +73,13 @@ class FakePurchaseService implements PurchaseService {
 
   @override
   Map<String, StoreProduct> get products => {
-        for (final e in _prices.entries)
-          e.key: StoreProduct(
-            id: e.key,
-            price: e.value,
-            isSubscription: ProductIds.subscriptions.contains(e.key),
-          ),
-      };
+    for (final e in _prices.entries)
+      e.key: StoreProduct(
+        id: e.key,
+        price: e.value,
+        isSubscription: ProductIds.subscriptions.contains(e.key),
+      ),
+  };
 
   @override
   Stream<PurchaseEvent> get events => _events.stream;

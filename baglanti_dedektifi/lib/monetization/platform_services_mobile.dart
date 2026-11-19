@@ -10,7 +10,8 @@ import 'ads_service.dart';
 import 'products.dart';
 import 'purchase_service.dart';
 
-AdsService createPlatformAds() => StoreConfig.fakeAds ? FakeAdsService() : MobileAdsService();
+AdsService createPlatformAds() =>
+    StoreConfig.fakeAds ? FakeAdsService() : MobileAdsService();
 
 PurchaseService createPlatformPurchases() =>
     StoreConfig.fakeStore ? FakePurchaseService() : PlayPurchaseService();
@@ -41,10 +42,15 @@ class MobileAdsService implements AdsService {
       },
       (_) => finish(),
     );
-    await consentDone.future.timeout(const Duration(seconds: 20), onTimeout: () {});
+    await consentDone.future.timeout(
+      const Duration(seconds: 20),
+      onTimeout: () {},
+    );
 
     _canRequestAds = await ConsentInformation.instance.canRequestAds();
-    _privacyRequired = await ConsentInformation.instance.getPrivacyOptionsRequirementStatus() ==
+    _privacyRequired =
+        await ConsentInformation.instance
+            .getPrivacyOptionsRequirementStatus() ==
         PrivacyOptionsRequirementStatus.required;
     if (!_canRequestAds) return;
 
@@ -53,7 +59,8 @@ class MobileAdsService implements AdsService {
     _loadInterstitial();
   }
 
-  Duration _backoff(int failures) => Duration(seconds: min(120, 5 * (1 << min(failures, 5))));
+  Duration _backoff(int failures) =>
+      Duration(seconds: min(120, 5 * (1 << min(failures, 5))));
 
   void _loadRewarded() {
     if (!_canRequestAds || _loadingRewarded || _rewarded != null) return;
@@ -77,7 +84,9 @@ class MobileAdsService implements AdsService {
   }
 
   void _loadInterstitial() {
-    if (!_canRequestAds || _loadingInterstitial || _interstitial != null) return;
+    if (!_canRequestAds || _loadingInterstitial || _interstitial != null) {
+      return;
+    }
     _loadingInterstitial = true;
     InterstitialAd.load(
       adUnitId: StoreConfig.interstitialAdUnit,
@@ -91,7 +100,10 @@ class MobileAdsService implements AdsService {
         onAdFailedToLoad: (error) {
           _loadingInterstitial = false;
           debugPrint('Gecis reklami yuklenemedi: $error');
-          Future<void>.delayed(_backoff(_interstitialFailures++), _loadInterstitial);
+          Future<void>.delayed(
+            _backoff(_interstitialFailures++),
+            _loadInterstitial,
+          );
         },
       ),
     );
@@ -181,7 +193,8 @@ class PlayPurchaseService implements PurchaseService {
   Future<void> init() async {
     _sub = _iap.purchaseStream.listen(
       _onPurchases,
-      onError: (Object _) => _events.add(const PurchaseEvent(PurchaseEventKind.error)),
+      onError: (Object _) =>
+          _events.add(const PurchaseEvent(PurchaseEventKind.error)),
     );
     _available = await _iap.isAvailable();
     if (!_available) return;
@@ -190,7 +203,9 @@ class PlayPurchaseService implements PurchaseService {
       if (!_details.containsKey(d.id) || _isBasePlan(d)) _details[d.id] = d;
     }
     if (response.notFoundIDs.isNotEmpty) {
-      debugPrint('Play Console\'da bulunamayan urunler: ${response.notFoundIDs}');
+      debugPrint(
+        'Play Console\'da bulunamayan urunler: ${response.notFoundIDs}',
+      );
     }
   }
 
@@ -208,13 +223,13 @@ class PlayPurchaseService implements PurchaseService {
 
   @override
   Map<String, StoreProduct> get products => {
-        for (final d in _details.values)
-          d.id: StoreProduct(
-            id: d.id,
-            price: d.price,
-            isSubscription: ProductIds.subscriptions.contains(d.id),
-          ),
-      };
+    for (final d in _details.values)
+      d.id: StoreProduct(
+        id: d.id,
+        price: d.price,
+        isSubscription: ProductIds.subscriptions.contains(d.id),
+      ),
+  };
 
   @override
   Stream<PurchaseEvent> get events => _events.stream;
@@ -248,12 +263,14 @@ class PlayPurchaseService implements PurchaseService {
         case PurchaseStatus.restored:
           final key = p.purchaseID ?? '${p.productID}@${p.transactionDate}';
           if (_handled.add(key)) {
-            _events.add(PurchaseEvent(
-              p.status == PurchaseStatus.restored
-                  ? PurchaseEventKind.restored
-                  : PurchaseEventKind.granted,
-              p.productID,
-            ));
+            _events.add(
+              PurchaseEvent(
+                p.status == PurchaseStatus.restored
+                    ? PurchaseEventKind.restored
+                    : PurchaseEventKind.granted,
+                p.productID,
+              ),
+            );
           }
         case PurchaseStatus.error:
           _events.add(PurchaseEvent(PurchaseEventKind.error, p.productID));
@@ -271,12 +288,14 @@ class PlayPurchaseService implements PurchaseService {
   Future<Set<String>?> ownedProductIds() async {
     if (!_available) return null;
     try {
-      final addition = _iap.getPlatformAddition<InAppPurchaseAndroidPlatformAddition>();
+      final addition = _iap
+          .getPlatformAddition<InAppPurchaseAndroidPlatformAddition>();
       final result = await addition.queryPastPurchases();
       if (result.error != null) return null;
       final owned = <String>{};
       for (final p in result.pastPurchases) {
-        if (p.status == PurchaseStatus.purchased || p.status == PurchaseStatus.restored) {
+        if (p.status == PurchaseStatus.purchased ||
+            p.status == PurchaseStatus.restored) {
           owned.add(p.productID);
         }
         // Onaylanmayan satin almalar 3 gun sonra Google tarafindan iade edilir.

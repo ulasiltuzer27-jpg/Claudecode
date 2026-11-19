@@ -35,19 +35,20 @@ const bodyFont = 'CourierPrime';
 const displayFont = 'Playfair';
 
 ThemeData buildTheme() {
-  final scheme = ColorScheme.fromSeed(
-    seedColor: Noir.brass,
-    brightness: Brightness.dark,
-  ).copyWith(
-    primary: Noir.brass,
-    onPrimary: Noir.ink,
-    secondary: Noir.thread,
-    onSecondary: Noir.paper,
-    surface: Noir.surface,
-    onSurface: Noir.text,
-    error: Noir.thread,
-    outline: Noir.outline,
-  );
+  final scheme =
+      ColorScheme.fromSeed(
+        seedColor: Noir.brass,
+        brightness: Brightness.dark,
+      ).copyWith(
+        primary: Noir.brass,
+        onPrimary: Noir.ink,
+        secondary: Noir.thread,
+        onSecondary: Noir.paper,
+        surface: Noir.surface,
+        onSurface: Noir.text,
+        error: Noir.thread,
+        outline: Noir.outline,
+      );
   final base = ThemeData(
     colorScheme: scheme,
     brightness: Brightness.dark,
@@ -59,11 +60,23 @@ ThemeData buildTheme() {
         .apply(bodyColor: Noir.text, displayColor: Noir.text)
         .copyWith(
           displaySmall: const TextStyle(
-              fontFamily: displayFont, fontWeight: FontWeight.w700, fontSize: 34, color: Noir.text),
+            fontFamily: displayFont,
+            fontWeight: FontWeight.w700,
+            fontSize: 34,
+            color: Noir.text,
+          ),
           headlineSmall: const TextStyle(
-              fontFamily: displayFont, fontWeight: FontWeight.w700, fontSize: 24, color: Noir.text),
+            fontFamily: displayFont,
+            fontWeight: FontWeight.w700,
+            fontSize: 24,
+            color: Noir.text,
+          ),
           titleLarge: const TextStyle(
-              fontFamily: displayFont, fontWeight: FontWeight.w700, fontSize: 20, color: Noir.text),
+            fontFamily: displayFont,
+            fontWeight: FontWeight.w700,
+            fontSize: 20,
+            color: Noir.text,
+          ),
         ),
     appBarTheme: const AppBarTheme(
       backgroundColor: Noir.background,
@@ -71,7 +84,11 @@ ThemeData buildTheme() {
       elevation: 0,
       centerTitle: false,
       titleTextStyle: TextStyle(
-          fontFamily: displayFont, fontWeight: FontWeight.w700, fontSize: 20, color: Noir.text),
+        fontFamily: displayFont,
+        fontWeight: FontWeight.w700,
+        fontSize: 20,
+        color: Noir.text,
+      ),
     ),
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
@@ -80,7 +97,11 @@ ThemeData buildTheme() {
         disabledBackgroundColor: Noir.surfaceHigh,
         disabledForegroundColor: Noir.textMuted,
         minimumSize: const Size(48, 48),
-        textStyle: const TextStyle(fontFamily: bodyFont, fontWeight: FontWeight.w700, fontSize: 16),
+        textStyle: const TextStyle(
+          fontFamily: bodyFont,
+          fontWeight: FontWeight.w700,
+          fontSize: 16,
+        ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
     ),
@@ -89,14 +110,21 @@ ThemeData buildTheme() {
         foregroundColor: Noir.text,
         side: const BorderSide(color: Noir.outline),
         minimumSize: const Size(48, 48),
-        textStyle: const TextStyle(fontFamily: bodyFont, fontWeight: FontWeight.w700, fontSize: 15),
+        textStyle: const TextStyle(
+          fontFamily: bodyFont,
+          fontWeight: FontWeight.w700,
+          fontSize: 15,
+        ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
     ),
     textButtonTheme: TextButtonThemeData(
       style: TextButton.styleFrom(
         foregroundColor: Noir.brass,
-        textStyle: const TextStyle(fontFamily: bodyFont, fontWeight: FontWeight.w700),
+        textStyle: const TextStyle(
+          fontFamily: bodyFont,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     ),
     cardTheme: CardThemeData(
@@ -114,7 +142,11 @@ ThemeData buildTheme() {
     ),
     snackBarTheme: const SnackBarThemeData(
       backgroundColor: Noir.paper,
-      contentTextStyle: TextStyle(fontFamily: bodyFont, color: Noir.ink, fontWeight: FontWeight.w700),
+      contentTextStyle: TextStyle(
+        fontFamily: bodyFont,
+        color: Noir.ink,
+        fontWeight: FontWeight.w700,
+      ),
       behavior: SnackBarBehavior.floating,
     ),
     dividerTheme: const DividerThemeData(color: Noir.outline, space: 1),

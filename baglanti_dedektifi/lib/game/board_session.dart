@@ -34,7 +34,7 @@ enum BoardStatus { playing, solved, failed }
 /// yalnizca kamuya acik metotlarla degistirir.
 class BoardSession {
   BoardSession(this.board, {int? seed, this.maxMistakes = defaultMaxMistakes})
-      : _random = Random(seed) {
+    : _random = Random(seed) {
     order = board.allItems.toList()..shuffle(_random);
   }
 
@@ -77,15 +77,16 @@ class BoardSession {
   bool get isPlaying => status == BoardStatus.playing;
 
   List<BoardGroup> get solvedGroups => [
-        for (final id in solvedGroupIds) board.groups.firstWhere((g) => g.id == id),
-      ];
+    for (final id in solvedGroupIds) board.groups.firstWhere((g) => g.id == id),
+  ];
 
   List<BoardGroup> get unsolvedGroups =>
       board.groups.where((g) => !solvedGroupIds.contains(g.id)).toList();
 
   /// Kalan grup boyutlari, buyukten kucuge.
   List<int> get remainingGroupSizes =>
-      unsolvedGroups.map((g) => g.size).toList()..sort((a, b) => b.compareTo(a));
+      unsolvedGroups.map((g) => g.size).toList()
+        ..sort((a, b) => b.compareTo(a));
 
   int get maxSelectable =>
       unsolvedGroups.fold(0, (m, g) => g.size > m ? g.size : m);
@@ -114,7 +115,8 @@ class BoardSession {
       if (g.size == picked.length && g.items.toSet().containsAll(picked)) {
         solvedGroupIds.add(g.id);
         if (solvedGroupIds.length == board.groups.length) {
-          _keenEye = board.decoys.isNotEmpty &&
+          _keenEye =
+              board.decoys.isNotEmpty &&
               fakeMarks.length == board.decoys.length &&
               fakeMarks.containsAll(board.decoys);
         }
@@ -130,9 +132,11 @@ class BoardSession {
 
     mistakes++;
     totalMistakes++;
-    final oneAway = unsolvedGroups.any((g) =>
-        g.size == picked.length &&
-        picked.where(g.items.contains).length == picked.length - 1);
+    final oneAway = unsolvedGroups.any(
+      (g) =>
+          g.size == picked.length &&
+          picked.where(g.items.contains).length == picked.length - 1,
+    );
     return SubmitResult(oneAway ? SubmitOutcome.oneAway : SubmitOutcome.wrong);
   }
 
@@ -154,9 +158,10 @@ class BoardSession {
 
   /// Acik ama henuz cozulmemis ipucu temalari.
   List<BoardGroup> get activeLeads => [
-        for (final id in revealedGroupIds)
-          if (!solvedGroupIds.contains(id)) board.groups.firstWhere((g) => g.id == id),
-      ];
+    for (final id in revealedGroupIds)
+      if (!solvedGroupIds.contains(id))
+        board.groups.firstWhere((g) => g.id == id),
+  ];
 
   void toggleFake(String itemId) {
     if (!isPlaying || !order.contains(itemId)) return;

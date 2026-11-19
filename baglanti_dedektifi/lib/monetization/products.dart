@@ -13,14 +13,22 @@ abstract final class ProductIds {
   static const clubYearly = 'club_yearly';
 
   /// Tuketilebilir jeton paketleri -> jeton miktari.
-  static const coinPacks = {coinsSmall: 300, coinsMedium: 1000, coinsLarge: 2500};
+  static const coinPacks = {
+    coinsSmall: 300,
+    coinsMedium: 1000,
+    coinsLarge: 2500,
+  };
   static const starterCoins = 1000;
 
   static const subscriptions = {clubWeekly, clubYearly};
   static const casePacks = {casePack1};
   static const nonConsumables = {removeAds, starterPack, casePack1};
 
-  static Set<String> get all => {...coinPacks.keys, ...nonConsumables, ...subscriptions};
+  static Set<String> get all => {
+    ...coinPacks.keys,
+    ...nonConsumables,
+    ...subscriptions,
+  };
 
   static bool isConsumable(String id) => coinPacks.containsKey(id);
 }
@@ -35,7 +43,10 @@ abstract final class StoreConfig {
   static const _store = String.fromEnvironment('STORE');
 
   static bool get fakeStore =>
-      kIsWeb || _store == 'fake' || _store == 'test' || (_store.isEmpty && kDebugMode);
+      kIsWeb ||
+      _store == 'fake' ||
+      _store == 'test' ||
+      (_store.isEmpty && kDebugMode);
 
   /// Web'de AdMob yok; diger yerlerde (test kimlikleriyle) gercek SDK.
   static bool get fakeAds => kIsWeb || _store == 'fake';
