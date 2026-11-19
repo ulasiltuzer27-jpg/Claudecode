@@ -1,8 +1,7 @@
 {
  "id": "case03",
  "order": 3,
- "premium": true,
- "pack": "case_pack_1",
+ "premium": false,
  "icon": "fog",
  "title": {
   "tr": "Sisli Fener",
@@ -821,7 +820,7 @@
   "en": "Orhan had steered the ship onto the rocks on purpose so he could hand the crate to the Shadow. The crate was found in his mansion's cellar, but it was empty except for a calling card: a silver eye on a black background."
  },
  "teaser": {
-  "tr": "Gölge hep bir adım önde. Ama artık onun işaretini biliyorsun. Yeni dosyalar yolda...",
-  "en": "The Shadow is always one step ahead. But now you know its mark. New case files are on the way..."
+  "tr": "Kartvizitin arkasına bir opera bileti iliştirilmiş: Liman Şehri Operası, cumartesi gecesi prömiyer. Gölge bir sonraki hamlesini sahnede yapacak.",
+  "en": "An opera ticket is pinned to the back of the card: Harbor City Opera, premiere on Saturday night. The Shadow's next move will happen on stage."
  }
 }

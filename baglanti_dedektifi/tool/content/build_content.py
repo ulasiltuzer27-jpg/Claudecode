@@ -24,8 +24,13 @@ ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
 sys.path.insert(0, HERE)
 
 from items import ITEMS  # noqa: E402
-from cases import CASES  # noqa: E402
-from daily import DAILY  # noqa: E402
+from cases import CASES as BASE_CASES  # noqa: E402
+from cases_extra import EXTRA  # noqa: E402
+from daily import DAILY as BASE_DAILY  # noqa: E402
+from daily_extra import DAILY_EXTRA  # noqa: E402
+
+CASES = BASE_CASES + EXTRA
+DAILY = BASE_DAILY + DAILY_EXTRA
 
 CONTENT = os.path.join(ROOT, "assets", "content")
 

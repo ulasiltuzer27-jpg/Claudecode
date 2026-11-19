@@ -1,0 +1,785 @@
+{
+ "id": "case08",
+ "order": 8,
+ "premium": true,
+ "pack": "case_pack_1",
+ "icon": "film-frames",
+ "title": {
+  "tr": "Kayıp Makara",
+  "en": "The Lost Reel"
+ },
+ "intro": [
+  {
+   "icon": "film-frames",
+   "text": {
+    "tr": "Efsane yönetmen Sadri Bey'in son filminin tek kopyası, gala gösteriminden bir saat önce Liman Sineması'nın makine dairesinden kayboldu.",
+    "en": "The only copy of legendary director Sadri's last film vanished from the Harbor Cinema's projection booth an hour before the gala screening."
+   }
+  },
+  {
+   "icon": "admission-tickets",
+   "text": {
+    "tr": "Salon dolu, biletler satıldı. Gösteriye kadar makarayı bulmalısın.",
+    "en": "The house is full and the tickets are sold. You have to find the reel before the screening."
+   }
+  }
+ ],
+ "suspects": [
+  {
+   "id": "deniz",
+   "icon": "man-technologist",
+   "name": {
+    "tr": "Deniz",
+    "en": "Deniz"
+   },
+   "role": {
+    "tr": "Makinist",
+    "en": "Projectionist"
+   },
+   "bio": {
+    "tr": "Makine dairesinin anahtarı onda. Filmi yıllardır o oynatıyor.",
+    "en": "He holds the key to the projection booth and has screened films here for years."
+   }
+  },
+  {
+   "id": "pinar",
+   "icon": "woman-curly-hair",
+   "name": {
+    "tr": "Pınar",
+    "en": "Pınar"
+   },
+   "role": {
+    "tr": "Başrol oyuncusu",
+    "en": "Lead actress"
+   },
+   "bio": {
+    "tr": "Filmin yıldızı. Filmde gençliğine dair utandığı bir sahne var.",
+    "en": "The star of the film. There's a scene in it about her youth that she's ashamed of."
+   }
+  },
+  {
+   "id": "can",
+   "icon": "man-blonde-hair",
+   "name": {
+    "tr": "Can",
+    "en": "Can"
+   },
+   "role": {
+    "tr": "Yönetmenin oğlu",
+    "en": "The director's son"
+   },
+   "bio": {
+    "tr": "Sinemanın yeni sahibi. Babasının mirasını yönetiyor.",
+    "en": "The cinema's new owner. He manages his father's estate."
+   }
+  },
+  {
+   "id": "vedat",
+   "icon": "man-bald",
+   "name": {
+    "tr": "Vedat",
+    "en": "Vedat"
+   },
+   "role": {
+    "tr": "Film eleştirmeni",
+    "en": "Film critic"
+   },
+   "bio": {
+    "tr": "Sadri Bey'in filmlerini yıllarca yerden yere vurdu. Bu geceki galaya yine de geldi.",
+    "en": "He tore Sadri's films apart for years. He came to tonight's gala all the same."
+   }
+  }
+ ],
+ "clues": [
+  {
+   "id": "c1",
+   "text": {
+    "tr": "Kilitli makine dairesinin iki anahtarı var: biri makinistte, biri sinemanın sahibinde.",
+    "en": "The locked projection booth has two keys: one with the projectionist, one with the cinema's owner."
+   }
+  },
+  {
+   "id": "c2",
+   "text": {
+    "tr": "Makinist Deniz gala öncesinde lobideydi; bilet görevlisi onun hiç ayrılmadığını söylüyor.",
+    "en": "Projectionist Deniz was in the lobby before the gala; the usher says he never left."
+   }
+  },
+  {
+   "id": "c3",
+   "text": {
+    "tr": "Pınar filmin gösterilmesini istemiyordu; filmde gençlik hatalarını anlatan bir sahne var.",
+    "en": "Pınar didn't want the film shown; it includes a scene about her youthful mistakes."
+   }
+  },
+  {
+   "id": "c4",
+   "text": {
+    "tr": "Pınar o saatte basın toplantısındaydı; otuz gazeteci tanık.",
+    "en": "Pınar was at a press conference at that hour; thirty journalists are witnesses."
+   }
+  },
+  {
+   "id": "c5",
+   "text": {
+    "tr": "Eleştirmen Vedat'ın çantasında makara büyüklüğünde bir kutu bulundu.",
+    "en": "A reel-sized tin was found in critic Vedat's bag."
+   }
+  },
+  {
+   "id": "c6",
+   "text": {
+    "tr": "Vedat'ın kutusundaki makara, kendi çektiği kısa filmin kopyası çıktı.",
+    "en": "The reel in Vedat's tin turned out to be a copy of his own short film."
+   }
+  },
+  {
+   "id": "c7",
+   "text": {
+    "tr": "Sinemanın ikinci anahtarı aile kasasında duruyordu; kasa bu ay Can tarafından iki kez açılmış.",
+    "en": "The cinema's second key was kept in the family safe; Can opened that safe twice this month."
+   }
+  },
+  {
+   "id": "c8",
+   "text": {
+    "tr": "Can'ın telefonunda bir koleksiyoncuyla yazışma var: \"Kopyası olmayan tek film. Fiyatı iki katı.\"",
+    "en": "Can's phone holds messages with a collector: \"The only film with no copy. Twice the price.\""
+   }
+  },
+  {
+   "id": "c9",
+   "text": {
+    "tr": "Makine dairesinin tozlu zemininde, Can'ın ayakkabı tabanıyla aynı desende izler var.",
+    "en": "There are prints on the dusty booth floor that match the sole pattern of Can's shoes."
+   }
+  },
+  {
+   "id": "c10",
+   "text": {
+    "tr": "Makara, Can'ın arabasının bagajında, yedek lastiğin içinde bulundu.",
+    "en": "The reel was found in the boot of Can's car, hidden inside the spare tyre."
+   }
+  }
+ ],
+ "boards": [
+  {
+   "id": "case08_b01",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Sinemada",
+      "en": "At the movies"
+     },
+     "items": [
+      "popcorn",
+      "admission-tickets",
+      "film-projector",
+      "clapper-board"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Kameralar",
+      "en": "Cameras"
+     },
+     "items": [
+      "camera",
+      "video-camera",
+      "movie-camera",
+      "camera-with-flash"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Pipetle içilir",
+      "en": "Drunk through a straw"
+     },
+     "items": [
+      "cup-with-straw",
+      "bubble-tea",
+      "tropical-drink",
+      "beverage-box"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Yıldızlar",
+      "en": "Stars"
+     },
+     "items": [
+      "star",
+      "glowing-star",
+      "shooting-star",
+      "sparkles"
+     ]
+    }
+   ],
+   "clue": "c1"
+  },
+  {
+   "id": "case08_b02",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Korku filmi",
+      "en": "Horror film"
+     },
+     "items": [
+      "ghost",
+      "skull",
+      "person-zombie",
+      "person-vampire"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Vahşi Batı",
+      "en": "Wild West"
+     },
+     "items": [
+      "horse",
+      "cactus",
+      "desert",
+      "cowboy-hat-face"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Bilim kurgu",
+      "en": "Science fiction"
+     },
+     "items": [
+      "rocket",
+      "alien",
+      "robot",
+      "flying-saucer"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Romantik film",
+      "en": "Romance"
+     },
+     "items": [
+      "love-letter",
+      "bouquet",
+      "ring",
+      "wedding"
+     ]
+    }
+   ],
+   "clue": "c2"
+  },
+  {
+   "id": "case08_b03",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Makine dairesi",
+      "en": "Projection booth"
+     },
+     "items": [
+      "film-projector",
+      "film-frames",
+      "light-bulb",
+      "fire-extinguisher"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Rulo halinde",
+      "en": "Rolled up"
+     },
+     "items": [
+      "scroll",
+      "roll-of-paper",
+      "rolled-up-newspaper",
+      "thread"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Araba",
+      "en": "The car"
+     },
+     "items": [
+      "wheel",
+      "fuel-pump",
+      "automobile",
+      "motorway"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Alkış",
+      "en": "Applause"
+     },
+     "items": [
+      "clapping-hands",
+      "trophy",
+      "bouquet",
+      "party-popper"
+     ]
+    }
+   ],
+   "decoys": [
+    "ticket"
+   ],
+   "clue": "c3"
+  },
+  {
+   "id": "case08_b04",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Eleştirmenin çantası",
+      "en": "The critic's bag"
+     },
+     "items": [
+      "newspaper",
+      "pen",
+      "spiral-notepad",
+      "glasses"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Gala kıyafeti",
+      "en": "Gala outfit"
+     },
+     "items": [
+      "cocktail-glass",
+      "dress",
+      "necktie",
+      "high-heeled-shoe"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Ses",
+      "en": "Sound"
+     },
+     "items": [
+      "loudspeaker",
+      "headphone",
+      "microphone",
+      "radio"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Seans saatleri",
+      "en": "Showtimes"
+     },
+     "items": [
+      "alarm-clock",
+      "calendar",
+      "hourglass-not-done",
+      "stopwatch"
+     ]
+    }
+   ],
+   "clue": "c4"
+  },
+  {
+   "id": "case08_b05",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Siyah beyaz",
+      "en": "Black and white"
+     },
+     "items": [
+      "zebra",
+      "panda",
+      "penguin",
+      "musical-keyboard"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Oturmak için",
+      "en": "For sitting"
+     },
+     "items": [
+      "seat",
+      "chair",
+      "couch-and-lamp"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Miras",
+      "en": "Inheritance"
+     },
+     "items": [
+      "money-bag",
+      "scroll",
+      "house",
+      "old-key"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Hızlı",
+      "en": "Fast"
+     },
+     "items": [
+      "racing-car",
+      "leopard",
+      "rocket",
+      "high-speed-train"
+     ],
+     "alsoFits": {
+      "turtle": "Hızlının tam tersi; sahte delil"
+     }
+    }
+   ],
+   "decoys": [
+    "turtle"
+   ],
+   "clue": "c5"
+  },
+  {
+   "id": "case08_b06",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Mesajlaşma",
+      "en": "Messaging"
+     },
+     "items": [
+      "mobile-phone",
+      "e-mail",
+      "speech-balloon",
+      "envelope"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Ayakkabılar",
+      "en": "Shoes"
+     },
+     "items": [
+      "running-shoe",
+      "hiking-boot",
+      "mans-shoe",
+      "flat-shoe"
+     ],
+     "alsoFits": {
+      "socks": "Ayağa giyilir ama ayakkabı değil; sahte delil"
+     }
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Temizlik",
+      "en": "Cleaning"
+     },
+     "items": [
+      "broom",
+      "sponge",
+      "soap",
+      "bucket"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Para",
+      "en": "Money"
+     },
+     "items": [
+      "dollar-banknote",
+      "euro-banknote",
+      "money-with-wings",
+      "credit-card"
+     ]
+    }
+   ],
+   "decoys": [
+    "socks"
+   ],
+   "clue": "c6"
+  },
+  {
+   "id": "case08_b07",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Film seti",
+      "en": "Film set"
+     },
+     "items": [
+      "clapper-board",
+      "movie-camera",
+      "megaphone",
+      "studio-microphone",
+      "film-frames"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Şöhret",
+      "en": "Fame"
+     },
+     "items": [
+      "star",
+      "trophy",
+      "camera-with-flash",
+      "crown"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Kahvaltı",
+      "en": "Breakfast"
+     },
+     "items": [
+      "egg",
+      "bacon",
+      "pancakes",
+      "croissant"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Kırmızı",
+      "en": "Red"
+     },
+     "items": [
+      "strawberry",
+      "fire-engine",
+      "red-apple"
+     ],
+     "alsoFits": {
+      "tangerine": "Turuncu, kırmızı değil; sahte delil"
+     }
+    }
+   ],
+   "decoys": [
+    "tangerine"
+   ],
+   "clue": "c7"
+  },
+  {
+   "id": "case08_b08",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Gizem",
+      "en": "Mystery"
+     },
+     "items": [
+      "magnifying-glass-tilted-left",
+      "detective",
+      "footprints",
+      "red-question-mark"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Dikiş",
+      "en": "Sewing"
+     },
+     "items": [
+      "sewing-needle",
+      "thread",
+      "scissors",
+      "safety-pin"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Film atıştırmalığı",
+      "en": "Movie snacks"
+     },
+     "items": [
+      "popcorn",
+      "candy",
+      "cup-with-straw",
+      "hot-dog"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Uzay filmi",
+      "en": "Space film"
+     },
+     "items": [
+      "astronaut",
+      "rocket",
+      "alien",
+      "ringed-planet"
+     ]
+    }
+   ],
+   "decoys": [
+    "lipstick",
+    "broom"
+   ],
+   "clue": "c8"
+  },
+  {
+   "id": "case08_b09",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Bagajda",
+      "en": "In the boot"
+     },
+     "items": [
+      "luggage",
+      "wheel",
+      "toolbox",
+      "closed-umbrella",
+      "backpack"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Makarası var",
+      "en": "Has a reel"
+     },
+     "items": [
+      "film-frames",
+      "thread",
+      "fishing-pole",
+      "videocassette"
+     ],
+     "alsoFits": {
+      "optical-disk": "Film saklar ama makarası yok; sahte delil"
+     }
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Dijital iz",
+      "en": "Digital trail"
+     },
+     "items": [
+      "mobile-phone",
+      "laptop",
+      "e-mail",
+      "speech-balloon"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Ayakta alkış",
+      "en": "Standing ovation"
+     },
+     "items": [
+      "clapping-hands",
+      "bouquet",
+      "party-popper"
+     ]
+    }
+   ],
+   "decoys": [
+    "optical-disk",
+    "pizza"
+   ],
+   "clue": "c9"
+  },
+  {
+   "id": "case08_b10",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Gala gecesi",
+      "en": "Premiere night"
+     },
+     "items": [
+      "admission-tickets",
+      "film-projector",
+      "popcorn",
+      "clapping-hands",
+      "camera-with-flash"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Adalet",
+      "en": "Justice"
+     },
+     "items": [
+      "police-car",
+      "balance-scale",
+      "judge",
+      "locked",
+      "police-officer"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Aile yadigârı",
+      "en": "Family heirlooms"
+     },
+     "items": [
+      "framed-picture",
+      "ring",
+      "old-key",
+      "mantelpiece-clock"
+     ]
+    }
+   ],
+   "decoys": [
+    "rocket",
+    "cactus"
+   ],
+   "clue": "c10"
+  }
+ ],
+ "culprit": "can",
+ "proof": [
+  "c8",
+  "c9",
+  "c10"
+ ],
+ "ending": {
+  "tr": "Can, babasının son filmini bir koleksiyoncuya satıp mirası hızlıca paraya çevirmek istemişti. Makara gala başlamadan makine dairesine döndü ve salon, Sadri Bey'in filmini ayakta alkışladı.",
+  "en": "Can had planned to sell his father's last film to a collector and turn the inheritance into quick cash. The reel was back in the booth before the gala began, and the audience gave Sadri's film a standing ovation."
+ },
+ "teaser": {
+  "tr": "Jenerikte, teşekkür listesinin en sonunda tanıdık bir isim geçiyor... Yeni Özel Dosyalar yolda.",
+  "en": "At the very end of the credits, a familiar name appears in the thank-you list... New Special Files are on the way."
+ }
+}

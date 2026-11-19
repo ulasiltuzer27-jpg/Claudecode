@@ -47,7 +47,7 @@ class CaseFolderCard extends StatelessWidget {
       return;
     }
     if (!gs.isPreviousClosed(caseFile)) {
-      showSnack(context, s.lockedPrev);
+      showSnack(context, caseFile.premium ? s.lockedFirstCase : s.lockedPrev);
       return;
     }
     Navigator.push(context, MaterialPageRoute<void>(builder: (_) => CaseHubScreen(caseFile: caseFile)));
@@ -64,7 +64,7 @@ class CaseFolderCard extends StatelessWidget {
     final subtitle = !access
         ? s.premiumLocked
         : !playable
-            ? s.lockedPrev
+            ? (c.premium ? s.lockedFirstCase : s.lockedPrev)
             : rec.solved
                 ? s.caseClosed
                 : s.boardsSolved(gs.solvedBoardCount(c), c.boards.length);

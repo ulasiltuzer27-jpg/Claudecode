@@ -1,0 +1,803 @@
+{
+ "id": "case05",
+ "order": 5,
+ "premium": false,
+ "icon": "snow-capped-mountain",
+ "title": {
+  "tr": "Karlı Otel",
+  "en": "The Snowbound Hotel"
+ },
+ "intro": [
+  {
+   "icon": "snow-capped-mountain",
+   "text": {
+    "tr": "Karlı Dağ Oteli'ne giden tek yol tipiyle kapandı. Gölge'ye karşı tanıklık edecek muhasebeci Emre burada saklanıyordu.",
+    "en": "The blizzard has closed the only road to Snowpeak Hotel, where accountant Emre was hiding before testifying against the Shadow."
+   }
+  },
+  {
+   "icon": "bellhop-bell",
+   "text": {
+    "tr": "Sabah oda 7 boştu. Yatak dağınık, pencere içeriden kilitli ve karda tek bir ayak izi bile yok.",
+    "en": "In the morning, room 7 was empty. The bed unmade, the window locked from inside, and not a single footprint in the snow."
+   }
+  },
+  {
+   "icon": "detective",
+   "text": {
+    "tr": "Otelden kimse çıkamaz. Emre hâlâ içeride bir yerde. Onu kim, nereye sakladı?",
+    "en": "Nobody can leave the hotel. Emre is still inside somewhere. Who hid him, and where?"
+   }
+  }
+ ],
+ "suspects": [
+  {
+   "id": "hulya",
+   "icon": "woman-blonde-hair",
+   "name": {
+    "tr": "Hülya",
+    "en": "Hülya"
+   },
+   "role": {
+    "tr": "Otel müdürü",
+    "en": "Hotel manager"
+   },
+   "bio": {
+    "tr": "Oteli yirmi yıldır işletiyor. Her odanın ana anahtarı onda.",
+    "en": "She has run the hotel for twenty years and holds the master key to every room."
+   }
+  },
+  {
+   "id": "cem",
+   "icon": "skier",
+   "name": {
+    "tr": "Cem",
+    "en": "Cem"
+   },
+   "role": {
+    "tr": "Kayak hocası",
+    "en": "Ski instructor"
+   },
+   "bio": {
+    "tr": "Dağı avucunun içi gibi bilir. Fırtınada bile dışarı çıkmaktan korkmaz.",
+    "en": "He knows the mountain like the back of his hand and isn't afraid to go out, even in a storm."
+   }
+  },
+  {
+   "id": "sukru",
+   "icon": "man-cook",
+   "name": {
+    "tr": "Şükrü",
+    "en": "Şükrü"
+   },
+   "role": {
+    "tr": "Aşçı",
+    "en": "Cook"
+   },
+   "bio": {
+    "tr": "Gece boyunca mutfaktaydı. Servis asansörünü yalnızca o kullanır.",
+    "en": "He spent the night in the kitchen. He's the only one who uses the service lift."
+   }
+  },
+  {
+   "id": "melis",
+   "icon": "woman-health-worker",
+   "name": {
+    "tr": "Melis",
+    "en": "Melis"
+   },
+   "role": {
+    "tr": "Otel hemşiresi",
+    "en": "Hotel nurse"
+   },
+   "bio": {
+    "tr": "Revirin anahtarı onda. Emre'yi dün akşam son gören kişi.",
+    "en": "She holds the key to the infirmary and was the last to see Emre last night."
+   }
+  }
+ ],
+ "clues": [
+  {
+   "id": "c1",
+   "text": {
+    "tr": "Oda 7'nin kapısı içeriden değil, dışarıdan ana anahtarla kilitlenmiş.",
+    "en": "Room 7 was locked from the outside with the master key, not from the inside."
+   }
+  },
+  {
+   "id": "c2",
+   "text": {
+    "tr": "Ana anahtar yalnızca müdürde ve gece resepsiyonunda bulunur.",
+    "en": "The master key is kept only by the manager and at the night reception desk."
+   }
+  },
+  {
+   "id": "c3",
+   "text": {
+    "tr": "Kayak hocası Cem bütün gece barda gitar çaldı; on iki misafir tanık.",
+    "en": "Ski instructor Cem played guitar in the bar all night; twelve guests are witnesses."
+   }
+  },
+  {
+   "id": "c4",
+   "text": {
+    "tr": "Çamaşır arabasının tekerlek izleri oda 7'den servis asansörüne gidiyor.",
+    "en": "Laundry cart wheel tracks lead from room 7 to the service lift."
+   }
+  },
+  {
+   "id": "c5",
+   "text": {
+    "tr": "Hemşire Melis'in dolabından güçlü bir sakinleştirici eksik.",
+    "en": "A strong sedative is missing from Nurse Melis's cabinet."
+   }
+  },
+  {
+   "id": "c6",
+   "text": {
+    "tr": "Melis, sakinleştiriciyi gece ateşlenen bir çocuğa verdiğini söylüyor; çocuğun annesi doğruluyor.",
+    "en": "Melis says she gave the sedative to a child with a fever that night; the child's mother confirms it."
+   }
+  },
+  {
+   "id": "c7",
+   "text": {
+    "tr": "Aşçı Şükrü asansörü yalnızca mutfakta kullandığını söylüyor ama asansör gece bir kez bodruma inmiş.",
+    "en": "Cook Şükrü says he only used the lift in the kitchen, yet the lift went down to the basement once that night."
+   }
+  },
+  {
+   "id": "c8",
+   "text": {
+    "tr": "Gece resepsiyon defterinde saat 02.00'den sonraki sayfa yırtılmış. O saatte resepsiyonda müdür Hülya duruyordu.",
+    "en": "In the night reception log, the page after 2 am has been torn out. Manager Hülya was on the desk at that hour."
+   }
+  },
+  {
+   "id": "c9",
+   "text": {
+    "tr": "Bodrumdaki eski şarap mahzeninin kilidi yeni. Anahtarı Hülya'nın odasındaki saksının dibinden çıktı.",
+    "en": "The lock on the old wine cellar in the basement is new. Its key turned up under a plant pot in Hülya's room."
+   }
+  },
+  {
+   "id": "c10",
+   "text": {
+    "tr": "Emre mahzende uyurken bulundu. Battaniyesine gümüş iplikle bir göz işlenmiş; iplik, müdürün odasındaki kasnaktakiyle aynı.",
+    "en": "Emre was found asleep in the cellar. An eye has been embroidered on his blanket in silver thread, the same thread as on the hoop in the manager's room."
+   }
+  }
+ ],
+ "boards": [
+  {
+   "id": "case05_b01",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Kış giysisi",
+      "en": "Winter clothes"
+     },
+     "items": [
+      "coat",
+      "scarf",
+      "gloves",
+      "socks"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Otel odası",
+      "en": "Hotel room"
+     },
+     "items": [
+      "bed",
+      "bellhop-bell",
+      "old-key",
+      "shower"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "İçini ısıtır",
+      "en": "Warms you up"
+     },
+     "items": [
+      "fire",
+      "hot-beverage",
+      "hot-springs",
+      "steaming-bowl"
+     ],
+     "alsoFits": {
+      "thermometer": "Sıcaklığı ölçer ama ısıtmaz; sahte delil"
+     }
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Kayak merkezi",
+      "en": "Ski resort"
+     },
+     "items": [
+      "skis",
+      "snowboarder",
+      "mountain-cableway",
+      "sled"
+     ]
+    }
+   ],
+   "decoys": [
+    "thermometer"
+   ],
+   "clue": "c1"
+  },
+  {
+   "id": "case05_b02",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Beyaz",
+      "en": "White"
+     },
+     "items": [
+      "ghost",
+      "polar-bear",
+      "white-flag",
+      "egg"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Arama ekibi",
+      "en": "Search party"
+     },
+     "items": [
+      "flashlight",
+      "dog",
+      "compass",
+      "megaphone"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Kilerde",
+      "en": "In the pantry"
+     },
+     "items": [
+      "canned-food",
+      "jar",
+      "honey-pot",
+      "salt"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Gece",
+      "en": "Night"
+     },
+     "items": [
+      "owl",
+      "bat",
+      "crescent-moon",
+      "zzz"
+     ]
+    }
+   ],
+   "clue": "c2"
+  },
+  {
+   "id": "case05_b03",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Tırmanış malzemesi",
+      "en": "Climbing gear"
+     },
+     "items": [
+      "ladder",
+      "knot",
+      "hiking-boot",
+      "backpack"
+     ],
+     "alsoFits": {
+      "rock": "Tırmanılır ama malzeme değil; sahte delil"
+     }
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Kapı ve kilit",
+      "en": "Doors and locks"
+     },
+     "items": [
+      "door",
+      "old-key",
+      "locked",
+      "unlocked"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Kırmızı",
+      "en": "Red"
+     },
+     "items": [
+      "fire-extinguisher",
+      "red-apple",
+      "strawberry",
+      "lady-beetle"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Otel kahvaltısı",
+      "en": "Hotel breakfast"
+     },
+     "items": [
+      "egg",
+      "croissant",
+      "bacon",
+      "pancakes"
+     ]
+    }
+   ],
+   "decoys": [
+    "rock"
+   ],
+   "clue": "c3"
+  },
+  {
+   "id": "case05_b04",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Hemşire çantası",
+      "en": "Nurse's kit"
+     },
+     "items": [
+      "adhesive-bandage",
+      "thermometer",
+      "pill",
+      "syringe"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Kutup hayvanları",
+      "en": "Polar animals"
+     },
+     "items": [
+      "polar-bear",
+      "penguin",
+      "seal"
+     ],
+     "alsoFits": {
+      "ice": "Kutupta bulunur ama hayvan değil; sahte delil"
+     }
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Şömine başında oyunlar",
+      "en": "Fireside games"
+     },
+     "items": [
+      "chess-pawn",
+      "game-die",
+      "puzzle-piece",
+      "mahjong-red-dragon"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Otel barı",
+      "en": "Hotel bar"
+     },
+     "items": [
+      "guitar",
+      "cocktail-glass",
+      "tumbler-glass",
+      "beer-mug"
+     ]
+    }
+   ],
+   "decoys": [
+    "ice"
+   ],
+   "clue": "c4"
+  },
+  {
+   "id": "case05_b05",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Çamaşırhane",
+      "en": "Laundry room"
+     },
+     "items": [
+      "soap",
+      "bubbles",
+      "t-shirt",
+      "basket",
+      "jeans"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Tekerlekli",
+      "en": "On wheels"
+     },
+     "items": [
+      "shopping-cart",
+      "kick-scooter",
+      "skateboard",
+      "roller-skate"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Yukarı aşağı gider",
+      "en": "Goes up and down"
+     },
+     "items": [
+      "elevator",
+      "yo-yo",
+      "roller-coaster",
+      "helicopter"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Sessiz",
+      "en": "Silent"
+     },
+     "items": [
+      "zipper-mouth-face",
+      "muted-speaker",
+      "bell-with-slash"
+     ]
+    }
+   ],
+   "clue": "c5"
+  },
+  {
+   "id": "case05_b06",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Kutular ve kaplar",
+      "en": "Containers"
+     },
+     "items": [
+      "package",
+      "basket",
+      "bucket",
+      "wastebasket"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Dağ sporları",
+      "en": "Mountain sports"
+     },
+     "items": [
+      "skier",
+      "snowboarder",
+      "person-climbing",
+      "person-mountain-biking"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Aşçının tezgâhı",
+      "en": "The cook's counter"
+     },
+     "items": [
+      "kitchen-knife",
+      "cooking",
+      "spoon",
+      "salt"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Buz üstünde yapılır",
+      "en": "Done on ice"
+     },
+     "items": [
+      "ice-skate",
+      "ice-hockey",
+      "curling-stone"
+     ],
+     "alsoFits": {
+      "ice": "Buzun kendisi; bir etkinlik değil",
+      "cloud-with-snow": "Kış ama buz üstünde değil; sahte delil"
+     }
+    }
+   ],
+   "decoys": [
+    "ice",
+    "cloud-with-snow"
+   ],
+   "clue": "c6"
+  },
+  {
+   "id": "case05_b07",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Resepsiyon",
+      "en": "Front desk"
+     },
+     "items": [
+      "bellhop-bell",
+      "telephone",
+      "ledger",
+      "credit-card"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Uyku",
+      "en": "Sleep"
+     },
+     "items": [
+      "bed",
+      "zzz",
+      "teddy-bear",
+      "pill"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Fotoğraf çekmek",
+      "en": "Taking photos"
+     },
+     "items": [
+      "camera",
+      "camera-with-flash",
+      "selfie",
+      "framed-picture"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Dört mevsim",
+      "en": "Four seasons"
+     },
+     "items": [
+      "snowflake",
+      "sun",
+      "fallen-leaf",
+      "cherry-blossom"
+     ],
+     "alsoFits": {
+      "rainbow": "Hava olayı ama bir mevsim değil; sahte delil"
+     }
+    }
+   ],
+   "decoys": [
+    "rainbow"
+   ],
+   "clue": "c7"
+  },
+  {
+   "id": "case05_b08",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Oda servisi",
+      "en": "Room service"
+     },
+     "items": [
+      "fork-and-knife-with-plate",
+      "hamburger",
+      "wine-glass",
+      "bowl-with-spoon",
+      "hot-beverage"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Uyandırır",
+      "en": "Wakes you up"
+     },
+     "items": [
+      "alarm-clock",
+      "rooster",
+      "sunrise",
+      "bell"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Kötü hava",
+      "en": "Bad weather"
+     },
+     "items": [
+      "cloud-with-snow",
+      "tornado",
+      "cloud-with-lightning",
+      "fog"
+     ],
+     "alsoFits": {
+      "snowman": "Kardan yapılır ama bir hava durumu değil; sahte delil"
+     }
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Spa",
+      "en": "Spa"
+     },
+     "items": [
+      "person-getting-massage",
+      "lotion-bottle",
+      "hot-springs"
+     ]
+    }
+   ],
+   "decoys": [
+    "snowman"
+   ],
+   "clue": "c8"
+  },
+  {
+   "id": "case05_b09",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Karanlık mahzen",
+      "en": "Dark cellar"
+     },
+     "items": [
+      "spider-web",
+      "rat",
+      "mouse-trap",
+      "candle"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "İğne iplik",
+      "en": "Needle and thread"
+     },
+     "items": [
+      "sewing-needle",
+      "thread",
+      "yarn",
+      "scissors"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Not almak",
+      "en": "Taking notes"
+     },
+     "items": [
+      "memo",
+      "pen",
+      "envelope",
+      "spiral-notepad"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Kurtarma",
+      "en": "Rescue"
+     },
+     "items": [
+      "helicopter",
+      "ambulance",
+      "rescue-workers-helmet",
+      "fire-extinguisher"
+     ]
+    }
+   ],
+   "decoys": [
+    "kite",
+    "lollipop"
+   ],
+   "clue": "c9"
+  },
+  {
+   "id": "case05_b10",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Yüzü gizler",
+      "en": "Hides the face"
+     },
+     "items": [
+      "sunglasses",
+      "performing-arts",
+      "goggles",
+      "scarf",
+      "billed-cap"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Tipide işe yarar",
+      "en": "Handy in a blizzard"
+     },
+     "items": [
+      "flashlight",
+      "sled",
+      "compass",
+      "radio",
+      "candle"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Mavi",
+      "en": "Blue"
+     },
+     "items": [
+      "blue-book",
+      "jeans",
+      "blueberries",
+      "large-blue-diamond"
+     ],
+     "alsoFits": {
+      "star": "Mavi yıldız aranıyor ama bu yıldız sarı; sahte delil"
+     }
+    }
+   ],
+   "decoys": [
+    "star",
+    "sunflower"
+   ],
+   "clue": "c10"
+  }
+ ],
+ "culprit": "hulya",
+ "proof": [
+  "c8",
+  "c9",
+  "c10"
+ ],
+ "ending": {
+  "tr": "Hülya, Gölge'nin otelin borçlarını ödeyeceğine inanmıştı. Emre'yi çamaşır arabasıyla mahzene taşımış, fırtına dinince teslim edecekti. Emre uyandığında ilk sözü şu oldu: \"Gölge'nin planını biliyorum.\"",
+  "en": "Hülya had believed the Shadow would pay the hotel's debts. She wheeled Emre down to the cellar in a laundry cart, ready to hand him over once the storm passed. When Emre woke, his first words were: \"I know the Shadow's plan.\""
+ },
+ "teaser": {
+  "tr": "Yılbaşı gecesi, saat kulesi on ikiyi vururken Liman Bankası'nın kasası boşalacak. Emre'nin elinde Gölge'nin tek bir fotoğrafı var: bulanık, ama bir kol düğmesi seçiliyor. Mavi bir yıldız.",
+  "en": "On New Year's Eve, as the clock tower strikes twelve, the Harbor Bank vault will be emptied. Emre has a single photo of the Shadow: blurry, but one cufflink stands out. A blue star."
+ }
+}

@@ -1,0 +1,801 @@
+{
+ "id": "case04",
+ "order": 4,
+ "premium": false,
+ "icon": "musical-score",
+ "title": {
+  "tr": "Opera Gecesi",
+  "en": "Night at the Opera"
+ },
+ "intro": [
+  {
+   "icon": "musical-score",
+   "text": {
+    "tr": "Liman Şehri Operası'nda prömiyer gecesi. Besteci Arif Bey'in kayıp son eseri ilk kez seslendirilecek.",
+    "en": "It's premiere night at the Harbor City Opera. Composer Arif's lost final work is about to be performed for the first time."
+   }
+  },
+  {
+   "icon": "locked",
+   "text": {
+    "tr": "Perde açılmadan bir saat önce orijinal notalar kasadan kayboldu. Kasanın kapağına gümüş bir göz çizilmiş.",
+    "en": "An hour before curtain, the original score vanished from the safe. A silver eye has been drawn on the safe door."
+   }
+  },
+  {
+   "icon": "detective",
+   "text": {
+    "tr": "Notaların arasında şifreli bir mesaj saklı olduğu söyleniyor. Gölge yine iş başında.",
+    "en": "Rumour has it a coded message is hidden in the score. The Shadow is at work again."
+   }
+  }
+ ],
+ "suspects": [
+  {
+   "id": "nil",
+   "icon": "woman-singer",
+   "name": {
+    "tr": "Nil",
+    "en": "Nil"
+   },
+   "role": {
+    "tr": "Soprano",
+    "en": "Soprano"
+   },
+   "bio": {
+    "tr": "Gecenin yıldızı. Notaları ilk o görmüş, prova boyunca elinden bırakmamış.",
+    "en": "The star of the night. She saw the score first and never let it go during rehearsal."
+   }
+  },
+  {
+   "id": "kerem",
+   "icon": "person-in-tuxedo",
+   "name": {
+    "tr": "Kerem",
+    "en": "Kerem"
+   },
+   "role": {
+    "tr": "Orkestra şefi",
+    "en": "Conductor"
+   },
+   "bio": {
+    "tr": "Eseri sahneye o hazırladı. Besteciyle arası hiç iyi olmadı.",
+    "en": "He prepared the work for the stage. He never got along with the composer."
+   }
+  },
+  {
+   "id": "ayla",
+   "icon": "woman-red-hair",
+   "name": {
+    "tr": "Ayla",
+    "en": "Ayla"
+   },
+   "role": {
+    "tr": "Kostümcü",
+    "en": "Costume designer"
+   },
+   "bio": {
+    "tr": "Kulisin her köşesini bilir. Bu gece herkesin kostümüne o dokundu.",
+    "en": "She knows every corner backstage. Tonight she touched everyone's costume."
+   }
+  },
+  {
+   "id": "bora",
+   "icon": "man-mechanic",
+   "name": {
+    "tr": "Bora",
+    "en": "Bora"
+   },
+   "role": {
+    "tr": "Işıkçı",
+    "en": "Lighting technician"
+   },
+   "bio": {
+    "tr": "Sahne ışıklarını yönetir. Tavan iskelesine yalnızca o çıkar.",
+    "en": "He runs the stage lights. Only he goes up to the lighting rig."
+   }
+  }
+ ],
+ "clues": [
+  {
+   "id": "c1",
+   "text": {
+    "tr": "Kasa zorlanmamış; şifresini bilen biri açmış.",
+    "en": "The safe wasn't forced; someone who knew the code opened it."
+   }
+  },
+  {
+   "id": "c2",
+   "text": {
+    "tr": "Kasanın şifresi eserin ilk dört notası. Notayı okuyamayan biri bilemez... ya da kulaktan ezberlemiş olmalı.",
+    "en": "The safe code is the first four notes of the piece. Only someone who reads music would know it... or someone who learned it by ear."
+   }
+  },
+  {
+   "id": "c3",
+   "text": {
+    "tr": "Şef Kerem prova boyunca orkestranın önündeydi; seksen müzisyen tanık.",
+    "en": "Conductor Kerem stood before the orchestra throughout rehearsal; eighty musicians are witnesses."
+   }
+  },
+  {
+   "id": "c4",
+   "text": {
+    "tr": "Kasadaki gümüş göz, kostüm atölyesindeki gümüş kumaş boyasıyla çizilmiş.",
+    "en": "The silver eye on the safe was drawn with the silver fabric paint from the costume workshop."
+   }
+  },
+  {
+   "id": "c5",
+   "text": {
+    "tr": "Nil, notaları provadan sonra kasaya kendi elleriyle koyduğunu söylüyor.",
+    "en": "Nil says she put the score back in the safe with her own hands after rehearsal."
+   }
+  },
+  {
+   "id": "c6",
+   "text": {
+    "tr": "Işıkçı Bora o saatte tavan iskelesindeydi; kamera onu bir kez bile inerken göstermiyor.",
+    "en": "Technician Bora was up on the rig at that hour; the camera never shows him coming down."
+   }
+  },
+  {
+   "id": "c7",
+   "text": {
+    "tr": "Ayla, ilk provanın kaydını dinlemek için ses odasından kulaklık ödünç almış.",
+    "en": "Ayla borrowed headphones from the sound booth to listen to the first rehearsal recording."
+   }
+  },
+  {
+   "id": "c8",
+   "text": {
+    "tr": "Nil'in kostümünün eteğine yeni, gümüş bir astar dikilmiş. Programda böyle bir kostüm değişikliği yok.",
+    "en": "A new silver lining has been sewn into the hem of Nil's costume. No such change appears in the programme."
+   }
+  },
+  {
+   "id": "c9",
+   "text": {
+    "tr": "Kostüm odasının çöpünde yarım bir not var: \"Göz her şeyi görür. Notayı perde arasında teslim et.\"",
+    "en": "There's a torn note in the costume room bin: \"The eye sees everything. Deliver the score at the interval.\""
+   }
+  },
+  {
+   "id": "c10",
+   "text": {
+    "tr": "Notalar Nil'in eteğindeki astardan çıktı. Dikiş, Ayla'nın imzası olan çift düğümle atılmış.",
+    "en": "The score was found inside the lining of Nil's hem. The stitching ends in Ayla's signature double knot."
+   }
+  }
+ ],
+ "boards": [
+  {
+   "id": "case04_b01",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Müzik aletleri",
+      "en": "Musical instruments"
+     },
+     "items": [
+      "violin",
+      "trumpet",
+      "drum",
+      "accordion"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Sahne kostümü",
+      "en": "Stage costumes"
+     },
+     "items": [
+      "crown",
+      "dress",
+      "kimono",
+      "top-hat"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Yıldıza çiçek",
+      "en": "Flowers for the star"
+     },
+     "items": [
+      "rose",
+      "tulip",
+      "sunflower",
+      "hibiscus"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Ara verince",
+      "en": "Intermission treats"
+     },
+     "items": [
+      "candy",
+      "chocolate-bar",
+      "cookie",
+      "cupcake"
+     ]
+    }
+   ],
+   "clue": "c1"
+  },
+  {
+   "id": "case04_b02",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Makyaj masası",
+      "en": "Dressing table"
+     },
+     "items": [
+      "mirror",
+      "lipstick",
+      "nail-polish",
+      "lotion-bottle"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Kırmızı",
+      "en": "Red"
+     },
+     "items": [
+      "red-apple",
+      "red-paper-lantern",
+      "tomato",
+      "fire-engine"
+     ],
+     "alsoFits": {
+      "love-letter": "Kırmızı kalpli ama bir mektup",
+      "lipstick": "Kırmızı ama makyaj masasında"
+     }
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Mektup ve not",
+      "en": "Letters and notes"
+     },
+     "items": [
+      "envelope",
+      "love-letter",
+      "memo",
+      "scroll"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Kuşlar",
+      "en": "Birds"
+     },
+     "items": [
+      "bird",
+      "dove",
+      "blackbird",
+      "swan"
+     ]
+    }
+   ],
+   "clue": "c2"
+  },
+  {
+   "id": "case04_b03",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Maskeler",
+      "en": "Masks"
+     },
+     "items": [
+      "performing-arts",
+      "goblin",
+      "ogre",
+      "diving-mask"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Altın sarısı",
+      "en": "Golden"
+     },
+     "items": [
+      "trophy",
+      "1st-place-medal",
+      "coin",
+      "bell"
+     ],
+     "alsoFits": {
+      "watch": "Altın renkli olabilir ama zaman grubunda"
+     }
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Oturmak için",
+      "en": "For sitting"
+     },
+     "items": [
+      "seat",
+      "chair",
+      "couch-and-lamp"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Perdeye ne kaldı?",
+      "en": "Time until curtain"
+     },
+     "items": [
+      "hourglass-not-done",
+      "alarm-clock",
+      "stopwatch",
+      "watch"
+     ]
+    }
+   ],
+   "clue": "c3"
+  },
+  {
+   "id": "case04_b04",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Çift olarak gelir",
+      "en": "Comes in pairs"
+     },
+     "items": [
+      "socks",
+      "gloves",
+      "chopsticks",
+      "ballet-shoes"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Büyütüp gösterir",
+      "en": "Makes things look bigger"
+     },
+     "items": [
+      "telescope",
+      "magnifying-glass-tilted-right",
+      "microscope"
+     ],
+     "alsoFits": {
+      "eyes": "Görmeye yarar ama büyütmez; sahte delil"
+     }
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Gece gökyüzü",
+      "en": "Night sky"
+     },
+     "items": [
+      "crescent-moon",
+      "night-with-stars",
+      "shooting-star",
+      "milky-way"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Tatlı içecekler",
+      "en": "Sweet drinks"
+     },
+     "items": [
+      "bubble-tea",
+      "tropical-drink",
+      "glass-of-milk",
+      "beverage-box"
+     ]
+    }
+   ],
+   "decoys": [
+    "eyes"
+   ],
+   "clue": "c4"
+  },
+  {
+   "id": "case04_b05",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Sahne ekibinin aletleri",
+      "en": "Stage crew tools"
+     },
+     "items": [
+      "wrench",
+      "hammer",
+      "ladder",
+      "flashlight"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Pembe",
+      "en": "Pink"
+     },
+     "items": [
+      "cherry-blossom",
+      "flamingo",
+      "pig"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Posta",
+      "en": "Mail"
+     },
+     "items": [
+      "envelope",
+      "package",
+      "postbox",
+      "postal-horn"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Ödüller",
+      "en": "Awards"
+     },
+     "items": [
+      "trophy",
+      "sports-medal",
+      "1st-place-medal",
+      "rosette"
+     ]
+    }
+   ],
+   "clue": "c5"
+  },
+  {
+   "id": "case04_b06",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Ses yayar",
+      "en": "Gives out sound"
+     },
+     "items": [
+      "loudspeaker",
+      "radio",
+      "speaker-high-volume",
+      "bell"
+     ],
+     "alsoFits": {
+      "muted-speaker": "Hoparlör ama sesi kapalı; sahte delil"
+     }
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Divaya hediye",
+      "en": "Gifts for the diva"
+     },
+     "items": [
+      "wrapped-gift",
+      "bouquet",
+      "ring",
+      "love-letter"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Çok uyuyan hayvanlar",
+      "en": "Animals that sleep a lot"
+     },
+     "items": [
+      "sloth",
+      "koala",
+      "bat",
+      "cat"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Siyah beyaz",
+      "en": "Black and white"
+     },
+     "items": [
+      "zebra",
+      "panda",
+      "penguin",
+      "musical-keyboard"
+     ]
+    }
+   ],
+   "decoys": [
+    "muted-speaker"
+   ],
+   "clue": "c6"
+  },
+  {
+   "id": "case04_b07",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Dikiş masası",
+      "en": "Sewing table"
+     },
+     "items": [
+      "sewing-needle",
+      "thread",
+      "scissors",
+      "safety-pin"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Uzun boyunlu",
+      "en": "Long necks"
+     },
+     "items": [
+      "giraffe",
+      "swan",
+      "sauropod",
+      "llama"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Kapaklı",
+      "en": "Has a lid"
+     },
+     "items": [
+      "teapot",
+      "jar",
+      "honey-pot",
+      "bento-box"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Motorsuz uçar",
+      "en": "Flies without an engine"
+     },
+     "items": [
+      "balloon",
+      "parachute",
+      "kite",
+      "feather"
+     ],
+     "alsoFits": {
+      "rocket": "Uçar ama motoru var; sahte delil"
+     }
+    }
+   ],
+   "decoys": [
+    "rocket"
+   ],
+   "clue": "c7"
+  },
+  {
+   "id": "case04_b08",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Sahne tekniği",
+      "en": "Stage tech"
+     },
+     "items": [
+      "light-bulb",
+      "microphone",
+      "control-knobs",
+      "level-slider",
+      "headphone"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Yeşil sebzeler",
+      "en": "Green vegetables"
+     },
+     "items": [
+      "broccoli",
+      "cucumber",
+      "leafy-green",
+      "pea-pod"
+     ],
+     "alsoFits": {
+      "green-apple": "Yeşil ama sebze değil meyve; sahte delil"
+     }
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Gemi yolculuğu",
+      "en": "Sea voyage"
+     },
+     "items": [
+      "passenger-ship",
+      "anchor",
+      "compass",
+      "ring-buoy"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Sihirbazlık",
+      "en": "Magic tricks"
+     },
+     "items": [
+      "magic-wand",
+      "crystal-ball",
+      "rabbit"
+     ]
+    }
+   ],
+   "decoys": [
+    "green-apple"
+   ],
+   "clue": "c8"
+  },
+  {
+   "id": "case04_b09",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Kayıp eşya bürosu",
+      "en": "Lost property"
+     },
+     "items": [
+      "closed-umbrella",
+      "glasses",
+      "gloves",
+      "purse"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Şarkı söyler",
+      "en": "Sings"
+     },
+     "items": [
+      "singer",
+      "bird",
+      "whale",
+      "cricket"
+     ],
+     "alsoFits": {
+      "microphone": "Şarkıcı kullanır ama kendisi şarkı söylemez; sahte delil"
+     }
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Siyah",
+      "en": "Black"
+     },
+     "items": [
+      "black-cat",
+      "pool-8-ball",
+      "black-flag",
+      "spade-suit"
+     ],
+     "alsoFits": {
+      "ghost": "Gölge gibi ama beyaz; sahte delil"
+     }
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Kar",
+      "en": "Snow"
+     },
+     "items": [
+      "snowman",
+      "snowflake",
+      "sled",
+      "skis"
+     ]
+    }
+   ],
+   "decoys": [
+    "ghost",
+    "microphone"
+   ],
+   "clue": "c9"
+  },
+  {
+   "id": "case04_b10",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Tebrikler!",
+      "en": "Congratulations!"
+     },
+     "items": [
+      "bouquet",
+      "party-popper",
+      "confetti-ball",
+      "clapping-hands",
+      "balloon"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Mesaj taşır",
+      "en": "Carries messages"
+     },
+     "items": [
+      "envelope",
+      "dove",
+      "postbox",
+      "e-mail",
+      "speech-balloon"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Göz",
+      "en": "Eyes"
+     },
+     "items": [
+      "eye",
+      "nazar-amulet",
+      "eyes",
+      "see-no-evil-monkey"
+     ],
+     "alsoFits": {
+      "ear": "Bir duyu organı ama göz değil; sahte delil"
+     }
+    }
+   ],
+   "decoys": [
+    "ear",
+    "ticket"
+   ],
+   "clue": "c10"
+  }
+ ],
+ "culprit": "ayla",
+ "proof": [
+  "c4",
+  "c9",
+  "c10"
+ ],
+ "ending": {
+  "tr": "Ayla itiraf etti: Gölge borçlarını kapatmayı vaat etmişti. Notaları Nil'in eteğine dikip perde arasında sahneden çıkaracaktı. Arif Bey'in eseri gece yarısına doğru ayakta alkışlandı ve notadaki şifre çözüldü.",
+  "en": "Ayla confessed: the Shadow had promised to pay off her debts. She sewed the score into Nil's hem so it would leave the stage at the interval. Arif's work received a standing ovation near midnight, and the code in the score was cracked."
+ },
+ "teaser": {
+  "tr": "Şifre tek bir yeri işaret ediyor: Karlı Dağ Oteli, oda 7. Gölge'ye karşı tanıklık edecek adam orada saklanıyor ve dağa kar fırtınası geliyor.",
+  "en": "The code points to a single place: Snowpeak Hotel, room 7. The man who will testify against the Shadow is hiding there, and a blizzard is rolling in."
+ }
+}

@@ -1,0 +1,812 @@
+{
+ "id": "case06",
+ "order": 6,
+ "premium": false,
+ "icon": "bust-in-silhouette",
+ "title": {
+  "tr": "Gölge'nin Yüzü",
+  "en": "The Shadow's Face"
+ },
+ "intro": [
+  {
+   "icon": "mantelpiece-clock",
+   "text": {
+    "tr": "Yılbaşı gecesi. Saat kulesi on ikiyi vurduğunda Liman Bankası'nın kasası açılacak. Gölge'yi yakalamak için son şans.",
+    "en": "New Year's Eve. When the clock tower strikes twelve, the Harbor Bank vault will open. This is the last chance to catch the Shadow."
+   }
+  },
+  {
+   "icon": "bust-in-silhouette",
+   "text": {
+    "tr": "Bankanın yılbaşı balosunda dört davetli var. Hepsi kasanın planlarını görmüş. Biri Gölge.",
+    "en": "There are four guests at the bank's New Year ball. All of them have seen the vault plans. One of them is the Shadow."
+   }
+  },
+  {
+   "icon": "gem-stone",
+   "text": {
+    "tr": "Bulanık fotoğraftaki tek ipucu, mavi yıldız biçiminde bir kol düğmesi. Bu işareti daha önce bir yerde gördün...",
+    "en": "The only clue in the blurry photo is a cufflink shaped like a blue star. You've seen that mark somewhere before..."
+   }
+  }
+ ],
+ "suspects": [
+  {
+   "id": "selim",
+   "icon": "man-in-tuxedo",
+   "name": {
+    "tr": "Selim",
+    "en": "Selim"
+   },
+   "role": {
+    "tr": "Bankanın sanat danışmanı",
+    "en": "The bank's art adviser"
+   },
+   "bio": {
+    "tr": "Mavi Yıldız davasından sonra müzeden ayrıldı. Şimdi bankanın koleksiyonunu yönetiyor.",
+    "en": "He left the museum after the Blue Star case. Now he manages the bank's art collection."
+   }
+  },
+  {
+   "id": "ferit",
+   "icon": "man-white-hair",
+   "name": {
+    "tr": "Ferit",
+    "en": "Ferit"
+   },
+   "role": {
+    "tr": "Banka müdürü",
+    "en": "Bank manager"
+   },
+   "bio": {
+    "tr": "Kasanın planları onun imzasıyla çizildi. Bu yıl emekli olacak.",
+    "en": "The vault plans were drawn up under his signature. He retires this year."
+   }
+  },
+  {
+   "id": "defne",
+   "icon": "woman-office-worker",
+   "name": {
+    "tr": "Defne",
+    "en": "Defne"
+   },
+   "role": {
+    "tr": "Gazeteci",
+    "en": "Journalist"
+   },
+   "bio": {
+    "tr": "Liman Ekspresi'nden beri Gölge'nin peşinde. Bu gece haberini bitirmeye geldi.",
+    "en": "She has chased the Shadow since the Harbor Express. Tonight she came to finish her story."
+   }
+  },
+  {
+   "id": "nermin",
+   "icon": "woman-police-officer",
+   "name": {
+    "tr": "Nermin",
+    "en": "Nermin"
+   },
+   "role": {
+    "tr": "Komiser",
+    "en": "Police chief"
+   },
+   "bio": {
+    "tr": "Baloda güvenlikten sorumlu. Gölge'yi yakalayamadığı için basın onu eleştiriyor.",
+    "en": "She's in charge of security at the ball. The press has slammed her for failing to catch the Shadow."
+   }
+  }
+ ],
+ "clues": [
+  {
+   "id": "c1",
+   "text": {
+    "tr": "Kasanın zaman kilidi kule saatinin mekanizmasına bağlı. Biri kule saatini üç dakika ileri almış.",
+    "en": "The vault's time lock is linked to the clock tower's mechanism. Someone set the tower clock three minutes fast."
+   }
+  },
+  {
+   "id": "c2",
+   "text": {
+    "tr": "Kule saati yalnızca eski saatçi anahtarıyla kurulabiliyor. O anahtar yıllarca müzede sergilendi.",
+    "en": "The tower clock can only be set with an old clockmaker's key. That key was on display in the museum for years."
+   }
+  },
+  {
+   "id": "c3",
+   "text": {
+    "tr": "Defne'nin taslak haberi: \"Gölge her davada sigortadan para kazandı.\"",
+    "en": "Defne's draft story: \"The Shadow profited from insurance in every case.\""
+   }
+  },
+  {
+   "id": "c4",
+   "text": {
+    "tr": "Komiser Nermin balo boyunca telsizle ekibini yönetti; kayıtlar bir saniye bile kesilmiyor.",
+    "en": "Chief Nermin directed her team by radio all night; the recordings never break for a second."
+   }
+  },
+  {
+   "id": "c5",
+   "text": {
+    "tr": "Banka müdürü Ferit kasanın planlarını eve götürmüş. Ama planlar ertesi sabah evinde, mühürlü zarfında dokunulmamış bulundu.",
+    "en": "Bank manager Ferit took the vault plans home. But the next morning they were found there, untouched in their sealed envelope."
+   }
+  },
+  {
+   "id": "c6",
+   "text": {
+    "tr": "Mavi Yıldız'ın sigortasını iki katına çıkaran kişi, şimdi bankanın sigorta danışmanlığını da yapıyor.",
+    "en": "The person who doubled the Blue Star's insurance now also advises the bank on insurance."
+   }
+  },
+  {
+   "id": "c7",
+   "text": {
+    "tr": "Opera, otel ve liman: üç kurum da sanat koleksiyonları için aynı danışmanla çalışmış.",
+    "en": "The opera, the hotel and the harbor office all used the same adviser for their art collections."
+   }
+  },
+  {
+   "id": "c8",
+   "text": {
+    "tr": "Balo salonunun halısında mavi yıldız biçiminde bir kol düğmesi bulundu.",
+    "en": "A cufflink shaped like a blue star was found on the ballroom carpet."
+   }
+  },
+  {
+   "id": "c9",
+   "text": {
+    "tr": "Selim'in smokininin sol kolunda kol düğmesi eksik.",
+    "en": "The cufflink is missing from the left sleeve of Selim's tuxedo."
+   }
+  },
+  {
+   "id": "c10",
+   "text": {
+    "tr": "Selim'in ofis kasasından gümüş gözlü kartvizitlerle dolu bir deste ve müzenin kayıp saatçi anahtarı çıktı.",
+    "en": "A stack of silver-eye calling cards and the museum's missing clockmaker's key were found in Selim's office safe."
+   }
+  }
+ ],
+ "boards": [
+  {
+   "id": "case06_b01",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Zamanı ölçer",
+      "en": "Measures time"
+     },
+     "items": [
+      "hourglass-done",
+      "alarm-clock",
+      "calendar",
+      "stopwatch"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Banka",
+      "en": "Bank"
+     },
+     "items": [
+      "bank",
+      "money-bag",
+      "credit-card",
+      "coin"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Yılbaşı",
+      "en": "New Year's Eve"
+     },
+     "items": [
+      "fireworks",
+      "party-popper",
+      "wrapped-gift",
+      "bottle-with-popping-cork"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Gece kıyafeti",
+      "en": "Black tie"
+     },
+     "items": [
+      "necktie",
+      "top-hat",
+      "dress",
+      "high-heeled-shoe"
+     ]
+    }
+   ],
+   "decoys": [
+    "scroll"
+   ],
+   "clue": "c1"
+  },
+  {
+   "id": "case06_b02",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Kasayı açmak için",
+      "en": "To crack a safe"
+     },
+     "items": [
+      "old-key",
+      "stethoscope",
+      "input-numbers",
+      "screwdriver",
+      "flashlight"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Siyah beyaz",
+      "en": "Black and white"
+     },
+     "items": [
+      "zebra",
+      "panda",
+      "penguin",
+      "soccer-ball"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Göz",
+      "en": "Eyes"
+     },
+     "items": [
+      "eye",
+      "nazar-amulet",
+      "eyes",
+      "see-no-evil-monkey"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Ay evreleri",
+      "en": "Phases of the moon"
+     },
+     "items": [
+      "crescent-moon",
+      "full-moon",
+      "new-moon"
+     ]
+    }
+   ],
+   "clue": "c2"
+  },
+  {
+   "id": "case06_b03",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Müze",
+      "en": "The museum"
+     },
+     "items": [
+      "gem-stone",
+      "framed-picture",
+      "amphora",
+      "classical-building"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Tren",
+      "en": "The train"
+     },
+     "items": [
+      "locomotive",
+      "ticket",
+      "railway-track",
+      "station"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Liman",
+      "en": "The harbor"
+     },
+     "items": [
+      "anchor",
+      "fog",
+      "ship",
+      "ring-buoy"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Opera",
+      "en": "The opera"
+     },
+     "items": [
+      "violin",
+      "performing-arts",
+      "musical-score",
+      "microphone"
+     ]
+    },
+    {
+     "id": "g5",
+     "theme": {
+      "tr": "Otel",
+      "en": "The hotel"
+     },
+     "items": [
+      "bellhop-bell",
+      "bed",
+      "skis",
+      "snow-capped-mountain"
+     ]
+    }
+   ],
+   "clue": "c3"
+  },
+  {
+   "id": "case06_b04",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Kırılabilir",
+      "en": "Fragile"
+     },
+     "items": [
+      "wine-glass",
+      "egg",
+      "light-bulb",
+      "mirror"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Takılar",
+      "en": "Jewelry"
+     },
+     "items": [
+      "ring",
+      "crown",
+      "gem-stone",
+      "watch"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Mavi",
+      "en": "Blue"
+     },
+     "items": [
+      "blue-book",
+      "jeans",
+      "blueberries",
+      "spouting-whale"
+     ],
+     "alsoFits": {
+      "gem-stone": "Mavi ama mavi grubu zaten dolu; o bir takı"
+     }
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Yıldız biçimli",
+      "en": "Star-shaped"
+     },
+     "items": [
+      "star",
+      "glowing-star",
+      "shooting-star",
+      "dotted-six-pointed-star"
+     ],
+     "alsoFits": {
+      "crescent-moon": "Gece gökyüzünde ama yıldız değil; sahte delil"
+     }
+    }
+   ],
+   "decoys": [
+    "crescent-moon"
+   ],
+   "clue": "c4"
+  },
+  {
+   "id": "case06_b05",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Tamir çantası",
+      "en": "Repair kit"
+     },
+     "items": [
+      "gear",
+      "nut-and-bolt",
+      "screwdriver",
+      "wrench",
+      "hammer"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Şehrin yukarısında",
+      "en": "High above the city"
+     },
+     "items": [
+      "tokyo-tower",
+      "office-building",
+      "helicopter",
+      "airplane",
+      "cloud"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Balo",
+      "en": "The ball"
+     },
+     "items": [
+      "mirror-ball",
+      "cocktail-glass",
+      "dress",
+      "woman-dancing",
+      "musical-notes"
+     ]
+    }
+   ],
+   "decoys": [
+    "rock"
+   ],
+   "clue": "c5"
+  },
+  {
+   "id": "case06_b06",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Kâğıt paralar",
+      "en": "Banknotes"
+     },
+     "items": [
+      "dollar-banknote",
+      "euro-banknote",
+      "yen-banknote",
+      "pound-banknote"
+     ],
+     "alsoFits": {
+      "coin": "Para ama kâğıt değil; sahte delil"
+     }
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Kayıt cihazları",
+      "en": "Recording devices"
+     },
+     "items": [
+      "video-camera",
+      "studio-microphone",
+      "camera",
+      "videocassette"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Gece avlanır",
+      "en": "Hunts at night"
+     },
+     "items": [
+      "owl",
+      "bat",
+      "raccoon",
+      "hedgehog"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Polis",
+      "en": "Police"
+     },
+     "items": [
+      "police-car",
+      "police-officer",
+      "shield",
+      "detective"
+     ]
+    }
+   ],
+   "decoys": [
+    "coin",
+    "sun"
+   ],
+   "clue": "c6"
+  },
+  {
+   "id": "case06_b07",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Evrak",
+      "en": "Paperwork"
+     },
+     "items": [
+      "receipt",
+      "memo",
+      "ledger",
+      "envelope",
+      "clipboard"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Çalar",
+      "en": "Rings"
+     },
+     "items": [
+      "bell",
+      "alarm-clock",
+      "telephone",
+      "bellhop-bell"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Harita üstünde plan",
+      "en": "Planning on a map"
+     },
+     "items": [
+      "world-map",
+      "compass",
+      "round-pushpin",
+      "triangular-ruler"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Gizli yüz",
+      "en": "A hidden face"
+     },
+     "items": [
+      "performing-arts",
+      "sunglasses",
+      "bust-in-silhouette"
+     ],
+     "alsoFits": {
+      "eye": "Yüzün parçası ama bir şey gizlemiyor; sahte delil"
+     }
+    }
+   ],
+   "decoys": [
+    "eye"
+   ],
+   "clue": "c7"
+  },
+  {
+   "id": "case06_b08",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Yılbaşı sofrası",
+      "en": "New Year's feast"
+     },
+     "items": [
+      "poultry-leg",
+      "tangerine",
+      "pie",
+      "bottle-with-popping-cork"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Kış",
+      "en": "Winter"
+     },
+     "items": [
+      "snowman",
+      "snowflake",
+      "scarf",
+      "sled"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Hediye paketi",
+      "en": "Gift wrapping"
+     },
+     "items": [
+      "wrapped-gift",
+      "ribbon",
+      "scissors",
+      "label"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Gökte ışık",
+      "en": "Lights in the sky"
+     },
+     "items": [
+      "fireworks",
+      "sparkler",
+      "shooting-star",
+      "comet"
+     ],
+     "alsoFits": {
+      "candle": "Işık verir ama gökte değil; sahte delil",
+      "balloon": "Gökte uçar ama ışık vermez; sahte delil"
+     }
+    }
+   ],
+   "decoys": [
+    "candle",
+    "balloon"
+   ],
+   "clue": "c8"
+  },
+  {
+   "id": "case06_b09",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Soygun çantası",
+      "en": "Heist bag"
+     },
+     "items": [
+      "flashlight",
+      "gloves",
+      "backpack",
+      "ladder",
+      "knot"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Kartlar",
+      "en": "Cards"
+     },
+     "items": [
+      "credit-card",
+      "identification-card",
+      "joker",
+      "flower-playing-cards",
+      "card-index"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Gece yarısı",
+      "en": "Midnight"
+     },
+     "items": [
+      "crescent-moon",
+      "night-with-stars",
+      "zzz",
+      "owl"
+     ]
+    }
+   ],
+   "decoys": [
+    "magnifying-glass-tilted-left",
+    "sun"
+   ],
+   "clue": "c9"
+  },
+  {
+   "id": "case06_b10",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Smokin",
+      "en": "Formal wear"
+     },
+     "items": [
+      "necktie",
+      "top-hat",
+      "dress",
+      "high-heeled-shoe"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Mavi",
+      "en": "Blue"
+     },
+     "items": [
+      "blueberries",
+      "jeans",
+      "blue-book",
+      "droplet"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Yakından görmek",
+      "en": "Seeing up close"
+     },
+     "items": [
+      "eye",
+      "telescope",
+      "magnifying-glass-tilted-left",
+      "microscope"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Korur",
+      "en": "Protects"
+     },
+     "items": [
+      "shield",
+      "umbrella",
+      "military-helmet",
+      "ring-buoy"
+     ]
+    },
+    {
+     "id": "g5",
+     "theme": {
+      "tr": "Saatler",
+      "en": "Clocks"
+     },
+     "items": [
+      "mantelpiece-clock",
+      "alarm-clock",
+      "watch",
+      "stopwatch"
+     ]
+    }
+   ],
+   "clue": "c10"
+  }
+ ],
+ "culprit": "selim",
+ "proof": [
+  "c8",
+  "c9",
+  "c10"
+ ],
+ "ending": {
+  "tr": "Gölge, Selim'di. Müzenin borçlarını kapatmak için başlattığı sigorta oyunu zamanla bir suç ağına dönüşmüştü. Kule saati on ikiyi vurduğunda kasa açıldı, ama içinde para değil, Komiser Nermin'in ekibi bekliyordu.",
+  "en": "The Shadow was Selim. The insurance scheme he began to cover the museum's debts had grown into a criminal network. When the tower clock struck twelve the vault opened, but instead of money, Chief Nermin's team was waiting inside."
+ },
+ "teaser": {
+  "tr": "Gölge yakalandı. Ama kartvizit destesinden bir tane eksik... Liman Şehri'nin gizemleri bitmedi. Özel Dosyalar seni bekliyor.",
+  "en": "The Shadow has been caught. But one card is missing from the deck... Harbor City's mysteries aren't over. The Special Files await you."
+ }
+}

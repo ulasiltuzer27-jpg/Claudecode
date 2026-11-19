@@ -99,6 +99,31 @@ void main() {
     expect(h.state.isPreviousClosed(content.cases[1]), isTrue);
   });
 
+  test('kilit: ucretsiz davalar sirayla; premium ilk dava kapaninca + satin alinca', () async {
+    final h = Harness();
+    final free = content.cases.where((c) => !c.premium).toList();
+    final premium = content.cases.where((c) => c.premium).toList();
+    expect(free.length, 6);
+    expect(premium.length, 2);
+    expect(h.state.isCasePlayable(free[0]), isTrue);
+    expect(h.state.isCasePlayable(free[1]), isFalse);
+    expect(h.state.isPreviousClosed(premium.first), isFalse);
+
+    h.state.record(free[0]).solved = true;
+    expect(h.state.isCasePlayable(free[1]), isTrue);
+    expect(h.state.isCasePlayable(free[2]), isFalse);
+    // Ilk dava kapali ama paket yok: hala kapali.
+    expect(h.state.isPreviousClosed(premium.first), isTrue);
+    expect(h.state.isCasePlayable(premium.first), isFalse);
+
+    await h.state.buy(premium.first.packId!);
+    await pumpEventQueue();
+    // Ana hikayenin geri kalanini beklemeden oynanabilir.
+    for (final p in premium) {
+      expect(h.state.isCasePlayable(p), isTrue, reason: p.id);
+    }
+  });
+
   test('premium dosya: paket ya da kulup olmadan kapali', () async {
     final h = Harness();
     final premium = content.cases.firstWhere((c) => c.premium);

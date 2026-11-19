@@ -68,6 +68,8 @@ class S {
   String get readEnding => _('Sonu yeniden oku', 'Read the ending again');
   String get lockedPrev =>
       _('Önceki dosyayı kapatınca açılır.', 'Opens once you close the previous case.');
+  String get lockedFirstCase => _('Özel dosyalar ilk dava kapanınca açılır.',
+      'Special files open once you close the first case.');
   String get premiumLocked =>
       _('Premium dosya. Mağazadan açabilirsin.', 'Premium case. You can unlock it in the shop.');
   String get premium => _('Premium', 'Premium');

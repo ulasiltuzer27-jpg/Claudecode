@@ -302,13 +302,11 @@ CASE2 = {
 }
 
 # ---------------------------------------------------------------------------
-# DAVA 3 - Sisli Fener (premium)
+# DAVA 3 - Sisli Fener
 # ---------------------------------------------------------------------------
 CASE3 = {
     "id": "case03",
     "order": 3,
-    "premium": True,
-    "pack": "case_pack_1",
     "icon": "fog",
     "title": T("Sisli Fener", "The Foggy Lighthouse"),
     "intro": [
@@ -364,8 +362,8 @@ CASE3 = {
         "Orhan, sandığı Gölge'ye teslim etmek için gemiyi bilerek kayalıklara yönlendirmişti. Sandık yalının mahzeninde bulundu ama içi boştu. İçinde yalnızca bir kartvizit vardı: siyah zemin üzerine gümüş bir göz.",
         "Orhan had steered the ship onto the rocks on purpose so he could hand the crate to the Shadow. The crate was found in his mansion's cellar, but it was empty except for a calling card: a silver eye on a black background."),
     "teaser": T(
-        "Gölge hep bir adım önde. Ama artık onun işaretini biliyorsun. Yeni dosyalar yolda...",
-        "The Shadow is always one step ahead. But now you know its mark. New case files are on the way..."),
+        "Kartvizitin arkasına bir opera bileti iliştirilmiş: Liman Şehri Operası, cumartesi gecesi prömiyer. Gölge bir sonraki hamlesini sahnede yapacak.",
+        "An opera ticket is pinned to the back of the card: Harbor City Opera, premiere on Saturday night. The Shadow's next move will happen on stage."),
     "boards": [
         B([
             G("Denizcilik", "Seafaring", ["anchor", "sailboat", "compass", "ring-buoy"],
@@ -444,4 +442,5 @@ CASE3 = {
     ],
 }
 
+# 4-8. davalar cases_extra.py icinde; build_content.py ikisini birlestirir.
 CASES = [CASE1, CASE2, CASE3]

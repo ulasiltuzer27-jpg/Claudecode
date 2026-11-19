@@ -146,11 +146,17 @@ class GameState extends ChangeNotifier {
   bool hasAccess(CaseFile c) =>
       !c.premium || clubActive || (c.packId != null && entitlements.ownedPacks.contains(c.packId));
 
-  /// Sirayla acilir: onceki dosya kapanmadan sonraki acilmaz.
+  /// Ucretsiz davalar kendi aralarinda sirayla acilir. Premium "Ozel
+  /// Dosyalar" ana hikayeyi beklemez: ilk dava kapaninca acilir (satin alan
+  /// oyuncu sezon finalini beklemek zorunda kalmasin).
   bool isPreviousClosed(CaseFile c) {
-    final i = content.cases.indexOf(c);
+    final free = content.cases.where((x) => !x.premium).toList();
+    if (c.premium) {
+      return free.isEmpty || record(free.first).solved;
+    }
+    final i = free.indexOf(c);
     if (i <= 0) return true;
-    return progress.caseRecord(content.cases[i - 1].id).solved;
+    return record(free[i - 1]).solved;
   }
 
   bool isCasePlayable(CaseFile c) => hasAccess(c) && isPreviousClosed(c);

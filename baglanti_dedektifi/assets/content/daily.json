@@ -818,6 +818,2654 @@
    "decoys": [
     "paintbrush"
    ]
+  },
+  {
+   "id": "daily_015",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Meyveler",
+      "en": "Fruits"
+     },
+     "items": [
+      "banana",
+      "pear",
+      "peach",
+      "grapes"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Gökyüzünde uçar",
+      "en": "Flies in the sky"
+     },
+     "items": [
+      "airplane",
+      "helicopter",
+      "parachute",
+      "kite"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Mutfakta",
+      "en": "In the kitchen"
+     },
+     "items": [
+      "spoon",
+      "teapot",
+      "kitchen-knife",
+      "cooking"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Hava durumu",
+      "en": "Weather"
+     },
+     "items": [
+      "sun",
+      "cloud",
+      "snowflake",
+      "tornado"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "daily_016",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Deniz hayvanları",
+      "en": "Sea animals"
+     },
+     "items": [
+      "dolphin",
+      "octopus",
+      "crab",
+      "shark"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Ofis malzemesi",
+      "en": "Office supplies"
+     },
+     "items": [
+      "paperclip",
+      "pushpin",
+      "file-folder",
+      "memo"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Spor topları",
+      "en": "Sports balls"
+     },
+     "items": [
+      "tennis",
+      "basketball",
+      "volleyball",
+      "bowling"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Sebzeler",
+      "en": "Vegetables"
+     },
+     "items": [
+      "carrot",
+      "potato",
+      "broccoli",
+      "eggplant"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "daily_017",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Müzik aletleri",
+      "en": "Musical instruments"
+     },
+     "items": [
+      "guitar",
+      "violin",
+      "drum",
+      "trumpet"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Çiçekler",
+      "en": "Flowers"
+     },
+     "items": [
+      "rose",
+      "tulip",
+      "sunflower",
+      "cherry-blossom"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Böcekler",
+      "en": "Insects"
+     },
+     "items": [
+      "ant",
+      "honeybee",
+      "butterfly",
+      "lady-beetle"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Taşıtlar",
+      "en": "Vehicles"
+     },
+     "items": [
+      "bus",
+      "taxi",
+      "bicycle",
+      "motorcycle"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "daily_018",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Kahvaltı",
+      "en": "Breakfast"
+     },
+     "items": [
+      "egg",
+      "cheese-wedge",
+      "olive",
+      "bread"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Yüzümüzde",
+      "en": "On your face"
+     },
+     "items": [
+      "eye",
+      "ear",
+      "nose",
+      "mouth"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Okul",
+      "en": "School"
+     },
+     "items": [
+      "books",
+      "pencil",
+      "backpack",
+      "school"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Hayvanat bahçesi",
+      "en": "At the zoo"
+     },
+     "items": [
+      "lion",
+      "giraffe",
+      "elephant",
+      "zebra"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "daily_019",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Kış",
+      "en": "Winter"
+     },
+     "items": [
+      "snowman",
+      "sled",
+      "scarf",
+      "ice-skate"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Bilim",
+      "en": "Science"
+     },
+     "items": [
+      "microscope",
+      "test-tube",
+      "dna",
+      "magnet"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Para",
+      "en": "Money"
+     },
+     "items": [
+      "coin",
+      "dollar-banknote",
+      "credit-card",
+      "money-bag"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Tatlılar",
+      "en": "Desserts"
+     },
+     "items": [
+      "birthday-cake",
+      "doughnut",
+      "cookie",
+      "cupcake"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "daily_020",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Kuşlar",
+      "en": "Birds"
+     },
+     "items": [
+      "eagle",
+      "owl",
+      "parrot",
+      "penguin"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Alet çantası",
+      "en": "Toolbox"
+     },
+     "items": [
+      "hammer",
+      "wrench",
+      "screwdriver",
+      "carpentry-saw"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Oyunlar",
+      "en": "Games"
+     },
+     "items": [
+      "chess-pawn",
+      "game-die",
+      "joystick",
+      "puzzle-piece"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "İçecekler",
+      "en": "Drinks"
+     },
+     "items": [
+      "hot-beverage",
+      "glass-of-milk",
+      "cocktail-glass",
+      "bubble-tea"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "daily_021",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Gece",
+      "en": "Night"
+     },
+     "items": [
+      "crescent-moon",
+      "night-with-stars",
+      "zzz",
+      "bat"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Yangın",
+      "en": "Fire"
+     },
+     "items": [
+      "fire",
+      "fire-engine",
+      "fire-extinguisher",
+      "firefighter"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Plaj",
+      "en": "Beach"
+     },
+     "items": [
+      "beach-with-umbrella",
+      "spiral-shell",
+      "bikini",
+      "sunglasses"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Fast food",
+      "en": "Fast food"
+     },
+     "items": [
+      "hamburger",
+      "pizza",
+      "hot-dog",
+      "french-fries"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "daily_022",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Hastane",
+      "en": "Hospital"
+     },
+     "items": [
+      "ambulance",
+      "syringe",
+      "pill",
+      "stethoscope"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Lunapark",
+      "en": "Funfair"
+     },
+     "items": [
+      "ferris-wheel",
+      "roller-coaster",
+      "carousel-horse",
+      "circus-tent"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Tarla",
+      "en": "Farm field"
+     },
+     "items": [
+      "tractor",
+      "sheaf-of-rice",
+      "seedling",
+      "farmer"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Posta",
+      "en": "Post"
+     },
+     "items": [
+      "envelope",
+      "postbox",
+      "love-letter",
+      "package"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "daily_023",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Kırmızı",
+      "en": "Red"
+     },
+     "items": [
+      "strawberry",
+      "fire-engine",
+      "rose",
+      "tomato"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Yeşil",
+      "en": "Green"
+     },
+     "items": [
+      "frog",
+      "cucumber",
+      "four-leaf-clover",
+      "cactus"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Sarı",
+      "en": "Yellow"
+     },
+     "items": [
+      "banana",
+      "lemon",
+      "sunflower",
+      "baby-chick"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Mavi",
+      "en": "Blue"
+     },
+     "items": [
+      "blueberries",
+      "jeans",
+      "blue-book",
+      "droplet"
+     ],
+     "alsoFits": {
+      "rainbow": "Her renkten var, tek bir renk değil; sahte delil"
+     }
+    }
+   ],
+   "decoys": [
+    "rainbow"
+   ]
+  },
+  {
+   "id": "daily_024",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Kamp",
+      "en": "Camping"
+     },
+     "items": [
+      "tent",
+      "flashlight",
+      "backpack",
+      "compass"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Balık tutmak",
+      "en": "Fishing"
+     },
+     "items": [
+      "fishing-pole",
+      "fish",
+      "hook",
+      "worm"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Gökyüzü",
+      "en": "In the sky"
+     },
+     "items": [
+      "sun",
+      "cloud",
+      "rainbow",
+      "crescent-moon"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Orman",
+      "en": "Forest"
+     },
+     "items": [
+      "evergreen-tree",
+      "brown-mushroom",
+      "fox",
+      "deer"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "daily_025",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Uzay",
+      "en": "Space"
+     },
+     "items": [
+      "astronaut",
+      "rocket",
+      "ringed-planet",
+      "alien"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Ev eşyası",
+      "en": "Furniture"
+     },
+     "items": [
+      "bed",
+      "couch-and-lamp",
+      "chair",
+      "bathtub"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Kış sporları",
+      "en": "Winter sports"
+     },
+     "items": [
+      "skis",
+      "ice-skate",
+      "sled",
+      "snowboarder"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Aksesuar",
+      "en": "Accessories"
+     },
+     "items": [
+      "ring",
+      "watch",
+      "glasses",
+      "necktie"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "daily_026",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Ortaçağ",
+      "en": "Medieval"
+     },
+     "items": [
+      "castle",
+      "crown",
+      "shield",
+      "crossed-swords"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Ekmek çeşitleri",
+      "en": "Breads"
+     },
+     "items": [
+      "bread",
+      "croissant",
+      "baguette-bread",
+      "bagel"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Kötü hava",
+      "en": "Bad weather"
+     },
+     "items": [
+      "cloud-with-rain",
+      "cloud-with-lightning",
+      "fog",
+      "cloud-with-snow"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Ölçer",
+      "en": "Measures"
+     },
+     "items": [
+      "thermometer",
+      "straight-ruler",
+      "balance-scale",
+      "stopwatch"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "daily_027",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Tropik ada",
+      "en": "Tropical island"
+     },
+     "items": [
+      "palm-tree",
+      "coconut",
+      "pineapple",
+      "parrot"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Haberleşme",
+      "en": "Communication"
+     },
+     "items": [
+      "telephone",
+      "mobile-phone",
+      "e-mail",
+      "satellite-antenna"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Atıştırmalık",
+      "en": "Snacks"
+     },
+     "items": [
+      "popcorn",
+      "pretzel",
+      "peanuts",
+      "french-fries"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Gizem",
+      "en": "Mystery"
+     },
+     "items": [
+      "detective",
+      "magnifying-glass-tilted-left",
+      "footprints",
+      "red-question-mark"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "daily_028",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Masal",
+      "en": "Fairy tale"
+     },
+     "items": [
+      "dragon",
+      "unicorn",
+      "person-fairy",
+      "castle"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Su",
+      "en": "Water"
+     },
+     "items": [
+      "droplet",
+      "water-wave",
+      "shower",
+      "potable-water"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Hızlı",
+      "en": "Fast"
+     },
+     "items": [
+      "racing-car",
+      "high-speed-train",
+      "leopard",
+      "speedboat"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Yavaş",
+      "en": "Slow"
+     },
+     "items": [
+      "snail",
+      "turtle",
+      "sloth"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "daily_029",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Kahve molası",
+      "en": "Coffee break"
+     },
+     "items": [
+      "hot-beverage",
+      "croissant",
+      "cookie",
+      "doughnut"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Futbol",
+      "en": "Football"
+     },
+     "items": [
+      "soccer-ball",
+      "goal-net",
+      "trophy",
+      "running-shirt"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Kuş yuvası",
+      "en": "Bird's nest"
+     },
+     "items": [
+      "nest-with-eggs",
+      "egg",
+      "hatching-chick",
+      "bird"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Saatler",
+      "en": "Clocks"
+     },
+     "items": [
+      "watch",
+      "alarm-clock",
+      "mantelpiece-clock",
+      "hourglass-done"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "daily_030",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Bayraklar",
+      "en": "Flags"
+     },
+     "items": [
+      "chequered-flag",
+      "white-flag",
+      "pirate-flag",
+      "triangular-flag"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Tren",
+      "en": "Train"
+     },
+     "items": [
+      "locomotive",
+      "railway-car",
+      "station",
+      "railway-track"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Çiftlik hayvanları",
+      "en": "Farm animals"
+     },
+     "items": [
+      "cow",
+      "pig",
+      "ewe",
+      "horse"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Mutfak sebzeleri",
+      "en": "Kitchen vegetables"
+     },
+     "items": [
+      "onion",
+      "garlic",
+      "potato",
+      "carrot"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "daily_031",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Su sporları",
+      "en": "Water sports"
+     },
+     "items": [
+      "canoe",
+      "person-surfing",
+      "diving-mask",
+      "person-swimming"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Kâğıt",
+      "en": "Paper"
+     },
+     "items": [
+      "newspaper",
+      "envelope",
+      "ticket",
+      "receipt"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Yuvarlak",
+      "en": "Round"
+     },
+     "items": [
+      "soccer-ball",
+      "full-moon",
+      "coin",
+      "globe-showing-europe-africa"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Üçgen",
+      "en": "Triangles"
+     },
+     "items": [
+      "red-triangle",
+      "pizza",
+      "triangular-ruler",
+      "triangular-flag"
+     ],
+     "alsoFits": {
+      "large-blue-diamond": "Köşeli ama üçgen de yuvarlak da değil; sahte delil"
+     }
+    }
+   ],
+   "decoys": [
+    "large-blue-diamond"
+   ]
+  },
+  {
+   "id": "daily_032",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Korku",
+      "en": "Spooky"
+     },
+     "items": [
+      "ghost",
+      "skull",
+      "spider-web",
+      "bat"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Parti",
+      "en": "Party"
+     },
+     "items": [
+      "balloon",
+      "party-popper",
+      "birthday-cake",
+      "confetti-ball"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Göl",
+      "en": "Lake"
+     },
+     "items": [
+      "duck",
+      "swan",
+      "frog",
+      "fish"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Oyuncaklar",
+      "en": "Toys"
+     },
+     "items": [
+      "teddy-bear",
+      "kite",
+      "yo-yo",
+      "nesting-dolls"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "daily_033",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Ders",
+      "en": "Lessons"
+     },
+     "items": [
+      "books",
+      "abacus",
+      "straight-ruler",
+      "graduation-cap"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Turunçgiller",
+      "en": "Citrus"
+     },
+     "items": [
+      "lemon",
+      "lime",
+      "tangerine"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Böcekler",
+      "en": "Bugs"
+     },
+     "items": [
+      "fly",
+      "mosquito",
+      "cockroach",
+      "beetle"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "İnşaat",
+      "en": "Construction"
+     },
+     "items": [
+      "construction",
+      "construction-worker",
+      "brick",
+      "building-construction"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "daily_034",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Sabah",
+      "en": "Morning"
+     },
+     "items": [
+      "sunrise",
+      "rooster",
+      "alarm-clock",
+      "hot-beverage"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Yağmur",
+      "en": "Rain"
+     },
+     "items": [
+      "umbrella-with-rain-drops",
+      "cloud-with-rain",
+      "droplet",
+      "rainbow"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Market",
+      "en": "Supermarket"
+     },
+     "items": [
+      "shopping-cart",
+      "shopping-bags",
+      "receipt",
+      "credit-card"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Saray",
+      "en": "Palace"
+     },
+     "items": [
+      "crown",
+      "prince",
+      "princess",
+      "castle"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "daily_035",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Spor salonu",
+      "en": "Gym"
+     },
+     "items": [
+      "flexed-biceps",
+      "person-lifting-weights",
+      "running-shoe",
+      "boxing-glove"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Denizcilik",
+      "en": "Seafaring"
+     },
+     "items": [
+      "anchor",
+      "sailboat",
+      "ship",
+      "compass"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Kahverengi",
+      "en": "Brown"
+     },
+     "items": [
+      "chestnut",
+      "chocolate-bar",
+      "brown-mushroom",
+      "bear"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Bilgisayar",
+      "en": "Computer"
+     },
+     "items": [
+      "laptop",
+      "keyboard",
+      "computer-mouse",
+      "desktop-computer"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "daily_036",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Müzik dinlemek",
+      "en": "Listening to music"
+     },
+     "items": [
+      "headphone",
+      "radio",
+      "loudspeaker",
+      "musical-note"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Kar",
+      "en": "Snow"
+     },
+     "items": [
+      "snowflake",
+      "snowman",
+      "cloud-with-snow",
+      "skis"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Bitkiler",
+      "en": "Plants"
+     },
+     "items": [
+      "seedling",
+      "potted-plant",
+      "cactus",
+      "herb"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Taşımak için",
+      "en": "For carrying"
+     },
+     "items": [
+      "backpack",
+      "luggage",
+      "basket",
+      "shopping-bags"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "daily_037",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Trafik",
+      "en": "Traffic"
+     },
+     "items": [
+      "vertical-traffic-light",
+      "taxi",
+      "bus",
+      "motorway"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Sağlık",
+      "en": "Health"
+     },
+     "items": [
+      "adhesive-bandage",
+      "pill",
+      "thermometer",
+      "syringe"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Arılar",
+      "en": "Bees"
+     },
+     "items": [
+      "honeybee",
+      "honey-pot",
+      "blossom"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Uyku",
+      "en": "Sleep"
+     },
+     "items": [
+      "bed",
+      "zzz",
+      "teddy-bear",
+      "crescent-moon"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "daily_038",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Masa oyunları",
+      "en": "Tabletop games"
+     },
+     "items": [
+      "chess-pawn",
+      "game-die",
+      "joker",
+      "mahjong-red-dragon"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Kâğıt işleri",
+      "en": "Papercraft"
+     },
+     "items": [
+      "scissors",
+      "paperclip",
+      "pushpin",
+      "straight-ruler"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Yaz meyveleri",
+      "en": "Summer fruits"
+     },
+     "items": [
+      "watermelon",
+      "peach",
+      "cherries",
+      "strawberry"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Uçar",
+      "en": "Can fly"
+     },
+     "items": [
+      "bird",
+      "butterfly",
+      "bat",
+      "airplane"
+     ],
+     "alsoFits": {
+      "penguin": "Bir kuş ama uçamaz; sahte delil"
+     }
+    }
+   ],
+   "decoys": [
+    "penguin"
+   ]
+  },
+  {
+   "id": "daily_039",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Evcil hayvanlar",
+      "en": "Pets"
+     },
+     "items": [
+      "dog",
+      "cat",
+      "hamster",
+      "rabbit"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Dans gecesi",
+      "en": "Dance night"
+     },
+     "items": [
+      "mirror-ball",
+      "man-dancing",
+      "musical-notes",
+      "cocktail-glass"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Piknik",
+      "en": "Picnic"
+     },
+     "items": [
+      "basket",
+      "sandwich",
+      "ant",
+      "watermelon"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Resim",
+      "en": "Painting"
+     },
+     "items": [
+      "artist-palette",
+      "paintbrush",
+      "framed-picture",
+      "crayon"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "daily_040",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Kurtarma araçları",
+      "en": "Emergency vehicles"
+     },
+     "items": [
+      "ambulance",
+      "fire-engine",
+      "police-car",
+      "helicopter"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Hamur işi",
+      "en": "Pastries"
+     },
+     "items": [
+      "pie",
+      "pancakes",
+      "waffle",
+      "dumpling"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Suda yüzer",
+      "en": "Floats on water"
+     },
+     "items": [
+      "ship",
+      "sailboat",
+      "canoe",
+      "ring-buoy"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Yıldızlar",
+      "en": "Stars"
+     },
+     "items": [
+      "star",
+      "glowing-star",
+      "shooting-star",
+      "sparkles"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "daily_041",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Çocuk parkı",
+      "en": "Playground"
+     },
+     "items": [
+      "playground-slide",
+      "kick-scooter",
+      "kite"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Baharat",
+      "en": "Spices"
+     },
+     "items": [
+      "hot-pepper",
+      "garlic",
+      "ginger-root",
+      "herb"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Kütüphane",
+      "en": "Library"
+     },
+     "items": [
+      "books",
+      "bookmark",
+      "open-book",
+      "card-index"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Uzun boyunlu",
+      "en": "Long necks"
+     },
+     "items": [
+      "giraffe",
+      "swan",
+      "flamingo",
+      "llama"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "daily_042",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Yağmur ormanı",
+      "en": "Rainforest"
+     },
+     "items": [
+      "parrot",
+      "gorilla",
+      "monkey",
+      "sloth"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Kuyumcu",
+      "en": "Jeweller"
+     },
+     "items": [
+      "ring",
+      "gem-stone",
+      "watch",
+      "crown"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Banyo",
+      "en": "Bathroom"
+     },
+     "items": [
+      "shower",
+      "soap",
+      "toothbrush",
+      "bathtub"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Şantiye",
+      "en": "Building site"
+     },
+     "items": [
+      "brick",
+      "construction-worker",
+      "building-construction",
+      "construction"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "daily_043",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Çok sıcak",
+      "en": "Very hot"
+     },
+     "items": [
+      "fire",
+      "hot-pepper",
+      "volcano",
+      "hot-springs"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Çok soğuk",
+      "en": "Very cold"
+     },
+     "items": [
+      "ice",
+      "snowflake",
+      "polar-bear",
+      "shaved-ice"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Islak",
+      "en": "Wet"
+     },
+     "items": [
+      "droplet",
+      "water-wave",
+      "shower",
+      "umbrella-with-rain-drops"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Çöl",
+      "en": "Desert"
+     },
+     "items": [
+      "desert",
+      "cactus",
+      "camel",
+      "scorpion"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "daily_044",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Şapkalar",
+      "en": "Hats"
+     },
+     "items": [
+      "top-hat",
+      "billed-cap",
+      "graduation-cap",
+      "womans-hat"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Kış giysisi",
+      "en": "Winter clothes"
+     },
+     "items": [
+      "coat",
+      "scarf",
+      "gloves",
+      "socks"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Sayı saymak",
+      "en": "Counting"
+     },
+     "items": [
+      "abacus",
+      "input-numbers",
+      "hundred-points"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Dans",
+      "en": "Dance"
+     },
+     "items": [
+      "ballet-shoes",
+      "man-dancing",
+      "mirror-ball",
+      "musical-notes"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "daily_045",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Kartlar",
+      "en": "Cards"
+     },
+     "items": [
+      "credit-card",
+      "identification-card",
+      "joker",
+      "admission-tickets"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Kahramanlar",
+      "en": "Heroes"
+     },
+     "items": [
+      "person-superhero",
+      "firefighter",
+      "police-officer",
+      "health-worker"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Bahçe",
+      "en": "Garden"
+     },
+     "items": [
+      "potted-plant",
+      "seedling",
+      "tulip",
+      "worm"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Dondurma",
+      "en": "Ice cream"
+     },
+     "items": [
+      "ice-cream",
+      "soft-ice-cream",
+      "shaved-ice"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "daily_046",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Fotoğraf",
+      "en": "Photos"
+     },
+     "items": [
+      "camera",
+      "camera-with-flash",
+      "framed-picture",
+      "selfie"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Süt ürünleri",
+      "en": "Dairy"
+     },
+     "items": [
+      "cheese-wedge",
+      "glass-of-milk",
+      "butter",
+      "custard"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Gökyüzü",
+      "en": "Sky"
+     },
+     "items": [
+      "cloud",
+      "rainbow",
+      "sun-behind-cloud",
+      "sunrise"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Toplu taşıma",
+      "en": "Public transport"
+     },
+     "items": [
+      "bus",
+      "tram",
+      "metro",
+      "bus-stop"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "daily_047",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Delikli",
+      "en": "Full of holes"
+     },
+     "items": [
+      "cheese-wedge",
+      "sponge",
+      "doughnut",
+      "bagel"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Dikenli",
+      "en": "Spiky"
+     },
+     "items": [
+      "cactus",
+      "hedgehog",
+      "blowfish",
+      "chestnut"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Hafif",
+      "en": "Light as air"
+     },
+     "items": [
+      "feather",
+      "balloon",
+      "bubbles",
+      "leaf-fluttering-in-wind"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Ağır",
+      "en": "Heavy"
+     },
+     "items": [
+      "elephant",
+      "anchor",
+      "rock",
+      "oil-drum"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "daily_048",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Turuncu",
+      "en": "Orange"
+     },
+     "items": [
+      "tangerine",
+      "carrot",
+      "jack-o-lantern",
+      "basketball"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Beyaz",
+      "en": "White"
+     },
+     "items": [
+      "ghost",
+      "egg",
+      "polar-bear",
+      "cloud"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Pembe",
+      "en": "Pink"
+     },
+     "items": [
+      "flamingo",
+      "pig",
+      "cherry-blossom"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Kahverengi",
+      "en": "Brown"
+     },
+     "items": [
+      "chocolate-bar",
+      "bear",
+      "brown-mushroom",
+      "cookie"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "daily_049",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Kabuğu var",
+      "en": "Has a shell"
+     },
+     "items": [
+      "egg",
+      "turtle",
+      "snail",
+      "peanuts"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Dişleri var",
+      "en": "Has teeth"
+     },
+     "items": [
+      "gear",
+      "carpentry-saw",
+      "shark",
+      "old-key"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "İple oynanır",
+      "en": "On a string"
+     },
+     "items": [
+      "kite",
+      "yo-yo",
+      "balloon",
+      "fishing-pole"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Toprağın altında",
+      "en": "Underground"
+     },
+     "items": [
+      "worm",
+      "metro",
+      "potato",
+      "ant"
+     ],
+     "alsoFits": {
+      "peanuts": "Toprak altında yetişir ama kabuklu grubunda"
+     }
+    }
+   ]
+  },
+  {
+   "id": "daily_050",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Doğum günü",
+      "en": "Birthday"
+     },
+     "items": [
+      "birthday-cake",
+      "balloon",
+      "wrapped-gift",
+      "party-popper"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Düğün",
+      "en": "Wedding"
+     },
+     "items": [
+      "wedding",
+      "ring",
+      "bouquet",
+      "dress"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Hasta olunca",
+      "en": "When you're ill"
+     },
+     "items": [
+      "thermometer",
+      "pill",
+      "bed",
+      "adhesive-bandage"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Çok eski",
+      "en": "Ancient"
+     },
+     "items": [
+      "amphora",
+      "moai",
+      "sauropod",
+      "mammoth"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "daily_051",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Kutuplarda",
+      "en": "At the poles"
+     },
+     "items": [
+      "penguin",
+      "polar-bear",
+      "seal",
+      "ice"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Kum",
+      "en": "Sand"
+     },
+     "items": [
+      "desert",
+      "hourglass-done",
+      "beach-with-umbrella",
+      "camel"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Gürültülü",
+      "en": "Loud"
+     },
+     "items": [
+      "loudspeaker",
+      "drum",
+      "firecracker",
+      "megaphone"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Sessiz",
+      "en": "Silent"
+     },
+     "items": [
+      "zipper-mouth-face",
+      "muted-speaker",
+      "bell-with-slash"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "daily_052",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Prize takılır",
+      "en": "Plugs in"
+     },
+     "items": [
+      "television",
+      "laptop",
+      "printer",
+      "radio"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Ağaçtan gelir",
+      "en": "Comes from trees"
+     },
+     "items": [
+      "chestnut",
+      "maple-leaf",
+      "wood",
+      "coconut"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Benekli",
+      "en": "Spotted"
+     },
+     "items": [
+      "leopard",
+      "lady-beetle",
+      "mushroom",
+      "cow"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Kanatlı",
+      "en": "Has wings"
+     },
+     "items": [
+      "airplane",
+      "butterfly",
+      "bat",
+      "baby-angel"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "daily_053",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Tekneler",
+      "en": "Boats"
+     },
+     "items": [
+      "sailboat",
+      "canoe",
+      "speedboat",
+      "ferry"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Kâğıt oyunu",
+      "en": "Playing cards"
+     },
+     "items": [
+      "joker",
+      "spade-suit",
+      "heart-suit",
+      "flower-playing-cards"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Yaz giysisi",
+      "en": "Summer clothes"
+     },
+     "items": [
+      "bikini",
+      "shorts",
+      "thong-sandal",
+      "sunglasses"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Salata",
+      "en": "Salad"
+     },
+     "items": [
+      "green-salad",
+      "cucumber",
+      "tomato",
+      "olive"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "daily_054",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Şövalye",
+      "en": "Knight"
+     },
+     "items": [
+      "shield",
+      "crossed-swords",
+      "horse",
+      "castle"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Raketle oynanır",
+      "en": "Played with a racket"
+     },
+     "items": [
+      "tennis",
+      "badminton",
+      "ping-pong"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Fırında pişer",
+      "en": "Baked in the oven"
+     },
+     "items": [
+      "bread",
+      "pie",
+      "cookie",
+      "pizza"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Su altında",
+      "en": "Underwater"
+     },
+     "items": [
+      "fish",
+      "octopus",
+      "coral",
+      "diving-mask"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "daily_055",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Uçar ama kuş değil",
+      "en": "Flies but isn't a bird"
+     },
+     "items": [
+      "butterfly",
+      "bat",
+      "honeybee",
+      "fly"
+     ],
+     "alsoFits": {
+      "owl": "Uçar ama bir kuş; sahte delil"
+     }
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Kırmızı meyveler",
+      "en": "Red fruits"
+     },
+     "items": [
+      "strawberry",
+      "cherries",
+      "red-apple",
+      "watermelon"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Spor",
+      "en": "Sports"
+     },
+     "items": [
+      "soccer-ball",
+      "basketball",
+      "volleyball",
+      "baseball"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Uzay",
+      "en": "Space"
+     },
+     "items": [
+      "rocket",
+      "flying-saucer",
+      "ringed-planet",
+      "comet"
+     ]
+    }
+   ],
+   "decoys": [
+    "owl"
+   ]
+  },
+  {
+   "id": "daily_056",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Hafta sonu kahvaltısı",
+      "en": "Weekend breakfast"
+     },
+     "items": [
+      "pancakes",
+      "waffle",
+      "bacon",
+      "egg"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Orman hayvanları",
+      "en": "Woodland animals"
+     },
+     "items": [
+      "fox",
+      "deer",
+      "hedgehog",
+      "owl"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Elektrik",
+      "en": "Electricity"
+     },
+     "items": [
+      "high-voltage",
+      "battery",
+      "electric-plug",
+      "light-bulb"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Kaplar",
+      "en": "Containers"
+     },
+     "items": [
+      "teapot",
+      "jar",
+      "bucket",
+      "bento-box"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "daily_057",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Polis",
+      "en": "Police"
+     },
+     "items": [
+      "police-car",
+      "police-officer",
+      "shield",
+      "detective"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Tuzlu",
+      "en": "Salty"
+     },
+     "items": [
+      "salt",
+      "pretzel",
+      "french-fries",
+      "olive"
+     ],
+     "alsoFits": {
+      "popcorn": "Tuzlu olabilir ama kanepedekiler grubunda"
+     }
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Bulmaca",
+      "en": "Puzzles"
+     },
+     "items": [
+      "puzzle-piece",
+      "red-question-mark",
+      "brain",
+      "light-bulb"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Kanepede",
+      "en": "On the sofa"
+     },
+     "items": [
+      "couch-and-lamp",
+      "television",
+      "popcorn",
+      "teddy-bear"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "daily_058",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Lunapark",
+      "en": "Funfair"
+     },
+     "items": [
+      "roller-coaster",
+      "ferris-wheel",
+      "carousel-horse",
+      "soft-ice-cream"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Yazı aletleri",
+      "en": "Writing tools"
+     },
+     "items": [
+      "pen",
+      "pencil",
+      "fountain-pen",
+      "black-nib"
+     ],
+     "alsoFits": {
+      "paintbrush": "Kâğıda iz bırakır ama resim fırçası; sahte delil"
+     }
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Kemik",
+      "en": "Bones"
+     },
+     "items": [
+      "bone",
+      "skull",
+      "sauropod",
+      "tooth"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Kapı",
+      "en": "Doors"
+     },
+     "items": [
+      "door",
+      "old-key",
+      "locked",
+      "unlocked"
+     ]
+    }
+   ],
+   "decoys": [
+    "paintbrush"
+   ]
+  },
+  {
+   "id": "daily_059",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Gece avcıları",
+      "en": "Night hunters"
+     },
+     "items": [
+      "owl",
+      "bat",
+      "raccoon",
+      "hedgehog"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Okyanus",
+      "en": "Ocean"
+     },
+     "items": [
+      "whale",
+      "dolphin",
+      "shark",
+      "octopus"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Dikiş",
+      "en": "Sewing"
+     },
+     "items": [
+      "sewing-needle",
+      "thread",
+      "yarn",
+      "scissors"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Üflemeli çalgılar",
+      "en": "Wind instruments"
+     },
+     "items": [
+      "trumpet",
+      "saxophone",
+      "flute"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "daily_060",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Ateş",
+      "en": "Fire"
+     },
+     "items": [
+      "fire",
+      "fireworks",
+      "candle",
+      "firecracker"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Göl kenarı",
+      "en": "Lakeside"
+     },
+     "items": [
+      "duck",
+      "frog",
+      "fishing-pole",
+      "canoe"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Kek ve pasta",
+      "en": "Cakes"
+     },
+     "items": [
+      "birthday-cake",
+      "cupcake",
+      "shortcake",
+      "moon-cake"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Yön bulmak",
+      "en": "Finding your way"
+     },
+     "items": [
+      "compass",
+      "world-map",
+      "round-pushpin",
+      "globe-with-meridians"
+     ]
+    }
+   ]
   }
  ]
 }

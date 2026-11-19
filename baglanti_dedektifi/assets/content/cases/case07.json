@@ -1,0 +1,779 @@
+{
+ "id": "case07",
+ "order": 7,
+ "premium": true,
+ "pack": "case_pack_1",
+ "icon": "diya-lamp",
+ "title": {
+  "tr": "Sahte Antika",
+  "en": "The Fake Antique"
+ },
+ "intro": [
+  {
+   "icon": "diya-lamp",
+   "text": {
+    "tr": "Kapalı Çarşı'nın en eski antikacısı Nazım Usta, koleksiyonundaki eşsiz bronz kandilin sahtesiyle değiştirildiğini fark etti.",
+    "en": "Nazım, the oldest antique dealer in the Grand Bazaar, has realized that the unique bronze lamp in his collection was swapped for a fake."
+   }
+  },
+  {
+   "icon": "balance-scale",
+   "text": {
+    "tr": "Gerçek kandil bu akşam bir açık artırmada satılacak. Satıştan önce sahtekârı bulmalısın.",
+    "en": "The real lamp will be sold at an auction this evening. You have to find the forger before the sale."
+   }
+  }
+ ],
+ "suspects": [
+  {
+   "id": "rifat",
+   "icon": "man-white-hair",
+   "name": {
+    "tr": "Rıfat",
+    "en": "Rıfat"
+   },
+   "role": {
+    "tr": "Rakip antikacı",
+    "en": "Rival dealer"
+   },
+   "bio": {
+    "tr": "Nazım Usta'yla kırk yıllık rakip. Kandile yıllardır göz koyduğu biliniyor.",
+    "en": "Nazım's rival for forty years. Everyone knows he has coveted the lamp for years."
+   }
+  },
+  {
+   "id": "seda",
+   "icon": "woman-scientist",
+   "name": {
+    "tr": "Seda",
+    "en": "Seda"
+   },
+   "role": {
+    "tr": "Restoratör",
+    "en": "Restorer"
+   },
+   "bio": {
+    "tr": "Çarşının en iyi restoratörü. Kandili geçen hafta temizlik için atölyesine götürdü.",
+    "en": "The best restorer in the bazaar. She took the lamp to her workshop for cleaning last week."
+   }
+  },
+  {
+   "id": "ozan",
+   "icon": "man-curly-hair",
+   "name": {
+    "tr": "Ozan",
+    "en": "Ozan"
+   },
+   "role": {
+    "tr": "Çırak",
+    "en": "Apprentice"
+   },
+   "bio": {
+    "tr": "Nazım Usta'nın genç çırağı. Dükkânın anahtarı onda da var.",
+    "en": "Nazım's young apprentice. He has a key to the shop as well."
+   }
+  },
+  {
+   "id": "lale",
+   "icon": "woman-in-tuxedo",
+   "name": {
+    "tr": "Lale",
+    "en": "Lale"
+   },
+   "role": {
+    "tr": "Müzayede sahibi",
+    "en": "Auctioneer"
+   },
+   "bio": {
+    "tr": "Bu akşamki açık artırmayı o yönetecek. Komisyonu satış fiyatına bağlı.",
+    "en": "She runs tonight's auction. Her commission depends on the sale price."
+   }
+  }
+ ],
+ "clues": [
+  {
+   "id": "c1",
+   "text": {
+    "tr": "Sahte kandil yeni yapılmış ama eskitilmiş; üzerinde çayla yapılmış yapay bir patina var.",
+    "en": "The fake lamp is newly made but aged on purpose, with an artificial patina made from tea."
+   }
+  },
+  {
+   "id": "c2",
+   "text": {
+    "tr": "Gerçek kandili en son, pazartesi temizlik için atölyesine götüren Seda gördü.",
+    "en": "The last person to see the real lamp was Seda, who took it to her workshop for cleaning on Monday."
+   }
+  },
+  {
+   "id": "c3",
+   "text": {
+    "tr": "Rıfat'ın dükkânı bütün hafta kapalıydı; İzmir'deki bir fuarda olduğu biletlerle doğrulandı.",
+    "en": "Rıfat's shop was closed all week; tickets confirm he was at a fair in İzmir."
+   }
+  },
+  {
+   "id": "c4",
+   "text": {
+    "tr": "Çırak Ozan'ın cebinden kandilin fotoğrafları çıktı.",
+    "en": "Photos of the lamp were found in apprentice Ozan's pocket."
+   }
+  },
+  {
+   "id": "c5",
+   "text": {
+    "tr": "Ozan, fotoğrafları ustası katalog için istediği için çektiğini söylüyor; katalog taslağı bunu doğruluyor.",
+    "en": "Ozan says he took the photos because his master wanted them for a catalogue; the draft catalogue confirms it."
+   }
+  },
+  {
+   "id": "c6",
+   "text": {
+    "tr": "Lale'nin kataloğunda kandil, \"sahibi değişti\" notuyla yer alıyor.",
+    "en": "Lale's catalogue lists the lamp with the note \"ownership changed\"."
+   }
+  },
+  {
+   "id": "c7",
+   "text": {
+    "tr": "Lale, notu satıcının isteğiyle yazdığını söylüyor. Satıcı olarak sahte bir isim verilmiş.",
+    "en": "Lale says she added the note at the seller's request. The seller gave a false name."
+   }
+  },
+  {
+   "id": "c8",
+   "text": {
+    "tr": "Sahte kandilin içindeki kalıp izleri, Seda'nın atölyesindeki silikon kalıpla birebir aynı.",
+    "en": "The mould marks inside the fake lamp match the silicone mould in Seda's workshop exactly."
+   }
+  },
+  {
+   "id": "c9",
+   "text": {
+    "tr": "Sahte ismin yazıldığı satış formundaki el yazısı, Seda'nın restorasyon raporlarındaki yazıyla eşleşiyor.",
+    "en": "The handwriting on the sales form with the false name matches the handwriting in Seda's restoration reports."
+   }
+  },
+  {
+   "id": "c10",
+   "text": {
+    "tr": "Seda'nın dolabında, eskitme için kullanılan çay kazanı ve gerçek kandilin kadife kutusu bulundu.",
+    "en": "In Seda's cupboard were the tea pot used for ageing and the velvet box of the real lamp."
+   }
+  }
+ ],
+ "boards": [
+  {
+   "id": "case07_b01",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Baharat",
+      "en": "Spices"
+     },
+     "items": [
+      "hot-pepper",
+      "garlic",
+      "ginger-root",
+      "herb"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Antikacıda",
+      "en": "In the antique shop"
+     },
+     "items": [
+      "amphora",
+      "scroll",
+      "diya-lamp",
+      "crossed-swords"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Kumaşlar",
+      "en": "Fabrics"
+     },
+     "items": [
+      "yarn",
+      "thread",
+      "kimono",
+      "sari"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Tatlılar",
+      "en": "Sweets"
+     },
+     "items": [
+      "candy",
+      "honey-pot",
+      "doughnut",
+      "custard"
+     ]
+    }
+   ],
+   "clue": "c1"
+  },
+  {
+   "id": "case07_b02",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Altın sarısı",
+      "en": "Golden"
+     },
+     "items": [
+      "trophy",
+      "bell",
+      "coin",
+      "trumpet"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Çay bahçesi",
+      "en": "Tea garden"
+     },
+     "items": [
+      "teapot",
+      "hot-beverage",
+      "lemon",
+      "bagel"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Kedigiller",
+      "en": "Big cats"
+     },
+     "items": [
+      "cat",
+      "lion",
+      "tiger",
+      "leopard"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Tartı ve ölçü",
+      "en": "Weights and measures"
+     },
+     "items": [
+      "balance-scale",
+      "straight-ruler",
+      "abacus",
+      "thermometer"
+     ]
+    }
+   ],
+   "clue": "c2"
+  },
+  {
+   "id": "case07_b03",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Restorasyon atölyesi",
+      "en": "Restoration workshop"
+     },
+     "items": [
+      "paintbrush",
+      "sponge",
+      "magnifying-glass-tilted-right",
+      "toolbox"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Kalıba dökülür",
+      "en": "Cast in a mould"
+     },
+     "items": [
+      "ice",
+      "candle",
+      "chocolate-bar",
+      "brick"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Örülür",
+      "en": "Woven"
+     },
+     "items": [
+      "basket",
+      "nest-with-eggs",
+      "spider-web",
+      "scarf"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Çok eski",
+      "en": "Ancient"
+     },
+     "items": [
+      "sauropod",
+      "mammoth",
+      "moai",
+      "amphora"
+     ]
+    }
+   ],
+   "decoys": [
+    "hot-beverage"
+   ],
+   "clue": "c3"
+  },
+  {
+   "id": "case07_b04",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Işık verir",
+      "en": "Gives light"
+     },
+     "items": [
+      "diya-lamp",
+      "candle",
+      "red-paper-lantern",
+      "light-bulb"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Para",
+      "en": "Money"
+     },
+     "items": [
+      "dollar-banknote",
+      "euro-banknote",
+      "coin",
+      "money-bag"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Kuşlar",
+      "en": "Birds"
+     },
+     "items": [
+      "parrot",
+      "dove",
+      "eagle",
+      "peacock"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Uğur getirir",
+      "en": "Brings luck"
+     },
+     "items": [
+      "four-leaf-clover",
+      "nazar-amulet",
+      "hamsa",
+      "crossed-fingers"
+     ]
+    }
+   ],
+   "clue": "c4"
+  },
+  {
+   "id": "case07_b05",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Fotoğraf",
+      "en": "Photography"
+     },
+     "items": [
+      "camera",
+      "camera-with-flash",
+      "framed-picture",
+      "selfie"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Fal",
+      "en": "Fortune telling"
+     },
+     "items": [
+      "crystal-ball",
+      "fortune-cookie",
+      "flower-playing-cards"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Yazı yazar",
+      "en": "Writes"
+     },
+     "items": [
+      "fountain-pen",
+      "pen",
+      "pencil",
+      "black-nib"
+     ],
+     "alsoFits": {
+      "crayon": "Çizer ama yazı aracı değil; sahte delil"
+     }
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Şekiller",
+      "en": "Shapes"
+     },
+     "items": [
+      "red-triangle",
+      "blue-circle",
+      "green-square",
+      "large-orange-diamond"
+     ]
+    }
+   ],
+   "decoys": [
+    "crayon"
+   ],
+   "clue": "c5"
+  },
+  {
+   "id": "case07_b06",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Alışveriş",
+      "en": "Shopping"
+     },
+     "items": [
+      "shopping-bags",
+      "shopping-cart",
+      "receipt",
+      "credit-card"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Mutfak gereçleri",
+      "en": "Kitchen tools"
+     },
+     "items": [
+      "kitchen-knife",
+      "spoon",
+      "chopsticks",
+      "cooking"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Deniz kıyısından",
+      "en": "Found at the seaside"
+     },
+     "items": [
+      "spiral-shell",
+      "coral",
+      "crab",
+      "oyster"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Yaşam evreleri",
+      "en": "Stages of life"
+     },
+     "items": [
+      "baby",
+      "child",
+      "person",
+      "older-person"
+     ]
+    }
+   ],
+   "clue": "c6"
+  },
+  {
+   "id": "case07_b07",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Eski oyuncaklar",
+      "en": "Old toys"
+     },
+     "items": [
+      "nesting-dolls",
+      "yo-yo",
+      "kite",
+      "teddy-bear"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Kaynar",
+      "en": "Boils"
+     },
+     "items": [
+      "teapot",
+      "pot-of-food",
+      "hot-springs",
+      "steaming-bowl"
+     ],
+     "alsoFits": {
+      "ice": "Kaynamanın tam tersi; sahte delil"
+     }
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Sarı",
+      "en": "Yellow"
+     },
+     "items": [
+      "banana",
+      "lemon",
+      "sunflower",
+      "baby-chick"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Değerli",
+      "en": "Valuable"
+     },
+     "items": [
+      "gem-stone",
+      "ring",
+      "crown",
+      "money-bag"
+     ]
+    }
+   ],
+   "decoys": [
+    "ice",
+    "cherries"
+   ],
+   "clue": "c7"
+  },
+  {
+   "id": "case07_b08",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Restoratörün eşyaları",
+      "en": "Restorer's kit"
+     },
+     "items": [
+      "paintbrush",
+      "magnifying-glass-tilted-right",
+      "sponge",
+      "scissors",
+      "lab-coat"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Eski taşıtlar",
+      "en": "Old ways to travel"
+     },
+     "items": [
+      "horse",
+      "camel",
+      "sailboat",
+      "locomotive"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Gürültülü",
+      "en": "Loud"
+     },
+     "items": [
+      "loudspeaker",
+      "drum",
+      "firecracker",
+      "megaphone"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Sabah",
+      "en": "Morning"
+     },
+     "items": [
+      "sunrise",
+      "rooster",
+      "alarm-clock"
+     ]
+    }
+   ],
+   "clue": "c8"
+  },
+  {
+   "id": "case07_b09",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Belgeler",
+      "en": "Documents"
+     },
+     "items": [
+      "page-facing-up",
+      "scroll",
+      "receipt",
+      "identification-card"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Acı yemekler",
+      "en": "Spicy food"
+     },
+     "items": [
+      "hot-pepper",
+      "curry-rice",
+      "taco",
+      "burrito"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Su tutar",
+      "en": "Holds water"
+     },
+     "items": [
+      "bucket",
+      "jar",
+      "bathtub",
+      "amphora"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Gece pazarı ışıkları",
+      "en": "Night market lights"
+     },
+     "items": [
+      "red-paper-lantern",
+      "candle",
+      "diya-lamp",
+      "flashlight"
+     ]
+    }
+   ],
+   "decoys": [
+    "cactus",
+    "bread"
+   ],
+   "clue": "c9"
+  },
+  {
+   "id": "case07_b10",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Sahtekârın masası",
+      "en": "The forger's desk"
+     },
+     "items": [
+      "fountain-pen",
+      "paintbrush",
+      "scissors",
+      "page-facing-up",
+      "magnifying-glass-tilted-left"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Hazine",
+      "en": "Treasure"
+     },
+     "items": [
+      "gem-stone",
+      "crown",
+      "ring",
+      "trophy",
+      "coin"
+     ],
+     "alsoFits": {
+      "receipt": "Parayla ilgili ama değeri yok; sahte delil"
+     }
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Yumuşak",
+      "en": "Soft"
+     },
+     "items": [
+      "teddy-bear",
+      "feather",
+      "yarn",
+      "sponge"
+     ],
+     "alsoFits": {
+      "rock": "Yumuşağın tam tersi; sahte delil"
+     }
+    }
+   ],
+   "decoys": [
+    "rock",
+    "receipt"
+   ],
+   "clue": "c10"
+  }
+ ],
+ "culprit": "seda",
+ "proof": [
+  "c8",
+  "c9",
+  "c10"
+ ],
+ "ending": {
+  "tr": "Seda, kandilin bir kopyasını yapıp gerçeğini sahte bir isimle satışa çıkarmıştı. Açık artırma durduruldu ve gerçek kandil, Nazım Usta'nın vitrinindeki yerine döndü.",
+  "en": "Seda had made a copy of the lamp and put the real one up for sale under a false name. The auction was halted, and the real lamp went back to its place in Nazım's window."
+ },
+ "teaser": {
+  "tr": "Nazım Usta teşekkür ederken eline eski bir film afişi tutuşturdu: \"Bunu da bir gün çözersin.\"",
+  "en": "As Nazım thanked you, he pressed an old film poster into your hand: \"You'll solve this one too, someday.\""
+ }
+}
