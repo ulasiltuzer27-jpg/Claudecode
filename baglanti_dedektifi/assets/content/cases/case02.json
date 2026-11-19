@@ -1,0 +1,817 @@
+{
+ "id": "case02",
+ "order": 2,
+ "premium": false,
+ "icon": "locomotive",
+ "title": {
+  "tr": "Liman Ekspresi",
+  "en": "The Harbor Express"
+ },
+ "intro": [
+  {
+   "icon": "locomotive",
+   "text": {
+    "tr": "Gece yarısı kalkan Liman Ekspresi'nde bir kurye, mikrofilmin ikinci yarısını taşıyor.",
+    "en": "On the midnight Harbor Express, a courier is carrying the second half of the microfilm."
+   }
+  },
+  {
+   "icon": "hot-beverage",
+   "text": {
+    "tr": "Kurye yemekli vagonda çayını içtikten sonra derin bir uykuya daldı. Uyandığında çantası boştu.",
+    "en": "After drinking his tea in the dining car, the courier fell into a deep sleep. When he woke, his case was empty."
+   }
+  },
+  {
+   "icon": "ticket",
+   "text": {
+    "tr": "Tren bir sonraki istasyona kadar durmayacak. Hırsız hâlâ vagonların birinde.",
+    "en": "The train will not stop until the next station. The thief is still somewhere on board."
+   }
+  }
+ ],
+ "suspects": [
+  {
+   "id": "hasan",
+   "icon": "old-man",
+   "name": {
+    "tr": "Hasan",
+    "en": "Hasan"
+   },
+   "role": {
+    "tr": "Kondüktör",
+    "en": "Conductor"
+   },
+   "bio": {
+    "tr": "Otuz yıldır bu hatta çalışıyor. Bütün kompartımanların anahtarı onda.",
+    "en": "He has worked this line for thirty years and holds the key to every compartment."
+   }
+  },
+  {
+   "id": "defne",
+   "icon": "woman-office-worker",
+   "name": {
+    "tr": "Defne",
+    "en": "Defne"
+   },
+   "role": {
+    "tr": "Gazeteci",
+    "en": "Journalist"
+   },
+   "bio": {
+    "tr": "Gölge hakkında bir haberin peşinde. Fotoğraf makinesini hiç elinden bırakmıyor.",
+    "en": "She is chasing a story about the Shadow and never lets go of her camera."
+   }
+  },
+  {
+   "id": "kemal",
+   "icon": "man-health-worker",
+   "name": {
+    "tr": "Kemal",
+    "en": "Kemal"
+   },
+   "role": {
+    "tr": "Doktor",
+    "en": "Doctor"
+   },
+   "bio": {
+    "tr": "Kuryeyle aynı vagonda seyahat ediyor. Çantasında ilaçlar taşıyor.",
+    "en": "He is travelling in the same car as the courier and carries a bag of medicine."
+   }
+  },
+  {
+   "id": "tolga",
+   "icon": "man-in-tuxedo",
+   "name": {
+    "tr": "Tolga",
+    "en": "Tolga"
+   },
+   "role": {
+    "tr": "Kumarbaz",
+    "en": "Gambler"
+   },
+   "bio": {
+    "tr": "Bütün gece yemekli vagonda kâğıt oynadı. Borçları kabarık.",
+    "en": "He played cards in the dining car all night. He is deep in debt."
+   }
+  }
+ ],
+ "clues": [
+  {
+   "id": "c1",
+   "text": {
+    "tr": "Kuryenin çayına güçlü bir uyku ilacı katılmış.",
+    "en": "A strong sleeping drug was slipped into the courier's tea."
+   }
+  },
+  {
+   "id": "c2",
+   "text": {
+    "tr": "Çay 23.40'ta servis edildi; kurye 23.55'te uyuyordu.",
+    "en": "The tea was served at 11:40 pm; by 11:55 the courier was asleep."
+   }
+  },
+  {
+   "id": "c3",
+   "text": {
+    "tr": "Defne'nin fotoğraflarının hepsi 23.30 ile 00.30 arasında arka vagonda çekilmiş; saat damgaları hiç kesilmiyor.",
+    "en": "All of Defne's photos were taken in the rear car between 11:30 pm and 12:30 am; the timestamps never break."
+   }
+  },
+  {
+   "id": "c4",
+   "text": {
+    "tr": "Doktor Kemal'in ilaç çantasından bir şişe eksik.",
+    "en": "A vial is missing from Doctor Kemal's medical bag."
+   }
+  },
+  {
+   "id": "c5",
+   "text": {
+    "tr": "Tolga'nın büyük bir kumar borcu var ve alacaklıları da bu trende.",
+    "en": "Tolga owes a huge gambling debt, and his creditors are on this train."
+   }
+  },
+  {
+   "id": "c6",
+   "text": {
+    "tr": "Kondüktör Hasan'ın anahtarı 00.10'da kuryenin kompartımanını açmış.",
+    "en": "Conductor Hasan's key opened the courier's compartment at 12:10 am."
+   }
+  },
+  {
+   "id": "c7",
+   "text": {
+    "tr": "Hasan, kuryeyi baygın bulup kapıyı açtığını ve hemen yardım çağırdığını söylüyor. Makinist bunu doğruluyor.",
+    "en": "Hasan says he found the courier unconscious, opened the door and called for help at once. The engineer confirms it."
+   }
+  },
+  {
+   "id": "c8",
+   "text": {
+    "tr": "Tolga bütün gece kâğıt masasından kalkmadı; beş oyuncu buna tanık.",
+    "en": "Tolga never left the card table all night; five players are witnesses."
+   }
+  },
+  {
+   "id": "c9",
+   "text": {
+    "tr": "Çay bardağının kenarında eldiven pudrası var: tıbbi eldivenlerde kullanılan türden.",
+    "en": "There is glove powder on the rim of the tea glass: the kind used in medical gloves."
+   }
+  },
+  {
+   "id": "c10",
+   "text": {
+    "tr": "Kemal'in steteskop kutusunun astarı yeni dikilmiş ve içinde mikrofilm büyüklüğünde bir cep var.",
+    "en": "The lining of Kemal's stethoscope case has been freshly stitched, leaving a microfilm-sized pocket."
+   }
+  }
+ ],
+ "boards": [
+  {
+   "id": "case02_b01",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Tren yolculuğu",
+      "en": "Train journey"
+     },
+     "items": [
+      "ticket",
+      "luggage",
+      "railway-track",
+      "station"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Kahvaltılık",
+      "en": "Breakfast"
+     },
+     "items": [
+      "croissant",
+      "cheese-wedge",
+      "olive",
+      "honey-pot"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Böcekler",
+      "en": "Insects"
+     },
+     "items": [
+      "honeybee",
+      "lady-beetle",
+      "ant",
+      "butterfly"
+     ],
+     "alsoFits": {
+      "honey-pot": "Arıyla ilgili ama bir kahvaltılık"
+     }
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Yazı yazar",
+      "en": "Writes"
+     },
+     "items": [
+      "pen",
+      "pencil",
+      "fountain-pen",
+      "crayon"
+     ]
+    }
+   ],
+   "clue": "c1"
+  },
+  {
+   "id": "case02_b02",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "İlaç ve sağlık",
+      "en": "Medicine"
+     },
+     "items": [
+      "pill",
+      "syringe",
+      "stethoscope",
+      "adhesive-bandage"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Uykuya dair",
+      "en": "About sleep"
+     },
+     "items": [
+      "bed",
+      "zzz",
+      "teddy-bear",
+      "night-with-stars"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Çay saati",
+      "en": "Tea time"
+     },
+     "items": [
+      "teapot",
+      "hot-beverage",
+      "lemon",
+      "cookie"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Kahverengi",
+      "en": "Brown"
+     },
+     "items": [
+      "chestnut",
+      "brown-mushroom",
+      "chocolate-bar",
+      "bear"
+     ],
+     "alsoFits": {
+      "cookie": "Kahverengi ama çay saatinin parçası"
+     }
+    }
+   ],
+   "clue": "c2"
+  },
+  {
+   "id": "case02_b03",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Şans oyunları",
+      "en": "Games of chance"
+     },
+     "items": [
+      "slot-machine",
+      "game-die",
+      "joker",
+      "coin"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Kış sporları",
+      "en": "Winter sports"
+     },
+     "items": [
+      "skis",
+      "ice-skate",
+      "sled",
+      "curling-stone"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Yuvarlak",
+      "en": "Round"
+     },
+     "items": [
+      "wheel",
+      "full-moon",
+      "soccer-ball",
+      "globe-showing-americas"
+     ],
+     "alsoFits": {
+      "coin": "Yuvarlak ama bir şans oyunu",
+      "curling-stone": "Yuvarlak ama bir kış sporu"
+     }
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Kuyruklu",
+      "en": "Has a tail"
+     },
+     "items": [
+      "comet",
+      "kite",
+      "fox",
+      "scorpion"
+     ]
+    }
+   ],
+   "clue": "c3"
+  },
+  {
+   "id": "case02_b04",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Gazetecinin çantası",
+      "en": "A reporter's kit"
+     },
+     "items": [
+      "camera",
+      "newspaper",
+      "microphone",
+      "spiral-notepad"
+     ],
+     "alsoFits": {
+      "mobile-phone": "Gazeteciler kullanır ama cebe sığanlar grubunda"
+     }
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Gökyüzünde",
+      "en": "In the sky"
+     },
+     "items": [
+      "ringed-planet",
+      "shooting-star",
+      "milky-way",
+      "sun"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Yeşil meyveler",
+      "en": "Green fruits"
+     },
+     "items": [
+      "lime",
+      "green-apple",
+      "kiwi-fruit",
+      "pear"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Cebe sığar",
+      "en": "Fits in a pocket"
+     },
+     "items": [
+      "old-key",
+      "mobile-phone",
+      "coin",
+      "safety-pin"
+     ]
+    }
+   ],
+   "clue": "c4"
+  },
+  {
+   "id": "case02_b05",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Sıcak yemekler",
+      "en": "Hot dishes"
+     },
+     "items": [
+      "steaming-bowl",
+      "pot-of-food",
+      "curry-rice",
+      "spaghetti"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Gece avlanır",
+      "en": "Hunts at night"
+     },
+     "items": [
+      "owl",
+      "bat",
+      "raccoon",
+      "hedgehog"
+     ],
+     "alsoFits": {
+      "paw-prints": "Hayvan izi ama olay yerindeki izlerden"
+     }
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Ellere takılır",
+      "en": "Worn on the hands"
+     },
+     "items": [
+      "gloves",
+      "boxing-glove",
+      "ring",
+      "watch"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Olay yerindeki izler",
+      "en": "Traces at a crime scene"
+     },
+     "items": [
+      "footprints",
+      "paw-prints",
+      "drop-of-blood",
+      "cigarette"
+     ]
+    }
+   ],
+   "clue": "c5"
+  },
+  {
+   "id": "case02_b06",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Raylı taşıtlar",
+      "en": "Rail vehicles"
+     },
+     "items": [
+      "locomotive",
+      "railway-car",
+      "tram",
+      "metro"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Su altında",
+      "en": "Underwater"
+     },
+     "items": [
+      "diving-mask",
+      "shark",
+      "coral",
+      "jellyfish"
+     ],
+     "alsoFits": {
+      "fish": "Suda yaşar ama kokusu ağır",
+      "anchor": "Suya batar ama sahte delil"
+     }
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Uyarı işaretleri",
+      "en": "Warning signs"
+     },
+     "items": [
+      "warning",
+      "no-entry",
+      "prohibited",
+      "construction"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Ağır kokar",
+      "en": "Smells strong"
+     },
+     "items": [
+      "garlic",
+      "onion",
+      "skunk",
+      "fish"
+     ]
+    }
+   ],
+   "decoys": [
+    "anchor"
+   ],
+   "clue": "c6"
+  },
+  {
+   "id": "case02_b07",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Kuşlar",
+      "en": "Birds"
+     },
+     "items": [
+      "parrot",
+      "flamingo",
+      "peacock",
+      "penguin"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Tuzlu atıştırmalık",
+      "en": "Salty snacks"
+     },
+     "items": [
+      "pretzel",
+      "popcorn",
+      "french-fries",
+      "peanuts"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Gizli belgeler",
+      "en": "Secret documents"
+     },
+     "items": [
+      "envelope",
+      "locked-with-key",
+      "file-folder",
+      "scroll"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Üflemeli çalgılar",
+      "en": "Wind instruments"
+     },
+     "items": [
+      "trumpet",
+      "saxophone",
+      "flute"
+     ],
+     "alsoFits": {
+      "violin": "Çalgı ama yaylı; sahte delil"
+     }
+    }
+   ],
+   "decoys": [
+    "violin"
+   ],
+   "clue": "c7"
+  },
+  {
+   "id": "case02_b08",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Kış giysileri",
+      "en": "Winter clothes"
+     },
+     "items": [
+      "coat",
+      "scarf",
+      "socks",
+      "womans-boot"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Pizza malzemeleri",
+      "en": "Pizza toppings"
+     },
+     "items": [
+      "tomato",
+      "olive",
+      "bell-pepper",
+      "cheese-wedge"
+     ],
+     "alsoFits": {
+      "mushroom": "Pizzaya konabilir ama zehirli olanlardan"
+     }
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Zehirli",
+      "en": "Poisonous"
+     },
+     "items": [
+      "mushroom",
+      "snake",
+      "spider",
+      "blowfish"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Daha iyi görmek için alet",
+      "en": "Tools for seeing better"
+     },
+     "items": [
+      "magnifying-glass-tilted-left",
+      "telescope",
+      "microscope",
+      "glasses"
+     ],
+     "alsoFits": {
+      "eye": "Görmeye yarar ama bir alet değil; sahte delil"
+     }
+    }
+   ],
+   "decoys": [
+    "eye"
+   ],
+   "clue": "c8"
+  },
+  {
+   "id": "case02_b09",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Saati söyler",
+      "en": "Tells the time"
+     },
+     "items": [
+      "alarm-clock",
+      "hourglass-done",
+      "stopwatch",
+      "mantelpiece-clock",
+      "watch"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Yemekli vagonda",
+      "en": "In the dining car"
+     },
+     "items": [
+      "fork-and-knife-with-plate",
+      "wine-glass",
+      "baguette-bread",
+      "salt"
+     ],
+     "alsoFits": {
+      "candle": "Akşam yemeğinde yanar ama ışık saçanlar grubunda"
+     }
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Masa oyunları",
+      "en": "Tabletop games"
+     },
+     "items": [
+      "joker",
+      "mahjong-red-dragon",
+      "chess-pawn",
+      "game-die"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Işık saçar",
+      "en": "Gives off light"
+     },
+     "items": [
+      "light-bulb",
+      "flashlight",
+      "candle"
+     ]
+    }
+   ],
+   "clue": "c9"
+  },
+  {
+   "id": "case02_b10",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Doktorun çantasında",
+      "en": "In a doctor's bag"
+     },
+     "items": [
+      "stethoscope",
+      "syringe",
+      "thermometer",
+      "pill"
+     ],
+     "alsoFits": {
+      "lab-coat": "Doktor giyer ama çantada taşınmaz; sahte delil"
+     }
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Kılık değiştirme",
+      "en": "Disguise kit"
+     },
+     "items": [
+      "sunglasses",
+      "top-hat",
+      "performing-arts",
+      "lipstick"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Raylarda gider",
+      "en": "Runs on rails"
+     },
+     "items": [
+      "roller-coaster",
+      "mountain-railway",
+      "monorail",
+      "light-rail"
+     ],
+     "alsoFits": {
+      "ferris-wheel": "Lunaparkta ama raylı değil; sahte delil"
+     }
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Sır saklar",
+      "en": "Keeps a secret"
+     },
+     "items": [
+      "locked",
+      "notebook-with-decorative-cover",
+      "zipper-mouth-face",
+      "file-cabinet"
+     ]
+    }
+   ],
+   "decoys": [
+    "lab-coat",
+    "ferris-wheel"
+   ],
+   "clue": "c10"
+  }
+ ],
+ "culprit": "kemal",
+ "proof": [
+  "c4",
+  "c9",
+  "c10"
+ ],
+ "ending": {
+  "tr": "Doktor Kemal kimin için çalıştığını söylemedi ama mikrofilm steteskop kutusunun astarından çıktı. İki yarı birleşince bir harita ortaya çıktı: şehrin kuzeyindeki eski fener.",
+  "en": "Doctor Kemal would not say who he worked for, but the microfilm came out of the lining of his stethoscope case. When the two halves were joined, they revealed a map: the old lighthouse north of the city."
+ },
+ "teaser": {
+  "tr": "Haritanın köşesinde el yazısıyla bir not var: \"Sisli gecede fener söner.\" Hava durumu: yarın gece yoğun sis.",
+  "en": "A handwritten note sits in the corner of the map: \"On a foggy night, the light goes out.\" Tomorrow's forecast: thick fog."
+ }
+}

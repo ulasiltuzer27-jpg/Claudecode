@@ -1,0 +1,2154 @@
+{
+ "items": {
+  "1st-place-medal": {
+   "icon": "1st-place-medal",
+   "tr": "Altın madalya",
+   "en": "Gold medal"
+  },
+  "accordion": {
+   "icon": "accordion",
+   "tr": "Akordeon",
+   "en": "Accordion"
+  },
+  "adhesive-bandage": {
+   "icon": "adhesive-bandage",
+   "tr": "Yara bandı",
+   "en": "Bandage"
+  },
+  "admission-tickets": {
+   "icon": "admission-tickets",
+   "tr": "Sinema bileti",
+   "en": "Movie tickets"
+  },
+  "airplane": {
+   "icon": "airplane",
+   "tr": "Uçak",
+   "en": "Airplane"
+  },
+  "airplane-departure": {
+   "icon": "airplane-departure",
+   "tr": "Kalkış",
+   "en": "Departure"
+  },
+  "alarm-clock": {
+   "icon": "alarm-clock",
+   "tr": "Çalar saat",
+   "en": "Alarm clock"
+  },
+  "alembic": {
+   "icon": "alembic",
+   "tr": "İmbik",
+   "en": "Alembic"
+  },
+  "ambulance": {
+   "icon": "ambulance",
+   "tr": "Ambulans",
+   "en": "Ambulance"
+  },
+  "amphora": {
+   "icon": "amphora",
+   "tr": "Amfora",
+   "en": "Amphora"
+  },
+  "anchor": {
+   "icon": "anchor",
+   "tr": "Çapa",
+   "en": "Anchor"
+  },
+  "ant": {
+   "icon": "ant",
+   "tr": "Karınca",
+   "en": "Ant"
+  },
+  "artist-palette": {
+   "icon": "artist-palette",
+   "tr": "Palet",
+   "en": "Palette"
+  },
+  "axe": {
+   "icon": "axe",
+   "tr": "Balta",
+   "en": "Axe"
+  },
+  "bagel": {
+   "icon": "bagel",
+   "tr": "Simit",
+   "en": "Bagel"
+  },
+  "baguette-bread": {
+   "icon": "baguette-bread",
+   "tr": "Baget",
+   "en": "Baguette"
+  },
+  "balance-scale": {
+   "icon": "balance-scale",
+   "tr": "Terazi",
+   "en": "Scales"
+  },
+  "ballet-shoes": {
+   "icon": "ballet-shoes",
+   "tr": "Bale ayakkabısı",
+   "en": "Ballet shoes"
+  },
+  "balloon": {
+   "icon": "balloon",
+   "tr": "Balon",
+   "en": "Balloon"
+  },
+  "banana": {
+   "icon": "banana",
+   "tr": "Muz",
+   "en": "Banana"
+  },
+  "barber-pole": {
+   "icon": "barber-pole",
+   "tr": "Berber direği",
+   "en": "Barber pole"
+  },
+  "baseball": {
+   "icon": "baseball",
+   "tr": "Beyzbol topu",
+   "en": "Baseball"
+  },
+  "basketball": {
+   "icon": "basketball",
+   "tr": "Basketbol topu",
+   "en": "Basketball"
+  },
+  "bat": {
+   "icon": "bat",
+   "tr": "Yarasa",
+   "en": "Bat"
+  },
+  "bathtub": {
+   "icon": "bathtub",
+   "tr": "Küvet",
+   "en": "Bathtub"
+  },
+  "beach-with-umbrella": {
+   "icon": "beach-with-umbrella",
+   "tr": "Plaj",
+   "en": "Beach"
+  },
+  "bear": {
+   "icon": "bear",
+   "tr": "Ayı",
+   "en": "Bear"
+  },
+  "beaver": {
+   "icon": "beaver",
+   "tr": "Kunduz",
+   "en": "Beaver"
+  },
+  "bed": {
+   "icon": "bed",
+   "tr": "Yatak",
+   "en": "Bed"
+  },
+  "bell": {
+   "icon": "bell",
+   "tr": "Çan",
+   "en": "Bell"
+  },
+  "bell-pepper": {
+   "icon": "bell-pepper",
+   "tr": "Biber",
+   "en": "Pepper"
+  },
+  "bellhop-bell": {
+   "icon": "bellhop-bell",
+   "tr": "Masa zili",
+   "en": "Service bell"
+  },
+  "bicycle": {
+   "icon": "bicycle",
+   "tr": "Bisiklet",
+   "en": "Bicycle"
+  },
+  "bikini": {
+   "icon": "bikini",
+   "tr": "Bikini",
+   "en": "Bikini"
+  },
+  "billed-cap": {
+   "icon": "billed-cap",
+   "tr": "Kasket",
+   "en": "Cap"
+  },
+  "birthday-cake": {
+   "icon": "birthday-cake",
+   "tr": "Pasta",
+   "en": "Cake"
+  },
+  "black-cat": {
+   "icon": "black-cat",
+   "tr": "Kara kedi",
+   "en": "Black cat"
+  },
+  "black-flag": {
+   "icon": "black-flag",
+   "tr": "Siyah bayrak",
+   "en": "Black flag"
+  },
+  "blackbird": {
+   "icon": "blackbird",
+   "tr": "Karatavuk",
+   "en": "Blackbird"
+  },
+  "blowfish": {
+   "icon": "blowfish",
+   "tr": "Balon balığı",
+   "en": "Pufferfish"
+  },
+  "blue-book": {
+   "icon": "blue-book",
+   "tr": "Mavi kitap",
+   "en": "Blue book"
+  },
+  "blueberries": {
+   "icon": "blueberries",
+   "tr": "Yaban mersini",
+   "en": "Blueberries"
+  },
+  "books": {
+   "icon": "books",
+   "tr": "Kitaplar",
+   "en": "Books"
+  },
+  "bouquet": {
+   "icon": "bouquet",
+   "tr": "Buket",
+   "en": "Bouquet"
+  },
+  "boxing-glove": {
+   "icon": "boxing-glove",
+   "tr": "Boks eldiveni",
+   "en": "Boxing glove"
+  },
+  "brain": {
+   "icon": "brain",
+   "tr": "Beyin",
+   "en": "Brain"
+  },
+  "bread": {
+   "icon": "bread",
+   "tr": "Ekmek",
+   "en": "Bread"
+  },
+  "broccoli": {
+   "icon": "broccoli",
+   "tr": "Brokoli",
+   "en": "Broccoli"
+  },
+  "brown-mushroom": {
+   "icon": "brown-mushroom",
+   "tr": "Mantar",
+   "en": "Mushroom"
+  },
+  "bubble-tea": {
+   "icon": "bubble-tea",
+   "tr": "Bubble tea",
+   "en": "Bubble tea"
+  },
+  "bus": {
+   "icon": "bus",
+   "tr": "Otobüs",
+   "en": "Bus"
+  },
+  "butter": {
+   "icon": "butter",
+   "tr": "Tereyağı",
+   "en": "Butter"
+  },
+  "butterfly": {
+   "icon": "butterfly",
+   "tr": "Kelebek",
+   "en": "Butterfly"
+  },
+  "calendar": {
+   "icon": "calendar",
+   "tr": "Takvim",
+   "en": "Calendar"
+  },
+  "camera": {
+   "icon": "camera",
+   "tr": "Fotoğraf makinesi",
+   "en": "Camera"
+  },
+  "candle": {
+   "icon": "candle",
+   "tr": "Mum",
+   "en": "Candle"
+  },
+  "candy": {
+   "icon": "candy",
+   "tr": "Şeker",
+   "en": "Candy"
+  },
+  "canoe": {
+   "icon": "canoe",
+   "tr": "Kano",
+   "en": "Canoe"
+  },
+  "carp-streamer": {
+   "icon": "carp-streamer",
+   "tr": "Rüzgâr flaması",
+   "en": "Windsock"
+  },
+  "carpentry-saw": {
+   "icon": "carpentry-saw",
+   "tr": "Testere",
+   "en": "Saw"
+  },
+  "carrot": {
+   "icon": "carrot",
+   "tr": "Havuç",
+   "en": "Carrot"
+  },
+  "castle": {
+   "icon": "castle",
+   "tr": "Şato",
+   "en": "Castle"
+  },
+  "chair": {
+   "icon": "chair",
+   "tr": "Sandalye",
+   "en": "Chair"
+  },
+  "cheese-wedge": {
+   "icon": "cheese-wedge",
+   "tr": "Peynir",
+   "en": "Cheese"
+  },
+  "chequered-flag": {
+   "icon": "chequered-flag",
+   "tr": "Damalı bayrak",
+   "en": "Checkered flag"
+  },
+  "cherries": {
+   "icon": "cherries",
+   "tr": "Kiraz",
+   "en": "Cherries"
+  },
+  "chess-pawn": {
+   "icon": "chess-pawn",
+   "tr": "Piyon",
+   "en": "Pawn"
+  },
+  "chestnut": {
+   "icon": "chestnut",
+   "tr": "Kestane",
+   "en": "Chestnut"
+  },
+  "chicken": {
+   "icon": "chicken",
+   "tr": "Tavuk",
+   "en": "Chicken"
+  },
+  "chocolate-bar": {
+   "icon": "chocolate-bar",
+   "tr": "Çikolata",
+   "en": "Chocolate"
+  },
+  "chopsticks": {
+   "icon": "chopsticks",
+   "tr": "Yemek çubukları",
+   "en": "Chopsticks"
+  },
+  "cigarette": {
+   "icon": "cigarette",
+   "tr": "Sigara izmariti",
+   "en": "Cigarette butt"
+  },
+  "clamp": {
+   "icon": "clamp",
+   "tr": "Mengene",
+   "en": "Clamp"
+  },
+  "clapper-board": {
+   "icon": "clapper-board",
+   "tr": "Klaket",
+   "en": "Clapperboard"
+  },
+  "cloud": {
+   "icon": "cloud",
+   "tr": "Bulut",
+   "en": "Cloud"
+  },
+  "cloud-with-lightning": {
+   "icon": "cloud-with-lightning",
+   "tr": "Şimşek",
+   "en": "Lightning"
+  },
+  "cloud-with-rain": {
+   "icon": "cloud-with-rain",
+   "tr": "Yağmur",
+   "en": "Rain"
+  },
+  "cloud-with-snow": {
+   "icon": "cloud-with-snow",
+   "tr": "Kar",
+   "en": "Snow"
+  },
+  "club-suit": {
+   "icon": "club-suit",
+   "tr": "Sinek",
+   "en": "Clubs"
+  },
+  "coat": {
+   "icon": "coat",
+   "tr": "Palto",
+   "en": "Coat"
+  },
+  "cocktail-glass": {
+   "icon": "cocktail-glass",
+   "tr": "Kokteyl",
+   "en": "Cocktail"
+  },
+  "coconut": {
+   "icon": "coconut",
+   "tr": "Hindistan cevizi",
+   "en": "Coconut"
+  },
+  "coffin": {
+   "icon": "coffin",
+   "tr": "Tabut",
+   "en": "Coffin"
+  },
+  "coin": {
+   "icon": "coin",
+   "tr": "Madeni para",
+   "en": "Coin"
+  },
+  "comet": {
+   "icon": "comet",
+   "tr": "Kuyruklu yıldız",
+   "en": "Comet"
+  },
+  "compass": {
+   "icon": "compass",
+   "tr": "Pusula",
+   "en": "Compass"
+  },
+  "confetti-ball": {
+   "icon": "confetti-ball",
+   "tr": "Konfeti",
+   "en": "Confetti"
+  },
+  "construction": {
+   "icon": "construction",
+   "tr": "Çalışma var",
+   "en": "Roadworks"
+  },
+  "cookie": {
+   "icon": "cookie",
+   "tr": "Kurabiye",
+   "en": "Cookie"
+  },
+  "coral": {
+   "icon": "coral",
+   "tr": "Mercan",
+   "en": "Coral"
+  },
+  "couch-and-lamp": {
+   "icon": "couch-and-lamp",
+   "tr": "Kanepe",
+   "en": "Sofa"
+  },
+  "cow": {
+   "icon": "cow",
+   "tr": "İnek",
+   "en": "Cow"
+  },
+  "crab": {
+   "icon": "crab",
+   "tr": "Yengeç",
+   "en": "Crab"
+  },
+  "crayon": {
+   "icon": "crayon",
+   "tr": "Pastel boya",
+   "en": "Crayon"
+  },
+  "credit-card": {
+   "icon": "credit-card",
+   "tr": "Kredi kartı",
+   "en": "Credit card"
+  },
+  "crescent-moon": {
+   "icon": "crescent-moon",
+   "tr": "Hilal",
+   "en": "Crescent moon"
+  },
+  "crocodile": {
+   "icon": "crocodile",
+   "tr": "Timsah",
+   "en": "Crocodile"
+  },
+  "croissant": {
+   "icon": "croissant",
+   "tr": "Kruvasan",
+   "en": "Croissant"
+  },
+  "crossed-swords": {
+   "icon": "crossed-swords",
+   "tr": "Kılıçlar",
+   "en": "Swords"
+  },
+  "crown": {
+   "icon": "crown",
+   "tr": "Taç",
+   "en": "Crown"
+  },
+  "crystal-ball": {
+   "icon": "crystal-ball",
+   "tr": "Kristal küre",
+   "en": "Crystal ball"
+  },
+  "cucumber": {
+   "icon": "cucumber",
+   "tr": "Salatalık",
+   "en": "Cucumber"
+  },
+  "cupcake": {
+   "icon": "cupcake",
+   "tr": "Kek",
+   "en": "Cupcake"
+  },
+  "curling-stone": {
+   "icon": "curling-stone",
+   "tr": "Körling taşı",
+   "en": "Curling stone"
+  },
+  "curry-rice": {
+   "icon": "curry-rice",
+   "tr": "Köri",
+   "en": "Curry"
+  },
+  "custard": {
+   "icon": "custard",
+   "tr": "Puding",
+   "en": "Pudding"
+  },
+  "cyclone": {
+   "icon": "cyclone",
+   "tr": "Kasırga",
+   "en": "Cyclone"
+  },
+  "dagger": {
+   "icon": "dagger",
+   "tr": "Hançer",
+   "en": "Dagger"
+  },
+  "deer": {
+   "icon": "deer",
+   "tr": "Geyik",
+   "en": "Deer"
+  },
+  "desktop-computer": {
+   "icon": "desktop-computer",
+   "tr": "Bilgisayar",
+   "en": "Computer"
+  },
+  "diamond-suit": {
+   "icon": "diamond-suit",
+   "tr": "Karo",
+   "en": "Diamonds"
+  },
+  "diving-mask": {
+   "icon": "diving-mask",
+   "tr": "Dalış maskesi",
+   "en": "Diving mask"
+  },
+  "diya-lamp": {
+   "icon": "diya-lamp",
+   "tr": "Kandil",
+   "en": "Oil lamp"
+  },
+  "dna": {
+   "icon": "dna",
+   "tr": "DNA",
+   "en": "DNA"
+  },
+  "dog": {
+   "icon": "dog",
+   "tr": "Köpek",
+   "en": "Dog"
+  },
+  "dollar-banknote": {
+   "icon": "dollar-banknote",
+   "tr": "Dolar",
+   "en": "Dollar"
+  },
+  "dolphin": {
+   "icon": "dolphin",
+   "tr": "Yunus",
+   "en": "Dolphin"
+  },
+  "doughnut": {
+   "icon": "doughnut",
+   "tr": "Donut",
+   "en": "Doughnut"
+  },
+  "dragon": {
+   "icon": "dragon",
+   "tr": "Ejderha",
+   "en": "Dragon"
+  },
+  "drop-of-blood": {
+   "icon": "drop-of-blood",
+   "tr": "Kan damlası",
+   "en": "Blood drop"
+  },
+  "droplet": {
+   "icon": "droplet",
+   "tr": "Damla",
+   "en": "Droplet"
+  },
+  "drum": {
+   "icon": "drum",
+   "tr": "Davul",
+   "en": "Drum"
+  },
+  "duck": {
+   "icon": "duck",
+   "tr": "Ördek",
+   "en": "Duck"
+  },
+  "eagle": {
+   "icon": "eagle",
+   "tr": "Kartal",
+   "en": "Eagle"
+  },
+  "ear": {
+   "icon": "ear",
+   "tr": "Kulak",
+   "en": "Ear"
+  },
+  "ear-of-corn": {
+   "icon": "ear-of-corn",
+   "tr": "Mısır",
+   "en": "Corn"
+  },
+  "egg": {
+   "icon": "egg",
+   "tr": "Yumurta",
+   "en": "Egg"
+  },
+  "eggplant": {
+   "icon": "eggplant",
+   "tr": "Patlıcan",
+   "en": "Eggplant"
+  },
+  "elephant": {
+   "icon": "elephant",
+   "tr": "Fil",
+   "en": "Elephant"
+  },
+  "envelope": {
+   "icon": "envelope",
+   "tr": "Zarf",
+   "en": "Envelope"
+  },
+  "euro-banknote": {
+   "icon": "euro-banknote",
+   "tr": "Euro",
+   "en": "Euro"
+  },
+  "ewe": {
+   "icon": "ewe",
+   "tr": "Koyun",
+   "en": "Sheep"
+  },
+  "eye": {
+   "icon": "eye",
+   "tr": "Göz",
+   "en": "Eye"
+  },
+  "fallen-leaf": {
+   "icon": "fallen-leaf",
+   "tr": "Kuru yaprak",
+   "en": "Fallen leaf"
+  },
+  "fax-machine": {
+   "icon": "fax-machine",
+   "tr": "Faks",
+   "en": "Fax"
+  },
+  "ferris-wheel": {
+   "icon": "ferris-wheel",
+   "tr": "Dönme dolap",
+   "en": "Ferris wheel"
+  },
+  "ferry": {
+   "icon": "ferry",
+   "tr": "Vapur",
+   "en": "Ferry"
+  },
+  "file-cabinet": {
+   "icon": "file-cabinet",
+   "tr": "Dosya dolabı",
+   "en": "File cabinet"
+  },
+  "file-folder": {
+   "icon": "file-folder",
+   "tr": "Dosya",
+   "en": "Folder"
+  },
+  "film-projector": {
+   "icon": "film-projector",
+   "tr": "Projektör",
+   "en": "Projector"
+  },
+  "fire": {
+   "icon": "fire",
+   "tr": "Ateş",
+   "en": "Fire"
+  },
+  "fire-engine": {
+   "icon": "fire-engine",
+   "tr": "İtfaiye",
+   "en": "Fire engine"
+  },
+  "fire-extinguisher": {
+   "icon": "fire-extinguisher",
+   "tr": "Yangın tüpü",
+   "en": "Extinguisher"
+  },
+  "fish": {
+   "icon": "fish",
+   "tr": "Balık",
+   "en": "Fish"
+  },
+  "fishing-pole": {
+   "icon": "fishing-pole",
+   "tr": "Olta",
+   "en": "Fishing rod"
+  },
+  "flamingo": {
+   "icon": "flamingo",
+   "tr": "Flamingo",
+   "en": "Flamingo"
+  },
+  "flashlight": {
+   "icon": "flashlight",
+   "tr": "El feneri",
+   "en": "Flashlight"
+  },
+  "flute": {
+   "icon": "flute",
+   "tr": "Flüt",
+   "en": "Flute"
+  },
+  "fly": {
+   "icon": "fly",
+   "tr": "Sinek",
+   "en": "Fly"
+  },
+  "flying-saucer": {
+   "icon": "flying-saucer",
+   "tr": "Uçan daire",
+   "en": "UFO"
+  },
+  "fog": {
+   "icon": "fog",
+   "tr": "Sis",
+   "en": "Fog"
+  },
+  "footprints": {
+   "icon": "footprints",
+   "tr": "Ayak izi",
+   "en": "Footprints"
+  },
+  "fork-and-knife": {
+   "icon": "fork-and-knife",
+   "tr": "Çatal bıçak",
+   "en": "Fork and knife"
+  },
+  "fork-and-knife-with-plate": {
+   "icon": "fork-and-knife-with-plate",
+   "tr": "Tabak",
+   "en": "Plate"
+  },
+  "fountain-pen": {
+   "icon": "fountain-pen",
+   "tr": "Dolma kalem",
+   "en": "Fountain pen"
+  },
+  "four-leaf-clover": {
+   "icon": "four-leaf-clover",
+   "tr": "Dört yapraklı yonca",
+   "en": "Four-leaf clover"
+  },
+  "fox": {
+   "icon": "fox",
+   "tr": "Tilki",
+   "en": "Fox"
+  },
+  "framed-picture": {
+   "icon": "framed-picture",
+   "tr": "Tablo",
+   "en": "Painting"
+  },
+  "french-fries": {
+   "icon": "french-fries",
+   "tr": "Patates kızartması",
+   "en": "Fries"
+  },
+  "frog": {
+   "icon": "frog",
+   "tr": "Kurbağa",
+   "en": "Frog"
+  },
+  "full-moon": {
+   "icon": "full-moon",
+   "tr": "Dolunay",
+   "en": "Full moon"
+  },
+  "game-die": {
+   "icon": "game-die",
+   "tr": "Zar",
+   "en": "Die"
+  },
+  "garlic": {
+   "icon": "garlic",
+   "tr": "Sarımsak",
+   "en": "Garlic"
+  },
+  "gem-stone": {
+   "icon": "gem-stone",
+   "tr": "Mücevher",
+   "en": "Gem"
+  },
+  "ghost": {
+   "icon": "ghost",
+   "tr": "Hayalet",
+   "en": "Ghost"
+  },
+  "glass-of-milk": {
+   "icon": "glass-of-milk",
+   "tr": "Süt",
+   "en": "Milk"
+  },
+  "glasses": {
+   "icon": "glasses",
+   "tr": "Gözlük",
+   "en": "Glasses"
+  },
+  "globe-showing-americas": {
+   "icon": "globe-showing-americas",
+   "tr": "Dünya",
+   "en": "Earth"
+  },
+  "globe-with-meridians": {
+   "icon": "globe-with-meridians",
+   "tr": "Küre",
+   "en": "Globe"
+  },
+  "gloves": {
+   "icon": "gloves",
+   "tr": "Eldiven",
+   "en": "Gloves"
+  },
+  "glowing-star": {
+   "icon": "glowing-star",
+   "tr": "Parlayan yıldız",
+   "en": "Glowing star"
+  },
+  "goggles": {
+   "icon": "goggles",
+   "tr": "Koruyucu gözlük",
+   "en": "Goggles"
+  },
+  "graduation-cap": {
+   "icon": "graduation-cap",
+   "tr": "Kep",
+   "en": "Graduation cap"
+  },
+  "grapes": {
+   "icon": "grapes",
+   "tr": "Üzüm",
+   "en": "Grapes"
+  },
+  "green-apple": {
+   "icon": "green-apple",
+   "tr": "Yeşil elma",
+   "en": "Green apple"
+  },
+  "guitar": {
+   "icon": "guitar",
+   "tr": "Gitar",
+   "en": "Guitar"
+  },
+  "hamburger": {
+   "icon": "hamburger",
+   "tr": "Hamburger",
+   "en": "Burger"
+  },
+  "hammer": {
+   "icon": "hammer",
+   "tr": "Çekiç",
+   "en": "Hammer"
+  },
+  "hatching-chick": {
+   "icon": "hatching-chick",
+   "tr": "Civciv",
+   "en": "Chick"
+  },
+  "headphone": {
+   "icon": "headphone",
+   "tr": "Kulaklık",
+   "en": "Headphones"
+  },
+  "heart-suit": {
+   "icon": "heart-suit",
+   "tr": "Kupa",
+   "en": "Hearts"
+  },
+  "hedgehog": {
+   "icon": "hedgehog",
+   "tr": "Kirpi",
+   "en": "Hedgehog"
+  },
+  "helicopter": {
+   "icon": "helicopter",
+   "tr": "Helikopter",
+   "en": "Helicopter"
+  },
+  "hibiscus": {
+   "icon": "hibiscus",
+   "tr": "Ebegümeci",
+   "en": "Hibiscus"
+  },
+  "high-heeled-shoe": {
+   "icon": "high-heeled-shoe",
+   "tr": "Topuklu",
+   "en": "High heel"
+  },
+  "hiking-boot": {
+   "icon": "hiking-boot",
+   "tr": "Bot",
+   "en": "Hiking boot"
+  },
+  "honey-pot": {
+   "icon": "honey-pot",
+   "tr": "Bal",
+   "en": "Honey"
+  },
+  "honeybee": {
+   "icon": "honeybee",
+   "tr": "Arı",
+   "en": "Bee"
+  },
+  "hook": {
+   "icon": "hook",
+   "tr": "Kanca",
+   "en": "Hook"
+  },
+  "hospital": {
+   "icon": "hospital",
+   "tr": "Hastane",
+   "en": "Hospital"
+  },
+  "hot-beverage": {
+   "icon": "hot-beverage",
+   "tr": "Sıcak içecek",
+   "en": "Hot drink"
+  },
+  "hot-dog": {
+   "icon": "hot-dog",
+   "tr": "Sosisli",
+   "en": "Hot dog"
+  },
+  "hourglass-done": {
+   "icon": "hourglass-done",
+   "tr": "Kum saati",
+   "en": "Hourglass"
+  },
+  "hourglass-not-done": {
+   "icon": "hourglass-not-done",
+   "tr": "Kum saati",
+   "en": "Hourglass"
+  },
+  "ice": {
+   "icon": "ice",
+   "tr": "Buz",
+   "en": "Ice"
+  },
+  "ice-cream": {
+   "icon": "ice-cream",
+   "tr": "Dondurma",
+   "en": "Ice cream"
+  },
+  "ice-skate": {
+   "icon": "ice-skate",
+   "tr": "Paten",
+   "en": "Ice skate"
+  },
+  "jeans": {
+   "icon": "jeans",
+   "tr": "Kot",
+   "en": "Jeans"
+  },
+  "jellyfish": {
+   "icon": "jellyfish",
+   "tr": "Denizanası",
+   "en": "Jellyfish"
+  },
+  "joker": {
+   "icon": "joker",
+   "tr": "Joker",
+   "en": "Joker"
+  },
+  "keyboard": {
+   "icon": "keyboard",
+   "tr": "Klavye",
+   "en": "Keyboard"
+  },
+  "kick-scooter": {
+   "icon": "kick-scooter",
+   "tr": "Scooter",
+   "en": "Scooter"
+  },
+  "kitchen-knife": {
+   "icon": "kitchen-knife",
+   "tr": "Bıçak",
+   "en": "Knife"
+  },
+  "kite": {
+   "icon": "kite",
+   "tr": "Uçurtma",
+   "en": "Kite"
+  },
+  "kiwi-fruit": {
+   "icon": "kiwi-fruit",
+   "tr": "Kivi",
+   "en": "Kiwi"
+  },
+  "lab-coat": {
+   "icon": "lab-coat",
+   "tr": "Önlük",
+   "en": "Lab coat"
+  },
+  "ladder": {
+   "icon": "ladder",
+   "tr": "Merdiven",
+   "en": "Ladder"
+  },
+  "lady-beetle": {
+   "icon": "lady-beetle",
+   "tr": "Uğur böceği",
+   "en": "Ladybug"
+  },
+  "leaf-fluttering-in-wind": {
+   "icon": "leaf-fluttering-in-wind",
+   "tr": "Uçuşan yaprak",
+   "en": "Blowing leaf"
+  },
+  "ledger": {
+   "icon": "ledger",
+   "tr": "Kayıt defteri",
+   "en": "Logbook"
+  },
+  "lemon": {
+   "icon": "lemon",
+   "tr": "Limon",
+   "en": "Lemon"
+  },
+  "light-bulb": {
+   "icon": "light-bulb",
+   "tr": "Ampul",
+   "en": "Light bulb"
+  },
+  "light-rail": {
+   "icon": "light-rail",
+   "tr": "Hafif raylı",
+   "en": "Light rail"
+  },
+  "lime": {
+   "icon": "lime",
+   "tr": "Misket limonu",
+   "en": "Lime"
+  },
+  "lipstick": {
+   "icon": "lipstick",
+   "tr": "Ruj",
+   "en": "Lipstick"
+  },
+  "lobster": {
+   "icon": "lobster",
+   "tr": "Istakoz",
+   "en": "Lobster"
+  },
+  "locked": {
+   "icon": "locked",
+   "tr": "Kilit",
+   "en": "Lock"
+  },
+  "locked-with-key": {
+   "icon": "locked-with-key",
+   "tr": "Anahtarlı kilit",
+   "en": "Key and lock"
+  },
+  "locomotive": {
+   "icon": "locomotive",
+   "tr": "Lokomotif",
+   "en": "Locomotive"
+  },
+  "lollipop": {
+   "icon": "lollipop",
+   "tr": "Lolipop",
+   "en": "Lollipop"
+  },
+  "loudspeaker": {
+   "icon": "loudspeaker",
+   "tr": "Hoparlör",
+   "en": "Loudspeaker"
+  },
+  "love-letter": {
+   "icon": "love-letter",
+   "tr": "Aşk mektubu",
+   "en": "Love letter"
+  },
+  "luggage": {
+   "icon": "luggage",
+   "tr": "Bavul",
+   "en": "Suitcase"
+  },
+  "magic-wand": {
+   "icon": "magic-wand",
+   "tr": "Sihirli değnek",
+   "en": "Magic wand"
+  },
+  "magnifying-glass-tilted-left": {
+   "icon": "magnifying-glass-tilted-left",
+   "tr": "Büyüteç",
+   "en": "Magnifier"
+  },
+  "mahjong-red-dragon": {
+   "icon": "mahjong-red-dragon",
+   "tr": "Mahjong taşı",
+   "en": "Mahjong tile"
+  },
+  "mango": {
+   "icon": "mango",
+   "tr": "Mango",
+   "en": "Mango"
+  },
+  "mantelpiece-clock": {
+   "icon": "mantelpiece-clock",
+   "tr": "Masa saati",
+   "en": "Mantel clock"
+  },
+  "maple-leaf": {
+   "icon": "maple-leaf",
+   "tr": "Akçaağaç yaprağı",
+   "en": "Maple leaf"
+  },
+  "memo": {
+   "icon": "memo",
+   "tr": "Not",
+   "en": "Memo"
+  },
+  "metro": {
+   "icon": "metro",
+   "tr": "Metro",
+   "en": "Metro"
+  },
+  "microphone": {
+   "icon": "microphone",
+   "tr": "Mikrofon",
+   "en": "Microphone"
+  },
+  "microscope": {
+   "icon": "microscope",
+   "tr": "Mikroskop",
+   "en": "Microscope"
+  },
+  "military-helmet": {
+   "icon": "military-helmet",
+   "tr": "Miğfer",
+   "en": "Helmet"
+  },
+  "milky-way": {
+   "icon": "milky-way",
+   "tr": "Samanyolu",
+   "en": "Milky Way"
+  },
+  "mirror": {
+   "icon": "mirror",
+   "tr": "Ayna",
+   "en": "Mirror"
+  },
+  "mirror-ball": {
+   "icon": "mirror-ball",
+   "tr": "Disko topu",
+   "en": "Disco ball"
+  },
+  "moai": {
+   "icon": "moai",
+   "tr": "Moai heykeli",
+   "en": "Moai statue"
+  },
+  "mobile-phone": {
+   "icon": "mobile-phone",
+   "tr": "Cep telefonu",
+   "en": "Mobile phone"
+  },
+  "money-bag": {
+   "icon": "money-bag",
+   "tr": "Para kesesi",
+   "en": "Money bag"
+  },
+  "monorail": {
+   "icon": "monorail",
+   "tr": "Monoray",
+   "en": "Monorail"
+  },
+  "mosquito": {
+   "icon": "mosquito",
+   "tr": "Sivrisinek",
+   "en": "Mosquito"
+  },
+  "motor-boat": {
+   "icon": "motor-boat",
+   "tr": "Yat",
+   "en": "Yacht"
+  },
+  "mountain-railway": {
+   "icon": "mountain-railway",
+   "tr": "Dağ treni",
+   "en": "Mountain railway"
+  },
+  "mushroom": {
+   "icon": "mushroom",
+   "tr": "Zehirli mantar",
+   "en": "Toadstool"
+  },
+  "musical-keyboard": {
+   "icon": "musical-keyboard",
+   "tr": "Piyano",
+   "en": "Piano"
+  },
+  "musical-note": {
+   "icon": "musical-note",
+   "tr": "Nota",
+   "en": "Musical note"
+  },
+  "nazar-amulet": {
+   "icon": "nazar-amulet",
+   "tr": "Nazar boncuğu",
+   "en": "Evil eye bead"
+  },
+  "nesting-dolls": {
+   "icon": "nesting-dolls",
+   "tr": "Matruşka",
+   "en": "Nesting dolls"
+  },
+  "newspaper": {
+   "icon": "newspaper",
+   "tr": "Gazete",
+   "en": "Newspaper"
+  },
+  "night-with-stars": {
+   "icon": "night-with-stars",
+   "tr": "Yıldızlı gece",
+   "en": "Starry night"
+  },
+  "no-entry": {
+   "icon": "no-entry",
+   "tr": "Girilmez",
+   "en": "No entry"
+  },
+  "no-smoking": {
+   "icon": "no-smoking",
+   "tr": "Sigara içilmez",
+   "en": "No smoking"
+  },
+  "nose": {
+   "icon": "nose",
+   "tr": "Burun",
+   "en": "Nose"
+  },
+  "notebook-with-decorative-cover": {
+   "icon": "notebook-with-decorative-cover",
+   "tr": "Günlük",
+   "en": "Diary"
+  },
+  "nut-and-bolt": {
+   "icon": "nut-and-bolt",
+   "tr": "Cıvata",
+   "en": "Nut and bolt"
+  },
+  "octopus": {
+   "icon": "octopus",
+   "tr": "Ahtapot",
+   "en": "Octopus"
+  },
+  "office-building": {
+   "icon": "office-building",
+   "tr": "Gökdelen",
+   "en": "Skyscraper"
+  },
+  "oil-drum": {
+   "icon": "oil-drum",
+   "tr": "Yakıt varili",
+   "en": "Fuel drum"
+  },
+  "old-key": {
+   "icon": "old-key",
+   "tr": "Anahtar",
+   "en": "Key"
+  },
+  "olive": {
+   "icon": "olive",
+   "tr": "Zeytin",
+   "en": "Olive"
+  },
+  "onion": {
+   "icon": "onion",
+   "tr": "Soğan",
+   "en": "Onion"
+  },
+  "otter": {
+   "icon": "otter",
+   "tr": "Su samuru",
+   "en": "Otter"
+  },
+  "owl": {
+   "icon": "owl",
+   "tr": "Baykuş",
+   "en": "Owl"
+  },
+  "oyster": {
+   "icon": "oyster",
+   "tr": "İstiridye",
+   "en": "Oyster"
+  },
+  "paintbrush": {
+   "icon": "paintbrush",
+   "tr": "Fırça",
+   "en": "Paintbrush"
+  },
+  "paperclip": {
+   "icon": "paperclip",
+   "tr": "Ataş",
+   "en": "Paperclip"
+  },
+  "parrot": {
+   "icon": "parrot",
+   "tr": "Papağan",
+   "en": "Parrot"
+  },
+  "party-popper": {
+   "icon": "party-popper",
+   "tr": "Konfeti patlatıcı",
+   "en": "Party popper"
+  },
+  "passport-control": {
+   "icon": "passport-control",
+   "tr": "Pasaport kontrol",
+   "en": "Passport control"
+  },
+  "paw-prints": {
+   "icon": "paw-prints",
+   "tr": "Pati izi",
+   "en": "Paw prints"
+  },
+  "peacock": {
+   "icon": "peacock",
+   "tr": "Tavus kuşu",
+   "en": "Peacock"
+  },
+  "peanuts": {
+   "icon": "peanuts",
+   "tr": "Fıstık",
+   "en": "Peanuts"
+  },
+  "pear": {
+   "icon": "pear",
+   "tr": "Armut",
+   "en": "Pear"
+  },
+  "pen": {
+   "icon": "pen",
+   "tr": "Tükenmez",
+   "en": "Pen"
+  },
+  "pencil": {
+   "icon": "pencil",
+   "tr": "Kurşun kalem",
+   "en": "Pencil"
+  },
+  "penguin": {
+   "icon": "penguin",
+   "tr": "Penguen",
+   "en": "Penguin"
+  },
+  "performing-arts": {
+   "icon": "performing-arts",
+   "tr": "Maske",
+   "en": "Masks"
+  },
+  "person-surfing": {
+   "icon": "person-surfing",
+   "tr": "Sörf",
+   "en": "Surfing"
+  },
+  "person-swimming": {
+   "icon": "person-swimming",
+   "tr": "Yüzme",
+   "en": "Swimming"
+  },
+  "pie": {
+   "icon": "pie",
+   "tr": "Turta",
+   "en": "Pie"
+  },
+  "pig": {
+   "icon": "pig",
+   "tr": "Domuz",
+   "en": "Pig"
+  },
+  "pill": {
+   "icon": "pill",
+   "tr": "Hap",
+   "en": "Pill"
+  },
+  "pineapple": {
+   "icon": "pineapple",
+   "tr": "Ananas",
+   "en": "Pineapple"
+  },
+  "ping-pong": {
+   "icon": "ping-pong",
+   "tr": "Masa tenisi",
+   "en": "Ping pong"
+  },
+  "pirate-flag": {
+   "icon": "pirate-flag",
+   "tr": "Korsan bayrağı",
+   "en": "Pirate flag"
+  },
+  "pizza": {
+   "icon": "pizza",
+   "tr": "Pizza",
+   "en": "Pizza"
+  },
+  "polar-bear": {
+   "icon": "polar-bear",
+   "tr": "Kutup ayısı",
+   "en": "Polar bear"
+  },
+  "pool-8-ball": {
+   "icon": "pool-8-ball",
+   "tr": "8 numaralı top",
+   "en": "Eight ball"
+  },
+  "popcorn": {
+   "icon": "popcorn",
+   "tr": "Patlamış mısır",
+   "en": "Popcorn"
+  },
+  "pot-of-food": {
+   "icon": "pot-of-food",
+   "tr": "Güveç",
+   "en": "Stew"
+  },
+  "potato": {
+   "icon": "potato",
+   "tr": "Patates",
+   "en": "Potato"
+  },
+  "pound-banknote": {
+   "icon": "pound-banknote",
+   "tr": "Sterlin",
+   "en": "Pound"
+  },
+  "pretzel": {
+   "icon": "pretzel",
+   "tr": "Pretzel",
+   "en": "Pretzel"
+  },
+  "printer": {
+   "icon": "printer",
+   "tr": "Yazıcı",
+   "en": "Printer"
+  },
+  "prohibited": {
+   "icon": "prohibited",
+   "tr": "Yasak",
+   "en": "Prohibited"
+  },
+  "pushpin": {
+   "icon": "pushpin",
+   "tr": "Raptiye",
+   "en": "Pushpin"
+  },
+  "puzzle-piece": {
+   "icon": "puzzle-piece",
+   "tr": "Yapboz",
+   "en": "Puzzle piece"
+  },
+  "rabbit": {
+   "icon": "rabbit",
+   "tr": "Tavşan",
+   "en": "Rabbit"
+  },
+  "raccoon": {
+   "icon": "raccoon",
+   "tr": "Rakun",
+   "en": "Raccoon"
+  },
+  "radio": {
+   "icon": "radio",
+   "tr": "Telsiz",
+   "en": "Radio"
+  },
+  "railway-car": {
+   "icon": "railway-car",
+   "tr": "Vagon",
+   "en": "Railway car"
+  },
+  "railway-track": {
+   "icon": "railway-track",
+   "tr": "Ray",
+   "en": "Railway track"
+  },
+  "rainbow": {
+   "icon": "rainbow",
+   "tr": "Gökkuşağı",
+   "en": "Rainbow"
+  },
+  "razor": {
+   "icon": "razor",
+   "tr": "Tıraş bıçağı",
+   "en": "Razor"
+  },
+  "receipt": {
+   "icon": "receipt",
+   "tr": "Fiş",
+   "en": "Receipt"
+  },
+  "red-apple": {
+   "icon": "red-apple",
+   "tr": "Elma",
+   "en": "Apple"
+  },
+  "red-paper-lantern": {
+   "icon": "red-paper-lantern",
+   "tr": "Fener",
+   "en": "Lantern"
+  },
+  "rescue-workers-helmet": {
+   "icon": "rescue-workers-helmet",
+   "tr": "Kurtarma kaskı",
+   "en": "Rescue helmet"
+  },
+  "ring": {
+   "icon": "ring",
+   "tr": "Yüzük",
+   "en": "Ring"
+  },
+  "ring-buoy": {
+   "icon": "ring-buoy",
+   "tr": "Can simidi",
+   "en": "Life ring"
+  },
+  "ringed-planet": {
+   "icon": "ringed-planet",
+   "tr": "Satürn",
+   "en": "Saturn"
+  },
+  "rock": {
+   "icon": "rock",
+   "tr": "Kaya",
+   "en": "Rock"
+  },
+  "rocket": {
+   "icon": "rocket",
+   "tr": "Roket",
+   "en": "Rocket"
+  },
+  "roller-coaster": {
+   "icon": "roller-coaster",
+   "tr": "Hız treni",
+   "en": "Roller coaster"
+  },
+  "roller-skate": {
+   "icon": "roller-skate",
+   "tr": "Tekerlekli paten",
+   "en": "Roller skate"
+  },
+  "rose": {
+   "icon": "rose",
+   "tr": "Gül",
+   "en": "Rose"
+  },
+  "round-pushpin": {
+   "icon": "round-pushpin",
+   "tr": "Konum iğnesi",
+   "en": "Map pin"
+  },
+  "running-shoe": {
+   "icon": "running-shoe",
+   "tr": "Spor ayakkabı",
+   "en": "Sneaker"
+  },
+  "safety-pin": {
+   "icon": "safety-pin",
+   "tr": "Çengelli iğne",
+   "en": "Safety pin"
+  },
+  "sailboat": {
+   "icon": "sailboat",
+   "tr": "Yelkenli",
+   "en": "Sailboat"
+  },
+  "salt": {
+   "icon": "salt",
+   "tr": "Tuz",
+   "en": "Salt"
+  },
+  "satellite-antenna": {
+   "icon": "satellite-antenna",
+   "tr": "Çanak anten",
+   "en": "Dish antenna"
+  },
+  "sauropod": {
+   "icon": "sauropod",
+   "tr": "Dinozor iskeleti",
+   "en": "Dinosaur"
+  },
+  "saxophone": {
+   "icon": "saxophone",
+   "tr": "Saksafon",
+   "en": "Saxophone"
+  },
+  "scarf": {
+   "icon": "scarf",
+   "tr": "Atkı",
+   "en": "Scarf"
+  },
+  "scissors": {
+   "icon": "scissors",
+   "tr": "Makas",
+   "en": "Scissors"
+  },
+  "scorpion": {
+   "icon": "scorpion",
+   "tr": "Akrep",
+   "en": "Scorpion"
+  },
+  "screwdriver": {
+   "icon": "screwdriver",
+   "tr": "Tornavida",
+   "en": "Screwdriver"
+  },
+  "scroll": {
+   "icon": "scroll",
+   "tr": "Parşömen",
+   "en": "Scroll"
+  },
+  "seal": {
+   "icon": "seal",
+   "tr": "Fok",
+   "en": "Seal"
+  },
+  "seedling": {
+   "icon": "seedling",
+   "tr": "Fide",
+   "en": "Seedling"
+  },
+  "sewing-needle": {
+   "icon": "sewing-needle",
+   "tr": "İğne",
+   "en": "Needle"
+  },
+  "shark": {
+   "icon": "shark",
+   "tr": "Köpek balığı",
+   "en": "Shark"
+  },
+  "sheaf-of-rice": {
+   "icon": "sheaf-of-rice",
+   "tr": "Başak",
+   "en": "Sheaf of grain"
+  },
+  "shooting-star": {
+   "icon": "shooting-star",
+   "tr": "Kayan yıldız",
+   "en": "Shooting star"
+  },
+  "shortcake": {
+   "icon": "shortcake",
+   "tr": "Çilekli pasta",
+   "en": "Shortcake"
+  },
+  "shower": {
+   "icon": "shower",
+   "tr": "Duş",
+   "en": "Shower"
+  },
+  "shrimp": {
+   "icon": "shrimp",
+   "tr": "Karides",
+   "en": "Shrimp"
+  },
+  "skateboard": {
+   "icon": "skateboard",
+   "tr": "Kaykay",
+   "en": "Skateboard"
+  },
+  "skis": {
+   "icon": "skis",
+   "tr": "Kayak",
+   "en": "Skis"
+  },
+  "skull": {
+   "icon": "skull",
+   "tr": "Kafatası",
+   "en": "Skull"
+  },
+  "skunk": {
+   "icon": "skunk",
+   "tr": "Kokarca",
+   "en": "Skunk"
+  },
+  "sled": {
+   "icon": "sled",
+   "tr": "Kızak",
+   "en": "Sled"
+  },
+  "slot-machine": {
+   "icon": "slot-machine",
+   "tr": "Kumar makinesi",
+   "en": "Slot machine"
+  },
+  "snake": {
+   "icon": "snake",
+   "tr": "Yılan",
+   "en": "Snake"
+  },
+  "snowflake": {
+   "icon": "snowflake",
+   "tr": "Kar tanesi",
+   "en": "Snowflake"
+  },
+  "snowman": {
+   "icon": "snowman",
+   "tr": "Kardan adam",
+   "en": "Snowman"
+  },
+  "soap": {
+   "icon": "soap",
+   "tr": "Sabun",
+   "en": "Soap"
+  },
+  "soccer-ball": {
+   "icon": "soccer-ball",
+   "tr": "Futbol topu",
+   "en": "Football"
+  },
+  "socks": {
+   "icon": "socks",
+   "tr": "Çorap",
+   "en": "Socks"
+  },
+  "soft-ice-cream": {
+   "icon": "soft-ice-cream",
+   "tr": "Külah dondurma",
+   "en": "Ice cream cone"
+  },
+  "softball": {
+   "icon": "softball",
+   "tr": "Softbol topu",
+   "en": "Softball"
+  },
+  "spade-suit": {
+   "icon": "spade-suit",
+   "tr": "Maça",
+   "en": "Spades"
+  },
+  "spaghetti": {
+   "icon": "spaghetti",
+   "tr": "Makarna",
+   "en": "Spaghetti"
+  },
+  "sparkles": {
+   "icon": "sparkles",
+   "tr": "Pırıltı",
+   "en": "Sparkles"
+  },
+  "speech-balloon": {
+   "icon": "speech-balloon",
+   "tr": "Mesaj",
+   "en": "Message"
+  },
+  "speedboat": {
+   "icon": "speedboat",
+   "tr": "Sürat teknesi",
+   "en": "Speedboat"
+  },
+  "spider": {
+   "icon": "spider",
+   "tr": "Örümcek",
+   "en": "Spider"
+  },
+  "spider-web": {
+   "icon": "spider-web",
+   "tr": "Örümcek ağı",
+   "en": "Spider web"
+  },
+  "spiral-notepad": {
+   "icon": "spiral-notepad",
+   "tr": "Not defteri",
+   "en": "Notepad"
+  },
+  "spiral-shell": {
+   "icon": "spiral-shell",
+   "tr": "Deniz kabuğu",
+   "en": "Seashell"
+  },
+  "spoon": {
+   "icon": "spoon",
+   "tr": "Kaşık",
+   "en": "Spoon"
+  },
+  "sports-medal": {
+   "icon": "sports-medal",
+   "tr": "Madalya",
+   "en": "Medal"
+  },
+  "spouting-whale": {
+   "icon": "spouting-whale",
+   "tr": "Mavi balina",
+   "en": "Blue whale"
+  },
+  "squid": {
+   "icon": "squid",
+   "tr": "Kalamar",
+   "en": "Squid"
+  },
+  "station": {
+   "icon": "station",
+   "tr": "İstasyon",
+   "en": "Station"
+  },
+  "statue-of-liberty": {
+   "icon": "statue-of-liberty",
+   "tr": "Özgürlük Heykeli",
+   "en": "Statue of Liberty"
+  },
+  "steaming-bowl": {
+   "icon": "steaming-bowl",
+   "tr": "Çorba",
+   "en": "Soup"
+  },
+  "stethoscope": {
+   "icon": "stethoscope",
+   "tr": "Steteskop",
+   "en": "Stethoscope"
+  },
+  "stopwatch": {
+   "icon": "stopwatch",
+   "tr": "Kronometre",
+   "en": "Stopwatch"
+  },
+  "straight-ruler": {
+   "icon": "straight-ruler",
+   "tr": "Cetvel",
+   "en": "Ruler"
+  },
+  "strawberry": {
+   "icon": "strawberry",
+   "tr": "Çilek",
+   "en": "Strawberry"
+  },
+  "sun": {
+   "icon": "sun",
+   "tr": "Güneş",
+   "en": "Sun"
+  },
+  "sun-behind-large-cloud": {
+   "icon": "sun-behind-large-cloud",
+   "tr": "Parçalı bulutlu",
+   "en": "Overcast"
+  },
+  "sunflower": {
+   "icon": "sunflower",
+   "tr": "Ayçiçeği",
+   "en": "Sunflower"
+  },
+  "sunglasses": {
+   "icon": "sunglasses",
+   "tr": "Güneş gözlüğü",
+   "en": "Sunglasses"
+  },
+  "swan": {
+   "icon": "swan",
+   "tr": "Kuğu",
+   "en": "Swan"
+  },
+  "syringe": {
+   "icon": "syringe",
+   "tr": "Şırınga",
+   "en": "Syringe"
+  },
+  "teapot": {
+   "icon": "teapot",
+   "tr": "Demlik",
+   "en": "Teapot"
+  },
+  "teddy-bear": {
+   "icon": "teddy-bear",
+   "tr": "Oyuncak ayı",
+   "en": "Teddy bear"
+  },
+  "telephone": {
+   "icon": "telephone",
+   "tr": "Telefon",
+   "en": "Telephone"
+  },
+  "telescope": {
+   "icon": "telescope",
+   "tr": "Teleskop",
+   "en": "Telescope"
+  },
+  "tennis": {
+   "icon": "tennis",
+   "tr": "Tenis topu",
+   "en": "Tennis ball"
+  },
+  "test-tube": {
+   "icon": "test-tube",
+   "tr": "Deney tüpü",
+   "en": "Test tube"
+  },
+  "thermometer": {
+   "icon": "thermometer",
+   "tr": "Termometre",
+   "en": "Thermometer"
+  },
+  "thong-sandal": {
+   "icon": "thong-sandal",
+   "tr": "Terlik",
+   "en": "Flip-flop"
+  },
+  "thought-balloon": {
+   "icon": "thought-balloon",
+   "tr": "Düşünce balonu",
+   "en": "Thought bubble"
+  },
+  "thread": {
+   "icon": "thread",
+   "tr": "Makara",
+   "en": "Thread"
+  },
+  "ticket": {
+   "icon": "ticket",
+   "tr": "Bilet",
+   "en": "Ticket"
+  },
+  "tiger": {
+   "icon": "tiger",
+   "tr": "Kaplan",
+   "en": "Tiger"
+  },
+  "tokyo-tower": {
+   "icon": "tokyo-tower",
+   "tr": "Kule",
+   "en": "Tower"
+  },
+  "tomato": {
+   "icon": "tomato",
+   "tr": "Domates",
+   "en": "Tomato"
+  },
+  "toothbrush": {
+   "icon": "toothbrush",
+   "tr": "Diş fırçası",
+   "en": "Toothbrush"
+  },
+  "top-hat": {
+   "icon": "top-hat",
+   "tr": "Silindir şapka",
+   "en": "Top hat"
+  },
+  "tornado": {
+   "icon": "tornado",
+   "tr": "Hortum",
+   "en": "Tornado"
+  },
+  "tractor": {
+   "icon": "tractor",
+   "tr": "Traktör",
+   "en": "Tractor"
+  },
+  "tram": {
+   "icon": "tram",
+   "tr": "Tramvay",
+   "en": "Tram"
+  },
+  "triangular-flag": {
+   "icon": "triangular-flag",
+   "tr": "Flama",
+   "en": "Pennant"
+  },
+  "triangular-ruler": {
+   "icon": "triangular-ruler",
+   "tr": "Gönye",
+   "en": "Set square"
+  },
+  "trophy": {
+   "icon": "trophy",
+   "tr": "Ödül kupası",
+   "en": "Trophy"
+  },
+  "trumpet": {
+   "icon": "trumpet",
+   "tr": "Trompet",
+   "en": "Trumpet"
+  },
+  "tulip": {
+   "icon": "tulip",
+   "tr": "Lale",
+   "en": "Tulip"
+  },
+  "turtle": {
+   "icon": "turtle",
+   "tr": "Kaplumbağa",
+   "en": "Turtle"
+  },
+  "umbrella-with-rain-drops": {
+   "icon": "umbrella-with-rain-drops",
+   "tr": "Şemsiye",
+   "en": "Umbrella"
+  },
+  "unicorn": {
+   "icon": "unicorn",
+   "tr": "Tek boynuzlu at",
+   "en": "Unicorn"
+  },
+  "violin": {
+   "icon": "violin",
+   "tr": "Keman",
+   "en": "Violin"
+  },
+  "volleyball": {
+   "icon": "volleyball",
+   "tr": "Voleybol topu",
+   "en": "Volleyball"
+  },
+  "warning": {
+   "icon": "warning",
+   "tr": "Uyarı",
+   "en": "Warning"
+  },
+  "watch": {
+   "icon": "watch",
+   "tr": "Kol saati",
+   "en": "Wristwatch"
+  },
+  "water-wave": {
+   "icon": "water-wave",
+   "tr": "Dalga",
+   "en": "Wave"
+  },
+  "watermelon": {
+   "icon": "watermelon",
+   "tr": "Karpuz",
+   "en": "Watermelon"
+  },
+  "wedding": {
+   "icon": "wedding",
+   "tr": "Düğün",
+   "en": "Wedding"
+  },
+  "whale": {
+   "icon": "whale",
+   "tr": "Balina",
+   "en": "Whale"
+  },
+  "wheel": {
+   "icon": "wheel",
+   "tr": "Tekerlek",
+   "en": "Wheel"
+  },
+  "white-flag": {
+   "icon": "white-flag",
+   "tr": "Beyaz bayrak",
+   "en": "White flag"
+  },
+  "wind-chime": {
+   "icon": "wind-chime",
+   "tr": "Rüzgâr çanı",
+   "en": "Wind chime"
+  },
+  "window": {
+   "icon": "window",
+   "tr": "Pencere",
+   "en": "Window"
+  },
+  "wine-glass": {
+   "icon": "wine-glass",
+   "tr": "Kadeh",
+   "en": "Wine glass"
+  },
+  "wolf": {
+   "icon": "wolf",
+   "tr": "Kurt",
+   "en": "Wolf"
+  },
+  "womans-boot": {
+   "icon": "womans-boot",
+   "tr": "Çizme",
+   "en": "Boot"
+  },
+  "world-map": {
+   "icon": "world-map",
+   "tr": "Dünya haritası",
+   "en": "World map"
+  },
+  "worm": {
+   "icon": "worm",
+   "tr": "Solucan",
+   "en": "Worm"
+  },
+  "wrench": {
+   "icon": "wrench",
+   "tr": "İngiliz anahtarı",
+   "en": "Wrench"
+  },
+  "yarn": {
+   "icon": "yarn",
+   "tr": "Yün",
+   "en": "Yarn"
+  },
+  "yen-banknote": {
+   "icon": "yen-banknote",
+   "tr": "Yen",
+   "en": "Yen"
+  },
+  "yo-yo": {
+   "icon": "yo-yo",
+   "tr": "Yoyo",
+   "en": "Yo-yo"
+  },
+  "zebra": {
+   "icon": "zebra",
+   "tr": "Zebra",
+   "en": "Zebra"
+  },
+  "zipper-mouth-face": {
+   "icon": "zipper-mouth-face",
+   "tr": "Ağzı fermuarlı",
+   "en": "Zipped lips"
+  },
+  "zzz": {
+   "icon": "zzz",
+   "tr": "Uyku",
+   "en": "Sleep"
+  }
+ }
+}

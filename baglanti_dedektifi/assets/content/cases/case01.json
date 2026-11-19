@@ -1,0 +1,701 @@
+{
+ "id": "case01",
+ "order": 1,
+ "premium": false,
+ "icon": "gem-stone",
+ "title": {
+  "tr": "Mavi Yıldız",
+  "en": "The Blue Star"
+ },
+ "intro": [
+  {
+   "icon": "classical-building",
+   "text": {
+    "tr": "Liman Şehri Müzesi'nde yılın galası var. Ünlü Mavi Yıldız elması ilk kez sergileniyor.",
+    "en": "Harbor City Museum is hosting the gala of the year. The famous Blue Star diamond is on display for the very first time."
+   }
+  },
+  {
+   "icon": "high-voltage",
+   "text": {
+    "tr": "Saat 22.15'te ışıklar üç dakikalığına söndü. Işıklar geri geldiğinde vitrin boştu.",
+    "en": "At 10:15 pm the lights went out for three minutes. When they came back on, the display case was empty."
+   }
+  },
+  {
+   "icon": "detective",
+   "text": {
+    "tr": "Müdür seni çağırdı. Kapılar kilitli, kimse dışarı çıkmadı. Dört şüpheli var ve elmas hâlâ binada olabilir.",
+    "en": "The director has called you in. The doors are locked and nobody has left. There are four suspects, and the diamond may still be inside."
+   }
+  },
+  {
+   "icon": "pushpin",
+   "text": {
+    "tr": "Delilleri panoya as, ortak noktası olanları kırmızı iple bağla. Çözdüğün her pano sana yeni bir ipucu verecek.",
+    "en": "Pin the evidence to the board and tie together the cards that share a connection with red thread. Every board you solve gives you a new clue."
+   }
+  }
+ ],
+ "suspects": [
+  {
+   "id": "selim",
+   "icon": "man-in-tuxedo",
+   "name": {
+    "tr": "Selim",
+    "en": "Selim"
+   },
+   "role": {
+    "tr": "Müze müdürü",
+    "en": "Museum director"
+   },
+   "bio": {
+    "tr": "Galayı o düzenledi. Müzenin borçları son yıllarda hızla arttı.",
+    "en": "He organized the gala. The museum's debts have grown fast in recent years."
+   }
+  },
+  {
+   "id": "riza",
+   "icon": "man-guard",
+   "name": {
+    "tr": "Rıza",
+    "en": "Rıza"
+   },
+   "role": {
+    "tr": "Gece bekçisi",
+    "en": "Night guard"
+   },
+   "bio": {
+    "tr": "Yirmi yıldır bu binada çalışıyor. Her kapının anahtarı onda.",
+    "en": "He has worked in this building for twenty years and holds a key to every door."
+   }
+  },
+  {
+   "id": "leyla",
+   "icon": "woman-artist",
+   "name": {
+    "tr": "Leyla",
+    "en": "Leyla"
+   },
+   "role": {
+    "tr": "Ressam",
+    "en": "Painter"
+   },
+   "bio": {
+    "tr": "Galada kendi tablosu da sergileniyor. Elmasa uzun uzun baktığı görülmüş.",
+    "en": "Her own painting is on show tonight. She was seen staring at the diamond for a long time."
+   }
+  },
+  {
+   "id": "mert",
+   "icon": "man-cook",
+   "name": {
+    "tr": "Mert",
+    "en": "Mert"
+   },
+   "role": {
+    "tr": "İkram şefi",
+    "en": "Catering chef"
+   },
+   "bio": {
+    "tr": "Gala yemeğini o hazırladı. Mutfakla salon arasında sürekli gidip geldi.",
+    "en": "He catered the gala and kept moving between the kitchen and the hall."
+   }
+  }
+ ],
+ "clues": [
+  {
+   "id": "c1",
+   "text": {
+    "tr": "Elmas saat 22.00'de hâlâ vitrindeydi; fotoğrafçının karesinde açıkça görünüyor.",
+    "en": "The diamond was still in its case at 10 pm; it is clearly visible in the photographer's shot."
+   }
+  },
+  {
+   "id": "c2",
+   "text": {
+    "tr": "Kesinti bir arıza değildi: sigorta kutusu bilerek kapatılmış.",
+    "en": "The blackout was no accident: someone switched off the fuse box on purpose."
+   }
+  },
+  {
+   "id": "c3",
+   "text": {
+    "tr": "Bekçi Rıza kesinti boyunca merkezle telsizle konuşuyordu; kayıtlar saniyesi saniyesine uyuyor.",
+    "en": "Guard Rıza was on the radio with headquarters during the whole blackout; the logs match to the second."
+   }
+  },
+  {
+   "id": "c4",
+   "text": {
+    "tr": "Vitrin camında taze, mavi bir yağlı boya izi var.",
+    "en": "There is a fresh smear of blue oil paint on the display glass."
+   }
+  },
+  {
+   "id": "c5",
+   "text": {
+    "tr": "Müdür Selim, elmasın sigortasını geçen ay iki katına çıkarmış.",
+    "en": "Director Selim doubled the diamond's insurance last month."
+   }
+  },
+  {
+   "id": "c6",
+   "text": {
+    "tr": "Şef Mert'in tepsisinde elmas büyüklüğünde buz kalıpları vardı. Hepsi sıradan kokteyl buzu çıktı.",
+    "en": "Chef Mert's tray was full of diamond-sized ice cubes. They all turned out to be ordinary cocktail ice."
+   }
+  },
+  {
+   "id": "c7",
+   "text": {
+    "tr": "Sigorta kutusunun yanında boyaya bulanmış bir eldiven bulundu.",
+    "en": "A paint-stained glove was found next to the fuse box."
+   }
+  },
+  {
+   "id": "c8",
+   "text": {
+    "tr": "Şef Mert kesinti sırasında mutfakta yirmi kişiyle birlikteydi.",
+    "en": "Chef Mert was in the kitchen with twenty people during the blackout."
+   }
+  },
+  {
+   "id": "c9",
+   "text": {
+    "tr": "Müdür Selim kesinti anında sahnede, mikrofon başındaydı. Bütün salon sesini duydu.",
+    "en": "Director Selim was on stage at the microphone when the lights went out. The whole hall heard him."
+   }
+  },
+  {
+   "id": "c10",
+   "text": {
+    "tr": "Leyla'nın tablosunda, taze boyanın altında elmas biçiminde bir kabarıklık var.",
+    "en": "On Leyla's canvas, under the fresh paint, there is a diamond-shaped bump."
+   }
+  }
+ ],
+ "boards": [
+  {
+   "id": "case01_b01",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Meyveler",
+      "en": "Fruits"
+     },
+     "items": [
+      "red-apple",
+      "grapes",
+      "cherries"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Müzik aletleri",
+      "en": "Musical instruments"
+     },
+     "items": [
+      "guitar",
+      "violin",
+      "drum"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Taşıtlar",
+      "en": "Vehicles"
+     },
+     "items": [
+      "bicycle",
+      "bus",
+      "sailboat"
+     ]
+    }
+   ],
+   "clue": "c1"
+  },
+  {
+   "id": "case01_b02",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Hava durumu",
+      "en": "Weather"
+     },
+     "items": [
+      "cloud-with-rain",
+      "snowflake",
+      "tornado"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Mutfak eşyaları",
+      "en": "Kitchen tools"
+     },
+     "items": [
+      "teapot",
+      "spoon",
+      "kitchen-knife"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Deniz canlıları",
+      "en": "Sea creatures"
+     },
+     "items": [
+      "octopus",
+      "crab",
+      "dolphin"
+     ]
+    }
+   ],
+   "clue": "c2"
+  },
+  {
+   "id": "case01_b03",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Zamanı gösterir",
+      "en": "Tells the time"
+     },
+     "items": [
+      "hourglass-not-done",
+      "alarm-clock",
+      "calendar"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Kanatlı",
+      "en": "Has wings"
+     },
+     "items": [
+      "eagle",
+      "airplane",
+      "butterfly"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Kırmızı",
+      "en": "Red"
+     },
+     "items": [
+      "tomato",
+      "fire-engine",
+      "rose"
+     ]
+    }
+   ],
+   "clue": "c3"
+  },
+  {
+   "id": "case01_b04",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Sanat atölyesi",
+      "en": "Art studio"
+     },
+     "items": [
+      "artist-palette",
+      "paintbrush",
+      "crayon",
+      "framed-picture"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Bekçinin çantası",
+      "en": "The guard's kit"
+     },
+     "items": [
+      "flashlight",
+      "old-key",
+      "radio",
+      "watch"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Hazine",
+      "en": "Treasure"
+     },
+     "items": [
+      "gem-stone",
+      "crown",
+      "ring",
+      "coin"
+     ],
+     "alsoFits": {
+      "watch": "Değerli olabilir ama bekçinin saati"
+     }
+    }
+   ],
+   "clue": "c4"
+  },
+  {
+   "id": "case01_b05",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Soğuk",
+      "en": "Cold"
+     },
+     "items": [
+      "ice",
+      "snowman",
+      "polar-bear",
+      "cloud-with-snow"
+     ],
+     "alsoFits": {
+      "ice-cream": "Soğuk ama bir tatlı"
+     }
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Tatlılar",
+      "en": "Desserts"
+     },
+     "items": [
+      "birthday-cake",
+      "doughnut",
+      "cookie",
+      "ice-cream"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "İçecekler",
+      "en": "Drinks"
+     },
+     "items": [
+      "hot-beverage",
+      "cocktail-glass",
+      "glass-of-milk",
+      "bubble-tea"
+     ]
+    }
+   ],
+   "clue": "c5"
+  },
+  {
+   "id": "case01_b06",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Yüze takılır",
+      "en": "Worn on the face"
+     },
+     "items": [
+      "glasses",
+      "sunglasses",
+      "goggles",
+      "diving-mask"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Işık verir",
+      "en": "Gives light"
+     },
+     "items": [
+      "candle",
+      "light-bulb",
+      "diya-lamp",
+      "red-paper-lantern"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Ölçer",
+      "en": "Measures"
+     },
+     "items": [
+      "straight-ruler",
+      "thermometer",
+      "balance-scale",
+      "stopwatch"
+     ]
+    }
+   ],
+   "clue": "c6"
+  },
+  {
+   "id": "case01_b07",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Oyunlar",
+      "en": "Games"
+     },
+     "items": [
+      "chess-pawn",
+      "game-die",
+      "puzzle-piece",
+      "yo-yo"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Kâğıttan",
+      "en": "Made of paper"
+     },
+     "items": [
+      "newspaper",
+      "envelope",
+      "scroll",
+      "ticket"
+     ],
+     "alsoFits": {
+      "kite": "Kâğıttan olabilir ama uçanlar grubunda"
+     }
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Keser",
+      "en": "Cuts"
+     },
+     "items": [
+      "scissors",
+      "axe",
+      "dagger"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Uçar",
+      "en": "Flies"
+     },
+     "items": [
+      "kite",
+      "rocket",
+      "helicopter"
+     ]
+    }
+   ],
+   "clue": "c7"
+  },
+  {
+   "id": "case01_b08",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Ormanda yaşar",
+      "en": "Lives in the forest"
+     },
+     "items": [
+      "fox",
+      "deer",
+      "owl",
+      "hedgehog"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Bahçede yetişir",
+      "en": "Grows in a garden"
+     },
+     "items": [
+      "carrot",
+      "potato",
+      "onion",
+      "eggplant"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Ayağa giyilir",
+      "en": "Worn on the feet"
+     },
+     "items": [
+      "running-shoe",
+      "hiking-boot",
+      "high-heeled-shoe"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Başa takılır",
+      "en": "Worn on the head"
+     },
+     "items": [
+      "top-hat",
+      "billed-cap",
+      "graduation-cap"
+     ]
+    }
+   ],
+   "clue": "c8"
+  },
+  {
+   "id": "case01_b09",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Mavi",
+      "en": "Blue"
+     },
+     "items": [
+      "jeans",
+      "blueberries",
+      "blue-book",
+      "spouting-whale"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Kâğıt oyunu sembolleri",
+      "en": "Card suits"
+     },
+     "items": [
+      "spade-suit",
+      "club-suit",
+      "diamond-suit",
+      "heart-suit"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Pırıl pırıl",
+      "en": "Sparkles"
+     },
+     "items": [
+      "gem-stone",
+      "mirror-ball",
+      "sparkles",
+      "glowing-star"
+     ],
+     "alsoFits": {
+      "diamond-suit": "İngilizcesi 'diamond' ama bir kâğıt sembolü"
+     }
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Müzede sergilenir",
+      "en": "On display in a museum"
+     },
+     "items": [
+      "amphora",
+      "moai",
+      "sauropod",
+      "crossed-swords"
+     ],
+     "alsoFits": {
+      "gem-stone": "Müzede de sergilenir ama pırıl pırıl grubunda"
+     }
+    }
+   ],
+   "clue": "c9"
+  },
+  {
+   "id": "case01_b10",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Gece",
+      "en": "Night"
+     },
+     "items": [
+      "crescent-moon",
+      "bat",
+      "night-with-stars",
+      "zzz"
+     ],
+     "alsoFits": {
+      "flashlight": "Gece işe yarar ama hırsızın aleti"
+     }
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Para",
+      "en": "Money"
+     },
+     "items": [
+      "dollar-banknote",
+      "euro-banknote",
+      "credit-card",
+      "money-bag"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Kırılabilir",
+      "en": "Fragile"
+     },
+     "items": [
+      "wine-glass",
+      "mirror",
+      "egg",
+      "window"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Hırsızın aletleri",
+      "en": "A burglar's tools"
+     },
+     "items": [
+      "ladder",
+      "gloves",
+      "screwdriver",
+      "flashlight"
+     ]
+    }
+   ],
+   "clue": "c10"
+  }
+ ],
+ "culprit": "leyla",
+ "proof": [
+  "c4",
+  "c7",
+  "c10"
+ ],
+ "ending": {
+  "tr": "Leyla itiraf etti. Mavi Yıldız, yıllar önce ailesinin elinden zorla alınmıştı. Elmas, tablosunun taze boyası altından çıktı ve sahibine döndü. Ama elmasın kadife yuvasının altında küçük bir mikrofilm saklıydı.",
+  "en": "Leyla confessed. Years ago, the Blue Star had been taken from her family by force. The diamond was recovered from under the fresh paint on her canvas. But beneath its velvet cushion, a tiny microfilm had been hidden."
+ },
+ "teaser": {
+  "tr": "Mikrofilmde tek bir kelime yazıyor: GÖLGE. Yanında bir tren bileti duruyor: Liman Ekspresi, bu gece yarısı.",
+  "en": "The microfilm bears a single word: SHADOW. Next to it lies a train ticket: Harbor Express, tonight at midnight."
+ }
+}

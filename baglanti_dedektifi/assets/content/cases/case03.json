@@ -1,0 +1,827 @@
+{
+ "id": "case03",
+ "order": 3,
+ "premium": true,
+ "pack": "case_pack_1",
+ "icon": "fog",
+ "title": {
+  "tr": "Sisli Fener",
+  "en": "The Foggy Lighthouse"
+ },
+ "intro": [
+  {
+   "icon": "fog",
+   "text": {
+    "tr": "Kuzey burnundaki eski fener, sisli bir gecede söndü ve bir yük gemisi kayalıklara oturdu.",
+    "en": "On a foggy night, the old lighthouse on the north cape went dark and a cargo ship ran aground on the rocks."
+   }
+  },
+  {
+   "icon": "ship",
+   "text": {
+    "tr": "Mürettebat kurtarıldı ama gemideki mühürlü sandık kayıp. Fener bekçisi de ortada yok.",
+    "en": "The crew was rescued, but the ship's sealed crate is missing. So is the lighthouse keeper."
+   }
+  },
+  {
+   "icon": "world-map",
+   "text": {
+    "tr": "Haritadaki işaret burayı gösteriyordu. Gölge'nin bir sonraki hamlesi o sandıkta olabilir.",
+    "en": "The mark on the map pointed here. The Shadow's next move may be inside that crate."
+   }
+  }
+ ],
+ "suspects": [
+  {
+   "id": "nevin",
+   "icon": "woman-student",
+   "name": {
+    "tr": "Nevin",
+    "en": "Nevin"
+   },
+   "role": {
+    "tr": "Bekçinin yeğeni",
+    "en": "The keeper's niece"
+   },
+   "bio": {
+    "tr": "Amcasının kaybolduğunu ilk o bildirdi. Fenerin yedek anahtarı ondaydı.",
+    "en": "She was the first to report her uncle missing. She held the spare lighthouse key."
+   }
+  },
+  {
+   "id": "cemal",
+   "icon": "man-beard",
+   "name": {
+    "tr": "Cemal Reis",
+    "en": "Cemal Reis"
+   },
+   "role": {
+    "tr": "Balıkçı",
+    "en": "Fisherman"
+   },
+   "bio": {
+    "tr": "O gece denizdeydi. Teknesi kayalıklara en yakın tekneydi.",
+    "en": "He was out at sea that night. His boat was the closest to the rocks."
+   }
+  },
+  {
+   "id": "orhan",
+   "icon": "man-office-worker",
+   "name": {
+    "tr": "Orhan",
+    "en": "Orhan"
+   },
+   "role": {
+    "tr": "Liman başkanı",
+    "en": "Harbor master"
+   },
+   "bio": {
+    "tr": "Gemilerin rotasını o onaylar. Geçen ay lüks bir yalı satın aldı.",
+    "en": "He approves every ship's course. Last month he bought a luxury seaside mansion."
+   }
+  },
+  {
+   "id": "zeynep",
+   "icon": "woman-office-worker",
+   "name": {
+    "tr": "Zeynep",
+    "en": "Zeynep"
+   },
+   "role": {
+    "tr": "Sigorta müfettişi",
+    "en": "Insurance inspector"
+   },
+   "bio": {
+    "tr": "Kazayı incelemek için geldi. Herkese çok fazla soru soruyor.",
+    "en": "She came to investigate the wreck and asks everyone far too many questions."
+   }
+  }
+ ],
+ "clues": [
+  {
+   "id": "c1",
+   "text": {
+    "tr": "Fenerin lambası bozulmamış; şalteri elle indirilmiş.",
+    "en": "The lamp was not broken; its switch had been pulled by hand."
+   }
+  },
+  {
+   "id": "c2",
+   "text": {
+    "tr": "Fener bekçisi, liman binasının bodrumunda bağlı halde bulundu. Sis yüzünden kimseyi görmemiş.",
+    "en": "The keeper was found tied up in the harbor office basement. In the fog, he saw no one."
+   }
+  },
+  {
+   "id": "c3",
+   "text": {
+    "tr": "Geminin rotası kazadan bir saat önce liman ofisinden değiştirilmiş.",
+    "en": "The ship's course was changed from the harbor office one hour before the wreck."
+   }
+  },
+  {
+   "id": "c4",
+   "text": {
+    "tr": "Cemal Reis'in teknesi o gece mürettebatı kurtardı; telsiz kayıtları onu baştan sona kayalıklarda gösteriyor.",
+    "en": "Captain Cemal's boat rescued the crew that night; radio logs place him at the rocks the whole time."
+   }
+  },
+  {
+   "id": "c5",
+   "text": {
+    "tr": "Nevin, fenerin yedek anahtarını iki hafta önce kaybettiğini bildirmiş.",
+    "en": "Nevin reported losing the spare lighthouse key two weeks ago."
+   }
+  },
+  {
+   "id": "c6",
+   "text": {
+    "tr": "Müfettiş Zeynep şehre kazadan bir gün önce, yani kaza olmadan önce gelmiş!",
+    "en": "Inspector Zeynep arrived in town the day before the wreck, before it had even happened!"
+   }
+  },
+  {
+   "id": "c7",
+   "text": {
+    "tr": "Zeynep'in şirketi onu, liman ofisinden gelen isimsiz bir ihbar üzerine erkenden göndermiş.",
+    "en": "Zeynep's company sent her early after an anonymous tip from inside the harbor office."
+   }
+  },
+  {
+   "id": "c8",
+   "text": {
+    "tr": "Liman ofisinin kapı kaydı: o gece içeri giren tek kart Orhan'ınki.",
+    "en": "The harbor office door log: the only card used that night was Orhan's."
+   }
+  },
+  {
+   "id": "c9",
+   "text": {
+    "tr": "Orhan'ın yalısının iskelesinde sandığın mühür mumundan parçalar bulundu.",
+    "en": "Fragments of the crate's wax seal were found on the jetty of Orhan's mansion."
+   }
+  },
+  {
+   "id": "c10",
+   "text": {
+    "tr": "Kayıp yedek anahtar, Orhan'ın paltosunun iç cebinden çıktı.",
+    "en": "The missing spare key turned up in the inside pocket of Orhan's coat."
+   }
+  }
+ ],
+ "boards": [
+  {
+   "id": "case03_b01",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Denizcilik",
+      "en": "Seafaring"
+     },
+     "items": [
+      "anchor",
+      "sailboat",
+      "compass",
+      "ring-buoy"
+     ],
+     "alsoFits": {
+      "water-wave": "Denizle ilgili ama sahte delil"
+     }
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Balık tutmak",
+      "en": "Fishing"
+     },
+     "items": [
+      "fishing-pole",
+      "fish",
+      "hook",
+      "worm"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Bulutlu hava",
+      "en": "Cloudy weather"
+     },
+     "items": [
+      "cloud",
+      "fog",
+      "cloud-with-rain",
+      "sun-behind-large-cloud"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "İşaret vermek",
+      "en": "Sending a signal"
+     },
+     "items": [
+      "triangular-flag",
+      "loudspeaker",
+      "bell",
+      "flashlight"
+     ]
+    }
+   ],
+   "decoys": [
+    "water-wave"
+   ],
+   "clue": "c1"
+  },
+  {
+   "id": "case03_b02",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Kabuklu deniz ürünleri",
+      "en": "Shellfish"
+     },
+     "items": [
+      "crab",
+      "lobster",
+      "shrimp",
+      "oyster"
+     ],
+     "alsoFits": {
+      "squid": "Deniz ürünü ama kabuğu yok; sahte delil"
+     }
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Rüzgârla hareket eder",
+      "en": "Moved by the wind"
+     },
+     "items": [
+      "kite",
+      "wind-chime",
+      "carp-streamer",
+      "leaf-fluttering-in-wind"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Yüksek yapılar",
+      "en": "Tall structures"
+     },
+     "items": [
+      "tokyo-tower",
+      "office-building",
+      "castle",
+      "statue-of-liberty"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Tuzlu",
+      "en": "Salty"
+     },
+     "items": [
+      "salt",
+      "pretzel",
+      "french-fries",
+      "olive"
+     ]
+    }
+   ],
+   "decoys": [
+    "squid"
+   ],
+   "clue": "c2"
+  },
+  {
+   "id": "case03_b03",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Gece gökyüzü",
+      "en": "Night sky"
+     },
+     "items": [
+      "crescent-moon",
+      "shooting-star",
+      "milky-way",
+      "ringed-planet",
+      "comet"
+     ],
+     "alsoFits": {
+      "cloud": "Gökyüzünde ama bir gök cismi değil; sahte delil"
+     }
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Kumsalda",
+      "en": "At the beach"
+     },
+     "items": [
+      "spiral-shell",
+      "beach-with-umbrella",
+      "bikini",
+      "thong-sandal"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Zil çalar",
+      "en": "Rings"
+     },
+     "items": [
+      "bell",
+      "telephone",
+      "alarm-clock",
+      "bellhop-bell"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Sarı",
+      "en": "Yellow"
+     },
+     "items": [
+      "banana",
+      "sunflower",
+      "lemon"
+     ]
+    }
+   ],
+   "decoys": [
+    "cloud"
+   ],
+   "clue": "c3"
+  },
+  {
+   "id": "case03_b04",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Liman ofisinde",
+      "en": "In the harbor office"
+     },
+     "items": [
+      "desktop-computer",
+      "file-cabinet",
+      "printer",
+      "fax-machine"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Tuşları var",
+      "en": "Has keys"
+     },
+     "items": [
+      "musical-keyboard",
+      "keyboard",
+      "accordion",
+      "saxophone"
+     ],
+     "alsoFits": {
+      "fax-machine": "Tuşları var ama ofis grubunda",
+      "old-key": "Kendisi bir anahtar; sahte delil"
+     }
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Kâğıt",
+      "en": "Paper"
+     },
+     "items": [
+      "receipt",
+      "newspaper",
+      "envelope",
+      "ticket"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Çok ağır",
+      "en": "Very heavy"
+     },
+     "items": [
+      "elephant",
+      "anchor",
+      "rock",
+      "spouting-whale"
+     ]
+    }
+   ],
+   "decoys": [
+    "old-key"
+   ],
+   "clue": "c4"
+  },
+  {
+   "id": "case03_b05",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Suyun üstünde durur",
+      "en": "Floats on water"
+     },
+     "items": [
+      "canoe",
+      "ring-buoy",
+      "duck",
+      "speedboat",
+      "ferry"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Hayalet hikâyesi",
+      "en": "Ghost story"
+     },
+     "items": [
+      "ghost",
+      "skull",
+      "black-cat",
+      "spider-web",
+      "coffin"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Çizgili",
+      "en": "Striped"
+     },
+     "items": [
+      "zebra",
+      "tiger",
+      "barber-pole"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Dikiş nakış",
+      "en": "Sewing"
+     },
+     "items": [
+      "sewing-needle",
+      "thread",
+      "yarn"
+     ]
+    }
+   ],
+   "clue": "c5"
+  },
+  {
+   "id": "case03_b06",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Fener bekçisinin odası",
+      "en": "The keeper's room"
+     },
+     "items": [
+      "telescope",
+      "radio",
+      "ledger",
+      "oil-drum"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Okyanus canlıları",
+      "en": "Ocean life"
+     },
+     "items": [
+      "whale",
+      "octopus",
+      "seal",
+      "dolphin"
+     ],
+     "alsoFits": {
+      "penguin": "Denizde yüzer ama bir kuş; sahte delil"
+     }
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Fırtına",
+      "en": "Storm"
+     },
+     "items": [
+      "cloud-with-lightning",
+      "tornado",
+      "cyclone",
+      "water-wave"
+     ],
+     "alsoFits": {
+      "rainbow": "Fırtınadan sonra çıkar; sahte delil"
+     }
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Kurtarma ekibi",
+      "en": "Rescue team"
+     },
+     "items": [
+      "ambulance",
+      "helicopter",
+      "rescue-workers-helmet",
+      "fire-extinguisher"
+     ]
+    }
+   ],
+   "decoys": [
+    "penguin",
+    "rainbow"
+   ],
+   "clue": "c6"
+  },
+  {
+   "id": "case03_b07",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Kâğıt paralar",
+      "en": "Banknotes"
+     },
+     "items": [
+      "dollar-banknote",
+      "euro-banknote",
+      "yen-banknote",
+      "pound-banknote"
+     ],
+     "alsoFits": {
+      "receipt": "Parayla ilgili ama bir banknot değil; sahte delil"
+     }
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Kapalı tutar",
+      "en": "Keeps things shut"
+     },
+     "items": [
+      "locked",
+      "safety-pin",
+      "paperclip",
+      "clamp"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Erir",
+      "en": "Melts"
+     },
+     "items": [
+      "candle",
+      "ice",
+      "snowman",
+      "butter"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Lüks",
+      "en": "Luxury"
+     },
+     "items": [
+      "crown",
+      "gem-stone",
+      "money-bag",
+      "motor-boat"
+     ]
+    }
+   ],
+   "decoys": [
+    "receipt"
+   ],
+   "clue": "c7"
+  },
+  {
+   "id": "case03_b08",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Sabah rutini",
+      "en": "Morning routine"
+     },
+     "items": [
+      "toothbrush",
+      "soap",
+      "shower",
+      "razor",
+      "hot-beverage"
+     ],
+     "alsoFits": {
+      "bathtub": "Banyoda ama evin büyük eşyalarından"
+     }
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Gözle ilgili",
+      "en": "All about eyes"
+     },
+     "items": [
+      "eye",
+      "nazar-amulet",
+      "glasses",
+      "telescope"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Evin büyük eşyaları",
+      "en": "Big things at home"
+     },
+     "items": [
+      "couch-and-lamp",
+      "bed",
+      "chair",
+      "bathtub"
+     ]
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Yumurtadan çıkar",
+      "en": "Hatches from an egg"
+     },
+     "items": [
+      "hatching-chick",
+      "turtle",
+      "crocodile"
+     ],
+     "alsoFits": {
+      "egg": "Yumurtanın kendisi; sahte delil"
+     }
+    }
+   ],
+   "decoys": [
+    "egg"
+   ],
+   "clue": "c8"
+  },
+  {
+   "id": "case03_b09",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Korsanlar",
+      "en": "Pirates"
+     },
+     "items": [
+      "pirate-flag",
+      "crossed-swords",
+      "parrot",
+      "world-map"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Düşünmek",
+      "en": "Thinking"
+     },
+     "items": [
+      "puzzle-piece",
+      "brain",
+      "light-bulb",
+      "thought-balloon"
+     ]
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Ağaçta yetişir",
+      "en": "Grows on trees"
+     },
+     "items": [
+      "coconut",
+      "cherries",
+      "chestnut",
+      "mango"
+     ],
+     "alsoFits": {
+      "pineapple": "Tropik meyve ama ağaçta değil yerde yetişir; sahte delil"
+     }
+    },
+    {
+     "id": "g4",
+     "theme": {
+      "tr": "Toplar",
+      "en": "Balls"
+     },
+     "items": [
+      "basketball",
+      "tennis",
+      "volleyball",
+      "softball"
+     ],
+     "alsoFits": {
+      "globe-showing-americas": "Yuvarlak ama bir top değil; sahte delil"
+     }
+    }
+   ],
+   "decoys": [
+    "pineapple",
+    "globe-showing-americas"
+   ],
+   "clue": "c9"
+  },
+  {
+   "id": "case03_b10",
+   "groups": [
+    {
+     "id": "g1",
+     "theme": {
+      "tr": "Casus çantası",
+      "en": "Spy kit"
+     },
+     "items": [
+      "magnifying-glass-tilted-left",
+      "camera",
+      "satellite-antenna",
+      "headphone",
+      "locked-with-key"
+     ]
+    },
+    {
+     "id": "g2",
+     "theme": {
+      "tr": "Deniz dibinde yaşar",
+      "en": "Lives on the seabed"
+     },
+     "items": [
+      "coral",
+      "spiral-shell",
+      "crab",
+      "oyster",
+      "lobster"
+     ],
+     "alsoFits": {
+      "jellyfish": "Denizde ama dipte değil, suda süzülür; sahte delil"
+     }
+    },
+    {
+     "id": "g3",
+     "theme": {
+      "tr": "Siyah",
+      "en": "Black"
+     },
+     "items": [
+      "black-cat",
+      "pool-8-ball",
+      "black-flag",
+      "blackbird"
+     ],
+     "alsoFits": {
+      "white-flag": "Bayrak ama beyaz; sahte delil"
+     }
+    }
+   ],
+   "decoys": [
+    "jellyfish",
+    "white-flag"
+   ],
+   "clue": "c10"
+  }
+ ],
+ "culprit": "orhan",
+ "proof": [
+  "c8",
+  "c9",
+  "c10"
+ ],
+ "ending": {
+  "tr": "Orhan, sandığı Gölge'ye teslim etmek için gemiyi bilerek kayalıklara yönlendirmişti. Sandık yalının mahzeninde bulundu ama içi boştu. İçinde yalnızca bir kartvizit vardı: siyah zemin üzerine gümüş bir göz.",
+  "en": "Orhan had steered the ship onto the rocks on purpose so he could hand the crate to the Shadow. The crate was found in his mansion's cellar, but it was empty except for a calling card: a silver eye on a black background."
+ },
+ "teaser": {
+  "tr": "Gölge hep bir adım önde. Ama artık onun işaretini biliyorsun. Yeni dosyalar yolda...",
+  "en": "The Shadow is always one step ahead. But now you know its mark. New case files are on the way..."
+ }
+}

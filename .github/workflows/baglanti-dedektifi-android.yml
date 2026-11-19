@@ -1,0 +1,76 @@
+# Bağlantı Dedektifi: test + Android APK.
+#
+# Her push'ta testleri çalıştırır, telefonda denemek için bir APK derler
+# (STORE=test: sahte mağaza + gerçek AdMob test reklamları) ve "test-apk"
+# adlı ön sürüme yükler. APK'yı GitHub'da Releases > "Test APK" altından
+# telefona indirip kurabilirsin.
+name: Bağlantı Dedektifi APK
+
+on:
+  push:
+    paths:
+      - "baglanti_dedektifi/**"
+      - ".github/workflows/baglanti-dedektifi-android.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: baglanti-dedektifi-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: baglanti_dedektifi
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: "3.50.0"
+          cache: true
+
+      - name: Paketler
+        run: flutter pub get
+
+      - name: Analiz
+        run: flutter analyze
+
+      - name: Testler
+        run: flutter test
+
+      - name: İçerik denetimi
+        run: dart run tool/validate_content.dart
+
+      - name: APK (test modu)
+        run: flutter build apk --release --split-per-abi --dart-define=STORE=test
+
+      - name: Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: baglanti-dedektifi-apk
+          path: baglanti_dedektifi/build/app/outputs/flutter-apk/*-release.apk
+          retention-days: 14
+
+      - name: Test APK ön sürümü
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          APK=build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
+          cp "$APK" baglanti-dedektifi-test.apk
+          gh release delete test-apk --yes --cleanup-tag || true
+          gh release create test-apk baglanti-dedektifi-test.apk \
+            --prerelease \
+            --target "${{ github.sha }}" \
+            --title "Test APK" \
+            --notes "Telefonda denemek için test derlemesi (commit ${{ github.sha }}). Mağaza sahte, reklamlar AdMob test reklamları. Play Store'a yüklenmez."
